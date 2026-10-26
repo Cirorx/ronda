@@ -20,7 +20,7 @@ Phone (Flutter: iOS, Android, web)
   ├─ needs → local filters → eligible seat ids → Firestore
   ├─ face blur (ML Kit) → upload blurred photo
   └─ FCM pushes in; RSVP / attendance / reports out
-Firebase (southamerica-east1; Auth itself runs in the US)
+Firebase (southamerica-east1; Auth itself runs in the US; Spark plan, so where Functions and Storage live is #35)
   ├─ Firestore: users, rondas, weeks, waitlists, proposals, reports, acta, agent_runs
   ├─ Storage: audio + blurred photos; deleted on success, hourly sweeper, lifecycle as backstop
   ├─ Functions (Python 3.13, 2nd gen):
@@ -51,7 +51,7 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 ## Data model (Firestore, draft)
 
 - `users/{uid}`: firstName, ageBand, barrio, slots[], pretexts[], brings[], plusOneUid?,
-  buddyUid?, phoneHash, consent {voice: bool, at}, createdAt. **Never:** address, cédula, birth
+  buddyUid?, consent {voice: bool, at}, createdAt. Sign-in is Google: no phone number is held. **Never:** address, cédula, birth
   date, lives-alone, nationality, mood, needs.
 - `users/{uid}/private/eligible`: seatIds[] (written by the phone; read by the solver only).
 - `users/{uid}/tokens/{token}`: platform (android | ios | web), updatedAt. The sender builds a
@@ -108,9 +108,9 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 ## Where data lives (Ley 18.331 art. 23)
 - Firestore, Storage and Functions sit in São Paulo. **Brazil is not on URCDP's adequate list**
   (Res. 23/021 and 63/023, which do list EU/EEA members, Argentina and US organisations on the
-  Data Privacy Framework). Firebase Auth keeps phone numbers in the US (Google claims DPF).
+  Data Privacy Framework). Firebase Auth keeps the sign-in identity (Google account id, email) in the US (Google claims DPF).
   Voice and photos go to Meta in the US.
-- So the consent screen names all three: "Tus datos se guardan en Brasil, tu teléfono se procesa
+- So the consent screen names all three: "Tus datos se guardan en Brasil, tu inicio de sesión lo procesa Google
   en EE. UU. y tu audio lo procesa Meta en EE. UU." Ask the URCDP before onboarding pilot members.
 - Needs and mood never leave the phone, so no sensitive data crosses a border.
 

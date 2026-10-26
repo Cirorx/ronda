@@ -16,7 +16,7 @@ here is out of the build (see `docs/PLAN.md`).
 - Two doors: "Contalo en un audio" / "Prefiero tocar botones". Never asks address, cédula,
   birth date, or whether you live alone. Age is a band the person picks ("sesenta y pico").
 - Voice: consent screen first ("Tu audio lo procesa Meta en EE. UU. y se borra apenas lo
-  leemos. Tus datos se guardan en Brasil y tu teléfono se procesa en EE. UU."), ≤ 60 s, then
+  leemos. Tus datos se guardan en Brasil y tu inicio de sesión lo procesa Google en EE. UU."), ≤ 60 s, then
   read-back with every field editable. Nothing is saved until "Está bien".
 - Buttons: activities, "¿Qué podés traer o enseñar?" (pan, yerba, termo, sillas, enseño truco,
   tengo ganas), a day × morning/afternoon/night grid, barrio picker.

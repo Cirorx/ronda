@@ -227,21 +227,24 @@ Store `platform` with each FCM token. iPhone web users get push only after Add t
 
 ## Native and project checklist
 
-**Firebase project:** Blaze; budget alert at $20; Firestore + Storage + Functions in
-`southamerica-east1`; SMS region policy **allow UY only** (new projects allow none); test phone
-numbers for demo and judges; authorised domains; Web Push (VAPID) key; admin custom claim for
-Ciro; App Check after the hackathon (callables require `auth != null` meanwhile).
+**Firebase project `ronda-uy`** (created 2026-10-26 on the no-cost Spark plan): **Google
+sign-in** enabled (free and unlimited on Spark; Android needs the SHA-1 and SHA-256, iOS the
+reversed client id URL scheme, web the authorised domains); Firestore in `southamerica-east1`;
+Web Push (VAPID) key; admin custom claim for the owner. Phone/SMS sign-in stays off: it needs
+Blaze and bills per SMS. Email-link sign-in is capped at 5 emails a day on Spark. Spark has no
+Cloud Functions or Storage: where the server code runs is #35. App Check after the hackathon
+(endpoints verify the Firebase ID token meanwhile).
 
 **Android:** SHA-1 and SHA-256 (debug and release) in the console; manifest: `RECORD_AUDIO`,
 `POST_NOTIFICATIONS` (ask at runtime on 13+), the FLN `ActionBroadcastReceiver`, the TTS
 `<queries>` block, `allowBackup="false"` + `dataExtractionRules` excluding cloud backup **and**
 device transfer + `fullBackupContent`; handle `ImagePicker.retrieveLostData()`.
 
-**iOS:** Apple Developer Program for push and APNs-based phone auth; APNs key uploaded to
+**iOS:** Apple Developer Program for push; APNs key uploaded to
 Firebase; Push + Background Modes (remote notifications); Encoded App ID URL scheme;
 `NSMicrophoneUsageDescription`, `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`
 localised in `es.lproj/InfoPlist.strings`; Podfile 15.5 + armv7 excluded; the
-`UNUserNotificationCenter` delegate line. Phone auth needs a real device.
+`UNUserNotificationCenter` delegate line.
 
 **Web:** HTTPS (mic, secure storage); `usePathUrlStrategy()`; Hosting SPA rewrite for the app,
 separate plain-HTML pages; ask notification permission only from a tap.
