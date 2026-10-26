@@ -73,7 +73,7 @@ Counts toward "Use of Meta AI tooling" (25% of the score); mention what was used
 
 ## Smoke tests (day 1, tests 1–5; day 2, tests 6–7)
 Run from `scripts/smoke/` in a Python 3.13 venv with `openai httpx pydantic meta-sam-parser
-Pillow`. Log latency and cost of each in `docs/NOW.md`.
+Pillow`. Log latency and cost of each in `notes/NOW.md`.
 
 1. **Access from Uruguay.**
    `curl -s https://api.meta.ai/v1/responses -H "Authorization: Bearer $MODEL_API_KEY" -H "Content-Type: application/json" -d '{"model":"muse-spark-1.3","input":"Decí hola en rioplatense."}'`

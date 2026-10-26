@@ -5,8 +5,8 @@ the rambla, truco, fútbol 5). Flutter app (Android, iOS, web) on Firebase, with
 runtime, built for the Meta Global AI Developer Hackathon.
 
 ## Start of a session
-1. Read `docs/NOW.md`. Done when you can say the current state and the next step.
-2. On a new machine, also read `docs/HANDOFF.md`, and accept the project plugins
+1. Read `notes/NOW.md`. Done when you can say the current state and the next step.
+2. On a new machine, also read `notes/HANDOFF.md`, and accept the project plugins
    (`.claude/settings.json`) when Claude Code offers them.
 3. Pick one issue: `gh issue list -R Cirorx/ronda --label agent --milestone "<day>"`. Issues
    labelled `human` belong to the owner; if yours depends on an open one, say so and pick
@@ -27,21 +27,21 @@ runtime, built for the Meta Global AI Developer Hackathon.
 4. Finish **green**: run the `green-gate` skill on every package you touched (analyze, format,
    test, coverage in one passing round, targets in `docs/STACK.md` § Quality bar), and tick every
    box in the issue's "Done when".
-5. Commit with `Closes #<n>`, push, and add a line to `docs/NOW.md`.
+5. Commit with `Closes #<n>`, push, and add a line to `notes/NOW.md`.
 
 ## End of a session
-Update `docs/NOW.md`: done, half-done, next step, and anything learned (model quirks, API
-paths, latency, cost). Done when a fresh session could continue from `docs/NOW.md` alone.
+Update `notes/NOW.md`: done, half-done, next step, and anything learned (model quirks, API
+paths, latency, cost). Done when a fresh session could continue from `notes/NOW.md` alone.
 
 ## Local-only notes
-`docs/NOW.md`, `docs/HANDOFF.md`, `docs/PLAN.md`, `docs/HACKATHON.md`, `docs/DEMO.md`,
-`docs/PILOT.md`, `docs/DEVTOOLS.md` and `docs/planilla/` are git-ignored: they live on the owner's
-machine only. Anything personal or operational (local paths, accounts,
-schedules, people, pilot details) goes there; tracked files stay free of it, because this repo is
-public.
+`notes/` is git-ignored by this repo and is its own local git repo with no remote. It holds
+`NOW.md`, `HANDOFF.md`, `PLAN.md`, `HACKATHON.md`, `DEMO.md`, `PILOT.md`, `DEVTOOLS.md` and
+`planilla/`. Anything personal or operational (local paths, accounts, schedules, people, pilot
+details) goes there; tracked files stay free of it, because this repo is public. Commit notes
+changes inside `notes/` (`git -C notes commit`); there is nothing to push.
 
 ## Rules that shape the code
-**Hackathon** (summary in `docs/HACKATHON.md`, local):
+**Hackathon** (summary in `notes/HACKATHON.md`, local):
 - Code starts on **2026-10-27**; the window closes **2026-11-04 21:00 ET (23:00 Uruguay)**.
   Write everything fresh in the window: no code from earlier projects, Farolito included.
 - The repo is public. Commit only invented demo data, labelled as such. Keys live in `.env` and
@@ -70,9 +70,9 @@ public.
 - `docs/PRODUCT.md` — before building a feature; real UI copy included.
 - `docs/ARCHITECTURE.md` — before touching Firestore, Storage, Functions, the solver or the agent.
 - `docs/MODELS.md` — before calling a Meta model or Baseten; has the smoke tests.
-- `docs/DESIGN.md` — before building a screen; the mockups are in `docs/planilla/index.html` (local).
-- `docs/PLAN.md` (local) — to see what a day must prove; the issues carry the same blocks.
-- `docs/DEMO.md` (local) — when work feeds the video.
-- `docs/HANDOFF.md` (local) — decisions made and still open, where everything lives.
-- `docs/PILOT.md` (local) — when work touches real members: dates, consent, data deletion.
-- `docs/DEVTOOLS.md` (local) — running Claude Code on Meta models, credits budget, questions for Discord.
+- `docs/DESIGN.md` — before building a screen; the mockups are in `notes/planilla/index.html` (local).
+- `notes/PLAN.md` (local) — to see what a day must prove; the issues carry the same blocks.
+- `notes/DEMO.md` (local) — when work feeds the video.
+- `notes/HANDOFF.md` (local) — decisions made and still open, where everything lives.
+- `notes/PILOT.md` (local) — when work touches real members: dates, consent, data deletion.
+- `notes/DEVTOOLS.md` (local) — running Claude Code on Meta models, credits budget, questions for Discord.

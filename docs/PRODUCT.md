@@ -1,6 +1,6 @@
 # Product spec (features in the 9-day build)
 
-Visual reference: the planilla mockups (`docs/planilla/index.html`, local only; filter "In the 9-day build").
+Visual reference: the planilla mockups (`notes/planilla/index.html`, local only; filter "In the 9-day build").
 Copy below is the real UI copy (rioplatense voseo); English UI mirrors it. Everything not listed
 here is out of the build.
 
@@ -105,4 +105,4 @@ here is out of the build.
   *0767, 911.
 
 ## Demo video
-The script, shot list and the 45-second X cut are in `docs/DEMO.md` (local only).
+The script, shot list and the 45-second X cut are in `notes/DEMO.md` (local only).

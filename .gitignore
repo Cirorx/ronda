@@ -9,12 +9,5 @@ firebase-debug.log
 .DS_Store
 # never commit pilot data
 /data/private/
-# local-only notes: personal and operational, never on GitHub
-/docs/NOW.md
-/docs/HANDOFF.md
-/docs/PILOT.md
-/docs/DEVTOOLS.md
-/docs/PLAN.md
-/docs/HACKATHON.md
-/docs/DEMO.md
-/docs/planilla/
+# local-only notes (its own local git repo, never on GitHub)
+/notes/
