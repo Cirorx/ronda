@@ -1,0 +1,11 @@
+.env
+.env.*
+*.keystore
+google-services.json
+GoogleService-Info.plist
+firebase-debug.log
+/build/
+.dart_tool/
+.DS_Store
+# never commit pilot data
+/data/private/
