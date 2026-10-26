@@ -1,0 +1,14 @@
+{
+  "extraKnownMarketplaces": {
+    "very-good-claude-code-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "VeryGoodOpenSource/very-good-claude-code-marketplace"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "vgv-ai-flutter-plugin@very-good-claude-code-marketplace": true,
+    "mattpocock-skills@claude-plugins-official": true
+  }
+}

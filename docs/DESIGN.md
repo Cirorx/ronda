@@ -42,12 +42,13 @@ radius 12; buttons radius 12, height ≥ 48 dp.
 ## In Flutter
 - Packages, versions, l10n setup and the native checklist: `docs/STACK.md`. State is Bloc
   (Cubit-first); fonts are bundled, not fetched.
-- Copy Farolito's pattern (patterns only, never its code): a `RondaPalette` `ThemeExtension` plus `spacing.dart`,
-  `typography.dart`, `motion.dart` under `lib/theme/`; Material 3 underneath. No inline colours.
+- Theme lives in `packages/ronda_ui` (VGV `app_ui_package`): `AppTheme.light` / `.dark` built
+  from the tokens above, a `RondaPalette` ThemeExtension for yerba, ámbar and margen, and
+  `AppSpacing`. Widgets read the theme; colours and text styles never appear inline
+  (`docs/STACK.md` § Theme and copy).
 - Components to build on day 1: `RondaCard`, `PersonRow` (initial, name, age band, what they
   bring), `RsvpBar`, `SeatRow`, `NoteBanner` (info / warning), `ChipPicker`, `SlotGrid`,
   `ReadBackCard`, `ConsentScreen`, `StepSheet` (bottom sheet), `AdminProposalCard`.
-- If the VGV plugin is available, its material-theming and accessibility skills fit this setup.
 
 ## Tooling and scope for 9 days
 - Skip Figma: the planilla mockups are the spec; build the components directly.

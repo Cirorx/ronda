@@ -1,9 +1,9 @@
 # Stack: packages, tools and setup (checked 2026-10-26)
 
 Research behind this file: three research reports of 2026-10-26, with sources (kept privately).
-Versions are from pub.dev / PyPI / npm on 2026-10-26. **First thing on day 1:** `flutter pub get`
-with this pubspec. If `material_ui` or anything else doesn't resolve, fix the pubspec before
-writing code.
+Versions are from pub.dev / PyPI / npm on 2026-10-26; the VGV conventions are from the
+vgv-ai-flutter-plugin skills (`layered-architecture`, `bloc`, `material-theming`,
+`internationalization`, `testing`, `green-gate`, `static-security`), checked 2026-10-26.
 
 ## Toolchain
 
@@ -19,7 +19,110 @@ writing code.
 | Maestro | latest (`curl -fsSL "https://get.maestro.mobile.dev" \| bash`) | Needs Java 17+ (this Mac has 23) |
 | FlutterFire CLI | 1.4.1 (`dart pub global activate flutterfire_cli`) | `flutterfire configure` writes `lib/firebase_options.dart` |
 
+## Scaffold: the VGV app template
+
+Create the app with the Very Good CLI MCP `create` tool (`subcommand: flutter_app`, `name: ronda`,
+`org_name: com.ciroapps`, `platforms: android,ios,web`) into a temporary directory, then move its
+contents to the repo root, keeping Ronda's `.gitignore` rules and `LICENSE`. Checked 2026-10-26,
+the template already ships what this file asks for:
+
+- `material_ui`, Bloc, `bloc_lint`, `very_good_analysis`, `mocktail`, `bloc_test`, Dart ^3.13.
+- Flavors `main_development.dart`, `main_staging.dart`, `main_production.dart` over one
+  `bootstrap.dart`. Ronda uses **development = emulators** and **production = the real project**;
+  delete staging.
+- l10n: `lib/l10n/arb/app_en.arb` + `app_es.arb`, generated into `lib/l10n/gen/`, read through
+  `context.l10n` (`lib/l10n/l10n.dart`). Add `app_es_419.arb` = `{"@@locale": "es_419"}`.
+- `test/helpers/pump_app.dart` with the localization delegates.
+- GitHub Actions: VGV `flutter_package` build (analyze, format, tests, coverage, bloc_lint), a
+  licence check (MIT, BSD, Apache) and a cspell spell check on `**/*.md`. Ronda's docs are half
+  Spanish: give cspell a Spanish dictionary and a `words` list, or narrow `includes` to
+  English docs, so CI stays green.
+
+Two template defaults to change on day 1:
+- `AppBlocObserver` logs every state change. Ronda's states carry phone numbers and needs, so
+  log `bloc.runtimeType` and the transition's type names only, and only in development.
+- The counter feature is sample code: delete it once the first real feature exists.
+
+## Architecture: VGV layers
+
+Four layers, dependencies pointing one way: **Presentation → Business Logic → Repository → Data**.
+
+| Layer | Where | Holds |
+|---|---|---|
+| Presentation | `lib/<feature>/view/` | Page (provides the Cubit) + View (`BlocBuilder` / `BlocListener`) |
+| Business logic | `lib/<feature>/cubit/` (or `bloc/` when events need transformers) | Cubits with sealed, Equatable states |
+| Repository | `packages/<domain>_repository/` | Domain models, orchestration of data clients |
+| Data | `packages/<source>/` | One external source each; models match its wire shape |
+
+Target package map (create each when its first feature needs it, with the Very Good CLI MCP
+`create` tool: `dart_package` where the source allows, `flutter_package` when it wraps a plugin):
+
+| Package | Layer | Wraps / owns | First issue |
+|---|---|---|---|
+| `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
+| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `rsvp`, `run_job`) | #13 |
+| `device_store` | Data | flutter_secure_storage (needs) and shared_preferences (flags) | #18 |
+| `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
+| `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
+| `face_blur` | Data | ML Kit face detection + `image` pixelation (native only) | #30 |
+| `auth_repository` | Repository | `FirebaseAuth` passed in from bootstrap | #13 |
+| `profile_repository` | Repository | Profile, eligible seat ids (over `ronda_api`) | #18 |
+| `needs_repository` | Repository | Needs and the seat filter, over `device_store` only: this repository has no network path | #18 |
+| `onboarding_repository` | Repository | Voice note → upload → `extract` → fields (over `voice_recorder` + `ronda_api`) | #19 |
+| `ronda_repository` | Repository | Rondas, weeks, RSVPs, proposals, acta | #25 |
+
+Rules the agents apply (from `layered-architecture` and `bloc`):
+- Bootstrap (`main_<flavor>.dart` / `bootstrap.dart`) builds every data client and repository and
+  hands the repositories to `App`, which exposes them with `MultiRepositoryProvider`. Only
+  entrypoints and bootstrap import a data package.
+- Repositories receive every source through the constructor, import no other repository, and
+  turn wire models into domain models. Business rules live in Cubits.
+- Path dependencies between local packages; every package exports through its barrel file.
+- Dart 3.13 primary constructors for models, states, events and widgets
+  (`class const User(final String id, final String firstName) extends Equatable`).
+- Pages provide, Views consume; `context.read` in callbacks, `BlocBuilder` / `context.watch` in
+  `build`. Cubits talk to each other only through repositories or the UI.
+
+## Theme and copy (from `material-theming` and `internationalization`)
+- `ronda_ui` maps the DESIGN.md tokens onto two `ColorScheme`s (light and dark: paper → surface,
+  ink → onSurface, birome → primary, yerba → tertiary, ámbar → secondary) inside `AppTheme.light`
+  / `AppTheme.dark`, passed to `MaterialApp` as `theme` / `darkTheme`. Yerba, ámbar and margen also
+  sit in a `RondaPalette` ThemeExtension for the roles Material has no slot for.
+- Typography: `AppTextStyle` → `TextTheme`; widgets read `Theme.of(context).textTheme`.
+- Component looks (buttons 48 dp, radius 12, cards, inputs) live in component themes in
+  `ThemeData`; call sites declare only what is unique to them.
+- `AppSpacing` with base unit 16: `xxs` 4, `xs` 8, `sm` 12, `md` 16, `lg` 24, `xlg` 32, each a
+  multiple of the unit. `EdgeInsets.only` / `.symmetric` / `EdgeInsetsDirectional`.
+- Every user-facing string comes from the ARB files via `context.l10n`; `ronda_ui` widgets take
+  their labels as `final String` parameters.
+
+## Quality bar: green gate
+Every issue ends **green**: the `green-gate` skill's four gates, analyze (`applyFixes`) →
+format (zero files changed) → test → coverage, all passing in the same final round, through the
+dart and very_good_cli MCP tools. Coverage target **100%** for `packages/*`, **≥ 90%** for the app
+(`lib/l10n/gen/**` and `*.g.dart` excluded). Tests follow the `testing` skill: groups that read
+as sentences, `late` + `setUp` inside groups, private `_Mock` classes, `pumpApp`, `MockCubit` in
+widget tests, goldens tagged `TestTag.golden` for the three hero screens (read-back, Mi ronda
+card, flyer).
+
+## Security (from `static-security`)
+- Meta and Baseten keys exist only in Cloud Functions config. The app ships Firebase's web/app
+  config, which is public by design: restrict those API keys to the Firebase APIs and the app ids
+  in the Google Cloud console.
+- Needs, tokens and anything personal go to flutter_secure_storage; shared_preferences holds
+  only flags such as "onboarding seen".
+- Logs carry ids and type names: phone numbers, names, transcripts, needs and FCM tokens stay
+  out of `log()`, `debugPrint()` and the BlocObserver.
+- Form fields (first name, phone number) are validated `formz` inputs held in Cubit state; the
+  submit reads state, never a `TextEditingController`.
+- Release builds use `--obfuscate --split-debug-info`; `osv-scanner --lockfile=pubspec.lock`
+  before the submission (#32).
+
 ## pubspec (resolved with `flutter pub get --dry-run` on 3.47.1)
+
+The flat list below is the resolved version set. With the package map above, each dependency
+goes into the package that owns its source; the app's own pubspec keeps the Flutter SDK
+packages, Bloc, go_router, Firebase core and the path dependencies.
 
 ```yaml
 environment:
@@ -52,6 +155,7 @@ dependencies:
   flutter_secure_storage: ^11.2.0        # needs, device-only
   shared_preferences: ^2.5.6     # non-sensitive flags only (it is backed up)
   url_launcher: ^6.3.3
+  formz: ^0.8.1                  # validated form inputs (VGV static-security)
   qr_flutter: ^4.1.0             # only for an in-app QR; flyer QRs are made server-side
 
 dev_dependencies:
@@ -82,8 +186,9 @@ stdlib `wave` module (`audioop` is gone in 3.13).
 
 ## Choices
 
-- **State: Bloc, Cubit-first.** Farolito uses it (copy patterns, never code: pre-10-27 code is
-  banned), the VGV bloc skill and `bloc_lint` keep AI-written code in line, no code generation.
+- **State: Bloc, Cubit-first**, laid out as above. Farolito uses the same stack (copy patterns,
+  never code: pre-10-27 code is banned); the VGV skills and `bloc_lint` keep AI-written code in
+  line; no code generation.
 - **E2E: Maestro**, not Patrol or `integration_test`. Black-box YAML on the USB phone and on web,
   grants permissions on launch, and the same flows replay the golden path for the demo
   recording. Give every tappable widget `Semantics(identifier: ...)`.
@@ -99,9 +204,9 @@ stdlib `wave` module (`audioop` is gone in 3.13).
 
 1. Import `package:material_ui/material_ui.dart`, not the framework's Material.
 2. gen-l10n needs `app_es.arb` (full voseo text) beside `app_es_419.arb` (just
-   `{"@@locale": "es_419"}`). Import from `package:ronda/l10n/app_localizations.dart`;
-   `flutter_gen` no longer exists. Map any `es_*` device locale to `es_419` in
-   `localeListResolutionCallback`.
+   `{"@@locale": "es_419"}`). Strings come from `package:ronda/l10n/l10n.dart` (`context.l10n`),
+   generated into `lib/l10n/gen/`; `flutter_gen` no longer exists. Map any `es_*` device locale
+   to `es_419` in `localeListResolutionCallback`.
 3. `cloud_functions` calls `us-central1` unless you use
    `FirebaseFunctions.instanceFor(region: 'southamerica-east1')`.
 4. `record` defaults to AAC 44.1 kHz stereo. Set `encoder: AudioEncoder.wav, sampleRate: 16000,
