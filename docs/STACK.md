@@ -13,7 +13,7 @@ vgv-ai-flutter-plugin skills (`layered-architecture`, `bloc`, `material-theming`
 | Android | minSdk 24, compile/target 36, AGP ≥ 8.11.1, core-library desugaring on | FlutterFire BoM 35 and flutter_local_notifications set the floors |
 | iOS | deployment target 15.5 (ML Kit), armv7 excluded in the Podfile | CocoaPods still used for ML Kit and flutter_tts |
 | Python (functions, scripts) | 3.13 (`uv python install 3.13`) | Firebase Python functions run 3.10–3.13; this Mac's 3.14 won't deploy |
-| firebase-tools | 15.34.1 via npm | The Homebrew binary hung on `firebase --version`: reinstall |
+| firebase-tools | 15.34.1 via npm | Installed under nvm's node 26, but the Hosting emulator (`superstatic`) supports node 20, 22 and 24 only: run the emulators under node 24 (`nvm install 24`, `nvm use 24`, reinstall firebase-tools there) |
 | ortools | 9.15.6755, with `protobuf==6.33.6` pinned | Only 6.33.5/6.33.6 satisfy both ortools and google-cloud-firestore |
 | scrcpy | 5.0.1 (`brew upgrade scrcpy`) | Two-phone recording |
 | Maestro | latest (`curl -fsSL "https://get.maestro.mobile.dev" \| bash`) | Needs Java 17+ (this Mac has 23) |

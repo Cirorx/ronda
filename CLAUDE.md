@@ -66,4 +66,5 @@ paths, latency, cost). Done when a fresh session could continue from `docs/NOW.m
 - `docs/DESIGN.md` — before building a screen; `docs/planilla/index.html` holds the mockups.
 - `docs/PLAN.md` — to see what a day must prove.
 - `docs/DEMO.md` — when work feeds the video.
+- `docs/PILOT.md` — when work touches real members: dates, consent, data deletion.
 - `docs/HANDOFF.md` — decisions made and still open.
