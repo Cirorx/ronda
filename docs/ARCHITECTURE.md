@@ -89,7 +89,10 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 
 - Runs on the weekly schedule (Mon plan, Tue 19:00 RSVP, Wed 18:00 quorum/rain check, day-
   before spot + last bus, Fri buddy prompt) and on events (an "esta no" → bench).
-- Tools listed in `docs/PLAN.md` day 5. Every tool call is idempotent and logged to the acta.
+- Tools: `get_forecast` (Open-Meteo), `get_sunset`, `get_last_bus` (DNT GTFS), `count_rsvps`,
+  `propose_move` (to the host), `send_member_push` (gated), `assign_hosts`, `prompt_buddy`,
+  `offer_bench_seat`, `log_acta`. Every tool call is idempotent, takes a required `reason`, and is
+  logged to the acta.
 - Two humans in the loop: Ciro approves groups; the host decides moves; the buddy writes the
   check-in in their own words.
 - Gates in code (not prompt): quiet hours 21:00–09:00, bot disclosure, no emoji, voseo, one

@@ -9,8 +9,8 @@ rambla, truco, fútbol 5. It is built in Ciudad de la Costa, Uruguay, for the
 [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon)
 (indie track, "Build for Your World"), 27 October – 4 November 2026.
 
-> **Status, 26 October 2026: design only.** The research, design docs and mockups in `docs/` were
-> written before the building window opened. Every line of code in this repository is written from
+> **Status, 26 October 2026: design only.** The design docs in `docs/` were written before the
+> building window opened. Every line of code in this repository is written from
 > 27 October 2026 on. Progress is tracked in the [issues](https://github.com/Cirorx/ronda/issues),
 > one milestone per day.
 
@@ -87,7 +87,7 @@ More in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/STACK.md`](doc
 | 8 | Tue 3 Nov | Real phones, real neighbours |
 | 9 | Wed 4 Nov | Video and submission |
 
-Details and "done when" for each day: [`docs/PLAN.md`](docs/PLAN.md).
+Each day is a milestone in the [issues](https://github.com/Cirorx/ronda/milestones), with what proves it's done.
 
 ## Docs
 
@@ -96,8 +96,7 @@ Details and "done when" for each day: [`docs/PLAN.md`](docs/PLAN.md).
 - [`docs/STACK.md`](docs/STACK.md): packages, tools and setup
 - [`docs/MODELS.md`](docs/MODELS.md): Meta models, partners and smoke tests
 - [`docs/DESIGN.md`](docs/DESIGN.md): the look, "the barrio's own paper"
-- [`docs/DEMO.md`](docs/DEMO.md): the 3-minute video script
-- [`docs/planilla/`](docs/planilla/): the feature sheet with mockups (open `index.html`)
+- [`docs/GLOSSARY.md`](docs/GLOSSARY.md): one word per domain concept
 
 ## Running it
 

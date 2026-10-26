@@ -34,13 +34,14 @@ Update `docs/NOW.md`: done, half-done, next step, and anything learned (model qu
 paths, latency, cost). Done when a fresh session could continue from `docs/NOW.md` alone.
 
 ## Local-only notes
-`docs/NOW.md`, `docs/HANDOFF.md`, `docs/PILOT.md` and `docs/DEVTOOLS.md` are git-ignored: they
-live on the owner's machine only. Anything personal or operational (local paths, accounts,
+`docs/NOW.md`, `docs/HANDOFF.md`, `docs/PLAN.md`, `docs/HACKATHON.md`, `docs/DEMO.md`,
+`docs/PILOT.md`, `docs/DEVTOOLS.md` and `docs/planilla/` are git-ignored: they live on the owner's
+machine only. Anything personal or operational (local paths, accounts,
 schedules, people, pilot details) goes there; tracked files stay free of it, because this repo is
 public.
 
 ## Rules that shape the code
-**Hackathon** (summary in `docs/HACKATHON.md`):
+**Hackathon** (summary in `docs/HACKATHON.md`, local):
 - Code starts on **2026-10-27**; the window closes **2026-11-04 21:00 ET (23:00 Uruguay)**.
   Write everything fresh in the window: no code from earlier projects, Farolito included.
 - The repo is public. Commit only invented demo data, labelled as such. Keys live in `.env` and
@@ -69,9 +70,9 @@ public.
 - `docs/PRODUCT.md` — before building a feature; real UI copy included.
 - `docs/ARCHITECTURE.md` — before touching Firestore, Storage, Functions, the solver or the agent.
 - `docs/MODELS.md` — before calling a Meta model or Baseten; has the smoke tests.
-- `docs/DESIGN.md` — before building a screen; `docs/planilla/index.html` holds the mockups.
-- `docs/PLAN.md` — to see what a day must prove.
-- `docs/DEMO.md` — when work feeds the video.
+- `docs/DESIGN.md` — before building a screen; the mockups are in `docs/planilla/index.html` (local).
+- `docs/PLAN.md` (local) — to see what a day must prove; the issues carry the same blocks.
+- `docs/DEMO.md` (local) — when work feeds the video.
 - `docs/HANDOFF.md` (local) — decisions made and still open, where everything lives.
 - `docs/PILOT.md` (local) — when work touches real members: dates, consent, data deletion.
-- `docs/DEVTOOLS.md` (local) — running Claude Code on Meta models, coding budget.
+- `docs/DEVTOOLS.md` (local) — running Claude Code on Meta models, credits budget, questions for Discord.

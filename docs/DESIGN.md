@@ -2,7 +2,7 @@
 
 **Direction: the barrio's own paper.** Ronda should look like a notice at the almacén, the
 ruled sign-up sheet and a tear-off flyer, not like a social app. The flyers, the printed planilla
-and the app then read as one thing. The planilla artifact (`docs/planilla/index.html`) already
+and the app then read as one thing. The planilla mockups (`docs/planilla/index.html`, local only) already
 uses this language; its mockups are the visual spec.
 
 ## Tokens

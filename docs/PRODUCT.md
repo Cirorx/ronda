@@ -1,8 +1,8 @@
 # Product spec (features in the 9-day build)
 
-Visual reference: the mockup flows in `docs/planilla/index.html` (filter "In the 9-day build").
+Visual reference: the planilla mockups (`docs/planilla/index.html`, local only; filter "In the 9-day build").
 Copy below is the real UI copy (rioplatense voseo); English UI mirrors it. Everything not listed
-here is out of the build (see `docs/PLAN.md`).
+here is out of the build.
 
 ## Screens
 - **Mi ronda** (tab): this week's card, who's coming, hosts, después, spot, RSVP.
@@ -105,4 +105,4 @@ here is out of the build (see `docs/PLAN.md`).
   *0767, 911.
 
 ## Demo video
-The script, shot list and the 45-second X cut are in `docs/DEMO.md`.
+The script, shot list and the 45-second X cut are in `docs/DEMO.md` (local only).
