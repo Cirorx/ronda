@@ -107,9 +107,10 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   semana?" [Esta semana no] [a public place nearby] [En lo de alguien del grupo] ("si esa
   persona quiere"). A home is allowed only for the después, never for the ronda itself. It
   shows only to that ronda's members (card and push; never Cerca, the seat page or public
-  pages). Ronda keeps the label ("bizcochos en lo de Mirta"), never the address: "Lo ven solo
-  los de este grupo. Ronda no guarda la dirección: pasala vos por WhatsApp." Members read
-  "Después, si querés: bizcochos en lo de Mirta (20 min). La dirección te la pasa ella."
+  pages). The host types who, what and the address; if it isn't the host's own home, that
+  person is asked first. "La ven solo los de este grupo, y la borramos cuando termina el día."
+  Members read on the card "Después, si querés: bizcochos en lo de Mirta, Av. Central 1234 (20
+  min)"; the push names the home but never carries the address, since it shows on lock screens.
 - **Attendance:** "¿Quién vino hoy?" — the host taps [Vino] / [No vino] per person; "Nadie más
   ve esta lista." No check-in codes.
 - **Buddy:** chosen after the first ronda: "Si un día faltás sin avisar, ¿a quién le avisamos?"

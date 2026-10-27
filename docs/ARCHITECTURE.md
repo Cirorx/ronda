@@ -60,8 +60,8 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 - Rules reject any user write that carries a `needs`, mood or audio field.
 - `rondas/{id}`: pretext, barrio, slot {day, time}, place {name, landmark, lat, lng} (public
   places only), size, status (forming | active | paused | ended), hosts {anfitrion, cola,
-  rotatesOn}, despues {kind: none | place | home, label} (members-only read; a label, never an
-  address), season {start, end}, openSeatFromWeek: 4.
+  rotatesOn}, despues {kind: none | place | home, label, address?, hostOk}
+  (members-only read; the address is deleted at the end of the day and never sent in a push), season {start, end}, openSeatFromWeek: 4.
 - `rondas/{id}/members/{uid}`: brings, state (active | paused | left), joinedAt.
 - `rondas/{id}/weeks/{isoWeek}`: date, placeOverride?, rsvp {uid: yes | no}, attendance
   {uid: bool}, plan {uid: item}, seguimos {uid: yes | no} (week 1 only).
