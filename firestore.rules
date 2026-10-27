@@ -20,5 +20,30 @@ service cloud.firestore {
       allow read, delete: if isOwner(uid);
       allow create, update: if isOwner(uid) && carriesNoSensitiveFields();
     }
+
+    // Seat facts the server publishes for the phone's needs filter, one per
+    // seat id. Written by the admin SDK only.
+    match /seat_facts/{seatId} {
+      allow read: if request.auth != null;
+    }
+
+    // The seat ids that passed the member's needs on their phone, and when:
+    // exactly seatIds and updatedAt. Nobody reads it back from a client; the
+    // solver reads it with the admin SDK.
+    match /users/{uid}/private/eligible {
+      allow create, update: if isOwner(uid) && isEligibleSeatIds();
+    }
+
+    // Rules can't check each element's type, so "a list of seat id strings"
+    // is the client's half; the size bound stays above every possible seat
+    // (9 barrios x 4 pretexts x 21 slots = 756).
+    function isEligibleSeatIds() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['seatIds', 'updatedAt'])
+          && data.keys().hasAll(['seatIds', 'updatedAt'])
+          && data.seatIds is list
+          && data.seatIds.size() <= 1000
+          && data.updatedAt == request.time;
+    }
   }
 }

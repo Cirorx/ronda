@@ -20,3 +20,17 @@ the region the plugin calls `us-central1`.
 
 The `users/{uid}` fields are in `docs/ARCHITECTURE.md` § Data model; the profile itself arrives
 with onboarding.
+
+## Seat facts and eligible seats (`EligibleSeatsApi`)
+
+An extension on `RondaApi` in `lib/src/seat_facts/`, so it stays apart from the profile methods.
+The shapes are in `docs/ARCHITECTURE.md` § Data model.
+
+| Member | Does |
+|---|---|
+| `Future<List<SeatFactsDocument>> readSeatFacts()` | Every `seat_facts/{seatId}` document; one without the seat shape is skipped, so it never passes the filter |
+| `Future<void> writeEligibleSeatIds({uid, seatIds})` | Replaces `users/{uid}/private/eligible` with exactly `{seatIds, updatedAt: serverTimestamp}` |
+| `SeatFactsDocument.fromJson(seatId, json)` | The wire model: barrio, pretext, slot, `blocksFrom`, `hasStairs`, `endsAfterDark`, `needsCar`; throws `FormatException` on another shape |
+
+Extension methods can't be stubbed with mocktail: a repository test over them passes a real
+`RondaApi` built on `FakeFirebaseFirestore`.

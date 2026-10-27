@@ -55,10 +55,28 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   buddyUid?, terms {version, acceptedAt}, createdAt. Sign-in is Google: no phone number is held. **Never:** address, cédula, birth
   date, lives-alone, nationality, mood, needs.
 - `users/{uid}/private/eligible`: seatIds[] (written by the phone; read by the solver only).
-- Seat facts the server publishes for the phone's filter, one per seat: `seatId`, `walkDistance`
-  (near ≤ 5 blocks, medium ≤ 10, far beyond, from barrio centroids), `hasStairs`, `endsAfterDark`
-  (the slot's end against that day's Open-Meteo sunset) and `needsCar`. The phone returns only
-  the ids that pass.
+- `seat_facts/{seatId}` (decided in #20): what the server publishes for the phone's filter, one
+  document per seat id `{barrio}_{pretext}_{slot}`, read by any signed-in member, written by the
+  admin SDK only. Fields: barrio, pretext, slot, `blocksFrom {barrioId: blocks}`, `hasStairs`,
+  `endsAfterDark`, `needsCar`, updatedAt.
+  - **Walk distance is per member, so the phone computes it.** It depends on the member's barrio
+    and the seat's, so the document carries `blocksFrom`: the haversine walk from every barrio's
+    centroid to the seat's (a block is 100 m, as in the solver), and the phone reads its own
+    barrio's entry: near ≤ 5 blocks, medium ≤ 10, far beyond (`WalkDistance.forMember` in
+    `needs_repository`). A barrio missing from the table reads as far. The server already holds
+    the member's barrio in the profile, so this sends nothing new.
+  - `hasStairs` and `needsCar` describe the place, so they are false until a host sets one; the
+    server republishes the document then, and phones recompute.
+  - `endsAfterDark` is per seat: the slot's end against that week's Open-Meteo sunset.
+  - The phone writes `users/{uid}/private/eligible` = exactly `{seatIds, updatedAt}` (rules check
+    the keys, a list, at most 1000 ids and `updatedAt == request.time`; that each id is a string
+    is the client's half). No client reads it back.
+  - Known limits: the solver's hard `withinTenBlocks` already drops far seats, so "caminar mucho"
+    changes no grouping today and only keeps far ids from leaving the phone. And the server holds
+    both the facts it published and the ids that came back, so it could infer a need from which
+    ids are missing (all evening seats gone → "volver de noche"). The need itself is never sent.
+  - Demo data: `data/demo/invented_seat_facts.json` (invented), loaded into the emulator by
+    `scripts/seed/seed_seat_facts.py`.
 - `users/{uid}/tokens/{token}`: platform (android | ios | web), updatedAt. The sender builds a
   different payload per platform (`docs/STACK.md` § Push).
 - Rules reject any user write that carries a `needs`, mood or audio field.

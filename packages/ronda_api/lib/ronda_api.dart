@@ -4,3 +4,4 @@
 library;
 
 export 'src/ronda_api.dart';
+export 'src/seat_facts/seat_facts.dart';
