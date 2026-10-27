@@ -50,7 +50,8 @@ leave or switch without explaining · free: **Ronda nunca pide plata**.
 
 - **Needs stay on the phone.** "I can't walk far", "not after dark", "no car" are filters on the
   device. The server only ever learns which seats fit.
-- **Voice is understood once.** A consent screen first; the audio is deleted as soon as it's read.
+- **Voice is understood once.** Sent only after the person accepts short, plain terms; the audio
+  is deleted as soon as it's read.
 - **Faces are blurred on the phone** before any photo is uploaded. Detection only, never
   recognition.
 - **The agent is a bot and says so.** Logistics only, quiet from 21:00 to 09:00, no emoji, and

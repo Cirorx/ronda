@@ -56,7 +56,8 @@ changes inside `notes/` (`git -C notes commit`); there is nothing to push.
 - People are known by first name, age band and what they bring. One weekly card, no feed,
   photos of people or map pins.
 - **Split by sensitivity:** needs stay on the phone as seat filters and the server gets
-  eligible seat ids; voice is sent after a consent screen and deleted once read; faces are
+  eligible seat ids; voice is sent only after the person accepts the terms (by continuing past
+  the welcome screen, which links them) and is deleted once read; faces are
   pixelated on the phone before upload (detection only).
 - The organiser agent says it is a program and does logistics. Every outgoing message passes
   the **gates** in code: 09:00–21:00 only, no emoji, voseo, one routine push a week, and the line

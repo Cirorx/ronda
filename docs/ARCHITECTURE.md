@@ -2,9 +2,10 @@
 
 ## Thesis: split by sensitivity
 
-- Voices are understood once by Voice Transcribe + Muse Spark, behind a consent screen
-  (Ley 18.331 art. 23: sending voice to the US is an international transfer). Nothing is kept
-  after extraction.
+- Voices are understood once by Voice Transcribe + Muse Spark, only after the person accepts
+  the terms by continuing past the welcome screen (Ley 18.331 art. 23: sending voice to the US
+  is an international transfer, so the tap is the express consent and is recorded). Nothing is
+  kept after extraction.
 - Needs (a bad knee, no car, not after dark) stay on the phone as seat filters. The server
   receives only eligible seat ids. (Mobility on a server is arguably health data, art. 4E/18.)
 - Faces are blurred on the phone (ML Kit face detection; never recognition, art. 18 BIS)
@@ -16,7 +17,7 @@
 
 ```
 Phone (Flutter: iOS, Android, web)
-  ├─ onboarding (buttons | voice) → consent → upload audio
+  ├─ welcome (terms accepted by continuing) → onboarding (buttons | voice) → upload audio
   ├─ needs → local filters → eligible seat ids → Firestore
   ├─ face blur (ML Kit) → upload blurred photo
   └─ FCM pushes in; RSVP / attendance / reports out
@@ -51,7 +52,7 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 ## Data model (Firestore, draft)
 
 - `users/{uid}`: firstName, ageBand, barrio, slots[], pretexts[], brings[], plusOneUid?,
-  buddyUid?, consent {voice: bool, at}, createdAt. Sign-in is Google: no phone number is held. **Never:** address, cédula, birth
+  buddyUid?, terms {version, acceptedAt}, createdAt. Sign-in is Google: no phone number is held. **Never:** address, cédula, birth
   date, lives-alone, nationality, mood, needs.
 - `users/{uid}/private/eligible`: seatIds[] (written by the phone; read by the solver only).
 - `users/{uid}/tokens/{token}`: platform (android | ios | web), updatedAt. The sender builds a
@@ -113,12 +114,13 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   (Res. 23/021 and 63/023, which do list EU/EEA members, Argentina and US organisations on the
   Data Privacy Framework). Firebase Auth keeps the sign-in identity (Google account id, email) in the US (Google claims DPF).
   Voice and photos go to Meta in the US.
-- So the consent screen names all three: "Tus datos se guardan en Brasil, tu inicio de sesión lo procesa Google
-  en EE. UU. y tu audio lo procesa Meta en EE. UU." Ask the URCDP before onboarding pilot members.
+- So the terms name all three in one line: "Tus datos se guardan en Brasil; el audio lo procesa
+  Meta y el inicio de sesión Google, en EE. UU." They are accepted by continuing past the welcome
+  screen, which links them. Ask the URCDP before onboarding pilot members.
 - Needs and mood never leave the phone, so no sensitive data crosses a border.
 
 ## Privacy and safety checklist (must hold in the demo)
-- Consent screen before any audio or photo leaves the phone.
+- Terms accepted (version and time recorded) before any audio or photo leaves the phone.
 - No needs, no mood, no audio, no unblurred faces in Firestore or Storage after 24 h.
 - Payers or institutions only ever see totals with cells ≥ 10 (after the hackathon).
 - Helpline in settings: Línea de Prevención del Suicidio 0800 0767 / *0767, 911. Not in the pitch.

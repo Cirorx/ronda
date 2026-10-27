@@ -48,7 +48,7 @@ radius 12; buttons radius 12, height ≥ 48 dp.
   (`docs/STACK.md` § Theme and copy).
 - Components to build on day 1: `RondaCard`, `PersonRow` (initial, name, age band, what they
   bring), `RsvpBar`, `SeatRow`, `NoteBanner` (info / warning), `ChipPicker`, `SlotGrid`,
-  `ReadBackCard`, `ConsentScreen`, `StepSheet` (bottom sheet), `AdminProposalCard`.
+  `ReadBackCard`, `TermsNote` (the "Al seguir, aceptás…" line and its link), `StepSheet` (bottom sheet), `AdminProposalCard`.
 
 ## Tooling and scope for 9 days
 - Skip Figma: the planilla mockups are the spec; build the components directly.

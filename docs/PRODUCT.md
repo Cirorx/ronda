@@ -13,15 +13,21 @@ here is out of the build.
 - (The Bitácora tab from the mockups is not in the build.)
 
 ## Onboarding
-- Two doors: "Contalo en un audio" / "Prefiero tocar botones". Never asks address, cédula,
-  birth date, or whether you live alone. Age is a band the person picks ("sesenta y pico").
-- Voice: consent screen first ("Tu audio lo procesa Meta en EE. UU. y se borra apenas lo
-  leemos. Tus datos se guardan en Brasil y tu inicio de sesión lo procesa Google en EE. UU."), ≤ 60 s, then
-  read-back with every field editable. Nothing is saved until "Está bien".
-- Buttons: activities, "¿Qué podés traer o enseñar?" (pan, yerba, termo, sillas, enseño truco,
-  tengo ganas), a day × morning/afternoon/night grid, barrio picker.
-- Needs ("caminar poco", "sin escaleras", "antes de que oscurezca", "sin auto") are shown under
-  "Lo que te cuesta — lo sabe solo este teléfono" and become filters; the server gets seat ids.
+- Two doors: "Con un audio" / "Tocando botones". Never asks address, cédula, birth date, or
+  whether you live alone. Age is a band the person picks ("sesenta y pico").
+- **Terms by continuing, no consent screen.** Under the doors: "Al seguir, aceptás las
+  condiciones de Ronda." Tapping either door is the acceptance; the app records the terms
+  version and the time. The link opens "Las condiciones, en corto": six plain points (free,
+  public places and adults only, what is kept, audio deleted at once, see or delete your data
+  in Ajustes, reports read by a person) and one line on where things happen: "Tus datos se
+  guardan en Brasil; el audio lo procesa Meta y el inicio de sesión Google, en EE. UU."
+- Voice: ≤ 60 s with ideas of what to say on screen and "El audio se borra apenas lo leemos.",
+  then read-back with every field editable. Nothing is saved until "Está bien, guardalo".
+- Buttons: activities, "¿Qué podés llevar o enseñar?" (pan, yerba, termo, sillas, enseño truco,
+  tengo ganas: "venís y listo"), a day × morning/afternoon/night grid, barrio picker.
+- Needs are asked as "¿Hay algo que te complique ir?" ("caminar mucho", "subir escaleras",
+  "volver de noche", "no tengo auto"), marked "Queda guardado solo en este teléfono", and become
+  filters; the server gets seat ids.
 - The buddy is chosen after the first ronda, not at sign-up.
 
 ## Lo que traés (profile)
