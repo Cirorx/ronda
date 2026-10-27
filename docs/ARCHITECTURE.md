@@ -54,7 +54,7 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 - `users/{uid}`: firstName, ageBand, barrio, slots[], pretexts[], brings[], plusOneUid?,
   buddyUid?, terms {version, acceptedAt}, createdAt. Sign-in is Google: no phone number is held. **Never:** address, cédula, birth
   date, lives-alone, nationality, mood, needs.
-- `users/{uid}/private/eligible`: seatIds[] (written by the phone; read by the solver only).
+- `users/{uid}/private/eligible`: seatIds[], updatedAt (written by the phone; read by the solver only).
 - `seat_facts/{seatId}` (decided in #20): what the server publishes for the phone's filter, one
   document per seat id `{barrio}_{pretext}_{slot}`, read by any signed-in member, written by the
   admin SDK only. Fields: barrio, pretext, slot, `blocksFrom {barrioId: blocks}`, `hasStairs`,
