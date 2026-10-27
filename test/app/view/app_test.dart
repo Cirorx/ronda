@@ -6,18 +6,32 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:needs_repository/needs_repository.dart';
+import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/cerca/cerca.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda/my_ronda/my_ronda.dart';
+import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/settings/settings.dart';
+import 'package:ronda/welcome/welcome.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 class _MockAuthRepository extends Mock implements AuthRepository;
 
 class _MockNeedsRepository extends Mock implements NeedsRepository;
 
+class _MockProfileRepository extends Mock implements ProfileRepository;
+
 const _user = User(id: 'demo-uid');
+
+final _profile = Profile(
+  firstName: 'Marta',
+  ageBand: AgeBand.sixties,
+  barrio: Barrio.solymarNorte,
+  pretexts: const {Pretext.mate},
+  slots: {const Slot(SlotDay.thursday, SlotBand.afternoon)},
+  brings: const {Bring.termo},
+);
 
 Finder _tab(String label) =>
     find.descendant(of: find.byType(NavigationBar), matching: find.text(label));
@@ -26,24 +40,58 @@ void main() {
   group(App, () {
     late AuthRepository authRepository;
     late NeedsRepository needsRepository;
+    late ProfileRepository profileRepository;
     late StreamController<User> users;
+    late StreamController<Profile?> profiles;
+
+    setUpAll(() {
+      registerFallbackValue(
+        TermsAcceptance(version: '', acceptedAt: DateTime(2026)),
+      );
+    });
 
     setUp(() {
       authRepository = _MockAuthRepository();
       needsRepository = _MockNeedsRepository();
+      profileRepository = _MockProfileRepository();
       users = StreamController<User>.broadcast();
+      profiles = StreamController<Profile?>.broadcast();
       addTearDown(users.close);
+      addTearDown(profiles.close);
       when(() => authRepository.currentUser).thenReturn(_user);
       when(() => authRepository.user).thenAnswer((_) => users.stream);
+      when(() => profileRepository.watchProfile(any()))
+          .thenAnswer((_) => profiles.stream);
+      when(() => profileRepository.acceptTerms(any(), any()))
+          .thenAnswer((_) async {});
     });
 
-    Widget buildSubject() =>
-        App(authRepository: authRepository, needsRepository: needsRepository);
+    Widget buildSubject() => App(
+      authRepository: authRepository,
+      needsRepository: needsRepository,
+      profileRepository: profileRepository,
+    );
+
+    /// Pumps the app with [_user] signed in and [profile] read, `_profile`
+    /// by default.
+    Future<void> pumpSignedIn(WidgetTester tester, {Profile? profile}) async {
+      await tester.pumpWidget(buildSubject());
+      users.add(_user);
+      await tester.pump();
+      profiles.add(profile ?? _profile);
+      await tester.pumpAndSettle();
+    }
+
+    /// Pumps the app with nobody signed in.
+    Future<void> pumpSignedOut(WidgetTester tester) async {
+      when(() => authRepository.currentUser).thenReturn(User.empty);
+      await tester.pumpWidget(buildSubject());
+      await tester.pumpAndSettle();
+    }
 
     group('renders', () {
       testWidgets('$MyRondaPage inside $AppShell on launch', (tester) async {
-        await tester.pumpWidget(buildSubject());
-        await tester.pumpAndSettle();
+        await pumpSignedIn(tester);
 
         expect(find.byType(AppShell), findsOneWidget);
         expect(find.byType(MyRondaPage), findsOneWidget);
@@ -58,8 +106,7 @@ void main() {
             Brightness.light;
         addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
-        await tester.pumpWidget(buildSubject());
-        await tester.pumpAndSettle();
+        await pumpSignedIn(tester);
 
         final theme = Theme.of(tester.element(find.byType(MyRondaPage)));
         expect(theme.colorScheme, equals(AppTheme.light.colorScheme));
@@ -71,8 +118,7 @@ void main() {
         tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
         addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
-        await tester.pumpWidget(buildSubject());
-        await tester.pumpAndSettle();
+        await pumpSignedIn(tester);
 
         final theme = Theme.of(tester.element(find.byType(MyRondaPage)));
         expect(theme.colorScheme, equals(AppTheme.dark.colorScheme));
@@ -81,8 +127,7 @@ void main() {
 
     group('provides', () {
       testWidgets('the repositories it was given to the tabs', (tester) async {
-        await tester.pumpWidget(buildSubject());
-        await tester.pumpAndSettle();
+        await pumpSignedIn(tester);
 
         final context = tester.element(find.byType(MyRondaPage));
         expect(
@@ -101,8 +146,7 @@ void main() {
         tester.platformDispatcher.localesTestValue = const [Locale('es', 'UY')];
         addTearDown(tester.platformDispatcher.clearLocalesTestValue);
 
-        await tester.pumpWidget(buildSubject());
-        await tester.pumpAndSettle();
+        await pumpSignedIn(tester);
 
         expect(
           Localizations.localeOf(tester.element(find.byType(MyRondaPage))),
@@ -118,8 +162,7 @@ void main() {
         tester.platformDispatcher.localesTestValue = const [Locale('en', 'US')];
         addTearDown(tester.platformDispatcher.clearLocalesTestValue);
 
-        await tester.pumpWidget(buildSubject());
-        await tester.pumpAndSettle();
+        await pumpSignedIn(tester);
 
         expect(
           Localizations.localeOf(tester.element(find.byType(MyRondaPage))),
@@ -134,8 +177,7 @@ void main() {
 
     group('navigates', () {
       testWidgets('to each tab when its destination is tapped', (tester) async {
-        await tester.pumpWidget(buildSubject());
-        await tester.pumpAndSettle();
+        await pumpSignedIn(tester);
 
         await tester.tap(_tab('Nearby'));
         await tester.pumpAndSettle();
@@ -156,8 +198,7 @@ void main() {
       testWidgets('stays on the open tab when it is tapped again', (
         tester,
       ) async {
-        await tester.pumpWidget(buildSubject());
-        await tester.pumpAndSettle();
+        await pumpSignedIn(tester);
 
         await tester.tap(_tab('Nearby'));
         await tester.pumpAndSettle();
@@ -168,8 +209,7 @@ void main() {
       });
 
       testWidgets('from / to $MyRondaPage', (tester) async {
-        await tester.pumpWidget(buildSubject());
-        await tester.pumpAndSettle();
+        await pumpSignedIn(tester);
         await tester.tap(_tab('Settings'));
         await tester.pumpAndSettle();
 
@@ -180,8 +220,7 @@ void main() {
       });
 
       testWidgets('from an unknown location to $MyRondaPage', (tester) async {
-        await tester.pumpWidget(buildSubject());
-        await tester.pumpAndSettle();
+        await pumpSignedIn(tester);
         await tester.tap(_tab('Settings'));
         await tester.pumpAndSettle();
 
@@ -193,68 +232,161 @@ void main() {
     });
 
     group('guards sign-in', () {
-      testWidgets('by landing signed-out people on $LoginPage', (tester) async {
-        when(() => authRepository.currentUser).thenReturn(User.empty);
+      Finder buttonsDoor() =>
+          find.bySemanticsIdentifier(WelcomePage.buttonsDoorIdentifier);
 
-        await tester.pumpWidget(buildSubject());
-        await tester.pumpAndSettle();
+      testWidgets('by landing signed-out people on $WelcomePage', (
+        tester,
+      ) async {
+        await pumpSignedOut(tester);
 
-        expect(find.byType(LoginPage), findsOneWidget);
+        expect(find.byType(WelcomePage), findsOneWidget);
         expect(find.byType(AppShell), findsNothing);
       });
 
-      testWidgets('by moving to $MyRondaPage once the person signs in', (
+      testWidgets('by keeping signed-out people on $WelcomePage from any '
+          'location', (tester) async {
+        await pumpSignedOut(tester);
+
+        GoRouter.of(tester.element(find.byType(WelcomePage)))
+            .go(SettingsPage.path);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(WelcomePage), findsOneWidget);
+        expect(find.byType(SettingsPage), findsNothing);
+      });
+
+      testWidgets('by opening $LoginPage only after a door is tapped', (
         tester,
       ) async {
-        when(() => authRepository.currentUser).thenReturn(User.empty);
-        await tester.pumpWidget(buildSubject());
+        await pumpSignedOut(tester);
+
+        GoRouter.of(tester.element(find.byType(WelcomePage)))
+            .go(LoginPage.path);
+        await tester.pumpAndSettle();
+        expect(find.byType(LoginPage), findsNothing);
+
+        await tester.tap(buttonsDoor());
+        await tester.pumpAndSettle();
+        expect(find.byType(LoginPage), findsOneWidget);
+        verifyNever(() => profileRepository.acceptTerms(any(), any()));
+      });
+
+      testWidgets('by going back from $LoginPage to the doors', (tester) async {
+        await pumpSignedOut(tester);
+        await tester.tap(buttonsDoor());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(WelcomePage), findsOneWidget);
+        expect(find.byType(LoginPage), findsNothing);
+      });
+
+      testWidgets('by opening the terms from $WelcomePage and coming back', (
+        tester,
+      ) async {
+        await pumpSignedOut(tester);
+
+        await tester.tap(
+          find.bySemanticsIdentifier(WelcomePage.termsLinkIdentifier),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(TermsPage), findsOneWidget);
+
+        final done = find.bySemanticsIdentifier(TermsPage.doneIdentifier);
+        await tester.scrollUntilVisible(done, 200);
+        await tester.tap(done);
+        await tester.pumpAndSettle();
+        expect(find.byType(WelcomePage), findsOneWidget);
+      });
+
+      testWidgets('by recording the terms and opening $OnboardingPage once '
+          'someone without a profile signs in', (tester) async {
+        await pumpSignedOut(tester);
+        await tester.tap(buttonsDoor());
         await tester.pumpAndSettle();
 
         users.add(_user);
         await tester.pumpAndSettle();
+        expect(find.byType(LoginPage), findsOneWidget);
+        profiles.add(null);
+        await tester.pumpAndSettle();
 
-        expect(find.byType(MyRondaPage), findsOneWidget);
-        expect(find.byType(LoginPage), findsNothing);
+        expect(find.byType(OnboardingPage), findsOneWidget);
+        verify(
+          () => profileRepository.acceptTerms(
+            'demo-uid',
+            any(
+              that: isA<TermsAcceptance>().having(
+                (terms) => terms.version,
+                'version',
+                AppBloc.termsVersion,
+              ),
+            ),
+          ),
+        ).called(1);
       });
 
-      testWidgets('by returning to $LoginPage when the person signs out', (
+      testWidgets('by moving from $OnboardingPage to $MyRondaPage once the '
+          'profile is saved', (tester) async {
+        await tester.pumpWidget(buildSubject());
+        users.add(_user);
+        await tester.pump();
+        profiles.add(null);
+        await tester.pumpAndSettle();
+        expect(find.byType(OnboardingPage), findsOneWidget);
+
+        profiles.add(_profile);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(MyRondaPage), findsOneWidget);
+        expect(find.byType(OnboardingPage), findsNothing);
+      });
+
+      testWidgets('by keeping people without a profile on $OnboardingPage', (
         tester,
       ) async {
         await tester.pumpWidget(buildSubject());
+        users.add(_user);
+        await tester.pump();
+        profiles.add(null);
         await tester.pumpAndSettle();
+
+        GoRouter.of(tester.element(find.byType(OnboardingPage)))
+            .go(SettingsPage.path);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnboardingPage), findsOneWidget);
+      });
+
+      testWidgets('by sending people with a profile away from welcome, '
+          'sign-in and onboarding', (tester) async {
+        await pumpSignedIn(tester);
+        final router = GoRouter.of(tester.element(find.byType(MyRondaPage)));
+
+        for (final path in [
+          WelcomePage.path,
+          LoginPage.path,
+          TermsPage.path,
+          OnboardingPage.path,
+        ]) {
+          router.go(path);
+          await tester.pumpAndSettle();
+          expect(find.byType(MyRondaPage), findsOneWidget, reason: path);
+        }
+      });
+
+      testWidgets('by returning to $WelcomePage when the person signs out', (
+        tester,
+      ) async {
+        await pumpSignedIn(tester);
 
         users.add(User.empty);
         await tester.pumpAndSettle();
 
-        expect(find.byType(LoginPage), findsOneWidget);
-      });
-
-      testWidgets('by sending signed-in people away from $LoginPage', (
-        tester,
-      ) async {
-        await tester.pumpWidget(buildSubject());
-        await tester.pumpAndSettle();
-
-        GoRouter.of(tester.element(find.byType(MyRondaPage)))
-            .go(LoginPage.path);
-        await tester.pumpAndSettle();
-
-        expect(find.byType(MyRondaPage), findsOneWidget);
-        expect(find.byType(LoginPage), findsNothing);
-      });
-
-      testWidgets('by keeping signed-out people on $LoginPage from any '
-          'location', (tester) async {
-        when(() => authRepository.currentUser).thenReturn(User.empty);
-        await tester.pumpWidget(buildSubject());
-        await tester.pumpAndSettle();
-
-        GoRouter.of(tester.element(find.byType(LoginPage)))
-            .go(SettingsPage.path);
-        await tester.pumpAndSettle();
-
-        expect(find.byType(LoginPage), findsOneWidget);
-        expect(find.byType(SettingsPage), findsNothing);
+        expect(find.byType(WelcomePage), findsOneWidget);
       });
     });
   });

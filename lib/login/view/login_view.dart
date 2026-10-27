@@ -21,11 +21,13 @@ class const LoginView({super.key}) extends StatelessWidget {
         state.status == LoginStatus.success;
 
     return Scaffold(
+      // Its back button returns to the welcome doors.
+      appBar: AppBar(),
       body: SafeArea(
         child: ListView(
           padding: EdgeInsetsDirectional.symmetric(
             horizontal: spacing.lg,
-            vertical: spacing.xlg,
+            vertical: spacing.md,
           ),
           children: [
             Text(l10n.loginTitle, style: textTheme.headlineMedium),

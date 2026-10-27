@@ -19,7 +19,7 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 
 ## Onboarding
 - Welcome: "Cinco vecinos, a pocas cuadras, el mismo día todas las semanas." Two doors: "Con un
-  audio" ("Hablás un minuto, como en WhatsApp.") / "Tocando botones" ("Cuatro preguntas
+  audio" ("Hablás un minuto, como en WhatsApp.") / "Tocando botones" ("Siete preguntas
   cortas."). Never asks address, cédula, birth date, or whether you live alone. Age is a band
   the person picks ("sesenta y pico").
 - **Terms by continuing, no consent screen.** Under the doors: "Al seguir, aceptás las
@@ -40,17 +40,26 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   nada"; "Tu audio ya se borró."; [Está bien, guardalo] [Grabar de nuevo].
 - **Microphone blocked:** "No podemos usar el micrófono", three steps to allow it, or
   [Prefiero tocar botones].
-- **Buttons, four steps:**
+- **Order:** welcome (doors + terms note) → door → sign-in → the steps. The voice door stays
+  hidden until voice onboarding is built. Signed-in people without a profile land on the
+  steps; with a profile, on the tabs.
+- **Buttons, seven questions and a read-back** (one per screen, "1 de 7"):
   1. "¿Qué te gustaría hacer?" (mate en la rambla, truco, fútbol 5, caminata; "no hace falta
-     saber") and "¿En qué barrio estás?" ("Solo el barrio. Nunca te pedimos la dirección.").
+     saber").
   2. "¿Qué podés llevar o enseñar?" (pan, yerba, termo, sillas, enseño truco, tengo ganas).
      "Cada uno pone algo chico. Con una cosa alcanza, y no hace falta comprar nada." "¿No tenés
      nada para llevar? Marcá «Tengo ganas»: venís y listo."
   3. "¿Cuándo podés?", a day × time grid. Mañana: de 9 a 12 · Tarde: de 14 a 18 · Noche: de 19
      a 21.
-  4. Optional: "¿Hay algo que te complique ir?" ("Caminar mucho", "Subir escaleras", "Volver de
+  4. "¿En qué barrio estás?" ("Solo el barrio. Nunca te pedimos la dirección.").
+  5. "¿Qué edad tenés, más o menos?" ("Alcanza con la década. Nunca te pedimos la fecha de
+     nacimiento."): De 18 a 29, Treinta y pico … Ochenta o más.
+  6. Optional: "¿Hay algo que te complique ir?" ("Caminar mucho", "Subir escaleras", "Volver de
      noche", "No tengo auto"), marked "Queda guardado solo en este teléfono". These become
-     filters; the server gets seat ids. [Guardar] [Saltear].
+     filters; the server gets seat ids. [Seguir] [Saltear].
+  7. "¿Cómo te llamás?" ("Solo el nombre de pila. Así te conocen en la ronda.").
+  Then the read-back "¿Está todo bien?" with every answer and a "Cambiar" on each, "Todavía no
+  guardamos nada", and [Está bien, guardalo].
 - **Before the system asks for notifications:** "¿Te avisamos los martes?" — "Uno por semana,
   el martes a las 19", "Algún otro solo si cambia algo", "Nunca de noche: solo entre las 9 y
   las 21." [Sí, avisame] [Ahora no].

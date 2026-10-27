@@ -11,12 +11,15 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:needs_repository/needs_repository.dart';
+import 'package:profile_repository/profile_repository.dart';
+import 'package:ronda_api/ronda_api.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// Builds the root widget from the repositories bootstrap constructs.
 typedef AppBuilder = FutureOr<Widget> Function({
   required AuthRepository authRepository,
   required NeedsRepository needsRepository,
+  required ProfileRepository profileRepository,
 });
 
 /// Where every Ronda function and callable runs (`docs/STACK.md` gotcha 3).
@@ -79,6 +82,7 @@ Future<void> bootstrap(
   final functions = FirebaseFunctions.instanceFor(region: functionsRegion);
   final storage = FirebaseStorage.instance;
   const deviceStore = DeviceStore();
+  final rondaApi = RondaApi(firestore: firestore);
 
   if (emulators != null) {
     final host = emulators.host;
@@ -94,11 +98,13 @@ Future<void> bootstrap(
     googleSignInFlow: googleSignInFlow,
   );
   const needsRepository = NeedsRepository(deviceStore: deviceStore);
+  final profileRepository = ProfileRepository(rondaApi: rondaApi);
 
   runApp(
     await builder(
       authRepository: authRepository,
       needsRepository: needsRepository,
+      profileRepository: profileRepository,
     ),
   );
 }

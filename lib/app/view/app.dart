@@ -2,15 +2,17 @@ import 'package:auth_repository/auth_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:needs_repository/needs_repository.dart';
+import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// The app's root: provides the repositories bootstrap built and the
-/// [AppBloc] that follows who is signed in.
+/// [AppBloc] that follows who is signed in and whether they have a profile.
 class const App({
   required final AuthRepository authRepository,
   required final NeedsRepository needsRepository,
+  required final ProfileRepository profileRepository,
   super.key,
 }) extends StatelessWidget {
   @override
@@ -19,11 +21,13 @@ class const App({
       providers: [
         RepositoryProvider.value(value: authRepository),
         RepositoryProvider.value(value: needsRepository),
+        RepositoryProvider.value(value: profileRepository),
       ],
       child: BlocProvider(
-        create: (_) =>
-            AppBloc(authRepository: authRepository)
-              ..add(const AppUserSubscriptionRequested()),
+        create: (_) => AppBloc(
+          authRepository: authRepository,
+          profileRepository: profileRepository,
+        )..add(const AppUserSubscriptionRequested()),
         child: const AppView(),
       ),
     );

@@ -5,15 +5,23 @@ import 'package:ronda/app/view/app_shell.dart';
 import 'package:ronda/cerca/cerca.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda/my_ronda/my_ronda.dart';
+import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/settings/settings.dart';
+import 'package:ronda/welcome/welcome.dart';
 
-/// Builds the app's router: the login screen, and one shell with a branch
-/// per tab.
+/// Builds the app's router: the welcome screen with sign-in and the terms
+/// under it, onboarding, and one shell with a branch per tab.
 ///
-/// Signed-out people land on [LoginPage] wherever they were going; signed-in
-/// people never see it. [refreshListenable] fires when [appBloc]'s state
-/// changes, so the redirect runs again on sign-in and sign-out. `/` and any
-/// unknown location land on Mi ronda.
+/// Where people may be follows [appBloc]'s state, and [refreshListenable]
+/// fires when it changes, so the redirect runs again on every change:
+/// - signed out: the welcome screen and the terms; sign-in only after a
+///   welcome door accepted the terms;
+/// - signed in, profile not read yet: wherever they are;
+/// - signed in without a profile: onboarding;
+/// - signed in with a profile: the tabs, never welcome or onboarding.
+///
+/// `/` and any unknown location land on Mi ronda, which the rules above
+/// then redirect as needed.
 GoRouter createAppRouter({
   required AppBloc appBloc,
   required Listenable refreshListenable,
@@ -22,15 +30,44 @@ GoRouter createAppRouter({
     initialLocation: MyRondaPage.path,
     refreshListenable: refreshListenable,
     redirect: (_, state) {
-      final signedIn = appBloc.state.status == AppStatus.authenticated;
-      final onLogin = state.matchedLocation == LoginPage.path;
-      if (!signedIn) return onLogin ? null : LoginPage.path;
-      return onLogin ? MyRondaPage.path : null;
+      final location = state.matchedLocation;
+      final onWelcome =
+          location == WelcomePage.path ||
+          location.startsWith('${WelcomePage.path}/');
+      final onOnboarding = location == OnboardingPage.path;
+      final app = appBloc.state;
+      return switch (app.status) {
+        AppStatus.unauthenticated when !onWelcome => WelcomePage.path,
+        AppStatus.unauthenticated
+            when location == LoginPage.path && app.pendingTerms == null =>
+          WelcomePage.path,
+        AppStatus.unauthenticated || AppStatus.loadingProfile => null,
+        AppStatus.onboarding => onOnboarding ? null : OnboardingPage.path,
+        AppStatus.authenticated =>
+          onWelcome || onOnboarding ? MyRondaPage.path : null,
+      };
     },
     onException: (_, _, router) => router.go(MyRondaPage.path),
     routes: [
       GoRoute(path: '/', redirect: (_, _) => MyRondaPage.path),
-      GoRoute(path: LoginPage.path, builder: (_, _) => const LoginPage()),
+      GoRoute(
+        path: WelcomePage.path,
+        builder: (_, _) => const WelcomePage(),
+        routes: [
+          GoRoute(
+            path: LoginPage.segment,
+            builder: (_, _) => const LoginPage(),
+          ),
+          GoRoute(
+            path: TermsPage.segment,
+            builder: (_, _) => const TermsPage(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: OnboardingPage.path,
+        builder: (_, _) => const OnboardingPage(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, navigationShell) =>
             AppShell(navigationShell: navigationShell),

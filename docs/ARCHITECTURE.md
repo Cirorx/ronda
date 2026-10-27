@@ -79,7 +79,10 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
     `scripts/seed/seed_seat_facts.py`.
 - `users/{uid}/tokens/{token}`: platform (android | ios | web), updatedAt. The sender builds a
   different payload per platform (`docs/STACK.md` § Push).
-- Rules reject any user write that carries a `needs`, mood or audio field.
+- Rules accept on `users/{uid}` only the fields above (typed: `ageBand` one of the bands,
+  `firstName` 1–30 characters, `terms` exactly `{version, acceptedAt}`), so any write carrying a
+  `needs`, mood, audio or address field is rejected. The `terms` write comes first and creates
+  the document; the profile lands on it when onboarding is saved.
 - `rondas/{id}`: pretext, barrio, slot {day, time}, place {name, landmark, lat, lng} (public
   places only), size, status (forming | active | paused | ended), hosts {anfitrion, cola,
   rotatesOn}, despues {kind: none | place | home, label, address?, hostOk}

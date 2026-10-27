@@ -59,5 +59,485 @@
     "loginError": "We couldn't sign you in. Try again.",
     "@loginError": {
         "description": "Shown when sign-in fails for any reason other than connection or cancelling"
+    },
+    "welcomeTitle": "Five neighbours, a few blocks away, the same day every week.",
+    "@welcomeTitle": {
+        "description": "Heading of the welcome screen"
+    },
+    "welcomeBody": "Mate on the rambla, a game of truco, a football match. Tell us a little about yourself and we'll find you a group near home.",
+    "@welcomeBody": {
+        "description": "Text under the welcome heading"
+    },
+    "welcomeDoorsHeading": "How would you like to tell us?",
+    "@welcomeDoorsHeading": {
+        "description": "Small heading above the two ways into Ronda"
+    },
+    "welcomeVoiceDoorTitle": "With a voice note",
+    "@welcomeVoiceDoorTitle": {
+        "description": "Door that starts onboarding by voice"
+    },
+    "welcomeVoiceDoorSubtitle": "You talk for a minute, like on WhatsApp.",
+    "@welcomeVoiceDoorSubtitle": {
+        "description": "What the voice door takes"
+    },
+    "welcomeButtonsDoorTitle": "By tapping buttons",
+    "@welcomeButtonsDoorTitle": {
+        "description": "Door that starts onboarding by buttons"
+    },
+    "welcomeButtonsDoorSubtitle": "Seven short questions.",
+    "@welcomeButtonsDoorSubtitle": {
+        "description": "What the buttons door takes"
+    },
+    "welcomeTermsLead": "By continuing, you accept",
+    "@welcomeTermsLead": {
+        "description": "Text before the terms link under the doors"
+    },
+    "welcomeTermsLink": "Ronda's terms",
+    "@welcomeTermsLink": {
+        "description": "The terms link under the doors"
+    },
+    "welcomeTermsTrailing": ".",
+    "@welcomeTermsTrailing": {
+        "description": "Text after the terms link, usually the full stop"
+    },
+    "termsTitle": "The terms, in short",
+    "@termsTitle": {
+        "description": "Heading of the short terms screen"
+    },
+    "termsFree": "Ronda is free. It will never ask you for money.",
+    "@termsFree": {
+        "description": "Terms point 1"
+    },
+    "termsPublicAdults": "Rondas meet in public places and are for over-18s only.",
+    "@termsPublicAdults": {
+        "description": "Terms point 2"
+    },
+    "termsWhatWeKeep": "We keep just enough: your name, roughly your age, your barrio, your times and what you bring.",
+    "@termsWhatWeKeep": {
+        "description": "Terms point 3"
+    },
+    "termsAudio": "If you send a voice note, a program turns it into text and it is deleted right away.",
+    "@termsAudio": {
+        "description": "Terms point 4"
+    },
+    "termsYourData": "You can see and delete your data whenever you like, from Settings.",
+    "@termsYourData": {
+        "description": "Terms point 5"
+    },
+    "termsReports": "If someone makes you uncomfortable, report it. A person reads it.",
+    "@termsReports": {
+        "description": "Terms point 6"
+    },
+    "termsWhere": "Where each thing happens: your data is stored in Brazil; Meta processes the audio and Google the sign-in, in the US.",
+    "@termsWhere": {
+        "description": "Where data is stored and processed, under the terms points"
+    },
+    "termsDone": "Got it",
+    "@termsDone": {
+        "description": "Button that closes the short terms screen"
+    },
+    "onboardingProgress": "{current} of {total}",
+    "@onboardingProgress": {
+        "description": "Visible progress through the onboarding questions",
+        "placeholders": {
+            "current": {
+                "type": "int"
+            },
+            "total": {
+                "type": "int"
+            }
+        }
+    },
+    "onboardingProgressSemantics": "Step {current} of {total}",
+    "@onboardingProgressSemantics": {
+        "description": "What a screen reader says for the onboarding progress bar",
+        "placeholders": {
+            "current": {
+                "type": "int"
+            },
+            "total": {
+                "type": "int"
+            }
+        }
+    },
+    "onboardingBack": "Back",
+    "@onboardingBack": {
+        "description": "Tooltip of the back button in onboarding"
+    },
+    "onboardingNext": "Continue",
+    "@onboardingNext": {
+        "description": "Button to the next onboarding question"
+    },
+    "onboardingSkip": "Skip",
+    "@onboardingSkip": {
+        "description": "Button that skips the optional needs question"
+    },
+    "pretextsTitle": "What would you like to do?",
+    "@pretextsTitle": {
+        "description": "Onboarding question: the pretexts"
+    },
+    "pretextsBody": "Pick one or more. It's an excuse to get together; you don't need to know how.",
+    "@pretextsBody": {
+        "description": "Text under the pretexts question"
+    },
+    "pretextMate": "Mate on the rambla",
+    "@pretextMate": {
+        "description": "Pretext: mate on the seafront"
+    },
+    "pretextTruco": "Truco",
+    "@pretextTruco": {
+        "description": "Pretext: the card game truco"
+    },
+    "pretextFutbol5": "Five-a-side football",
+    "@pretextFutbol5": {
+        "description": "Pretext: five-a-side football"
+    },
+    "pretextCaminata": "A walk",
+    "@pretextCaminata": {
+        "description": "Pretext: a walk"
+    },
+    "bringsTitle": "What can you bring or teach?",
+    "@bringsTitle": {
+        "description": "Onboarding question: what the person brings"
+    },
+    "bringsBody": "Everyone chips in something small. One thing is enough, and there's no need to buy anything.",
+    "@bringsBody": {
+        "description": "Text under the brings question"
+    },
+    "bringsNote": "Nothing to bring? Pick “I'm keen”: just come along. Only your group sees what you choose.",
+    "@bringsNote": {
+        "description": "Note under the brings chips"
+    },
+    "bringPan": "Bread",
+    "@bringPan": {
+        "description": "Something to bring: bread"
+    },
+    "bringYerba": "Yerba",
+    "@bringYerba": {
+        "description": "Something to bring: yerba mate"
+    },
+    "bringTermo": "Thermos",
+    "@bringTermo": {
+        "description": "Something to bring: a thermos of hot water"
+    },
+    "bringSillas": "Chairs",
+    "@bringSillas": {
+        "description": "Something to bring: chairs"
+    },
+    "bringEnsenoTruco": "I teach truco",
+    "@bringEnsenoTruco": {
+        "description": "Something to teach: truco"
+    },
+    "bringTengoGanas": "I'm keen",
+    "@bringTengoGanas": {
+        "description": "Nothing to bring, just keen to come"
+    },
+    "slotsTitle": "When can you?",
+    "@slotsTitle": {
+        "description": "Onboarding question: the slots"
+    },
+    "slotsBody": "Mark every one that works. The ronda is just one of them, once a week.",
+    "@slotsBody": {
+        "description": "Text under the slots question"
+    },
+    "slotsBands": "Morning: 9 to 12 · Afternoon: 2 to 6 pm · Evening: 7 to 9 pm",
+    "@slotsBands": {
+        "description": "The hours of each time band, under the grid"
+    },
+    "dayMonday": "Monday",
+    "@dayMonday": {
+        "description": "Weekday"
+    },
+    "dayTuesday": "Tuesday",
+    "@dayTuesday": {
+        "description": "Weekday"
+    },
+    "dayWednesday": "Wednesday",
+    "@dayWednesday": {
+        "description": "Weekday"
+    },
+    "dayThursday": "Thursday",
+    "@dayThursday": {
+        "description": "Weekday"
+    },
+    "dayFriday": "Friday",
+    "@dayFriday": {
+        "description": "Weekday"
+    },
+    "daySaturday": "Saturday",
+    "@daySaturday": {
+        "description": "Weekday"
+    },
+    "daySunday": "Sunday",
+    "@daySunday": {
+        "description": "Weekday"
+    },
+    "bandMorning": "Morning",
+    "@bandMorning": {
+        "description": "Time band column"
+    },
+    "bandAfternoon": "Afternoon",
+    "@bandAfternoon": {
+        "description": "Time band column"
+    },
+    "bandEvening": "Evening",
+    "@bandEvening": {
+        "description": "Time band column"
+    },
+    "slotMorning": "{day} morning",
+    "@slotMorning": {
+        "description": "A weekday's morning, read for a grid cell and on the read-back",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "slotAfternoon": "{day} afternoon",
+    "@slotAfternoon": {
+        "description": "A weekday's afternoon, read for a grid cell and on the read-back",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "slotEvening": "{day} evening",
+    "@slotEvening": {
+        "description": "A weekday's evening, read for a grid cell and on the read-back",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "barrioTitle": "Which barrio are you in?",
+    "@barrioTitle": {
+        "description": "Onboarding question: the barrio"
+    },
+    "barrioBody": "Just the barrio. We never ask for your address.",
+    "@barrioBody": {
+        "description": "Text under the barrio question"
+    },
+    "barrioShangrila": "Shangrilá",
+    "@barrioShangrila": {
+        "description": "Barrio name"
+    },
+    "barrioSanJoseDeCarrasco": "San José de Carrasco",
+    "@barrioSanJoseDeCarrasco": {
+        "description": "Barrio name"
+    },
+    "barrioLagomarSur": "Lagomar Sur",
+    "@barrioLagomarSur": {
+        "description": "Barrio name"
+    },
+    "barrioLagomarNorte": "Lagomar Norte",
+    "@barrioLagomarNorte": {
+        "description": "Barrio name"
+    },
+    "barrioSolymarSur": "Solymar Sur",
+    "@barrioSolymarSur": {
+        "description": "Barrio name"
+    },
+    "barrioSolymarNorte": "Solymar Norte",
+    "@barrioSolymarNorte": {
+        "description": "Barrio name"
+    },
+    "barrioLomasDeSolymar": "Lomas de Solymar",
+    "@barrioLomasDeSolymar": {
+        "description": "Barrio name"
+    },
+    "barrioElPinarSur": "El Pinar Sur",
+    "@barrioElPinarSur": {
+        "description": "Barrio name"
+    },
+    "barrioElPinarNorte": "El Pinar Norte",
+    "@barrioElPinarNorte": {
+        "description": "Barrio name"
+    },
+    "ageBandTitle": "How old are you, roughly?",
+    "@ageBandTitle": {
+        "description": "Onboarding question: the age band"
+    },
+    "ageBandBody": "The decade is enough. We never ask for your date of birth.",
+    "@ageBandBody": {
+        "description": "Text under the age band question"
+    },
+    "ageBand18To29": "18 to 29",
+    "@ageBand18To29": {
+        "description": "Age band 18-29"
+    },
+    "ageBandThirties": "Thirty-something",
+    "@ageBandThirties": {
+        "description": "Age band 30-39"
+    },
+    "ageBandForties": "Forty-something",
+    "@ageBandForties": {
+        "description": "Age band 40-49"
+    },
+    "ageBandFifties": "Fifty-something",
+    "@ageBandFifties": {
+        "description": "Age band 50-59"
+    },
+    "ageBandSixties": "Sixty-something",
+    "@ageBandSixties": {
+        "description": "Age band 60-69"
+    },
+    "ageBandSeventies": "Seventy-something",
+    "@ageBandSeventies": {
+        "description": "Age band 70-79"
+    },
+    "ageBandEightyPlus": "Eighty or over",
+    "@ageBandEightyPlus": {
+        "description": "Age band 80 and over"
+    },
+    "needsOptional": "Optional",
+    "@needsOptional": {
+        "description": "Line above the optional needs question"
+    },
+    "needsTitle": "Is there anything that makes it hard to go?",
+    "@needsTitle": {
+        "description": "Onboarding question: the needs"
+    },
+    "needsBody": "That way we only show you rondas that suit you.",
+    "@needsBody": {
+        "description": "Text under the needs question"
+    },
+    "needsKeptOnPhone": "It stays on this phone only",
+    "@needsKeptOnPhone": {
+        "description": "Banner on the needs question: needs never leave the phone"
+    },
+    "needsChangeLater": "You can change it any time in Settings.",
+    "@needsChangeLater": {
+        "description": "Note under the needs switches"
+    },
+    "needWalkALot": "Walking a lot",
+    "@needWalkALot": {
+        "description": "Need: walking far"
+    },
+    "needClimbStairs": "Climbing stairs",
+    "@needClimbStairs": {
+        "description": "Need: stairs"
+    },
+    "needReturnAfterDark": "Getting home after dark",
+    "@needReturnAfterDark": {
+        "description": "Need: coming back after dark"
+    },
+    "needNoCar": "I don't have a car",
+    "@needNoCar": {
+        "description": "Need: no car"
+    },
+    "firstNameTitle": "What's your name?",
+    "@firstNameTitle": {
+        "description": "Onboarding question: the first name"
+    },
+    "firstNameBody": "Just your first name. That's how your ronda will know you.",
+    "@firstNameBody": {
+        "description": "Text under the first name question"
+    },
+    "firstNameLabel": "Your first name",
+    "@firstNameLabel": {
+        "description": "Label of the first name field"
+    },
+    "firstNameErrorEmpty": "Write your first name.",
+    "@firstNameErrorEmpty": {
+        "description": "Error when the first name is empty"
+    },
+    "firstNameErrorTooLong": "Use up to {max} letters.",
+    "@firstNameErrorTooLong": {
+        "description": "Error when the first name is too long",
+        "placeholders": {
+            "max": {
+                "type": "int"
+            }
+        }
+    },
+    "firstNameErrorInvalid": "Use letters only.",
+    "@firstNameErrorInvalid": {
+        "description": "Error when the first name has digits or symbols"
+    },
+    "reviewTitle": "Is this right?",
+    "@reviewTitle": {
+        "description": "Heading of the onboarding read-back"
+    },
+    "reviewBody": "Check what you chose. If something is wrong, tap “Change”. Nothing is saved yet.",
+    "@reviewBody": {
+        "description": "Text under the read-back heading"
+    },
+    "reviewEdit": "Change",
+    "@reviewEdit": {
+        "description": "The edit action on every read-back line"
+    },
+    "reviewFirstName": "Your name",
+    "@reviewFirstName": {
+        "description": "Read-back label: first name"
+    },
+    "reviewAgeBand": "Age",
+    "@reviewAgeBand": {
+        "description": "Read-back label: age band"
+    },
+    "reviewBarrio": "Barrio",
+    "@reviewBarrio": {
+        "description": "Read-back label: barrio"
+    },
+    "reviewPretexts": "You'd like",
+    "@reviewPretexts": {
+        "description": "Read-back label: pretexts"
+    },
+    "reviewSlots": "When you can",
+    "@reviewSlots": {
+        "description": "Read-back label: slots"
+    },
+    "reviewBrings": "You can bring",
+    "@reviewBrings": {
+        "description": "Read-back label: what the person brings"
+    },
+    "reviewNeeds": "What makes it hard to go",
+    "@reviewNeeds": {
+        "description": "Read-back label: needs"
+    },
+    "reviewNoNeeds": "Nothing",
+    "@reviewNoNeeds": {
+        "description": "Read-back value when no needs are marked"
+    },
+    "reviewEditFirstName": "Change name",
+    "@reviewEditFirstName": {
+        "description": "Screen reader label of the edit action for the name"
+    },
+    "reviewEditAgeBand": "Change age",
+    "@reviewEditAgeBand": {
+        "description": "Screen reader label of the edit action for the age band"
+    },
+    "reviewEditBarrio": "Change barrio",
+    "@reviewEditBarrio": {
+        "description": "Screen reader label of the edit action for the barrio"
+    },
+    "reviewEditPretexts": "Change what you'd like to do",
+    "@reviewEditPretexts": {
+        "description": "Screen reader label of the edit action for the pretexts"
+    },
+    "reviewEditSlots": "Change days",
+    "@reviewEditSlots": {
+        "description": "Screen reader label of the edit action for the slots"
+    },
+    "reviewEditBrings": "Change what you bring",
+    "@reviewEditBrings": {
+        "description": "Screen reader label of the edit action for what the person brings"
+    },
+    "reviewEditNeeds": "Change what makes it hard to go",
+    "@reviewEditNeeds": {
+        "description": "Screen reader label of the edit action for the needs"
+    },
+    "reviewNeedsKeptOnPhone": "What makes it hard to go stays on this phone only. Ronda never receives it.",
+    "@reviewNeedsKeptOnPhone": {
+        "description": "Banner on the read-back: needs never leave the phone"
+    },
+    "reviewSave": "That's right, save it",
+    "@reviewSave": {
+        "description": "Button that saves the onboarding answers"
+    },
+    "reviewSaveError": "We couldn't save it. Try again.",
+    "@reviewSaveError": {
+        "description": "Shown on the read-back when saving fails"
     }
 }

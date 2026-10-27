@@ -19,22 +19,28 @@ String _emulatorHost() {
   return 'localhost';
 }
 
-/// Signs in on phones with `signInWithProvider`, which opens the Auth
-/// emulator's account picker in a browser tab. Pass
+/// Signs in with the Auth emulator's account picker: a popup on web,
+/// `signInWithProvider` in a browser tab on phones. Pass
 /// `--dart-define=EMULATOR_GOOGLE_CREDENTIAL=true` to skip the picker and
-/// sign in as the fixed demo account instead (Maestro, CI-like runs).
+/// sign in as the fixed demo account instead (Maestro, browsers that block
+/// popups, CI-like runs).
 GoogleSignInFlow _googleSignInFlow() {
-  if (kIsWeb) return GoogleSignInFlow.popup;
   const useCredential = bool.fromEnvironment('EMULATOR_GOOGLE_CREDENTIAL');
-  return useCredential
-      ? GoogleSignInFlow.emulatorCredential
-      : GoogleSignInFlow.provider;
+  if (useCredential) return GoogleSignInFlow.emulatorCredential;
+  return kIsWeb ? GoogleSignInFlow.popup : GoogleSignInFlow.provider;
 }
 
 Future<void> main() async {
   await bootstrap(
-    ({required authRepository, required needsRepository}) =>
-        App(authRepository: authRepository, needsRepository: needsRepository),
+    ({
+      required authRepository,
+      required needsRepository,
+      required profileRepository,
+    }) => App(
+      authRepository: authRepository,
+      needsRepository: needsRepository,
+      profileRepository: profileRepository,
+    ),
     firebaseOptions: DefaultFirebaseOptions.currentPlatform,
     googleSignInFlow: _googleSignInFlow(),
     emulators: FirebaseEmulators(host: _emulatorHost()),
