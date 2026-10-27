@@ -18,9 +18,14 @@ research.
 | margen | `#C8433C` | rare accents only (the ruled-sheet margin line); never for errors alone |
 | line | `#D6DDE8` | dividers |
 | muted | `#5A6477` | secondary text |
+| surface | `#FFFFFF` | cards on paper |
+| danger | `#B42318` | only the "Dejar Ronda y borrar todo" button |
+| birome tint · ámbar tint · yerba tint · neutral tint | `#EEF1FC` · `#FBF3E6` · `#E8F3EC` · `#F3F5FA` | NoteBanner backgrounds (info, warning, kept-on-phone, offline) and selected chips |
 
-Dark mode follows the system (Facu at night): paper `#0E1320`, ink `#E5E9F1`, birome `#93A6FF`,
-yerba `#5CC48E`, ámbar `#E2A53D`. Define every colour as a token in both.
+Dark mode follows the system (Facu at night): paper `#0E1320`, surface `#151B2B`, ink `#E5E9F1`,
+birome `#93A6FF`, yerba `#5CC48E`, ámbar `#E2A53D`, margen `#E07A72`, line `#2E384D`, muted
+`#A3ADBF`, birome tint `#1C2440`. Define every colour as a token in both. The component sheet on
+the screen canvas shows each token and component.
 
 Type: **Young Serif** for titles only; **Atkinson Hyperlegible** for everything else (designed for
 low-vision readers). Body 17–18 sp. Tabular figures for times. Spacing 4/8/12/16/24/32; card
