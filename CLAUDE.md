@@ -71,7 +71,7 @@ changes inside `notes/` (`git -C notes commit`); there is nothing to push.
 - `docs/PRODUCT.md` — before building a feature; real UI copy included.
 - `docs/ARCHITECTURE.md` — before touching Firestore, Storage, Functions, the solver or the agent.
 - `docs/MODELS.md` — before calling a Meta model or Baseten; has the smoke tests.
-- `docs/DESIGN.md` — before building a screen; the mockups are in `notes/planilla/index.html` (local).
+- `docs/DESIGN.md` — before building a screen; the screen canvas is linked in `notes/HANDOFF.md` (local).
 - `notes/PLAN.md` (local) — to see what a day must prove; the issues carry the same blocks.
 - `notes/DEMO.md` (local) — when work feeds the video.
 - `notes/HANDOFF.md` (local) — decisions made and still open, where everything lives.

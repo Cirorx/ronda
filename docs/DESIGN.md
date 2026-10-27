@@ -2,8 +2,9 @@
 
 **Direction: the barrio's own paper.** Ronda should look like a notice at the almacén, the
 ruled sign-up sheet and a tear-off flyer, not like a social app. The flyers, the printed planilla
-and the app then read as one thing. The planilla mockups (`notes/planilla/index.html`, local only) already
-uses this language; its mockups are the visual spec.
+and the app then read as one thing. The screen canvas (59 phone screens, link in `notes/HANDOFF.md`,
+local only) is the visual spec; the older planilla mockups (`notes/planilla/index.html`) show the
+research.
 
 ## Tokens
 
@@ -52,7 +53,7 @@ radius 12; buttons radius 12, height ≥ 48 dp.
   `ReadBackCard`, `TermsNote` (the "Al seguir, aceptás…" line and its link), `StepSheet` (bottom sheet), `AdminProposalCard`.
 
 ## Tooling and scope for 9 days
-- Skip Figma: the planilla mockups are the spec; build the components directly.
+- Skip Figma: the screen canvas is the spec; build the components directly.
 - Muse Image is for flyers (creative bonus), not for app chrome.
 - Make the public pages (Cerca tuyo, QR landing) plain HTML on Firebase Hosting: they load fast
   on old phones and slow connections, where a Flutter web bundle is heavy. The member app stays
