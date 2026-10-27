@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:device_store/device_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -224,6 +227,93 @@ void main() {
           );
         },
       );
+
+      group('with the invented demo seat facts', () {
+        // The same file `scripts/seed/seed_seat_facts.py` loads into the
+        // emulator, read from the repo root.
+        late Map<String, Object?> demoSeats;
+
+        setUp(() {
+          final file = File('../../data/demo/invented_seat_facts.json');
+          final json = jsonDecode(file.readAsStringSync()) as Map;
+          demoSeats = (json['seats']! as Map).cast<String, Object?>();
+        });
+
+        List<SeatFacts> seatsFor(String memberBarrio) => [
+          for (final MapEntry(key: seatId, :value) in demoSeats.entries)
+            if (value case {
+              'blocksFrom': final Map<String, Object?> blocksFrom,
+              'hasStairs': final bool hasStairs,
+              'endsAfterDark': final bool endsAfterDark,
+              'needsCar': final bool needsCar,
+            })
+              SeatFacts(
+                seatId: seatId,
+                walkDistance: WalkDistance.forMember(
+                  memberBarrio: memberBarrio,
+                  blocksFrom: blocksFrom.cast<String, num>(),
+                ),
+                hasStairs: hasStairs,
+                endsAfterDark: endsAfterDark,
+                needsCar: needsCar,
+              ),
+        ];
+
+        test('reads every demo seat', () {
+          expect(seatsFor('solymar-sur'), hasLength(demoSeats.length));
+        });
+
+        test('keeps only near and medium daytime seats for a member in '
+            'solymar-sur for whom walking a lot and coming back at night '
+            'are hard', () {
+          expect(
+            subject.eligibleSeatIds(
+              const Needs({Need.walkALot, Need.returnAfterDark}),
+              seatsFor('solymar-sur'),
+            ),
+            equals([
+              'solymar-sur_mate_sat-afternoon',
+              'solymar-sur_caminata_sat-morning',
+              'solymar-norte_mate_sun-afternoon',
+              'solymar-norte_truco_sat-afternoon',
+            ]),
+          );
+        });
+
+        test('keeps far seats when only coming back at night is hard', () {
+          expect(
+            subject.eligibleSeatIds(
+              const Needs({Need.returnAfterDark}),
+              seatsFor('solymar-sur'),
+            ),
+            equals([
+              'solymar-sur_mate_sat-afternoon',
+              'solymar-sur_caminata_sat-morning',
+              'solymar-norte_mate_sun-afternoon',
+              'solymar-norte_truco_sat-afternoon',
+              'lomas-de-solymar_futbol5_sat-afternoon',
+              'lagomar-sur_mate_sat-afternoon',
+              'san-jose-de-carrasco_caminata_sun-afternoon',
+              'shangrila_mate_sat-morning',
+              'el-pinar-sur_futbol5_sat-afternoon',
+              'el-pinar-norte_caminata_sun-afternoon',
+            ]),
+          );
+        });
+
+        test("measures the walk from the member's own barrio", () {
+          expect(
+            subject.eligibleSeatIds(
+              const Needs({Need.walkALot, Need.returnAfterDark}),
+              seatsFor('el-pinar-norte'),
+            ),
+            equals([
+              'el-pinar-sur_futbol5_sat-afternoon',
+              'el-pinar-norte_caminata_sun-afternoon',
+            ]),
+          );
+        });
+      });
 
       test('returns no ids when there are no seats', () {
         expect(

@@ -23,8 +23,12 @@ server receives only the seat ids that `eligibleSeatIds` returns (see `docs/ARCH
 - `Need`: `walkALot` (caminar mucho), `climbStairs` (subir escaleras), `returnAfterDark`
   (volver de noche), `noCar` (no tengo auto). UI labels come from the app's l10n, not from here.
 - `Needs(Set<Need> values)`, Equatable; `Needs.none` is the empty set.
-- `SeatFacts(seatId, walkDistance, hasStairs, endsAfterDark, needsCar)`, one per seat, computed
-  upstream. `WalkDistance`: `near` (≤ 5 blocks), `medium` (≤ 10), `far`.
+- `SeatFacts(seatId, walkDistance, hasStairs, endsAfterDark, needsCar)`, one per seat.
+  `WalkDistance`: `near` (≤ 5 blocks), `medium` (≤ 10), `far`.
+- `WalkDistance.fromBlocks(num)` bands a walk; `WalkDistance.forMember(memberBarrio:, blocksFrom:)`
+  reads the member's barrio from a seat's `blocksFrom` table (`seat_facts/{seatId}`, see
+  `docs/ARCHITECTURE.md` § Data model). A barrio the table doesn't list reads as `far`, so a seat
+  the phone can't place never passes "caminar mucho".
 
 ## Filter rules
 
@@ -48,6 +52,9 @@ saved it. Unknown names and non-text entries are skipped; anything that isn't th
 as `Needs.none`.
 
 ## Tests
+
+`test/src/needs_repository_test.dart` also runs the filter over the repo's invented demo seats,
+`../../data/demo/invented_seat_facts.json`, so the demo data and the filter can't drift apart.
 
 ```sh
 very_good test --coverage --min-coverage 100

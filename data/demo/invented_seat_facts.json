@@ -1,0 +1,271 @@
+{
+  "_note": "Invented demo data: no real seats, places or people. Barrio names are real places in Ciudad de la Costa; blocksFrom is the haversine walk in blocks (100 m) from each barrio's invented centroid in solver/fixtures/invented_demo_30.json to the seat's, rounded to 0.1. endsAfterDark is the slot's end against an approximate late-October sunset (about 19:45): evening slots end at 21:00, so they end after dark; morning and afternoon slots do not. hasStairs and needsCar are false until a host sets a place; the two seats that carry true stand for places an invented host has set.",
+  "seats": {
+    "solymar-sur_mate_sat-afternoon": {
+      "barrio": "solymar-sur",
+      "pretext": "mate",
+      "slot": "sat-afternoon",
+      "blocksFrom": {
+        "shangrila": 62.2,
+        "san-jose-de-carrasco": 43.1,
+        "lagomar-sur": 24.1,
+        "lagomar-norte": 26.1,
+        "solymar-sur": 0.0,
+        "solymar-norte": 9.1,
+        "lomas-de-solymar": 21.0,
+        "el-pinar-sur": 60.7,
+        "el-pinar-norte": 63.5
+      },
+      "hasStairs": false,
+      "endsAfterDark": false,
+      "needsCar": false
+    },
+    "solymar-sur_truco_thu-evening": {
+      "barrio": "solymar-sur",
+      "pretext": "truco",
+      "slot": "thu-evening",
+      "blocksFrom": {
+        "shangrila": 62.2,
+        "san-jose-de-carrasco": 43.1,
+        "lagomar-sur": 24.1,
+        "lagomar-norte": 26.1,
+        "solymar-sur": 0.0,
+        "solymar-norte": 9.1,
+        "lomas-de-solymar": 21.0,
+        "el-pinar-sur": 60.7,
+        "el-pinar-norte": 63.5
+      },
+      "hasStairs": false,
+      "endsAfterDark": true,
+      "needsCar": false
+    },
+    "solymar-sur_caminata_sat-morning": {
+      "barrio": "solymar-sur",
+      "pretext": "caminata",
+      "slot": "sat-morning",
+      "blocksFrom": {
+        "shangrila": 62.2,
+        "san-jose-de-carrasco": 43.1,
+        "lagomar-sur": 24.1,
+        "lagomar-norte": 26.1,
+        "solymar-sur": 0.0,
+        "solymar-norte": 9.1,
+        "lomas-de-solymar": 21.0,
+        "el-pinar-sur": 60.7,
+        "el-pinar-norte": 63.5
+      },
+      "hasStairs": false,
+      "endsAfterDark": false,
+      "needsCar": false
+    },
+    "solymar-norte_mate_sun-afternoon": {
+      "barrio": "solymar-norte",
+      "pretext": "mate",
+      "slot": "sun-afternoon",
+      "blocksFrom": {
+        "shangrila": 64.8,
+        "san-jose-de-carrasco": 46.0,
+        "lagomar-sur": 25.9,
+        "lagomar-norte": 24.5,
+        "solymar-sur": 9.1,
+        "solymar-norte": 0.0,
+        "lomas-de-solymar": 12.0,
+        "el-pinar-sur": 59.3,
+        "el-pinar-norte": 60.7
+      },
+      "hasStairs": false,
+      "endsAfterDark": false,
+      "needsCar": false
+    },
+    "solymar-norte_truco_sat-afternoon": {
+      "barrio": "solymar-norte",
+      "pretext": "truco",
+      "slot": "sat-afternoon",
+      "blocksFrom": {
+        "shangrila": 64.8,
+        "san-jose-de-carrasco": 46.0,
+        "lagomar-sur": 25.9,
+        "lagomar-norte": 24.5,
+        "solymar-sur": 9.1,
+        "solymar-norte": 0.0,
+        "lomas-de-solymar": 12.0,
+        "el-pinar-sur": 59.3,
+        "el-pinar-norte": 60.7
+      },
+      "hasStairs": true,
+      "endsAfterDark": false,
+      "needsCar": false
+    },
+    "solymar-norte_caminata_thu-evening": {
+      "barrio": "solymar-norte",
+      "pretext": "caminata",
+      "slot": "thu-evening",
+      "blocksFrom": {
+        "shangrila": 64.8,
+        "san-jose-de-carrasco": 46.0,
+        "lagomar-sur": 25.9,
+        "lagomar-norte": 24.5,
+        "solymar-sur": 9.1,
+        "solymar-norte": 0.0,
+        "lomas-de-solymar": 12.0,
+        "el-pinar-sur": 59.3,
+        "el-pinar-norte": 60.7
+      },
+      "hasStairs": false,
+      "endsAfterDark": true,
+      "needsCar": false
+    },
+    "lomas-de-solymar_futbol5_sat-afternoon": {
+      "barrio": "lomas-de-solymar",
+      "pretext": "futbol5",
+      "slot": "sat-afternoon",
+      "blocksFrom": {
+        "shangrila": 71.7,
+        "san-jose-de-carrasco": 53.7,
+        "lagomar-sur": 33.8,
+        "lagomar-norte": 29.2,
+        "solymar-sur": 21.0,
+        "solymar-norte": 12.0,
+        "lomas-de-solymar": 0.0,
+        "el-pinar-sur": 57.3,
+        "el-pinar-norte": 56.9
+      },
+      "hasStairs": false,
+      "endsAfterDark": false,
+      "needsCar": false
+    },
+    "lomas-de-solymar_mate_thu-evening": {
+      "barrio": "lomas-de-solymar",
+      "pretext": "mate",
+      "slot": "thu-evening",
+      "blocksFrom": {
+        "shangrila": 71.7,
+        "san-jose-de-carrasco": 53.7,
+        "lagomar-sur": 33.8,
+        "lagomar-norte": 29.2,
+        "solymar-sur": 21.0,
+        "solymar-norte": 12.0,
+        "lomas-de-solymar": 0.0,
+        "el-pinar-sur": 57.3,
+        "el-pinar-norte": 56.9
+      },
+      "hasStairs": false,
+      "endsAfterDark": true,
+      "needsCar": false
+    },
+    "lagomar-sur_mate_sat-afternoon": {
+      "barrio": "lagomar-sur",
+      "pretext": "mate",
+      "slot": "sat-afternoon",
+      "blocksFrom": {
+        "shangrila": 38.9,
+        "san-jose-de-carrasco": 20.1,
+        "lagomar-sur": 0.0,
+        "lagomar-norte": 9.3,
+        "solymar-sur": 24.1,
+        "solymar-norte": 25.9,
+        "lomas-de-solymar": 33.8,
+        "el-pinar-sur": 84.4,
+        "el-pinar-norte": 86.4
+      },
+      "hasStairs": false,
+      "endsAfterDark": false,
+      "needsCar": false
+    },
+    "lagomar-norte_truco_thu-evening": {
+      "barrio": "lagomar-norte",
+      "pretext": "truco",
+      "slot": "thu-evening",
+      "blocksFrom": {
+        "shangrila": 42.6,
+        "san-jose-de-carrasco": 25.4,
+        "lagomar-sur": 9.3,
+        "lagomar-norte": 0.0,
+        "solymar-sur": 26.1,
+        "solymar-norte": 24.5,
+        "lomas-de-solymar": 29.2,
+        "el-pinar-sur": 83.7,
+        "el-pinar-norte": 84.8
+      },
+      "hasStairs": false,
+      "endsAfterDark": true,
+      "needsCar": false
+    },
+    "san-jose-de-carrasco_caminata_sun-afternoon": {
+      "barrio": "san-jose-de-carrasco",
+      "pretext": "caminata",
+      "slot": "sun-afternoon",
+      "blocksFrom": {
+        "shangrila": 19.1,
+        "san-jose-de-carrasco": 0.0,
+        "lagomar-sur": 20.1,
+        "lagomar-norte": 25.4,
+        "solymar-sur": 43.1,
+        "solymar-norte": 46.0,
+        "lomas-de-solymar": 53.7,
+        "el-pinar-sur": 103.8,
+        "el-pinar-norte": 106.3
+      },
+      "hasStairs": false,
+      "endsAfterDark": false,
+      "needsCar": false
+    },
+    "shangrila_mate_sat-morning": {
+      "barrio": "shangrila",
+      "pretext": "mate",
+      "slot": "sat-morning",
+      "blocksFrom": {
+        "shangrila": 0.0,
+        "san-jose-de-carrasco": 19.1,
+        "lagomar-sur": 38.9,
+        "lagomar-norte": 42.6,
+        "solymar-sur": 62.2,
+        "solymar-norte": 64.8,
+        "lomas-de-solymar": 71.7,
+        "el-pinar-sur": 122.9,
+        "el-pinar-norte": 125.3
+      },
+      "hasStairs": false,
+      "endsAfterDark": false,
+      "needsCar": false
+    },
+    "el-pinar-sur_futbol5_sat-afternoon": {
+      "barrio": "el-pinar-sur",
+      "pretext": "futbol5",
+      "slot": "sat-afternoon",
+      "blocksFrom": {
+        "shangrila": 122.9,
+        "san-jose-de-carrasco": 103.8,
+        "lagomar-sur": 84.4,
+        "lagomar-norte": 83.7,
+        "solymar-sur": 60.7,
+        "solymar-norte": 59.3,
+        "lomas-de-solymar": 57.3,
+        "el-pinar-sur": 0.0,
+        "el-pinar-norte": 9.1
+      },
+      "hasStairs": false,
+      "endsAfterDark": false,
+      "needsCar": true
+    },
+    "el-pinar-norte_caminata_sun-afternoon": {
+      "barrio": "el-pinar-norte",
+      "pretext": "caminata",
+      "slot": "sun-afternoon",
+      "blocksFrom": {
+        "shangrila": 125.3,
+        "san-jose-de-carrasco": 106.3,
+        "lagomar-sur": 86.4,
+        "lagomar-norte": 84.8,
+        "solymar-sur": 63.5,
+        "solymar-norte": 60.7,
+        "lomas-de-solymar": 56.9,
+        "el-pinar-sur": 9.1,
+        "el-pinar-norte": 0.0
+      },
+      "hasStairs": false,
+      "endsAfterDark": false,
+      "needsCar": false
+    }
+  }
+}
