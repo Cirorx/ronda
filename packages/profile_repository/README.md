@@ -1,8 +1,9 @@
 # profile_repository
 
-Repository layer. A member's `Profile` ("lo que traés") on `users/{uid}`, and the conditions they
-accepted on the welcome screen, over `ronda_api`. It turns `UserDocument` into domain models and
-back; it never handles needs, which stay on the phone in `needs_repository`.
+Repository layer. A member's `Profile` ("lo que traés") on `users/{uid}`, the conditions they
+accepted on the welcome screen, and the seat ids their needs let through, over `ronda_api`. It
+turns the wire documents into domain models and back; it never handles needs, which stay on the
+phone in `needs_repository`.
 
 ## API
 
@@ -12,6 +13,11 @@ back; it never handles needs, which stay on the phone in `needs_repository`.
 | `Stream<Profile?> watchProfile(String uid)` | The profile, or `null` until firstName, ageBand and barrio are saved (a document holding only `terms` reads as `null`) |
 | `Future<void> acceptTerms(String uid, TermsAcceptance)` | Writes `terms {version, acceptedAt}`; throws `AcceptTermsFailure` |
 | `Future<void> createProfile(String uid, Profile)` | Writes the profile, keeping `terms`; throws `SaveProfileFailure` |
+| `Future<List<PublishedSeat>> publishedSeats()` | Every `seat_facts` document, for the phone's needs filter; throws `ReadPublishedSeatsFailure` |
+| `Future<void> saveEligibleSeatIds({uid, seatIds})` | Replaces `users/{uid}/private/eligible` with exactly the ids and a server time; throws `SaveEligibleSeatIdsFailure` |
+
+The seat methods go through `ronda_api`'s `EligibleSeatsApi` extension, which mocktail can't
+stub, so their tests use a real `RondaApi` over `FakeFirebaseFirestore`.
 
 ## Models
 
@@ -25,6 +31,8 @@ never thrown):
 - `Bring`: `pan`, `yerba`, `termo`, `sillas`, `enseno-truco`, `tengo-ganas`.
 - `Slot(SlotDay, SlotBand)`: id `{day}-{band}`, e.g. `sat-afternoon`.
 - `Profile`, `TermsAcceptance(version, acceptedAt)`.
+- `PublishedSeat(seatId, blocksFrom, hasStairs, endsAfterDark, needsCar)`: the app builds the
+  needs filter's `SeatFacts` from it, measuring the walk from the member's barrio.
 
 Lists are written in the enums' declaration order, so the same choices always produce the same
 document. UI labels come from the app's l10n.

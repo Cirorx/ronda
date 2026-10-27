@@ -13,9 +13,9 @@ service cloud.firestore {
       return !request.resource.data.keys().hasAny(['needs', 'mood', 'audio']);
     }
 
-    // A member reads and writes only their own profile. Subcollections
-    // (private/eligible, tokens) are not matched here, so they stay closed
-    // until their own rules are written.
+    // A member reads and writes only their own profile. Subcollections are
+    // not matched here: private/eligible has its own block below, and any
+    // other (tokens) stays closed until its rules are written.
     //
     // Only the fields docs/ARCHITECTURE.md § Data model names, each optional
     // (the terms arrive first, when a welcome door is tapped; the profile

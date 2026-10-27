@@ -10,8 +10,9 @@ part 'onboarding_state.dart';
 ///
 /// The profile goes to `users/{uid}` through [ProfileRepository]; the needs
 /// stay on this phone through [NeedsRepository] and never reach the profile.
-/// Where the person goes after saving is the router's call: it follows the
-/// profile, not this cubit.
+/// Only the seat ids they let through leave the phone, to
+/// `users/{uid}/private/eligible`. Where the person goes after saving is the
+/// router's call: it follows the profile, not this cubit.
 class OnboardingCubit extends Cubit<OnboardingState> {
   new({
     required this._uid,
@@ -92,8 +93,12 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     emit(state.copyWith(step: step, editingFromReview: true));
   }
 
-  /// "Está bien, guardalo": the needs on this phone first, then the profile,
-  /// whose arrival moves the router on.
+  /// "Está bien, guardalo": the needs on this phone first, then the seat ids
+  /// they allow, then the profile, whose arrival moves the router on.
+  ///
+  /// Any step failing fails the save and writes no profile, so the person
+  /// stays on the read-back and "Está bien, guardalo" runs every step again:
+  /// the solver can't seat someone whose eligible ids never arrived.
   Future<void> save() async {
     final OnboardingState(:ageBand, :barrio, :status) = state;
     if (state.step != OnboardingStep.review || !state.isComplete) return;
@@ -103,7 +108,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     try {
       final needs = Needs(state.needs);
       await _needsRepository.save(needs);
-      await _publishEligibleSeatIds(needs);
+      await _publishEligibleSeatIds(needs, barrio);
       await _profileRepository.createProfile(
         _uid,
         Profile(
@@ -121,9 +126,29 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     }
   }
 
-  /// The seam for #20: filter the seats with [needs] on this phone and
-  /// write only the eligible seat ids to `users/{uid}/private/eligible`.
-  /// It runs after the needs are saved and before the profile, so the
-  /// router can't leave onboarding before the ids are written.
-  Future<void> _publishEligibleSeatIds(Needs needs) async {}
+  /// Filters the published seats with [needs] on this phone, measuring each
+  /// walk from [barrio], and writes only the ids that pass.
+  ///
+  /// Pretext and slot are not filtered here: the solver matches those
+  /// against the profile.
+  Future<void> _publishEligibleSeatIds(Needs needs, Barrio barrio) async {
+    final seats = await _profileRepository.publishedSeats();
+    final facts = [
+      for (final seat in seats)
+        SeatFacts(
+          seatId: seat.seatId,
+          walkDistance: WalkDistance.forMember(
+            memberBarrio: barrio.id,
+            blocksFrom: seat.blocksFrom,
+          ),
+          hasStairs: seat.hasStairs,
+          endsAfterDark: seat.endsAfterDark,
+          needsCar: seat.needsCar,
+        ),
+    ];
+    await _profileRepository.saveEligibleSeatIds(
+      uid: _uid,
+      seatIds: _needsRepository.eligibleSeatIds(needs, facts),
+    );
+  }
 }

@@ -71,6 +71,10 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   - The phone writes `users/{uid}/private/eligible` = exactly `{seatIds, updatedAt}` (rules check
     the keys, a list, at most 1000 ids and `updatedAt == request.time`; that each id is a string
     is the client's half). No client reads it back.
+  - When: on "Está bien, guardalo", after the needs are saved on the phone and before the
+    profile. The phone filters by needs only (pretext and slot are the solver's match). If
+    reading the seats or writing the ids fails, the save fails and no profile is written, so
+    the person retries from the read-back and nobody reaches the tabs without eligible ids.
   - Known limits: the solver's hard `withinTenBlocks` already drops far seats, so "caminar mucho"
     changes no grouping today and only keeps far ids from leaving the phone. And the server holds
     both the facts it published and the ids that came back, so it could infer a need from which

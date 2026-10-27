@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:profile_repository/profile_repository.dart';
@@ -169,6 +171,107 @@ void main() {
         expect(
           () => subject.createProfile('demo-uid', profile),
           throwsA(isA<SaveProfileFailure>()),
+        );
+      });
+    });
+
+    // EligibleSeatsApi is an extension, which mocktail can't stub: these
+    // tests read and write through a real RondaApi over a fake Firestore.
+    group('over a fake Firestore', () {
+      late FakeFirebaseFirestore firestore;
+
+      setUp(() {
+        firestore = FakeFirebaseFirestore();
+        subject = ProfileRepository(rondaApi: RondaApi(firestore: firestore));
+      });
+
+      group('publishedSeats', () {
+        test('maps every seat_facts document to a $PublishedSeat', () async {
+          await firestore
+              .collection('seat_facts')
+              .doc('solymar-sur_mate_sat-afternoon')
+              .set({
+                'barrio': 'solymar-sur',
+                'pretext': 'mate',
+                'slot': 'sat-afternoon',
+                'blocksFrom': {'solymar-sur': 0, 'solymar-norte': 9.1},
+                'hasStairs': false,
+                'endsAfterDark': false,
+                'needsCar': true,
+              });
+          await firestore.collection('seat_facts').doc('broken').set({
+            'barrio': 'solymar-sur',
+          });
+
+          expect(
+            await subject.publishedSeats(),
+            equals([
+              const PublishedSeat(
+                seatId: 'solymar-sur_mate_sat-afternoon',
+                blocksFrom: {'solymar-sur': 0, 'solymar-norte': 9.1},
+                hasStairs: false,
+                endsAfterDark: false,
+                needsCar: true,
+              ),
+            ]),
+          );
+        });
+
+        test('returns no seats when none is published', () async {
+          expect(await subject.publishedSeats(), isEmpty);
+        });
+      });
+
+      group('saveEligibleSeatIds', () {
+        test(
+          'writes exactly seatIds and updatedAt to private/eligible',
+          () async {
+            await subject.saveEligibleSeatIds(
+              uid: 'demo-uid',
+              seatIds: const [
+                'solymar-sur_mate_sat-afternoon',
+                'solymar-norte_truco_sat-afternoon',
+              ],
+            );
+
+            final eligible = await firestore
+                .doc('users/demo-uid/private/eligible')
+                .get();
+            expect(
+              eligible.data()?.keys,
+              unorderedEquals(['seatIds', 'updatedAt']),
+            );
+            expect(
+              eligible.data()?['seatIds'],
+              equals([
+                'solymar-sur_mate_sat-afternoon',
+                'solymar-norte_truco_sat-afternoon',
+              ]),
+            );
+            expect(eligible.data()?['updatedAt'], isA<Timestamp>());
+            final user = await firestore.doc('users/demo-uid').get();
+            expect(user.exists, isFalse);
+          },
+        );
+      });
+    });
+
+    group('when Firestore fails', () {
+      setUp(() {
+        when(() => rondaApi.firestore).thenThrow(Exception('unavailable'));
+      });
+
+      test('publishedSeats throws $ReadPublishedSeatsFailure', () {
+        expect(
+          subject.publishedSeats,
+          throwsA(isA<ReadPublishedSeatsFailure>()),
+        );
+      });
+
+      test('saveEligibleSeatIds throws $SaveEligibleSeatIdsFailure', () {
+        expect(
+          () => subject.saveEligibleSeatIds(uid: 'demo-uid', seatIds: const []),
+          throwsA(isA<SaveEligibleSeatIdsFailure>()),
         );
       });
     });

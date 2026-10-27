@@ -23,6 +23,85 @@ final _answered = OnboardingState(
   firstName: const FirstName.dirty(' Marta '),
 );
 
+/// Invented demo seats (values from data/demo/invented_seat_facts.json).
+const _seats = [
+  PublishedSeat(
+    seatId: 'solymar-sur_mate_sat-afternoon',
+    blocksFrom: {'solymar-sur': 0, 'solymar-norte': 9.1},
+    hasStairs: false,
+    endsAfterDark: false,
+    needsCar: false,
+  ),
+  PublishedSeat(
+    seatId: 'solymar-sur_truco_thu-evening',
+    blocksFrom: {'solymar-sur': 0, 'solymar-norte': 9.1},
+    hasStairs: false,
+    endsAfterDark: true,
+    needsCar: false,
+  ),
+  PublishedSeat(
+    seatId: 'solymar-norte_mate_sun-afternoon',
+    blocksFrom: {'solymar-sur': 9.1, 'solymar-norte': 0},
+    hasStairs: false,
+    endsAfterDark: false,
+    needsCar: false,
+  ),
+  PublishedSeat(
+    seatId: 'lagomar-sur_mate_sat-afternoon',
+    blocksFrom: {'solymar-sur': 24.1, 'lagomar-sur': 0},
+    hasStairs: true,
+    endsAfterDark: false,
+    needsCar: true,
+  ),
+  PublishedSeat(
+    seatId: 'el-pinar-norte_caminata_sun-afternoon',
+    blocksFrom: {'el-pinar-norte': 0},
+    hasStairs: false,
+    endsAfterDark: false,
+    needsCar: false,
+  ),
+];
+
+/// [_seats] as the needs filter sees them from solymar-sur: walks measured
+/// from that barrio, and a barrio missing from the table read as far.
+const _solymarSurFacts = [
+  SeatFacts(
+    seatId: 'solymar-sur_mate_sat-afternoon',
+    walkDistance: WalkDistance.near,
+    hasStairs: false,
+    endsAfterDark: false,
+    needsCar: false,
+  ),
+  SeatFacts(
+    seatId: 'solymar-sur_truco_thu-evening',
+    walkDistance: WalkDistance.near,
+    hasStairs: false,
+    endsAfterDark: true,
+    needsCar: false,
+  ),
+  SeatFacts(
+    seatId: 'solymar-norte_mate_sun-afternoon',
+    walkDistance: WalkDistance.medium,
+    hasStairs: false,
+    endsAfterDark: false,
+    needsCar: false,
+  ),
+  SeatFacts(
+    seatId: 'lagomar-sur_mate_sat-afternoon',
+    walkDistance: WalkDistance.far,
+    hasStairs: true,
+    endsAfterDark: false,
+    needsCar: true,
+  ),
+  SeatFacts(
+    seatId: 'el-pinar-norte_caminata_sun-afternoon',
+    walkDistance: WalkDistance.far,
+    hasStairs: false,
+    endsAfterDark: false,
+    needsCar: false,
+  ),
+];
+
 void main() {
   group(OnboardingCubit, () {
     late ProfileRepository profileRepository;
@@ -30,6 +109,7 @@ void main() {
 
     setUpAll(() {
       registerFallbackValue(Needs.none);
+      registerFallbackValue(<SeatFacts>[]);
       registerFallbackValue(
         const Profile(
           firstName: '',
@@ -48,6 +128,16 @@ void main() {
       when(() => needsRepository.save(any())).thenAnswer((_) async {});
       when(() => profileRepository.createProfile(any(), any()))
           .thenAnswer((_) async {});
+      when(() => profileRepository.publishedSeats())
+          .thenAnswer((_) async => _seats);
+      when(() => needsRepository.eligibleSeatIds(any(), any()))
+          .thenReturn(const []);
+      when(
+        () => profileRepository.saveEligibleSeatIds(
+          uid: any(named: 'uid'),
+          seatIds: any(named: 'seatIds'),
+        ),
+      ).thenAnswer((_) async {});
     });
 
     OnboardingCubit buildCubit() => OnboardingCubit(
@@ -285,7 +375,8 @@ void main() {
 
     group('save', () {
       blocTest<OnboardingCubit, OnboardingState>(
-        'saves the needs on the phone, then the profile without them',
+        'saves the needs on the phone, then the eligible seat ids, then the '
+        'profile without the needs',
         build: buildCubit,
         seed: () => _answered,
         act: (cubit) => cubit.save(),
@@ -296,6 +387,11 @@ void main() {
         verify: (_) {
           verifyInOrder([
             () => needsRepository.save(const Needs({Need.noCar})),
+            () => profileRepository.publishedSeats(),
+            () => profileRepository.saveEligibleSeatIds(
+              uid: 'demo-uid',
+              seatIds: const [],
+            ),
             () => profileRepository.createProfile(
               'demo-uid',
               Profile(
@@ -316,6 +412,81 @@ void main() {
         setUp: () {
           when(() => needsRepository.save(any()))
               .thenThrow(Exception('keychain'));
+        },
+        build: buildCubit,
+        seed: () => _answered,
+        act: (cubit) => cubit.save(),
+        expect: () => [
+          _answered.copyWith(status: OnboardingStatus.saving),
+          _answered.copyWith(status: OnboardingStatus.failure),
+        ],
+        verify: (_) {
+          verifyNever(() => profileRepository.createProfile(any(), any()));
+        },
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'publishes only the near and medium daytime seats for a solymar-sur '
+        'member for whom walking a lot and coming back at night are hard',
+        setUp: () {
+          when(
+            () => needsRepository.eligibleSeatIds(
+              const Needs({Need.walkALot, Need.returnAfterDark}),
+              _solymarSurFacts,
+            ),
+          ).thenReturn(const [
+            'solymar-sur_mate_sat-afternoon',
+            'solymar-norte_mate_sun-afternoon',
+          ]);
+        },
+        build: buildCubit,
+        seed: () => _answered.copyWith(
+          barrio: Barrio.solymarSur,
+          needs: const {Need.walkALot, Need.returnAfterDark},
+        ),
+        act: (cubit) => cubit.save(),
+        verify: (cubit) {
+          expect(cubit.state.status, equals(OnboardingStatus.saved));
+          verify(
+            () => profileRepository.saveEligibleSeatIds(
+              uid: 'demo-uid',
+              seatIds: const [
+                'solymar-sur_mate_sat-afternoon',
+                'solymar-norte_mate_sun-afternoon',
+              ],
+            ),
+          ).called(1);
+        },
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'emits failure and writes no profile when the seats cannot be read',
+        setUp: () {
+          when(() => profileRepository.publishedSeats())
+              .thenThrow(const ReadPublishedSeatsFailure());
+        },
+        build: buildCubit,
+        seed: () => _answered,
+        act: (cubit) => cubit.save(),
+        expect: () => [
+          _answered.copyWith(status: OnboardingStatus.saving),
+          _answered.copyWith(status: OnboardingStatus.failure),
+        ],
+        verify: (_) {
+          verifyNever(() => profileRepository.createProfile(any(), any()));
+        },
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'emits failure and writes no profile when the eligible ids cannot be '
+        'written',
+        setUp: () {
+          when(
+            () => profileRepository.saveEligibleSeatIds(
+              uid: any(named: 'uid'),
+              seatIds: any(named: 'seatIds'),
+            ),
+          ).thenThrow(const SaveEligibleSeatIdsFailure());
         },
         build: buildCubit,
         seed: () => _answered,

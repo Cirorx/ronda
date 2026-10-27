@@ -2,10 +2,12 @@ import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda_api/ronda_api.dart';
 
 /// {@template profile_repository}
-/// A member's profile on `users/{uid}`, and the conditions they accepted.
+/// A member's profile on `users/{uid}`, the conditions they accepted, and
+/// the seat ids their needs let through.
 ///
-/// It turns the wire document from [RondaApi] into a [Profile] and back. It
-/// never handles needs: those stay on the phone in `needs_repository`.
+/// It turns the wire documents from [RondaApi] into domain models and back.
+/// It never handles needs: those stay on the phone in `needs_repository`,
+/// and only the ids they allow reach `users/{uid}/private/eligible`.
 /// {@endtemplate}
 class ProfileRepository {
   /// {@macro profile_repository}
@@ -60,6 +62,42 @@ class ProfileRepository {
       );
     } on Exception {
       throw const SaveProfileFailure();
+    }
+  }
+
+  /// Every seat the server publishes, for the phone's needs filter.
+  ///
+  /// Throws a [ReadPublishedSeatsFailure] when the read fails.
+  Future<List<PublishedSeat>> publishedSeats() async {
+    try {
+      final seats = await _rondaApi.readSeatFacts();
+      return [
+        for (final seat in seats)
+          PublishedSeat(
+            seatId: seat.seatId,
+            blocksFrom: seat.blocksFrom,
+            hasStairs: seat.hasStairs,
+            endsAfterDark: seat.endsAfterDark,
+            needsCar: seat.needsCar,
+          ),
+      ];
+    } on Exception {
+      throw const ReadPublishedSeatsFailure();
+    }
+  }
+
+  /// Replaces the eligible seat ids of [uid] with [seatIds]: the only trace
+  /// of their needs that leaves the phone.
+  ///
+  /// Throws a [SaveEligibleSeatIdsFailure] when the write fails.
+  Future<void> saveEligibleSeatIds({
+    required String uid,
+    required List<String> seatIds,
+  }) async {
+    try {
+      await _rondaApi.writeEligibleSeatIds(uid: uid, seatIds: seatIds);
+    } on Exception {
+      throw const SaveEligibleSeatIdsFailure();
     }
   }
 }

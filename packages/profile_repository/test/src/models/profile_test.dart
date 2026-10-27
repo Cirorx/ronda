@@ -31,4 +31,19 @@ void main() {
       );
     });
   });
+
+  group(PublishedSeat, () {
+    test('compares by value', () {
+      PublishedSeat build({bool needsCar = false}) => PublishedSeat(
+        seatId: 'solymar-sur_mate_sat-afternoon',
+        blocksFrom: const {'solymar-sur': 0},
+        hasStairs: false,
+        endsAfterDark: false,
+        needsCar: needsCar,
+      );
+
+      expect(build(), equals(build()));
+      expect(build(), isNot(equals(build(needsCar: true))));
+    });
+  });
 }

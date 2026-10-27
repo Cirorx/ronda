@@ -13,3 +13,19 @@ class SaveProfileFailure implements Exception {
   /// {@macro save_profile_failure}
   const new();
 }
+
+/// {@template read_published_seats_failure}
+/// Reading the seats the server publishes failed.
+/// {@endtemplate}
+class ReadPublishedSeatsFailure implements Exception {
+  /// {@macro read_published_seats_failure}
+  const new();
+}
+
+/// {@template save_eligible_seat_ids_failure}
+/// Writing `users/{uid}/private/eligible` failed.
+/// {@endtemplate}
+class SaveEligibleSeatIdsFailure implements Exception {
+  /// {@macro save_eligible_seat_ids_failure}
+  const new();
+}
