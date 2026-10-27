@@ -1,0 +1,21 @@
+name: profile_repository
+description: A member's profile (lo que traés) and the conditions they accepted, over ronda_api.
+version: 0.1.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ^3.47.0
+
+dependencies:
+  equatable: ^2.0.7
+  flutter:
+    sdk: flutter
+  ronda_api:
+    path: ../ronda_api
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+  very_good_analysis: ^11.0.0

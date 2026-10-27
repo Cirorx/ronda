@@ -16,10 +16,19 @@ the region the plugin calls `us-central1`.
 | `RondaApi(firestore: FirebaseFirestore)` | Built in bootstrap; tests pass `FakeFirebaseFirestore` |
 | `RondaApi.region` | `southamerica-east1`, where every function and callable runs |
 | `RondaApi.usersCollection` | `users`, one document per Firebase uid |
-| `Stream<bool> watchUserExists(String uid)` | Whether `users/{uid}` exists, now and on every change |
+| `Stream<UserDocument?> watchUser(String uid)` | `users/{uid}` now and on every change; `null` while it doesn't exist |
+| `Future<void> saveTerms(String uid, TermsRecord)` | Merges `terms {version, acceptedAt}`, creating the document if needed |
+| `Future<void> saveProfile(String uid, {firstName, ageBand, barrio, slots, pretexts, brings})` | Merges the profile fields and a server `createdAt` |
 
-The `users/{uid}` fields are in `docs/ARCHITECTURE.md` § Data model; the profile itself arrives
-with onboarding.
+## Models
+
+- `UserDocument`: `users/{uid}` as stored. Every field is optional on the wire, because the terms
+  arrive first (a welcome door) and the profile later (onboarding saved); fields of the wrong
+  type are skipped. Existence alone does not mean onboarding is done.
+- `TermsRecord(version, acceptedAt)`: `acceptedAt` is a Firestore `Timestamp` on the wire.
+
+The `users/{uid}` fields are in `docs/ARCHITECTURE.md` § Data model; `firestore.rules` allows
+only those, typed. Needs, mood and audio never go through this client.
 
 ## Seat facts and eligible seats (`EligibleSeatsApi`)
 

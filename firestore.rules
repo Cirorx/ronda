@@ -16,9 +16,39 @@ service cloud.firestore {
     // A member reads and writes only their own profile. Subcollections
     // (private/eligible, tokens) are not matched here, so they stay closed
     // until their own rules are written.
+    //
+    // Only the fields docs/ARCHITECTURE.md § Data model names, each optional
+    // (the terms arrive first, when a welcome door is tapped; the profile
+    // when onboarding is saved) and typed where it is cheap to check.
     match /users/{uid} {
+      function isOptional(data, field, check) {
+        return !(field in data) || check;
+      }
+
+      function isUserDocument(data) {
+        return data.keys().hasOnly([
+              'firstName', 'ageBand', 'barrio', 'slots', 'pretexts', 'brings',
+              'plusOneUid', 'buddyUid', 'terms', 'createdAt'])
+          && isOptional(data, 'firstName', data.firstName is string
+              && data.firstName.size() > 0 && data.firstName.size() <= 30)
+          && isOptional(data, 'ageBand', data.ageBand in [
+              '18-29', '30-39', '40-49', '50-59', '60-69', '70-79', '80+'])
+          && isOptional(data, 'barrio', data.barrio is string)
+          && isOptional(data, 'slots', data.slots is list)
+          && isOptional(data, 'pretexts', data.pretexts is list)
+          && isOptional(data, 'brings', data.brings is list)
+          && isOptional(data, 'plusOneUid', data.plusOneUid is string)
+          && isOptional(data, 'buddyUid', data.buddyUid is string)
+          && isOptional(data, 'terms', data.terms is map
+              && data.terms.keys().hasOnly(['version', 'acceptedAt'])
+              && data.terms.version is string
+              && data.terms.acceptedAt is timestamp)
+          && isOptional(data, 'createdAt', data.createdAt is timestamp);
+      }
+
       allow read, delete: if isOwner(uid);
-      allow create, update: if isOwner(uid) && carriesNoSensitiveFields();
+      allow create, update: if isOwner(uid) && carriesNoSensitiveFields()
+          && isUserDocument(request.resource.data);
     }
 
     // Seat facts the server publishes for the phone's needs filter, one per

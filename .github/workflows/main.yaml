@@ -35,6 +35,7 @@ jobs:
           - packages/auth_repository
           - packages/device_store
           - packages/needs_repository
+          - packages/profile_repository
           - packages/ronda_api
     uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
     with:
