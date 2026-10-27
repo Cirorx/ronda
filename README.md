@@ -46,6 +46,10 @@ leave or switch without explaining · free: **Ronda nunca pide plata**.
 | SAM 3.1 | Meta Model API | Cuts the group's things (termo, mate, mazo) out of a photo for a flyer |
 | Muse Image | Meta Model API | Lays out the "Hay un mate de más" flyer for the almacén board |
 
+Two jobs Meta has no model for run on the phone with the platform's own models: ML Kit face
+detection (faces are pixelated before any photo leaves the phone) and the phone's text-to-speech
+for reading screens aloud.
+
 ## Privacy by design: split by sensitivity
 
 - **Needs stay on the phone.** "I can't walk far", "not after dark", "no car" are filters on the

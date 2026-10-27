@@ -7,7 +7,7 @@ Prices per million tokens unless noted.
 
 | Model | Id | Use in Ronda | Price |
 |---|---|---|---|
-| Muse Voice Transcribe | `muse-voice-transcribe-1.0` (`POST /v1/asr/transcribe`, realtime `wss://api.meta.ai/v1/asr/realtime`) | Voice onboarding, voice RSVP, host recap | $0.18 / hour |
+| Muse Voice Transcribe | `muse-voice-transcribe-1.0` (`POST /v1/asr/transcribe`, real-time `wss://api.meta.ai/v1/asr/realtime`) | Voice onboarding, voice RSVP, host recap | $0.18 / hour |
 | Muse Spark 1.3 | `muse-spark-1.3` | Structured fields from transcripts; fallback for the agent | $1.25 in · $0.15 cached · $4.25 out |
 | SAM 3.1 | `sam-3.1` (Responses API, Files API) | Cut objects out of a ronda photo for the flyer; spot photo outline | $2.50 / 1,000 images; video $0.20 / 1,000 frames |
 | Muse Image 1.0 | `muse-image-1.0` (`/v1/images/generations`, `/v1/images/edits`) | "Mate de más" and tear-off flyer layouts | $0.01 / image |

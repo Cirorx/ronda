@@ -32,7 +32,9 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   tu cuenta", "No vemos tus contactos, tus fotos ni tus mails" and "En Ronda te conocen solo por
   tu nombre de pila". [Seguir con Google]; "¿No tenés cuenta de Google? Te ayudamos a crear una
   en un minuto."
-- **Voice:** "Te escuchamos", ≤ 60 s, "Ideas de qué contar" ticked off as they are said,
+- **Voice:** "Te escuchamos", ≤ 60 s, "Ideas de qué contar" shown as a plain checklist while
+  recording and ticked on the read-back from what the transcript covered (live ticking would
+  need live transcription; decided 2026-10-27),
   [Terminé], "Borrar y empezar de nuevo", [Cancelar], and "El audio se borra apenas lo leemos."
   Then "¿Entendimos bien?" with every field and a "Cambiar" on each; "Todavía no guardamos
   nada"; "Tu audio ya se borró."; [Está bien, guardalo] [Grabar de nuevo].
@@ -176,7 +178,9 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   no hace falta bajar nada." Phone number answered by a person (later).
 - **Un mate de más:** from week 4 each ronda keeps one newcomer seat. The host photographs the
   group's things: "Sacale una foto a las cosas del grupo. Mejor sin gente: si sale alguien, lo
-  borroneamos antes de subir." Faces blurred on the phone → SAM 3.1 cuts out termo, mazo, mates
+  borroneamos antes de subir." Faces blurred on the phone; on the preview the host can tap any
+  face the detector missed to blur it too ("Tocá una cara para borronearla") → SAM 3.1 cuts out
+  termo, mazo, mates
   → Muse Image makes the background; "Hay un mate de más. Es tuyo." and the QR are drawn in
   code. Preview: "Así queda tu volante" [Imprimir o compartir]. Phone app only (no face
   detection on web): the web app says "Hacelo desde la app del teléfono".

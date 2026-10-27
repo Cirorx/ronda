@@ -10,10 +10,13 @@ issues, docs, code, commit messages.
 | `Pretext` | actividad | What the ronda does: mate on the rambla, truco, fútbol 5, caminata |
 | `Slot` | día y horario | Weekday plus a time band (mañana / tarde / noche) |
 | `Barrio` | barrio | The neighbourhood; distance is measured between barrio centroids |
-| `AgeBand` | edad ("sesenta y pico") | The only age data Ronda keeps; never a birth date |
+| `AgeBand` | edad ("sesenta y pico") | The only age data Ronda keeps; never a birth date. Values: `18-29`, `30-39`, `40-49`, `50-59`, `60-69`, `70-79`, `80+` |
 | `Brings` | lo que traés | What a member brings or teaches (pan, termo, enseño truco, tengo ganas); how people are known |
 | `Needs` | lo que te complica ir | What makes taking part hard (caminar mucho, subir escaleras, volver de noche, no tengo auto). Lives only on the phone |
-| `Seat` | lugar | One place in a ronda. A seat is *eligible* for a member when it passes their needs filter |
+| `Seat` | lugar | One place in a ronda. A seat is *eligible* for a member when it passes their needs filter. Its id is the ronda's key, `{barrio}_{pretext}_{slot}` |
+| `Need` | (one item of lo que te complica ir) | `walkALot`, `climbStairs`, `returnAfterDark`, `noCar`; stored by these names on the phone |
+| `SeatFacts` | (none) | What the filter knows about a seat: `walkDistance`, `hasStairs`, `endsAfterDark`, `needsCar` |
+| `WalkDistance` | a pocas cuadras | `near` ≤ 5 blocks, `medium` ≤ 10, `far` beyond; "caminar mucho" drops far |
 | `Waitlist` | lista de espera | Neighbours waiting for the same barrio × pretext × slot; opens a ronda at the threshold |
 | `Threshold` | "hay 4 anotados y hacen falta 6" | Six on a waitlist by a deadline starts a new ronda |
 | `Proposal` | propuesta | The solver's grouping, waiting for the owner's approval, with a rejected alternative |

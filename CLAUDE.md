@@ -46,8 +46,10 @@ changes inside `notes/` (`git -C notes commit`); there is nothing to push.
   Write everything fresh in the window: no code from earlier projects, Farolito included.
 - The repo is public. Commit only invented demo data, labelled as such. Keys live in `.env` and
   Cloud Functions config; member data, phone numbers, voice notes and photos stay out of git.
-- Runtime models are Meta's only: Voice Transcribe, Muse Spark 1.3, Muse Spark Open (Baseten),
-  SAM 3.1, Muse Image.
+- Every AI job Meta offers runs on Meta: Voice Transcribe, Muse Spark 1.3, Muse Spark Open
+  (Baseten), SAM 3.1, Muse Image. A platform model is used only for a job Meta has no model for,
+  only on the phone, and is named in the README: ML Kit face detection and the phone's own
+  text-to-speech. Speech recognition is always Voice Transcribe.
 - Data with rights only: Open-Meteo (CC BY 4.0), DNT GTFS, OpenStreetMap (ODbL, attributed).
 - Matching uses slot, distance, pretext and age band. Ronda is neighbourhood infrastructure:
   no health framing, no personality, nothing political.

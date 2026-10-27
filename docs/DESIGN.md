@@ -27,6 +27,13 @@ birome `#93A6FF`, yerba `#5CC48E`, ámbar `#E2A53D`, margen `#E07A72`, line `#2E
 `#A3ADBF`, birome tint `#1C2440`. Define every colour as a token in both. The component sheet on
 the screen canvas shows each token and component.
 
+Added by the `ronda_ui` build (2026-10-27): birome pressed `#1A3196`, neutral fill `#EEF0F4`,
+control off (switch track) `#8792A6`; dark values derived by mixing over dark paper: danger
+`#F07C72`, ámbar tint `#2A2416`, yerba tint `#15291F`, neutral tint `#1A2234`, birome pressed
+`#7189F0`, neutral fill `#1F2638`, control off `#6B7489` (confirmed by the owner 2026-10-27). Radii 8/10/12/16/22.
+Selected chips show a check as well as colour (colour alone fails WCAG 1.4.1). The time grid
+turns into per-day chips from 1.5× text.
+
 Type: **Young Serif** for titles only; **Atkinson Hyperlegible** for everything else (designed for
 low-vision readers). Body 17–18 sp. Tabular figures for times. Spacing 4/8/12/16/24/32; card
 radius 12; buttons radius 12, height ≥ 48 dp.

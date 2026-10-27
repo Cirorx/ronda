@@ -21,7 +21,7 @@ Phone (Flutter: iOS, Android, web)
   ├─ needs → local filters → eligible seat ids → Firestore
   ├─ face blur (ML Kit) → upload blurred photo
   └─ FCM pushes in; RSVP / attendance / reports out
-Firebase (southamerica-east1; Auth itself runs in the US; Spark plan, so where Functions and Storage live is #35)
+Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign-in off)
   ├─ Firestore: users, rondas, weeks, waitlists, proposals, reports, acta, agent_runs
   ├─ Storage: audio + blurred photos; deleted on success, hourly sweeper, lifecycle as backstop
   ├─ Functions (Python 3.13, 2nd gen):
@@ -55,6 +55,10 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   buddyUid?, terms {version, acceptedAt}, createdAt. Sign-in is Google: no phone number is held. **Never:** address, cédula, birth
   date, lives-alone, nationality, mood, needs.
 - `users/{uid}/private/eligible`: seatIds[] (written by the phone; read by the solver only).
+- Seat facts the server publishes for the phone's filter, one per seat: `seatId`, `walkDistance`
+  (near ≤ 5 blocks, medium ≤ 10, far beyond, from barrio centroids), `hasStairs`, `endsAfterDark`
+  (the slot's end against that day's Open-Meteo sunset) and `needsCar`. The phone returns only
+  the ids that pass.
 - `users/{uid}/tokens/{token}`: platform (android | ios | web), updatedAt. The sender builds a
   different payload per platform (`docs/STACK.md` § Push).
 - Rules reject any user write that carries a `needs`, mood or audio field.
@@ -80,12 +84,25 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 
 ## Solver (Python, OR-Tools CP-SAT)
 
-- Runs per season and on refill (ronda at 4) or merge (ronda at 3), never weekly.
+Built in `solver/` (#23): pure Python, JSON in and out, no Firebase imports. The contract,
+weights and limits are in `solver/README.md`; every rule name and number is in
+`solver/ronda_solver/rules.py`.
+
+- Runs per season and on refill (ronda at 4) or merge (ronda at 3), never weekly. Only the season
+  run is built: there is no input for existing rondas yet.
+- Candidate rondas are barrio × pretext × slot, one per key. A seat id is that key,
+  `{barrio}_{pretext}_{slot}`, so the phone can send eligible ids before any ronda exists.
 - Hard: a person only in seats from their eligible set; slot and pretext match; distance by
-  barrio centroid under ~10 blocks; avoid pairs never together.
-- Soft (weighted): ≥ 2 per age band; size by activity; +1 pair together; ≤ 1 +1 pair per ronda;
-  cross-age truco partners; open a nearby ronda before seating far.
-- Output: proposals + the best rejected alternative with the rule it broke (shown to Ciro).
+  barrio centroid ≤ 10 blocks; avoid pairs never together; one ronda each; a ronda opens only
+  within its size bounds (fútbol 8–10, every other pretext 4–6).
+- Soft (weighted): nobody the only one of their age group (under 30, 30–59, 60+); shortfall from
+  the target size (fútbol 10, truco 6, others 5); +1 pair together; ≤ 1 +1 pair per ronda;
+  cross-age truco partners (weight 0 switches it off, #9); open a nearby ronda before seating far.
+- Output: proposals + the best rejected alternative with the rule it broke (shown to Ciro); a
+  checker re-verifies every hard rule on any output.
+- Time: 8 s for the solve, then 2 s for the alternative. 200 invented people: optimal in 6–9 s
+  on 8 cores; on 1–4 cores the limit stops it 1–5 seats short of optimal, so size the function
+  in #25 by cores.
 
 ## Organiser agent
 

@@ -10,7 +10,7 @@ vgv-ai-flutter-plugin skills (`layered-architecture`, `bloc`, `material-theming`
 | Tool | Version | Note |
 |---|---|---|
 | Flutter / Dart | 3.47.8 / 3.13.7 (stable 2026-10-23) | This Mac has 3.47.1: `flutter upgrade` |
-| Android | minSdk 24, compile/target 36, AGP ≥ 8.11.1, core-library desugaring on | FlutterFire BoM 35 and flutter_local_notifications set the floors |
+| Android | minSdk 24, compile/target 36, AGP ≥ 8.11.1, Kotlin 2.3.20 (`compilerOptions` DSL, not `kotlinOptions`), core-library desugaring on | FlutterFire BoM 35 and flutter_local_notifications set the floors; `firebase-auth` 25.0.0 ships Kotlin 2.4 metadata, which Kotlin 2.2 can't read (checked 2026-10-27); Flutter 3.47.8 warns that AGP 9.0.1 and Gradle 9.1 will soon be required |
 | iOS | deployment target 15.5 (ML Kit), armv7 excluded in the Podfile | CocoaPods still used for ML Kit and flutter_tts |
 | Python (functions, scripts) | 3.13 (`uv python install 3.13`) | Firebase Python functions run 3.10–3.13; this Mac's 3.14 won't deploy |
 | firebase-tools | 15.34.1 via npm | Installed under nvm's node 26, but the Hosting emulator (`superstatic`) supports node 20, 22 and 24 only: run the emulators under node 24 (`nvm install 24`, `nvm use 24`, reinstall firebase-tools there) |
@@ -27,9 +27,11 @@ contents to the repo root, keeping Ronda's `.gitignore` rules and `LICENSE`. Che
 the template already ships what this file asks for:
 
 - `material_ui`, Bloc, `bloc_lint`, `very_good_analysis`, `mocktail`, `bloc_test`, Dart ^3.13.
-- Flavors `main_development.dart`, `main_staging.dart`, `main_production.dart` over one
-  `bootstrap.dart`. Ronda uses **development = emulators** and **production = the real project**;
-  delete staging.
+- Flavors over one `bootstrap.dart`: **development** (emulators) and **production** (the real
+  project); staging is removed. There is no `lib/main.dart`, so every command names its target:
+  `flutter run --flavor development -t lib/main_development.dart` on a phone,
+  `flutter run -d chrome -t lib/main_development.dart` on web (no `--flavor`),
+  `flutter build web -t lib/main_production.dart`.
 - l10n: `lib/l10n/arb/app_en.arb` + `app_es.arb`, generated into `lib/l10n/gen/`, read through
   `context.l10n` (`lib/l10n/l10n.dart`). Add `app_es_419.arb` = `{"@@locale": "es_419"}`.
 - `test/helpers/pump_app.dart` with the localization delegates.
@@ -61,7 +63,7 @@ Target package map (create each when its first feature needs it, with the Very G
 |---|---|---|---|
 | `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
 | `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `rsvp`, `run_job`) | #13 |
-| `device_store` | Data | flutter_secure_storage (needs) and shared_preferences (flags) | #18 |
+| `device_store` | Data | flutter_secure_storage (needs); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
 | `face_blur` | Data | ML Kit face detection + `image` pixelation (native only) | #30 |
@@ -74,7 +76,8 @@ Target package map (create each when its first feature needs it, with the Very G
 Rules the agents apply (from `layered-architecture` and `bloc`):
 - Bootstrap (`main_<flavor>.dart` / `bootstrap.dart`) builds every data client and repository and
   hands the repositories to `App`, which exposes them with `MultiRepositoryProvider`. Only
-  entrypoints and bootstrap import a data package.
+  entrypoints and bootstrap import a data package. A new repository is a new named parameter of
+  `AppBuilder` and of `App`.
 - Repositories receive every source through the constructor, import no other repository, and
   turn wire models into domain models. Business rules live in Cubits.
 - Path dependencies between local packages; every package exports through its barrel file.
@@ -84,6 +87,9 @@ Rules the agents apply (from `layered-architecture` and `bloc`):
   `build`. Cubits talk to each other only through repositories or the UI.
 
 ## Theme and copy (from `material-theming` and `internationalization`)
+- Names in `ronda_ui`: `AppColors` (token constants), `RondaPalette` (the ThemeExtension, read with
+  `context.rondaPalette`), `AppTextStyle`, `AppSpacing`, `AppRadius` (8/10/12/16/22), `AppTheme`.
+  `material_ui` 1.8.0's `inputDecorationTheme` takes `InputDecorationThemeData`.
 - `ronda_ui` maps the DESIGN.md tokens onto two `ColorScheme`s (light and dark: paper → surface,
   ink → onSurface, birome → primary, yerba → tertiary, ámbar → secondary) inside `AppTheme.light`
   / `AppTheme.dark`, passed to `MaterialApp` as `theme` / `darkTheme`. Yerba, ámbar and margen also
@@ -103,7 +109,22 @@ dart and very_good_cli MCP tools. Coverage target **100%** for `packages/*`, **�
 (`lib/l10n/gen/**` and `*.g.dart` excluded). Tests follow the `testing` skill: groups that read
 as sentences, `late` + `setUp` inside groups, private `_Mock` classes, `pumpApp`, `MockCubit` in
 widget tests, goldens tagged `TestTag.golden` for the three hero screens (read-back, Mi ronda
-card, flyer).
+card, flyer). MCP quirks: `analyze_files` needs absolute `file:` URIs (relative paths silently
+report "No errors"), `dart_format` takes relative paths, and `check_ignore` is rejected for
+Flutter projects, so `// coverage:ignore` has no effect there (passing it fails the whole run
+with exit 64).
+- Coverage counts only files a test imports: `bootstrap.dart` and `main_*.dart` have no test (as
+  in the VGV template), so the web and development APK builds are what prove the wiring.
+- The app's `pumpApp` pumps `AppTheme.light` and the es-419 locale, like ronda_ui's helper, so
+  page tests see what the app shows.
+- Golden test files carry library-level `@Tags(['golden', 'skip_very_good_optimization'])` as
+  string literals: the very_good optimizer merges test files and its golden comparator then
+  crashes, and both the optimizer and the runner read only literal file-level tags.
+- Maestro identifiers sit on the node that has the tap action:
+  `MergeSemantics(child: Semantics(identifier: …, child: button))`; when the spoken label must
+  differ from the visible text, `Semantics(container: true, identifier: …, label: …, button: true,
+  onTap: …, excludeSemantics: true)`. A bare `Semantics(identifier:)` lands on a wrapper with no
+  action.
 
 ## Security (from `static-security`)
 - Meta and Baseten keys exist only in Cloud Functions config. The app ships Firebase's web/app
@@ -113,10 +134,24 @@ card, flyer).
   only flags such as "onboarding seen".
 - Logs carry ids and type names: phone numbers, names, transcripts, needs and FCM tokens stay
   out of `log()`, `debugPrint()` and the BlocObserver.
-- Form fields (first name, phone number) are validated `formz` inputs held in Cubit state; the
+- Form fields (first name) are validated `formz` inputs held in Cubit state; the
   submit reads state, never a `TextEditingController`.
 - Release builds use `--obfuscate --split-debug-info`; `osv-scanner --lockfile=pubspec.lock`
   before the submission (#32).
+- **Photos leave the phone without location or faces, in this order:** `flutter_image_compress`
+  first (long side 1600 px, `keepExif: false`, `autoCorrectionAngle: true`), so the pixels are
+  upright and carry no EXIF; ML Kit on a ≥ 2400 px copy made the same way (`accurate`,
+  `minFaceSize` ≈ 0.03, boxes padded 25%); `image` pixelates in `Isolate.run`, then
+  `image.exif = ExifData()` before `encodeJpg` (the `image` package otherwise writes EXIF back,
+  and `image_picker` on Android copies GPS tags onto its resized file); the server re-saves with
+  Pillow without EXIF as a backstop. Check with `exiftool -a -G1` on a camera photo with
+  location on.
+- **Voice:** keep WAV 16 kHz mono (Voice Transcribe takes nothing else); on Android try
+  `AndroidRecordConfig(audioSource: AndroidAudioSource.voiceRecognition)` against the default in
+  the voice eval; no denoising on the phone; log upload bytes and milliseconds per note.
+- No FFmpeg or custom native code in the app (`ffmpeg_kit_flutter` is retired and its forks are
+  GPL). If the server needs to convert audio, check `ffmpeg -version` in a deployed function
+  first; the fallback is `soundfile` + `soxr`.
 
 ## pubspec (resolved with `flutter pub get --dry-run` on 3.47.1)
 
@@ -132,6 +167,7 @@ environment:
 dependencies:
   flutter: {sdk: flutter}
   flutter_localizations: {sdk: flutter}
+  flutter_web_plugins: {sdk: flutter}   # usePathUrlStrategy()
   material_ui: ^1.8.0            # Material now ships outside the framework
   intl: ^0.20.2
   firebase_core: ^5.1.0
@@ -163,6 +199,7 @@ dev_dependencies:
   mocktail: ^1.0.5
   bloc_test: ^10.0.0
   bloc_lint: ^0.4.3
+  bloc_tools: ^0.1.0-dev.24      # from the template; CI's bloc lint
   very_good_analysis: ^11.0.0
   fake_cloud_firestore: ^4.5.0
   firebase_auth_mocks: ^0.16.0
@@ -170,7 +207,7 @@ dev_dependencies:
 flutter:
   generate: true
   uses-material-design: true
-  fonts:          # bundled from github.com/google/fonts (OFL 1.1); register OFL.txt with LicenseRegistry
+  fonts:          # bundled from github.com/google/fonts (OFL 1.1); the two families have different copyright holders, so register both OFL notices with LicenseRegistry
     - family: YoungSerif
       fonts: [{asset: assets/fonts/YoungSerif-Regular.ttf}]
     - family: AtkinsonHyperlegible
@@ -191,7 +228,9 @@ stdlib `wave` module (`audioop` is gone in 3.13).
   line; no code generation.
 - **E2E: Maestro**, not Patrol or `integration_test`. Black-box YAML on the USB phone and on web,
   grants permissions on launch, and the same flows replay the golden path for the demo
-  recording. Give every tappable widget `Semantics(identifier: ...)`.
+  recording. Give every tappable widget `Semantics(identifier: ...)`, except `NavigationBar`
+  destinations: wrapping them breaks Flutter's "a tab must have a tap action" semantics check,
+  so Maestro taps tabs by their label.
 - **Other tests:** `bloc_test` + `mocktail` for cubits; `fake_cloud_firestore` for repositories;
   `pytest` for the solver and the voice eval; `@firebase/rules-unit-testing` 6.0.0 under
   `firebase emulators:exec` for rules.
@@ -206,7 +245,12 @@ stdlib `wave` module (`audioop` is gone in 3.13).
 2. gen-l10n needs `app_es.arb` (full voseo text) beside `app_es_419.arb` (just
    `{"@@locale": "es_419"}`). Strings come from `package:ronda/l10n/l10n.dart` (`context.l10n`),
    generated into `lib/l10n/gen/`; `flutter_gen` no longer exists. Map any `es_*` device locale
-   to `es_419` in `localeListResolutionCallback`.
+   to `es_419` (`resolveAppLocale()`). Use `appLocalizationsDelegates` from the same file, never
+   the generated `AppLocalizations.localizationsDelegates`: the generated list wires the
+   framework's Material localizations, not `material_ui`'s, and every non-English locale then
+   throws "No MaterialLocalizations found". Tests' `pumpApp` uses the same list, and packages use
+   `material_ui`'s `GlobalMaterialLocalizations.delegates` directly. Widget tests pump es-419 by
+   default, so a missing delegate fails in tests before it fails in the app.
 3. `cloud_functions` calls `us-central1` unless you use
    `FirebaseFunctions.instanceFor(region: 'southamerica-east1')`.
 4. `record` defaults to AAC 44.1 kHz stereo. Set `encoder: AudioEncoder.wav, sampleRate: 16000,
@@ -227,13 +271,57 @@ Store `platform` with each FCM token. iPhone web users get push only after Add t
 
 ## Native and project checklist
 
-**Firebase project `ronda-uy`** (created 2026-10-26 on the no-cost Spark plan): **Google
-sign-in** enabled (free and unlimited on Spark; Android needs the SHA-1 and SHA-256, iOS the
+**Firebase project `ronda-uy`** (Blaze, decided 2026-10-27; budget alert at $20, `max_instances`
+on every function): **Google sign-in** enabled (free and unlimited on Spark; Android needs the SHA-1 and SHA-256, iOS the
 reversed client id URL scheme, web the authorised domains); Firestore in `southamerica-east1`;
 Web Push (VAPID) key; admin custom claim for the owner. Phone/SMS sign-in stays off: it needs
-Blaze and bills per SMS. Email-link sign-in is capped at 5 emails a day on Spark. Spark has no
-Cloud Functions or Storage: where the server code runs is #35. App Check after the hackathon
-(endpoints verify the Firebase ID token meanwhile).
+Blaze and bills per SMS, so it is never enabled. Storage bucket in `southamerica-east1`. App Check
+after the hackathon (callables require `auth != null` meanwhile).
+
+**Firebase in this repo** (set up 2026-10-27, #13). Five apps are registered in `ronda-uy`: Android
+`com.ciroapps.ronda` (production) and `com.ciroapps.ronda.dev` (development), the same two
+bundle ids on iOS, and one web app both flavors share. The debug keystore's SHA-1 and SHA-256 are
+on both Android apps; the release ones are added when a release key exists.
+
+- **Generated config stays out of git:** `lib/firebase_options_development.dart`,
+  `lib/firebase_options_production.dart`, `android/app/src/<flavor>/google-services.json` and
+  `ios/config/<flavor>/GoogleService-Info.plist`. CI copies `tool/firebase_options_stub.dart`
+  (fake values) to both Dart names in the workflow's `setup:` step, so analyze and test pass on a
+  clean checkout. The app reads its config from the Dart options; the iOS plists are written but
+  not bundled (flutterfire's per-configuration build phase needs the CLI at build time and app ids
+  in `firebase.json`, so it was left out).
+- **Fresh clone:** `firebase login`, then for each flavor
+  `flutterfire configure --project=ronda-uy --platforms=android,ios,web --yes --out=lib/firebase_options_<flavor>.dart --android-package-name=<id> --android-out=android/app/src/<flavor>/google-services.json --ios-bundle-id=<id> --ios-out=ios/config/<flavor>/GoogleService-Info.plist --ios-build-config=Debug-<flavor>`
+  (`<id>` is `com.ciroapps.ronda` or `com.ciroapps.ronda.dev`). Without `--ios-build-config` the
+  CLI stops at an interactive prompt even with `--yes`. Afterwards revert what it adds to
+  `ios/Runner.xcodeproj/project.pbxproj` and the `flutter` block it writes into `firebase.json`
+  (both carry app ids). Functions: `uv venv --seed --python 3.13 functions/venv` and
+  `VIRTUAL_ENV=functions/venv uv pip install -r functions/requirements.txt`.
+- **Emulators:** `firebase emulators:start` from the repo root (auth 9099, firestore **8088**,
+  functions 5001, storage 9199, pubsub 8085, UI on :4000). Firestore is off its default 8080
+  because web dev servers often hold that port. `ping` answers at
+  `http://127.0.0.1:5001/ronda-uy/southamerica-east1/ping`. No hosting emulator, so node 26 works;
+  `.nvmrc` says 24 for when hosting joins.
+- **Which host the development app uses:** `localhost` on web and the iOS simulator, `10.0.2.2`
+  on the Android emulator, and on a USB phone `127.0.0.1` after
+  `for p in 9099 8088 5001 9199; do adb reverse tcp:$p tcp:$p; done`, passed as
+  `--dart-define=FIREBASE_EMULATOR_HOST=127.0.0.1`. The development flavor's
+  `network_security_config.xml` allows cleartext to those three hosts only; production keeps
+  Android's default.
+
+**Google sign-in against the Auth emulator** (checked 2026-10-27 in the Firebase docs, the
+FlutterFire 7.0.1 plugin source, the iOS SDK source and the Android SDK 25.0.0 binary):
+
+| Platform | Flow (`GoogleSignInFlow`) | Reaches the emulator? |
+|---|---|---|
+| Web | `signInWithPopup(GoogleAuthProvider())` | Yes: the popup is the emulator's "Sign-in with Google.com" picker. Tried on Chrome: user created, app on Mi ronda |
+| Android | `signInWithProvider(GoogleAuthProvider())` | Yes: FlutterFire calls `startActivityForSignInWithProvider`; with `useAuthEmulator` set, `GenericIdpActivity` opens `http://<host>:9099/emulator/auth/handler…` in Chrome (seen in logcat on the Pixel 8 emulator). Needs a browser past its first run |
+| iOS | `signInWithProvider(GoogleAuthProvider())` | Yes by source: FlutterFire builds an `OAuthProvider("google.com")`, and the iOS SDK swaps `https://<authDomain>/__/auth/handler` for `http://<host>/emulator/auth/handler` when an emulator is set. Not run yet |
+| Android, iOS (opt-in) | `signInWithCredential(GoogleAuthProvider.credential(idToken: '{"sub":…,"email":…,"email_verified":true}'))` | Yes: the emulator takes a literal JSON string as the Google id token (Firebase docs, "Connect your app to the Authentication Emulator"). Signs in as `vecina@example.com` with no picker; `--dart-define=EMULATOR_GOOGLE_CREDENTIAL=true` on `main_development.dart` only. Tried on the Pixel 8 emulator |
+
+`main_production.dart` can only pass `popup` (web) or `provider` (phones); the real project
+rejects the unsigned token anyway. On iOS the provider flow against the real project also needs the
+reversed client id (or the encoded app id) as a URL scheme in `Info.plist`, per flavor.
 
 **Android:** SHA-1 and SHA-256 (debug and release) in the console; manifest: `RECORD_AUDIO`,
 `POST_NOTIFICATIONS` (ask at runtime on 13+), the FLN `ActionBroadcastReceiver`, the TTS
@@ -246,10 +334,12 @@ Firebase; Push + Background Modes (remote notifications); Encoded App ID URL sch
 localised in `es.lproj/InfoPlist.strings`; Podfile 15.5 + armv7 excluded; the
 `UNUserNotificationCenter` delegate line.
 
-**Web:** HTTPS (mic, secure storage); `usePathUrlStrategy()`; Hosting SPA rewrite for the app,
-separate plain-HTML pages; ask notification permission only from a tap.
+**Web:** HTTPS (mic, secure storage); `usePathUrlStrategy()`; the Flutter app is built with
+`--base-href /app/` and served under `/app` with an SPA rewrite, so its `/app/cerca` route never
+collides with the public plain-HTML `/cerca` and `/f/{id}` pages; ask notification permission only
+from a tap.
 
-**Needs on the phone:** one JSON blob in flutter_secure_storage with
+**Needs on the phone:** one JSON blob under the key `needs`, shaped `{"needs":["walkALot","noCar"]}` (the `Need` enum names, so renaming a value loses what phones saved), in flutter_secure_storage with
 `IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device)`. On web it is
 experimental: say "lo sabe solo este navegador".
 
