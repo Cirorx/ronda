@@ -1,0 +1,48 @@
+name: ronda
+description: Weekly groups of neighbours, a few blocks from home.
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ^3.47.0
+
+dependencies:
+  auth_repository:
+    path: packages/auth_repository
+  bloc: ^9.2.1
+  cloud_firestore: ^7.1.0
+  cloud_functions: ^7.0.1
+  device_store:
+    path: packages/device_store
+  equatable: ^2.0.7
+  firebase_auth: ^7.0.1
+  firebase_core: ^5.1.0
+  firebase_storage: ^14.0.1
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.1
+  flutter_localizations:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  go_router: ^18.1.1
+  intl: ^0.20.2
+  material_ui: ^1.8.0
+  needs_repository:
+    path: packages/needs_repository
+  ronda_ui:
+    path: packages/ronda_ui
+
+dev_dependencies:
+  bloc_lint: ^0.4.3
+  bloc_test: ^10.0.0
+  bloc_tools: ^0.1.0-dev.24
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+  very_good_analysis: ^11.0.0
+
+flutter:
+  generate: true
+  uses-material-design: true

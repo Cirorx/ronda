@@ -1,0 +1,11 @@
+rules_version = '2';
+
+// Deny by default. Audio and blurred-photo uploads open their own paths with
+// the features that need them (voice onboarding, face blur).
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

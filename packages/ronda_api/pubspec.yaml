@@ -1,0 +1,20 @@
+name: ronda_api
+description: Ronda data client over Firestore and the Cloud Functions callables.
+version: 0.1.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ^3.47.0
+
+dependencies:
+  cloud_firestore: ^7.1.0
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  fake_cloud_firestore: ^4.5.0
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+  very_good_analysis: ^11.0.0

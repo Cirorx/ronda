@@ -1,0 +1,18 @@
+{
+    "@@locale": "es",
+    "appTitle": "Ronda",
+    "myRondaTabLabel": "Mi ronda",
+    "cercaTabLabel": "Cerca",
+    "settingsTabLabel": "Ajustes",
+    "myRondaPlaceholder": "Estamos armando tu grupo",
+    "cercaPlaceholder": "Todavía no hay grupos acá",
+    "settingsPlaceholder": "Acá vas a poder tomarte unas semanas, cambiarte de grupo o dejar Ronda.",
+    "loginTitle": "Primero, entrá con tu cuenta",
+    "loginNoPosting": "No publicamos nada en tu cuenta",
+    "loginNoContacts": "No vemos tus contactos, tus fotos ni tus mails",
+    "loginFirstNameOnly": "En Ronda te conocen solo por tu nombre de pila",
+    "loginGoogleButton": "Seguir con Google",
+    "loginNoGoogleAccount": "¿No tenés cuenta de Google? Te ayudamos a crear una en un minuto.",
+    "loginNetworkError": "Sin conexión. Probá de nuevo cuando tengas señal.",
+    "loginError": "No pudimos hacerte entrar. Probá de nuevo."
+}

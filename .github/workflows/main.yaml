@@ -1,0 +1,70 @@
+name: ronda
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  semantic-pull-request:
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/semantic_pull_request.yml@v1
+
+  build:
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
+    with:
+      flutter_version: "3.47.x"
+      run_bloc_lint: true
+      min_coverage: 90
+      coverage_excludes: "lib/l10n/gen/*.dart"
+      # The generated Firebase options are git-ignored; stand in fake ones.
+      setup: |
+        cp tool/firebase_options_stub.dart lib/firebase_options_development.dart
+        cp tool/firebase_options_stub.dart lib/firebase_options_production.dart
+
+  packages:
+    strategy:
+      matrix:
+        package:
+          - packages/auth_repository
+          - packages/device_store
+          - packages/needs_repository
+          - packages/ronda_api
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
+    with:
+      flutter_version: "3.47.x"
+      working_directory: ${{ matrix.package }}
+
+  ronda_ui:
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
+    with:
+      flutter_version: "3.47.x"
+      working_directory: packages/ronda_ui
+      # Goldens are recorded on macOS; Linux renders text differently.
+      runs_on: macos-latest
+
+  solver:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: solver
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest --cov
+
+  spell-check:
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/spell_check.yml@v1
+    with:
+      includes: |
+        **/*.md
+      modified_files_only: false

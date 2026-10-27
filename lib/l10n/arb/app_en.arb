@@ -1,0 +1,63 @@
+{
+    "@@locale": "en",
+    "appTitle": "Ronda",
+    "@appTitle": {
+        "description": "App name, used as the window and browser tab title"
+    },
+    "myRondaTabLabel": "My ronda",
+    "@myRondaTabLabel": {
+        "description": "Label of the tab with this week's ronda card"
+    },
+    "cercaTabLabel": "Nearby",
+    "@cercaTabLabel": {
+        "description": "Label of the tab with groups that have open places nearby"
+    },
+    "settingsTabLabel": "Settings",
+    "@settingsTabLabel": {
+        "description": "Label of the settings tab"
+    },
+    "myRondaPlaceholder": "We're putting your group together",
+    "@myRondaPlaceholder": {
+        "description": "Shown on the My ronda tab before a group exists"
+    },
+    "cercaPlaceholder": "No groups here yet",
+    "@cercaPlaceholder": {
+        "description": "Shown on the Nearby tab while there are no groups nearby"
+    },
+    "settingsPlaceholder": "Here you'll be able to take a few weeks off, switch groups or leave Ronda.",
+    "@settingsPlaceholder": {
+        "description": "Placeholder on the Settings tab until the options are built"
+    },
+    "loginTitle": "First, sign in with your account",
+    "@loginTitle": {
+        "description": "Heading of the sign-in screen, shown after the person picks how to join"
+    },
+    "loginNoPosting": "We never post anything to your account",
+    "@loginNoPosting": {
+        "description": "First reassurance on the sign-in screen"
+    },
+    "loginNoContacts": "We don't see your contacts, your photos or your emails",
+    "@loginNoContacts": {
+        "description": "Second reassurance on the sign-in screen"
+    },
+    "loginFirstNameOnly": "In Ronda people know you only by your first name",
+    "@loginFirstNameOnly": {
+        "description": "Third reassurance on the sign-in screen"
+    },
+    "loginGoogleButton": "Continue with Google",
+    "@loginGoogleButton": {
+        "description": "The only sign-in button: signs in with a Google account"
+    },
+    "loginNoGoogleAccount": "No Google account? We'll help you make one in a minute.",
+    "@loginNoGoogleAccount": {
+        "description": "Note under the sign-in button for people without a Google account"
+    },
+    "loginNetworkError": "No connection. Try again when you have signal.",
+    "@loginNetworkError": {
+        "description": "Shown when sign-in fails for lack of connection"
+    },
+    "loginError": "We couldn't sign you in. Try again.",
+    "@loginError": {
+        "description": "Shown when sign-in fails for any reason other than connection or cancelling"
+    }
+}
