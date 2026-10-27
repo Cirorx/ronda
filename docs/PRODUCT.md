@@ -1,6 +1,6 @@
 # Product spec (features in the 9-day build)
 
-Visual reference: the screen canvas (59 phone screens; link in `notes/HANDOFF.md`, local only).
+Visual reference: the screen canvas (link in `notes/HANDOFF.md`, local only).
 The older planilla mockups (`notes/planilla/index.html`) show the research, not the current UI.
 Copy below is the real UI copy (rioplatense voseo); English UI mirrors it. Names, places and
 dates in the examples are demo data. Everything not listed here is out of the build.
@@ -84,7 +84,7 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 
 ## The weekly loop
 - **Tuesday 19:00 RSVP push:** "Jueves 16:00 · mate frente al quiosco" / "Ya van Mirta, Jorge,
-  Ana y Facu. Te toca llevar el pan. Después, si querés, bizcochos en lo de Rosa. ¿Venís?"
+  Ana y Facu. Te toca llevar el pan. Después, si querés, bizcochos en lo de Mirta. ¿Venís?"
   [Voy] [Esta no]. One push a week. Members stay in by default.
 - **The card after "Voy":** "Vas. Llevá el pan." "Te esperan el jueves a las 16." with
   "Cambiar mi respuesta". Counts: "Van 4 · 1 no puede · falta tu respuesta".
@@ -103,7 +103,13 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 - **Bench:** every "esta no" pings the next person on the bench with a deadline: "Se liberó un
   lugar para hoy. Truco en el Club Lagomar, martes 19:30. Estabas en la lista de espera. ¿Lo
   tomás? Tenés hasta las 17:00." [Lo tomo] [Esta vez no]. No fines, ever.
-- **Después:** one optional 20-minute after-spot on every ronda card ("Después, si querés").
+- **Después:** an optional 20-minute after-spot, set each week by the host: "¿Hay después esta
+  semana?" [Esta semana no] [a public place nearby] [En lo de alguien del grupo] ("si esa
+  persona quiere"). A home is allowed only for the después, never for the ronda itself. It
+  shows only to that ronda's members (card and push; never Cerca, the seat page or public
+  pages). Ronda keeps the label ("bizcochos en lo de Mirta"), never the address: "Lo ven solo
+  los de este grupo. Ronda no guarda la dirección: pasala vos por WhatsApp." Members read
+  "Después, si querés: bizcochos en lo de Mirta (20 min). La dirección te la pasa ella."
 - **Attendance:** "¿Quién vino hoy?" — the host taps [Vino] / [No vino] per person; "Nadie más
   ve esta lista." No check-in codes.
 - **Buddy:** chosen after the first ronda: "Si un día faltás sin avisar, ¿a quién le avisamos?"
@@ -188,7 +194,8 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 - Ciro's queue puts anyone reported in two rondas on top; actions [Sacar de Ronda]
   [Separarlos], or for small things [Pasarle a Mirta] [Archivar]. Report-apart pairs never
   seated together. The agent may only move a ronda to a public place in OSM, host confirms.
-- Public places, adults only. Helpline in Ajustes: "¿Necesitás hablar con alguien ahora?"
+- The ronda always meets in a public place, adults only; only the después may be at a home,
+  when the host sets it. Helpline in Ajustes: "¿Necesitás hablar con alguien ahora?"
   Línea de Prevención del Suicidio 0800 0767 / *0767, Emergencias 911.
 
 ## Your data and leaving

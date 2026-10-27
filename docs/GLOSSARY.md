@@ -23,7 +23,7 @@ issues, docs, code, commit messages.
 | `Anfitrion` | abre ("llega primero") | The host who opens the meeting this month |
 | `Cola` | cierra ("se queda al final") | The co-host who closes; asked first when the anfitrión can't |
 | `Bench` | banco | Ordered neighbours who take a seat freed by an "esta no" that week |
-| `Despues` | después | The optional 20-minute after-spot on every ronda card |
+| `Despues` | después | The optional 20-minute after-spot the host sets each week; may be a member's home, shown only to that ronda, address never stored |
 | `Buddy` | tu persona de confianza | The member someone chose to write to them after one missed week |
 | `Acta` | lo que hizo el programa | The members' log of every organiser-agent action, with "Algo estuvo mal" |
 | `AgentRun` | (admin only) | One run of the organiser agent; its steps are the trace |

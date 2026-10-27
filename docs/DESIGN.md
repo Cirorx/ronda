@@ -2,7 +2,7 @@
 
 **Direction: the barrio's own paper.** Ronda should look like a notice at the almacén, the
 ruled sign-up sheet and a tear-off flyer, not like a social app. The flyers, the printed planilla
-and the app then read as one thing. The screen canvas (59 phone screens, link in `notes/HANDOFF.md`,
+and the app then read as one thing. The screen canvas (link in `notes/HANDOFF.md`,
 local only) is the visual spec; the older planilla mockups (`notes/planilla/index.html`) show the
 research.
 

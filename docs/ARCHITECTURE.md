@@ -60,7 +60,8 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 - Rules reject any user write that carries a `needs`, mood or audio field.
 - `rondas/{id}`: pretext, barrio, slot {day, time}, place {name, landmark, lat, lng} (public
   places only), size, status (forming | active | paused | ended), hosts {anfitrion, cola,
-  rotatesOn}, despues, season {start, end}, openSeatFromWeek: 4.
+  rotatesOn}, despues {kind: none | place | home, label} (members-only read; a label, never an
+  address), season {start, end}, openSeatFromWeek: 4.
 - `rondas/{id}/members/{uid}`: brings, state (active | paused | left), joinedAt.
 - `rondas/{id}/weeks/{isoWeek}`: date, placeOverride?, rsvp {uid: yes | no}, attendance
   {uid: bool}, plan {uid: item}, seguimos {uid: yes | no} (week 1 only).
@@ -97,7 +98,8 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 - Two humans in the loop: Ciro approves groups; the host decides moves; the buddy writes the
   check-in in their own words.
 - Gates in code (not prompt): quiet hours 21:00–09:00, bot disclosure, no emoji, voseo, one
-  routine push a week, public places only. ("Ronda nunca pide plata" is in the terms and on the
+  routine push a week, public places only for the ronda itself (the host may set a home
+  for the después). ("Ronda nunca pide plata" is in the terms and on the
   flyers, not in messages.)
 
 ## Data sources and licences
