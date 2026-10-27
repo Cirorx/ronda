@@ -97,7 +97,8 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 - Two humans in the loop: Ciro approves groups; the host decides moves; the buddy writes the
   check-in in their own words.
 - Gates in code (not prompt): quiet hours 21:00–09:00, bot disclosure, no emoji, voseo, one
-  routine push a week, the no-money line, public places only.
+  routine push a week, public places only. ("Ronda nunca pide plata" is in the terms and on the
+  flyers, not in messages.)
 
 ## Data sources and licences
 

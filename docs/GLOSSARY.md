@@ -27,6 +27,6 @@ issues, docs, code, commit messages.
 | `Buddy` | tu persona | The member someone chose to write to them after one missed week |
 | `Acta` | lo que hizo el bot | The members' log of every organiser-agent action, with "Algo estuvo mal" |
 | `AgentRun` | (admin only) | One run of the organiser agent; its steps are the trace |
-| `Gate` | (none) | A rule in code that every outgoing message passes (quiet hours, no emoji, voseo, bot disclosure, no-money line) |
+| `Gate` | (none) | A rule in code that every outgoing message passes (quiet hours, no emoji, voseo, bot disclosure, one routine push a week) |
 | `Flyer` | afiche | Paper growth: the tear-off flyer and "Hay un mate de más" |
 | `Cerca` | cerca tuyo | The public no-login page of open seats and waitlists by barrio |

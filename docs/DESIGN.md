@@ -35,8 +35,8 @@ radius 12; buttons radius 12, height ≥ 48 dp.
 4. **Objects, not people.** A small line-icon set of ronda objects (mate, termo, pelota, mazo,
    bizcochos, sillas) doubles as "lo que traés" and as flyer art. People are initials.
 5. **Copy is the interface.** Voseo, short, verb first; never the word "IA". "Ronda nunca pide
-   plata" is said where it earns its place, not as a footer: the terms ("Ronda es gratis"), the
-   flyers, and the outgoing messages under the gates. App screens don't repeat it.
+   plata" is said where it earns its place: the terms ("Ronda es gratis") and the printed
+   flyers. App screens and messages, routine pushes included, don't repeat it.
 6. **Calm motion.** Only state changes animate (a seat filling, a confirmation); respect reduced
    motion.
 
