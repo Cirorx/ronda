@@ -1,0 +1,39 @@
+[project]
+name = "ronda-solver"
+version = "0.1.0"
+description = "Ronda's group solver: candidate rondas in JSON, proposals out (OR-Tools CP-SAT). No Firebase imports."
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "ortools==9.15.6755",
+    # Pinned with ortools: only 6.33.5/6.33.6 satisfy both ortools and google-cloud-firestore.
+    "protobuf==6.33.6",
+]
+
+[dependency-groups]
+dev = ["pytest", "pytest-cov", "ruff"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+# ortools' protobuf bindings use `~` on a bool at import time (Python 3.13 deprecation).
+filterwarnings = ["ignore:Bitwise inversion:DeprecationWarning"]
+
+[tool.coverage.run]
+source = ["ronda_solver", "bench"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+exclude_also = ['if __name__ == "__main__":']
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+allowed-confusables = ["×"]  # barrio × pretext × slot, as in docs/GLOSSARY.md

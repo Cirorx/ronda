@@ -1,0 +1,1336 @@
+{
+  "_note": "Invented demo data: no real people. Barrio names are real places in Ciudad de la Costa with approximate, invented centroids.",
+  "barrios": {
+    "shangrila": {
+      "lat": -34.866,
+      "lng": -55.993
+    },
+    "san-jose-de-carrasco": {
+      "lat": -34.856,
+      "lng": -55.976
+    },
+    "lagomar-sur": {
+      "lat": -34.842,
+      "lng": -55.962
+    },
+    "lagomar-norte": {
+      "lat": -34.8345,
+      "lng": -55.9665
+    },
+    "solymar-sur": {
+      "lat": -34.833,
+      "lng": -55.938
+    },
+    "solymar-norte": {
+      "lat": -34.8255,
+      "lng": -55.942
+    },
+    "lomas-de-solymar": {
+      "lat": -34.815,
+      "lng": -55.945
+    },
+    "el-pinar-sur": {
+      "lat": -34.8,
+      "lng": -55.885
+    },
+    "el-pinar-norte": {
+      "lat": -34.7925,
+      "lng": -55.889
+    }
+  },
+  "people": [
+    {
+      "uid": "demo-001",
+      "ageBand": "70-79",
+      "barrio": "el-pinar-sur",
+      "pretexts": [
+        "futbol5"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sun-afternoon"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_futbol5_sat-afternoon",
+        "shangrila_futbol5_sun-afternoon",
+        "san-jose-de-carrasco_futbol5_sat-afternoon",
+        "san-jose-de-carrasco_futbol5_sun-afternoon",
+        "lagomar-sur_futbol5_sat-afternoon",
+        "lagomar-sur_futbol5_sun-afternoon",
+        "lagomar-norte_futbol5_sat-afternoon",
+        "lagomar-norte_futbol5_sun-afternoon",
+        "solymar-sur_futbol5_sat-afternoon",
+        "solymar-sur_futbol5_sun-afternoon",
+        "solymar-norte_futbol5_sat-afternoon",
+        "solymar-norte_futbol5_sun-afternoon",
+        "lomas-de-solymar_futbol5_sat-afternoon",
+        "lomas-de-solymar_futbol5_sun-afternoon",
+        "el-pinar-sur_futbol5_sat-afternoon",
+        "el-pinar-sur_futbol5_sun-afternoon",
+        "el-pinar-norte_futbol5_sat-afternoon",
+        "el-pinar-norte_futbol5_sun-afternoon"
+      ]
+    },
+    {
+      "uid": "demo-002",
+      "ageBand": "50-59",
+      "barrio": "shangrila",
+      "pretexts": [
+        "caminata",
+        "mate"
+      ],
+      "slots": [
+        "sun-afternoon",
+        "thu-evening"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_caminata_sun-afternoon",
+        "shangrila_caminata_thu-evening",
+        "shangrila_mate_sun-afternoon",
+        "san-jose-de-carrasco_caminata_thu-evening",
+        "lagomar-sur_caminata_sun-afternoon",
+        "lagomar-sur_caminata_thu-evening",
+        "lagomar-sur_mate_sun-afternoon",
+        "lagomar-sur_mate_thu-evening",
+        "lagomar-norte_caminata_thu-evening",
+        "lagomar-norte_mate_sun-afternoon",
+        "lagomar-norte_mate_thu-evening",
+        "solymar-sur_caminata_thu-evening",
+        "solymar-sur_mate_sun-afternoon",
+        "solymar-sur_mate_thu-evening",
+        "solymar-norte_caminata_thu-evening",
+        "solymar-norte_mate_sun-afternoon",
+        "solymar-norte_mate_thu-evening",
+        "lomas-de-solymar_caminata_sun-afternoon",
+        "lomas-de-solymar_caminata_thu-evening",
+        "lomas-de-solymar_mate_thu-evening",
+        "el-pinar-sur_caminata_sun-afternoon",
+        "el-pinar-sur_caminata_thu-evening",
+        "el-pinar-sur_mate_thu-evening",
+        "el-pinar-norte_caminata_thu-evening",
+        "el-pinar-norte_mate_sun-afternoon",
+        "el-pinar-norte_mate_thu-evening"
+      ]
+    },
+    {
+      "uid": "demo-003",
+      "ageBand": "18-29",
+      "barrio": "lagomar-sur",
+      "pretexts": [
+        "mate",
+        "truco"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sat-morning",
+        "sun-afternoon"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_mate_sat-afternoon",
+        "shangrila_mate_sat-morning",
+        "shangrila_mate_sun-afternoon",
+        "shangrila_truco_sat-afternoon",
+        "shangrila_truco_sat-morning",
+        "shangrila_truco_sun-afternoon",
+        "san-jose-de-carrasco_mate_sat-afternoon",
+        "san-jose-de-carrasco_mate_sat-morning",
+        "san-jose-de-carrasco_mate_sun-afternoon",
+        "san-jose-de-carrasco_truco_sat-afternoon",
+        "san-jose-de-carrasco_truco_sat-morning",
+        "san-jose-de-carrasco_truco_sun-afternoon",
+        "lagomar-sur_mate_sat-afternoon",
+        "lagomar-sur_mate_sat-morning",
+        "lagomar-sur_mate_sun-afternoon",
+        "lagomar-sur_truco_sat-afternoon",
+        "lagomar-sur_truco_sat-morning",
+        "lagomar-sur_truco_sun-afternoon",
+        "lagomar-norte_mate_sat-afternoon",
+        "lagomar-norte_mate_sat-morning",
+        "lagomar-norte_mate_sun-afternoon",
+        "lagomar-norte_truco_sat-afternoon",
+        "lagomar-norte_truco_sat-morning",
+        "lagomar-norte_truco_sun-afternoon",
+        "solymar-sur_mate_sat-afternoon",
+        "solymar-sur_mate_sat-morning",
+        "solymar-sur_mate_sun-afternoon",
+        "solymar-sur_truco_sat-afternoon",
+        "solymar-sur_truco_sat-morning",
+        "solymar-sur_truco_sun-afternoon",
+        "solymar-norte_mate_sat-afternoon",
+        "solymar-norte_mate_sat-morning",
+        "solymar-norte_mate_sun-afternoon",
+        "solymar-norte_truco_sat-afternoon",
+        "solymar-norte_truco_sat-morning",
+        "solymar-norte_truco_sun-afternoon",
+        "lomas-de-solymar_mate_sat-afternoon",
+        "lomas-de-solymar_mate_sat-morning",
+        "lomas-de-solymar_mate_sun-afternoon",
+        "lomas-de-solymar_truco_sat-afternoon",
+        "lomas-de-solymar_truco_sat-morning",
+        "lomas-de-solymar_truco_sun-afternoon",
+        "el-pinar-sur_mate_sat-afternoon",
+        "el-pinar-sur_mate_sat-morning",
+        "el-pinar-sur_mate_sun-afternoon",
+        "el-pinar-sur_truco_sat-afternoon",
+        "el-pinar-sur_truco_sat-morning",
+        "el-pinar-sur_truco_sun-afternoon",
+        "el-pinar-norte_mate_sat-afternoon",
+        "el-pinar-norte_mate_sat-morning",
+        "el-pinar-norte_mate_sun-afternoon",
+        "el-pinar-norte_truco_sat-afternoon",
+        "el-pinar-norte_truco_sat-morning",
+        "el-pinar-norte_truco_sun-afternoon"
+      ]
+    },
+    {
+      "uid": "demo-004",
+      "ageBand": "18-29",
+      "barrio": "solymar-sur",
+      "pretexts": [
+        "truco"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sat-morning",
+        "thu-evening"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_truco_sat-afternoon",
+        "shangrila_truco_sat-morning",
+        "shangrila_truco_thu-evening",
+        "san-jose-de-carrasco_truco_sat-afternoon",
+        "san-jose-de-carrasco_truco_sat-morning",
+        "san-jose-de-carrasco_truco_thu-evening",
+        "lagomar-sur_truco_sat-afternoon",
+        "lagomar-sur_truco_sat-morning",
+        "lagomar-sur_truco_thu-evening",
+        "lagomar-norte_truco_sat-afternoon",
+        "lagomar-norte_truco_sat-morning",
+        "lagomar-norte_truco_thu-evening",
+        "solymar-sur_truco_sat-afternoon",
+        "solymar-sur_truco_sat-morning",
+        "solymar-sur_truco_thu-evening",
+        "solymar-norte_truco_sat-afternoon",
+        "solymar-norte_truco_sat-morning",
+        "solymar-norte_truco_thu-evening",
+        "lomas-de-solymar_truco_sat-afternoon",
+        "lomas-de-solymar_truco_sat-morning",
+        "lomas-de-solymar_truco_thu-evening",
+        "el-pinar-sur_truco_sat-afternoon",
+        "el-pinar-sur_truco_sat-morning",
+        "el-pinar-sur_truco_thu-evening",
+        "el-pinar-norte_truco_sat-afternoon",
+        "el-pinar-norte_truco_sat-morning",
+        "el-pinar-norte_truco_thu-evening"
+      ],
+      "plusOneUid": "demo-005"
+    },
+    {
+      "uid": "demo-005",
+      "ageBand": "70-79",
+      "barrio": "solymar-sur",
+      "pretexts": [
+        "truco"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sat-morning",
+        "thu-evening"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_truco_sat-afternoon",
+        "shangrila_truco_sat-morning",
+        "shangrila_truco_thu-evening",
+        "san-jose-de-carrasco_truco_sat-afternoon",
+        "san-jose-de-carrasco_truco_sat-morning",
+        "san-jose-de-carrasco_truco_thu-evening",
+        "lagomar-sur_truco_sat-afternoon",
+        "lagomar-sur_truco_sat-morning",
+        "lagomar-sur_truco_thu-evening",
+        "lagomar-norte_truco_sat-afternoon",
+        "lagomar-norte_truco_sat-morning",
+        "lagomar-norte_truco_thu-evening",
+        "solymar-sur_truco_sat-afternoon",
+        "solymar-sur_truco_sat-morning",
+        "solymar-sur_truco_thu-evening",
+        "solymar-norte_truco_sat-afternoon",
+        "solymar-norte_truco_sat-morning",
+        "solymar-norte_truco_thu-evening",
+        "lomas-de-solymar_truco_sat-afternoon",
+        "lomas-de-solymar_truco_sat-morning",
+        "lomas-de-solymar_truco_thu-evening",
+        "el-pinar-sur_truco_sat-afternoon",
+        "el-pinar-sur_truco_sat-morning",
+        "el-pinar-sur_truco_thu-evening",
+        "el-pinar-norte_truco_sat-afternoon",
+        "el-pinar-norte_truco_sat-morning",
+        "el-pinar-norte_truco_thu-evening"
+      ]
+    },
+    {
+      "uid": "demo-006",
+      "ageBand": "40-49",
+      "barrio": "solymar-sur",
+      "pretexts": [
+        "mate"
+      ],
+      "slots": [
+        "sat-morning",
+        "sun-afternoon"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_mate_sat-morning",
+        "shangrila_mate_sun-afternoon",
+        "san-jose-de-carrasco_mate_sat-morning",
+        "san-jose-de-carrasco_mate_sun-afternoon",
+        "lagomar-sur_mate_sat-morning",
+        "lagomar-sur_mate_sun-afternoon",
+        "lagomar-norte_mate_sat-morning",
+        "lagomar-norte_mate_sun-afternoon",
+        "solymar-sur_mate_sat-morning",
+        "solymar-sur_mate_sun-afternoon",
+        "solymar-norte_mate_sat-morning",
+        "solymar-norte_mate_sun-afternoon",
+        "lomas-de-solymar_mate_sat-morning",
+        "lomas-de-solymar_mate_sun-afternoon",
+        "el-pinar-sur_mate_sat-morning",
+        "el-pinar-sur_mate_sun-afternoon",
+        "el-pinar-norte_mate_sat-morning",
+        "el-pinar-norte_mate_sun-afternoon"
+      ],
+      "plusOneUid": "demo-007"
+    },
+    {
+      "uid": "demo-007",
+      "ageBand": "60-69",
+      "barrio": "solymar-sur",
+      "pretexts": [
+        "mate"
+      ],
+      "slots": [
+        "sat-morning",
+        "sun-afternoon"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_mate_sat-morning",
+        "shangrila_mate_sun-afternoon",
+        "san-jose-de-carrasco_mate_sat-morning",
+        "san-jose-de-carrasco_mate_sun-afternoon",
+        "lagomar-sur_mate_sat-morning",
+        "lagomar-sur_mate_sun-afternoon",
+        "lagomar-norte_mate_sat-morning",
+        "lagomar-norte_mate_sun-afternoon",
+        "solymar-sur_mate_sat-morning",
+        "solymar-sur_mate_sun-afternoon",
+        "solymar-norte_mate_sat-morning",
+        "solymar-norte_mate_sun-afternoon",
+        "lomas-de-solymar_mate_sat-morning",
+        "lomas-de-solymar_mate_sun-afternoon",
+        "el-pinar-sur_mate_sat-morning",
+        "el-pinar-sur_mate_sun-afternoon",
+        "el-pinar-norte_mate_sat-morning",
+        "el-pinar-norte_mate_sun-afternoon"
+      ]
+    },
+    {
+      "uid": "demo-008",
+      "ageBand": "50-59",
+      "barrio": "solymar-norte",
+      "pretexts": [
+        "caminata",
+        "truco"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sat-morning"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_caminata_sat-afternoon",
+        "shangrila_caminata_sat-morning",
+        "shangrila_truco_sat-afternoon",
+        "shangrila_truco_sat-morning",
+        "san-jose-de-carrasco_caminata_sat-afternoon",
+        "san-jose-de-carrasco_caminata_sat-morning",
+        "san-jose-de-carrasco_truco_sat-afternoon",
+        "san-jose-de-carrasco_truco_sat-morning",
+        "lagomar-sur_caminata_sat-afternoon",
+        "lagomar-sur_caminata_sat-morning",
+        "lagomar-sur_truco_sat-afternoon",
+        "lagomar-sur_truco_sat-morning",
+        "lagomar-norte_caminata_sat-afternoon",
+        "lagomar-norte_caminata_sat-morning",
+        "lagomar-norte_truco_sat-afternoon",
+        "lagomar-norte_truco_sat-morning",
+        "solymar-sur_caminata_sat-afternoon",
+        "solymar-sur_caminata_sat-morning",
+        "solymar-sur_truco_sat-afternoon",
+        "solymar-sur_truco_sat-morning",
+        "solymar-norte_caminata_sat-afternoon",
+        "solymar-norte_caminata_sat-morning",
+        "solymar-norte_truco_sat-afternoon",
+        "solymar-norte_truco_sat-morning",
+        "lomas-de-solymar_caminata_sat-afternoon",
+        "lomas-de-solymar_caminata_sat-morning",
+        "lomas-de-solymar_truco_sat-afternoon",
+        "lomas-de-solymar_truco_sat-morning",
+        "el-pinar-sur_caminata_sat-afternoon",
+        "el-pinar-sur_caminata_sat-morning",
+        "el-pinar-sur_truco_sat-afternoon",
+        "el-pinar-sur_truco_sat-morning",
+        "el-pinar-norte_caminata_sat-afternoon",
+        "el-pinar-norte_caminata_sat-morning",
+        "el-pinar-norte_truco_sat-afternoon",
+        "el-pinar-norte_truco_sat-morning"
+      ]
+    },
+    {
+      "uid": "demo-009",
+      "ageBand": "60-69",
+      "barrio": "solymar-norte",
+      "pretexts": [
+        "mate"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sat-morning",
+        "sun-afternoon"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_mate_sat-afternoon",
+        "shangrila_mate_sat-morning",
+        "shangrila_mate_sun-afternoon",
+        "san-jose-de-carrasco_mate_sat-afternoon",
+        "san-jose-de-carrasco_mate_sat-morning",
+        "san-jose-de-carrasco_mate_sun-afternoon",
+        "lagomar-sur_mate_sat-afternoon",
+        "lagomar-sur_mate_sat-morning",
+        "lagomar-sur_mate_sun-afternoon",
+        "lagomar-norte_mate_sat-afternoon",
+        "lagomar-norte_mate_sat-morning",
+        "lagomar-norte_mate_sun-afternoon",
+        "solymar-sur_mate_sat-afternoon",
+        "solymar-sur_mate_sat-morning",
+        "solymar-sur_mate_sun-afternoon",
+        "solymar-norte_mate_sat-afternoon",
+        "solymar-norte_mate_sat-morning",
+        "solymar-norte_mate_sun-afternoon",
+        "lomas-de-solymar_mate_sat-afternoon",
+        "lomas-de-solymar_mate_sat-morning",
+        "lomas-de-solymar_mate_sun-afternoon",
+        "el-pinar-sur_mate_sat-afternoon",
+        "el-pinar-sur_mate_sat-morning",
+        "el-pinar-sur_mate_sun-afternoon",
+        "el-pinar-norte_mate_sat-afternoon",
+        "el-pinar-norte_mate_sat-morning",
+        "el-pinar-norte_mate_sun-afternoon"
+      ],
+      "plusOneUid": "demo-010"
+    },
+    {
+      "uid": "demo-010",
+      "ageBand": "40-49",
+      "barrio": "solymar-norte",
+      "pretexts": [
+        "mate"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sat-morning",
+        "sun-afternoon"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_mate_sat-afternoon",
+        "shangrila_mate_sat-morning",
+        "shangrila_mate_sun-afternoon",
+        "san-jose-de-carrasco_mate_sat-afternoon",
+        "san-jose-de-carrasco_mate_sat-morning",
+        "san-jose-de-carrasco_mate_sun-afternoon",
+        "lagomar-sur_mate_sat-afternoon",
+        "lagomar-sur_mate_sat-morning",
+        "lagomar-sur_mate_sun-afternoon",
+        "lagomar-norte_mate_sat-afternoon",
+        "lagomar-norte_mate_sat-morning",
+        "lagomar-norte_mate_sun-afternoon",
+        "solymar-sur_mate_sat-afternoon",
+        "solymar-sur_mate_sat-morning",
+        "solymar-sur_mate_sun-afternoon",
+        "solymar-norte_mate_sat-afternoon",
+        "solymar-norte_mate_sat-morning",
+        "solymar-norte_mate_sun-afternoon",
+        "lomas-de-solymar_mate_sat-afternoon",
+        "lomas-de-solymar_mate_sat-morning",
+        "lomas-de-solymar_mate_sun-afternoon",
+        "el-pinar-sur_mate_sat-afternoon",
+        "el-pinar-sur_mate_sat-morning",
+        "el-pinar-sur_mate_sun-afternoon",
+        "el-pinar-norte_mate_sat-afternoon",
+        "el-pinar-norte_mate_sat-morning",
+        "el-pinar-norte_mate_sun-afternoon"
+      ]
+    },
+    {
+      "uid": "demo-011",
+      "ageBand": "40-49",
+      "barrio": "shangrila",
+      "pretexts": [
+        "mate"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sat-morning",
+        "sun-afternoon"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_mate_sat-afternoon",
+        "shangrila_mate_sat-morning",
+        "shangrila_mate_sun-afternoon",
+        "san-jose-de-carrasco_mate_sat-afternoon",
+        "san-jose-de-carrasco_mate_sat-morning",
+        "san-jose-de-carrasco_mate_sun-afternoon",
+        "lagomar-sur_mate_sat-afternoon",
+        "lagomar-sur_mate_sat-morning",
+        "lagomar-sur_mate_sun-afternoon",
+        "lagomar-norte_mate_sat-afternoon",
+        "lagomar-norte_mate_sat-morning",
+        "lagomar-norte_mate_sun-afternoon",
+        "solymar-sur_mate_sat-afternoon",
+        "solymar-sur_mate_sat-morning",
+        "solymar-sur_mate_sun-afternoon",
+        "solymar-norte_mate_sat-afternoon",
+        "solymar-norte_mate_sat-morning",
+        "solymar-norte_mate_sun-afternoon",
+        "lomas-de-solymar_mate_sat-afternoon",
+        "lomas-de-solymar_mate_sat-morning",
+        "lomas-de-solymar_mate_sun-afternoon",
+        "el-pinar-sur_mate_sat-afternoon",
+        "el-pinar-sur_mate_sat-morning",
+        "el-pinar-sur_mate_sun-afternoon",
+        "el-pinar-norte_mate_sat-afternoon",
+        "el-pinar-norte_mate_sat-morning",
+        "el-pinar-norte_mate_sun-afternoon"
+      ]
+    },
+    {
+      "uid": "demo-012",
+      "ageBand": "70-79",
+      "barrio": "lagomar-sur",
+      "pretexts": [
+        "futbol5",
+        "truco"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sat-morning",
+        "thu-evening"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_futbol5_sat-afternoon",
+        "shangrila_futbol5_sat-morning",
+        "shangrila_futbol5_thu-evening",
+        "shangrila_truco_sat-afternoon",
+        "shangrila_truco_sat-morning",
+        "shangrila_truco_thu-evening",
+        "san-jose-de-carrasco_futbol5_sat-afternoon",
+        "san-jose-de-carrasco_futbol5_sat-morning",
+        "san-jose-de-carrasco_futbol5_thu-evening",
+        "san-jose-de-carrasco_truco_sat-afternoon",
+        "san-jose-de-carrasco_truco_sat-morning",
+        "san-jose-de-carrasco_truco_thu-evening",
+        "lagomar-sur_futbol5_sat-afternoon",
+        "lagomar-sur_futbol5_sat-morning",
+        "lagomar-sur_futbol5_thu-evening",
+        "lagomar-sur_truco_sat-afternoon",
+        "lagomar-sur_truco_sat-morning",
+        "lagomar-sur_truco_thu-evening",
+        "lagomar-norte_futbol5_sat-afternoon",
+        "lagomar-norte_futbol5_sat-morning",
+        "lagomar-norte_futbol5_thu-evening",
+        "lagomar-norte_truco_sat-afternoon",
+        "lagomar-norte_truco_sat-morning",
+        "lagomar-norte_truco_thu-evening",
+        "solymar-sur_futbol5_sat-afternoon",
+        "solymar-sur_futbol5_sat-morning",
+        "solymar-sur_futbol5_thu-evening",
+        "solymar-sur_truco_sat-afternoon",
+        "solymar-sur_truco_sat-morning",
+        "solymar-sur_truco_thu-evening",
+        "solymar-norte_futbol5_sat-afternoon",
+        "solymar-norte_futbol5_sat-morning",
+        "solymar-norte_futbol5_thu-evening",
+        "solymar-norte_truco_sat-afternoon",
+        "solymar-norte_truco_sat-morning",
+        "solymar-norte_truco_thu-evening",
+        "lomas-de-solymar_futbol5_sat-afternoon",
+        "lomas-de-solymar_futbol5_sat-morning",
+        "lomas-de-solymar_futbol5_thu-evening",
+        "lomas-de-solymar_truco_sat-afternoon",
+        "lomas-de-solymar_truco_sat-morning",
+        "lomas-de-solymar_truco_thu-evening",
+        "el-pinar-sur_futbol5_sat-afternoon",
+        "el-pinar-sur_futbol5_sat-morning",
+        "el-pinar-sur_futbol5_thu-evening",
+        "el-pinar-sur_truco_sat-afternoon",
+        "el-pinar-sur_truco_sat-morning",
+        "el-pinar-sur_truco_thu-evening",
+        "el-pinar-norte_futbol5_sat-afternoon",
+        "el-pinar-norte_futbol5_sat-morning",
+        "el-pinar-norte_futbol5_thu-evening",
+        "el-pinar-norte_truco_sat-afternoon",
+        "el-pinar-norte_truco_sat-morning",
+        "el-pinar-norte_truco_thu-evening"
+      ],
+      "plusOneUid": "demo-013"
+    },
+    {
+      "uid": "demo-013",
+      "ageBand": "60-69",
+      "barrio": "lagomar-sur",
+      "pretexts": [
+        "futbol5",
+        "truco"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sat-morning",
+        "thu-evening"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_futbol5_sat-afternoon",
+        "shangrila_futbol5_sat-morning",
+        "shangrila_futbol5_thu-evening",
+        "shangrila_truco_sat-afternoon",
+        "shangrila_truco_sat-morning",
+        "shangrila_truco_thu-evening",
+        "san-jose-de-carrasco_futbol5_sat-afternoon",
+        "san-jose-de-carrasco_futbol5_sat-morning",
+        "san-jose-de-carrasco_futbol5_thu-evening",
+        "san-jose-de-carrasco_truco_sat-afternoon",
+        "san-jose-de-carrasco_truco_sat-morning",
+        "san-jose-de-carrasco_truco_thu-evening",
+        "lagomar-sur_futbol5_sat-afternoon",
+        "lagomar-sur_futbol5_sat-morning",
+        "lagomar-sur_futbol5_thu-evening",
+        "lagomar-sur_truco_sat-afternoon",
+        "lagomar-sur_truco_sat-morning",
+        "lagomar-sur_truco_thu-evening",
+        "lagomar-norte_futbol5_sat-afternoon",
+        "lagomar-norte_futbol5_sat-morning",
+        "lagomar-norte_futbol5_thu-evening",
+        "lagomar-norte_truco_sat-afternoon",
+        "lagomar-norte_truco_sat-morning",
+        "lagomar-norte_truco_thu-evening",
+        "solymar-sur_futbol5_sat-afternoon",
+        "solymar-sur_futbol5_sat-morning",
+        "solymar-sur_futbol5_thu-evening",
+        "solymar-sur_truco_sat-afternoon",
+        "solymar-sur_truco_sat-morning",
+        "solymar-sur_truco_thu-evening",
+        "solymar-norte_futbol5_sat-afternoon",
+        "solymar-norte_futbol5_sat-morning",
+        "solymar-norte_futbol5_thu-evening",
+        "solymar-norte_truco_sat-afternoon",
+        "solymar-norte_truco_sat-morning",
+        "solymar-norte_truco_thu-evening",
+        "lomas-de-solymar_futbol5_sat-afternoon",
+        "lomas-de-solymar_futbol5_sat-morning",
+        "lomas-de-solymar_futbol5_thu-evening",
+        "lomas-de-solymar_truco_sat-afternoon",
+        "lomas-de-solymar_truco_sat-morning",
+        "lomas-de-solymar_truco_thu-evening",
+        "el-pinar-sur_futbol5_sat-afternoon",
+        "el-pinar-sur_futbol5_sat-morning",
+        "el-pinar-sur_futbol5_thu-evening",
+        "el-pinar-sur_truco_sat-afternoon",
+        "el-pinar-sur_truco_sat-morning",
+        "el-pinar-sur_truco_thu-evening",
+        "el-pinar-norte_futbol5_sat-afternoon",
+        "el-pinar-norte_futbol5_sat-morning",
+        "el-pinar-norte_futbol5_thu-evening",
+        "el-pinar-norte_truco_sat-afternoon",
+        "el-pinar-norte_truco_sat-morning",
+        "el-pinar-norte_truco_thu-evening"
+      ]
+    },
+    {
+      "uid": "demo-014",
+      "ageBand": "60-69",
+      "barrio": "solymar-norte",
+      "pretexts": [
+        "mate"
+      ],
+      "slots": [
+        "sat-morning",
+        "sun-afternoon"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_mate_sat-morning",
+        "shangrila_mate_sun-afternoon",
+        "san-jose-de-carrasco_mate_sat-morning",
+        "san-jose-de-carrasco_mate_sun-afternoon",
+        "lagomar-sur_mate_sat-morning",
+        "lagomar-sur_mate_sun-afternoon",
+        "lagomar-norte_mate_sat-morning",
+        "lagomar-norte_mate_sun-afternoon",
+        "solymar-sur_mate_sat-morning",
+        "solymar-sur_mate_sun-afternoon",
+        "solymar-norte_mate_sat-morning",
+        "solymar-norte_mate_sun-afternoon",
+        "lomas-de-solymar_mate_sat-morning",
+        "lomas-de-solymar_mate_sun-afternoon",
+        "el-pinar-sur_mate_sat-morning",
+        "el-pinar-sur_mate_sun-afternoon",
+        "el-pinar-norte_mate_sat-morning",
+        "el-pinar-norte_mate_sun-afternoon"
+      ]
+    },
+    {
+      "uid": "demo-015",
+      "ageBand": "60-69",
+      "barrio": "solymar-sur",
+      "pretexts": [
+        "mate"
+      ],
+      "slots": [
+        "sun-afternoon",
+        "thu-evening"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_mate_sun-afternoon",
+        "shangrila_mate_thu-evening",
+        "san-jose-de-carrasco_mate_sun-afternoon",
+        "san-jose-de-carrasco_mate_thu-evening",
+        "lagomar-sur_mate_sun-afternoon",
+        "lagomar-sur_mate_thu-evening",
+        "lagomar-norte_mate_sun-afternoon",
+        "lagomar-norte_mate_thu-evening",
+        "solymar-sur_mate_sun-afternoon",
+        "solymar-sur_mate_thu-evening",
+        "solymar-norte_mate_sun-afternoon",
+        "solymar-norte_mate_thu-evening",
+        "lomas-de-solymar_mate_sun-afternoon",
+        "lomas-de-solymar_mate_thu-evening",
+        "el-pinar-sur_mate_sun-afternoon",
+        "el-pinar-sur_mate_thu-evening",
+        "el-pinar-norte_mate_sun-afternoon",
+        "el-pinar-norte_mate_thu-evening"
+      ]
+    },
+    {
+      "uid": "demo-016",
+      "ageBand": "70-79",
+      "barrio": "solymar-sur",
+      "pretexts": [
+        "mate"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "thu-evening"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_mate_thu-evening",
+        "san-jose-de-carrasco_mate_sat-afternoon",
+        "san-jose-de-carrasco_mate_thu-evening",
+        "lagomar-sur_mate_sat-afternoon",
+        "lagomar-sur_mate_thu-evening",
+        "lagomar-norte_mate_sat-afternoon",
+        "lagomar-norte_mate_thu-evening",
+        "solymar-sur_mate_sat-afternoon",
+        "solymar-sur_mate_thu-evening",
+        "solymar-norte_mate_thu-evening",
+        "lomas-de-solymar_mate_sat-afternoon",
+        "lomas-de-solymar_mate_thu-evening",
+        "el-pinar-sur_mate_thu-evening"
+      ]
+    },
+    {
+      "uid": "demo-017",
+      "ageBand": "60-69",
+      "barrio": "solymar-norte",
+      "pretexts": [
+        "caminata",
+        "mate"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sun-afternoon"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_caminata_sat-afternoon",
+        "shangrila_mate_sat-afternoon",
+        "shangrila_mate_sun-afternoon",
+        "san-jose-de-carrasco_caminata_sat-afternoon",
+        "san-jose-de-carrasco_mate_sun-afternoon",
+        "lagomar-sur_caminata_sat-afternoon",
+        "lagomar-sur_mate_sat-afternoon",
+        "lagomar-sur_mate_sun-afternoon",
+        "lagomar-norte_mate_sat-afternoon",
+        "solymar-sur_caminata_sat-afternoon",
+        "solymar-sur_caminata_sun-afternoon",
+        "solymar-sur_mate_sat-afternoon",
+        "solymar-sur_mate_sun-afternoon",
+        "solymar-norte_caminata_sat-afternoon",
+        "solymar-norte_caminata_sun-afternoon",
+        "solymar-norte_mate_sat-afternoon",
+        "solymar-norte_mate_sun-afternoon",
+        "lomas-de-solymar_caminata_sat-afternoon",
+        "lomas-de-solymar_mate_sun-afternoon",
+        "el-pinar-sur_caminata_sun-afternoon",
+        "el-pinar-sur_mate_sat-afternoon",
+        "el-pinar-sur_mate_sun-afternoon",
+        "el-pinar-norte_caminata_sat-afternoon",
+        "el-pinar-norte_caminata_sun-afternoon",
+        "el-pinar-norte_mate_sat-afternoon",
+        "el-pinar-norte_mate_sun-afternoon"
+      ]
+    },
+    {
+      "uid": "demo-018",
+      "ageBand": "70-79",
+      "barrio": "el-pinar-sur",
+      "pretexts": [
+        "caminata"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sun-afternoon",
+        "thu-evening"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_caminata_sat-afternoon",
+        "shangrila_caminata_sun-afternoon",
+        "shangrila_caminata_thu-evening",
+        "san-jose-de-carrasco_caminata_sat-afternoon",
+        "san-jose-de-carrasco_caminata_sun-afternoon",
+        "san-jose-de-carrasco_caminata_thu-evening",
+        "lagomar-sur_caminata_sat-afternoon",
+        "lagomar-sur_caminata_sun-afternoon",
+        "lagomar-sur_caminata_thu-evening",
+        "lagomar-norte_caminata_sat-afternoon",
+        "lagomar-norte_caminata_sun-afternoon",
+        "lagomar-norte_caminata_thu-evening",
+        "solymar-sur_caminata_sat-afternoon",
+        "solymar-sur_caminata_sun-afternoon",
+        "solymar-sur_caminata_thu-evening",
+        "solymar-norte_caminata_sat-afternoon",
+        "solymar-norte_caminata_sun-afternoon",
+        "solymar-norte_caminata_thu-evening",
+        "lomas-de-solymar_caminata_sat-afternoon",
+        "lomas-de-solymar_caminata_sun-afternoon",
+        "lomas-de-solymar_caminata_thu-evening",
+        "el-pinar-sur_caminata_sat-afternoon",
+        "el-pinar-sur_caminata_sun-afternoon",
+        "el-pinar-sur_caminata_thu-evening",
+        "el-pinar-norte_caminata_sat-afternoon",
+        "el-pinar-norte_caminata_sun-afternoon",
+        "el-pinar-norte_caminata_thu-evening"
+      ],
+      "plusOneUid": "demo-019"
+    },
+    {
+      "uid": "demo-019",
+      "ageBand": "50-59",
+      "barrio": "el-pinar-sur",
+      "pretexts": [
+        "caminata"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sun-afternoon",
+        "thu-evening"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_caminata_sat-afternoon",
+        "shangrila_caminata_sun-afternoon",
+        "shangrila_caminata_thu-evening",
+        "san-jose-de-carrasco_caminata_sat-afternoon",
+        "san-jose-de-carrasco_caminata_sun-afternoon",
+        "san-jose-de-carrasco_caminata_thu-evening",
+        "lagomar-sur_caminata_sat-afternoon",
+        "lagomar-sur_caminata_sun-afternoon",
+        "lagomar-sur_caminata_thu-evening",
+        "lagomar-norte_caminata_sat-afternoon",
+        "lagomar-norte_caminata_sun-afternoon",
+        "lagomar-norte_caminata_thu-evening",
+        "solymar-sur_caminata_sat-afternoon",
+        "solymar-sur_caminata_sun-afternoon",
+        "solymar-sur_caminata_thu-evening",
+        "solymar-norte_caminata_sat-afternoon",
+        "solymar-norte_caminata_sun-afternoon",
+        "solymar-norte_caminata_thu-evening",
+        "lomas-de-solymar_caminata_sat-afternoon",
+        "lomas-de-solymar_caminata_sun-afternoon",
+        "lomas-de-solymar_caminata_thu-evening",
+        "el-pinar-sur_caminata_sat-afternoon",
+        "el-pinar-sur_caminata_sun-afternoon",
+        "el-pinar-sur_caminata_thu-evening",
+        "el-pinar-norte_caminata_sat-afternoon",
+        "el-pinar-norte_caminata_sun-afternoon",
+        "el-pinar-norte_caminata_thu-evening"
+      ]
+    },
+    {
+      "uid": "demo-020",
+      "ageBand": "60-69",
+      "barrio": "solymar-norte",
+      "pretexts": [
+        "caminata",
+        "mate"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sun-afternoon"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_caminata_sat-afternoon",
+        "shangrila_caminata_sun-afternoon",
+        "shangrila_mate_sat-afternoon",
+        "shangrila_mate_sun-afternoon",
+        "san-jose-de-carrasco_caminata_sat-afternoon",
+        "san-jose-de-carrasco_caminata_sun-afternoon",
+        "san-jose-de-carrasco_mate_sat-afternoon",
+        "san-jose-de-carrasco_mate_sun-afternoon",
+        "lagomar-sur_caminata_sat-afternoon",
+        "lagomar-sur_caminata_sun-afternoon",
+        "lagomar-sur_mate_sat-afternoon",
+        "lagomar-sur_mate_sun-afternoon",
+        "lagomar-norte_caminata_sat-afternoon",
+        "lagomar-norte_caminata_sun-afternoon",
+        "lagomar-norte_mate_sat-afternoon",
+        "lagomar-norte_mate_sun-afternoon",
+        "solymar-sur_caminata_sat-afternoon",
+        "solymar-sur_caminata_sun-afternoon",
+        "solymar-sur_mate_sat-afternoon",
+        "solymar-sur_mate_sun-afternoon",
+        "solymar-norte_caminata_sat-afternoon",
+        "solymar-norte_caminata_sun-afternoon",
+        "solymar-norte_mate_sat-afternoon",
+        "solymar-norte_mate_sun-afternoon",
+        "lomas-de-solymar_caminata_sat-afternoon",
+        "lomas-de-solymar_caminata_sun-afternoon",
+        "lomas-de-solymar_mate_sat-afternoon",
+        "lomas-de-solymar_mate_sun-afternoon",
+        "el-pinar-sur_caminata_sat-afternoon",
+        "el-pinar-sur_caminata_sun-afternoon",
+        "el-pinar-sur_mate_sat-afternoon",
+        "el-pinar-sur_mate_sun-afternoon",
+        "el-pinar-norte_caminata_sat-afternoon",
+        "el-pinar-norte_caminata_sun-afternoon",
+        "el-pinar-norte_mate_sat-afternoon",
+        "el-pinar-norte_mate_sun-afternoon"
+      ]
+    },
+    {
+      "uid": "demo-021",
+      "ageBand": "50-59",
+      "barrio": "el-pinar-sur",
+      "pretexts": [
+        "mate"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sat-morning"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_mate_sat-afternoon",
+        "shangrila_mate_sat-morning",
+        "san-jose-de-carrasco_mate_sat-afternoon",
+        "san-jose-de-carrasco_mate_sat-morning",
+        "lagomar-sur_mate_sat-afternoon",
+        "lagomar-sur_mate_sat-morning",
+        "lagomar-norte_mate_sat-afternoon",
+        "lagomar-norte_mate_sat-morning",
+        "solymar-sur_mate_sat-afternoon",
+        "solymar-sur_mate_sat-morning",
+        "solymar-norte_mate_sat-afternoon",
+        "solymar-norte_mate_sat-morning",
+        "lomas-de-solymar_mate_sat-afternoon",
+        "lomas-de-solymar_mate_sat-morning",
+        "el-pinar-sur_mate_sat-afternoon",
+        "el-pinar-sur_mate_sat-morning",
+        "el-pinar-norte_mate_sat-afternoon",
+        "el-pinar-norte_mate_sat-morning"
+      ]
+    },
+    {
+      "uid": "demo-022",
+      "ageBand": "18-29",
+      "barrio": "shangrila",
+      "pretexts": [
+        "caminata",
+        "truco"
+      ],
+      "slots": [
+        "sat-morning",
+        "thu-evening"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_caminata_sat-morning",
+        "shangrila_caminata_thu-evening",
+        "shangrila_truco_sat-morning",
+        "shangrila_truco_thu-evening",
+        "san-jose-de-carrasco_caminata_sat-morning",
+        "san-jose-de-carrasco_caminata_thu-evening",
+        "san-jose-de-carrasco_truco_sat-morning",
+        "san-jose-de-carrasco_truco_thu-evening",
+        "lagomar-sur_caminata_sat-morning",
+        "lagomar-sur_caminata_thu-evening",
+        "lagomar-sur_truco_sat-morning",
+        "lagomar-sur_truco_thu-evening",
+        "lagomar-norte_caminata_sat-morning",
+        "lagomar-norte_caminata_thu-evening",
+        "lagomar-norte_truco_sat-morning",
+        "lagomar-norte_truco_thu-evening",
+        "solymar-sur_caminata_sat-morning",
+        "solymar-sur_caminata_thu-evening",
+        "solymar-sur_truco_sat-morning",
+        "solymar-sur_truco_thu-evening",
+        "solymar-norte_caminata_sat-morning",
+        "solymar-norte_caminata_thu-evening",
+        "solymar-norte_truco_sat-morning",
+        "solymar-norte_truco_thu-evening",
+        "lomas-de-solymar_caminata_sat-morning",
+        "lomas-de-solymar_caminata_thu-evening",
+        "lomas-de-solymar_truco_sat-morning",
+        "lomas-de-solymar_truco_thu-evening",
+        "el-pinar-sur_caminata_sat-morning",
+        "el-pinar-sur_caminata_thu-evening",
+        "el-pinar-sur_truco_sat-morning",
+        "el-pinar-sur_truco_thu-evening",
+        "el-pinar-norte_caminata_sat-morning",
+        "el-pinar-norte_caminata_thu-evening",
+        "el-pinar-norte_truco_sat-morning",
+        "el-pinar-norte_truco_thu-evening"
+      ]
+    },
+    {
+      "uid": "demo-023",
+      "ageBand": "60-69",
+      "barrio": "solymar-sur",
+      "pretexts": [
+        "mate"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sun-afternoon",
+        "thu-evening"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_mate_sat-afternoon",
+        "shangrila_mate_sun-afternoon",
+        "shangrila_mate_thu-evening",
+        "san-jose-de-carrasco_mate_sat-afternoon",
+        "san-jose-de-carrasco_mate_sun-afternoon",
+        "san-jose-de-carrasco_mate_thu-evening",
+        "lagomar-sur_mate_sat-afternoon",
+        "lagomar-sur_mate_sun-afternoon",
+        "lagomar-sur_mate_thu-evening",
+        "lagomar-norte_mate_sat-afternoon",
+        "lagomar-norte_mate_sun-afternoon",
+        "lagomar-norte_mate_thu-evening",
+        "solymar-sur_mate_sat-afternoon",
+        "solymar-sur_mate_sun-afternoon",
+        "solymar-sur_mate_thu-evening",
+        "solymar-norte_mate_sat-afternoon",
+        "solymar-norte_mate_sun-afternoon",
+        "solymar-norte_mate_thu-evening",
+        "lomas-de-solymar_mate_sat-afternoon",
+        "lomas-de-solymar_mate_sun-afternoon",
+        "lomas-de-solymar_mate_thu-evening",
+        "el-pinar-sur_mate_sat-afternoon",
+        "el-pinar-sur_mate_sun-afternoon",
+        "el-pinar-sur_mate_thu-evening",
+        "el-pinar-norte_mate_sat-afternoon",
+        "el-pinar-norte_mate_sun-afternoon",
+        "el-pinar-norte_mate_thu-evening"
+      ]
+    },
+    {
+      "uid": "demo-024",
+      "ageBand": "80+",
+      "barrio": "solymar-sur",
+      "pretexts": [
+        "mate"
+      ],
+      "slots": [
+        "sat-morning",
+        "sun-afternoon"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_mate_sat-morning",
+        "shangrila_mate_sun-afternoon",
+        "san-jose-de-carrasco_mate_sat-morning",
+        "san-jose-de-carrasco_mate_sun-afternoon",
+        "lagomar-sur_mate_sat-morning",
+        "lagomar-sur_mate_sun-afternoon",
+        "lagomar-norte_mate_sat-morning",
+        "lagomar-norte_mate_sun-afternoon",
+        "solymar-sur_mate_sat-morning",
+        "solymar-sur_mate_sun-afternoon",
+        "solymar-norte_mate_sat-morning",
+        "solymar-norte_mate_sun-afternoon",
+        "lomas-de-solymar_mate_sat-morning",
+        "lomas-de-solymar_mate_sun-afternoon",
+        "el-pinar-sur_mate_sat-morning",
+        "el-pinar-sur_mate_sun-afternoon",
+        "el-pinar-norte_mate_sat-morning",
+        "el-pinar-norte_mate_sun-afternoon"
+      ]
+    },
+    {
+      "uid": "demo-025",
+      "ageBand": "30-39",
+      "barrio": "solymar-norte",
+      "pretexts": [
+        "mate",
+        "truco"
+      ],
+      "slots": [
+        "sat-morning",
+        "sun-afternoon"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_mate_sat-morning",
+        "shangrila_mate_sun-afternoon",
+        "shangrila_truco_sat-morning",
+        "shangrila_truco_sun-afternoon",
+        "san-jose-de-carrasco_mate_sat-morning",
+        "san-jose-de-carrasco_mate_sun-afternoon",
+        "san-jose-de-carrasco_truco_sat-morning",
+        "san-jose-de-carrasco_truco_sun-afternoon",
+        "lagomar-sur_mate_sat-morning",
+        "lagomar-sur_mate_sun-afternoon",
+        "lagomar-sur_truco_sat-morning",
+        "lagomar-sur_truco_sun-afternoon",
+        "lagomar-norte_mate_sat-morning",
+        "lagomar-norte_mate_sun-afternoon",
+        "lagomar-norte_truco_sat-morning",
+        "lagomar-norte_truco_sun-afternoon",
+        "solymar-sur_mate_sat-morning",
+        "solymar-sur_mate_sun-afternoon",
+        "solymar-sur_truco_sat-morning",
+        "solymar-sur_truco_sun-afternoon",
+        "solymar-norte_mate_sat-morning",
+        "solymar-norte_mate_sun-afternoon",
+        "solymar-norte_truco_sat-morning",
+        "solymar-norte_truco_sun-afternoon",
+        "lomas-de-solymar_mate_sat-morning",
+        "lomas-de-solymar_mate_sun-afternoon",
+        "lomas-de-solymar_truco_sat-morning",
+        "lomas-de-solymar_truco_sun-afternoon",
+        "el-pinar-sur_mate_sat-morning",
+        "el-pinar-sur_mate_sun-afternoon",
+        "el-pinar-sur_truco_sat-morning",
+        "el-pinar-sur_truco_sun-afternoon",
+        "el-pinar-norte_mate_sat-morning",
+        "el-pinar-norte_mate_sun-afternoon",
+        "el-pinar-norte_truco_sat-morning",
+        "el-pinar-norte_truco_sun-afternoon"
+      ]
+    },
+    {
+      "uid": "demo-026",
+      "ageBand": "80+",
+      "barrio": "el-pinar-norte",
+      "pretexts": [
+        "truco"
+      ],
+      "slots": [
+        "sat-morning",
+        "sun-afternoon"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_truco_sat-morning",
+        "shangrila_truco_sun-afternoon",
+        "san-jose-de-carrasco_truco_sat-morning",
+        "san-jose-de-carrasco_truco_sun-afternoon",
+        "lagomar-sur_truco_sat-morning",
+        "lagomar-sur_truco_sun-afternoon",
+        "lagomar-norte_truco_sat-morning",
+        "lagomar-norte_truco_sun-afternoon",
+        "solymar-sur_truco_sat-morning",
+        "solymar-sur_truco_sun-afternoon",
+        "solymar-norte_truco_sat-morning",
+        "solymar-norte_truco_sun-afternoon",
+        "lomas-de-solymar_truco_sat-morning",
+        "lomas-de-solymar_truco_sun-afternoon",
+        "el-pinar-sur_truco_sat-morning",
+        "el-pinar-sur_truco_sun-afternoon",
+        "el-pinar-norte_truco_sat-morning",
+        "el-pinar-norte_truco_sun-afternoon"
+      ],
+      "plusOneUid": "demo-027"
+    },
+    {
+      "uid": "demo-027",
+      "ageBand": "70-79",
+      "barrio": "el-pinar-norte",
+      "pretexts": [
+        "truco"
+      ],
+      "slots": [
+        "sat-morning",
+        "sun-afternoon"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_truco_sat-morning",
+        "shangrila_truco_sun-afternoon",
+        "san-jose-de-carrasco_truco_sat-morning",
+        "san-jose-de-carrasco_truco_sun-afternoon",
+        "lagomar-sur_truco_sat-morning",
+        "lagomar-sur_truco_sun-afternoon",
+        "lagomar-norte_truco_sat-morning",
+        "lagomar-norte_truco_sun-afternoon",
+        "solymar-sur_truco_sat-morning",
+        "solymar-sur_truco_sun-afternoon",
+        "solymar-norte_truco_sat-morning",
+        "solymar-norte_truco_sun-afternoon",
+        "lomas-de-solymar_truco_sat-morning",
+        "lomas-de-solymar_truco_sun-afternoon",
+        "el-pinar-sur_truco_sat-morning",
+        "el-pinar-sur_truco_sun-afternoon",
+        "el-pinar-norte_truco_sat-morning",
+        "el-pinar-norte_truco_sun-afternoon"
+      ]
+    },
+    {
+      "uid": "demo-028",
+      "ageBand": "80+",
+      "barrio": "solymar-norte",
+      "pretexts": [
+        "caminata",
+        "mate"
+      ],
+      "slots": [
+        "sat-afternoon",
+        "sat-morning"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_caminata_sat-afternoon",
+        "shangrila_caminata_sat-morning",
+        "shangrila_mate_sat-afternoon",
+        "shangrila_mate_sat-morning",
+        "san-jose-de-carrasco_caminata_sat-afternoon",
+        "san-jose-de-carrasco_caminata_sat-morning",
+        "san-jose-de-carrasco_mate_sat-afternoon",
+        "san-jose-de-carrasco_mate_sat-morning",
+        "lagomar-sur_caminata_sat-afternoon",
+        "lagomar-sur_caminata_sat-morning",
+        "lagomar-sur_mate_sat-afternoon",
+        "lagomar-sur_mate_sat-morning",
+        "lagomar-norte_caminata_sat-afternoon",
+        "lagomar-norte_caminata_sat-morning",
+        "lagomar-norte_mate_sat-afternoon",
+        "lagomar-norte_mate_sat-morning",
+        "solymar-sur_caminata_sat-afternoon",
+        "solymar-sur_caminata_sat-morning",
+        "solymar-sur_mate_sat-afternoon",
+        "solymar-sur_mate_sat-morning",
+        "solymar-norte_caminata_sat-afternoon",
+        "solymar-norte_caminata_sat-morning",
+        "solymar-norte_mate_sat-afternoon",
+        "solymar-norte_mate_sat-morning",
+        "lomas-de-solymar_caminata_sat-afternoon",
+        "lomas-de-solymar_caminata_sat-morning",
+        "lomas-de-solymar_mate_sat-afternoon",
+        "lomas-de-solymar_mate_sat-morning",
+        "el-pinar-sur_caminata_sat-afternoon",
+        "el-pinar-sur_caminata_sat-morning",
+        "el-pinar-sur_mate_sat-afternoon",
+        "el-pinar-sur_mate_sat-morning",
+        "el-pinar-norte_caminata_sat-afternoon",
+        "el-pinar-norte_caminata_sat-morning",
+        "el-pinar-norte_mate_sat-afternoon",
+        "el-pinar-norte_mate_sat-morning"
+      ]
+    },
+    {
+      "uid": "demo-029",
+      "ageBand": "60-69",
+      "barrio": "solymar-norte",
+      "pretexts": [
+        "truco"
+      ],
+      "slots": [
+        "sat-morning",
+        "thu-evening"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_truco_sat-morning",
+        "shangrila_truco_thu-evening",
+        "san-jose-de-carrasco_truco_sat-morning",
+        "san-jose-de-carrasco_truco_thu-evening",
+        "lagomar-sur_truco_sat-morning",
+        "lagomar-sur_truco_thu-evening",
+        "lagomar-norte_truco_sat-morning",
+        "lagomar-norte_truco_thu-evening",
+        "solymar-sur_truco_sat-morning",
+        "solymar-sur_truco_thu-evening",
+        "solymar-norte_truco_sat-morning",
+        "solymar-norte_truco_thu-evening",
+        "lomas-de-solymar_truco_sat-morning",
+        "lomas-de-solymar_truco_thu-evening",
+        "el-pinar-sur_truco_sat-morning",
+        "el-pinar-sur_truco_thu-evening",
+        "el-pinar-norte_truco_sat-morning",
+        "el-pinar-norte_truco_thu-evening"
+      ]
+    },
+    {
+      "uid": "demo-030",
+      "ageBand": "60-69",
+      "barrio": "solymar-norte",
+      "pretexts": [
+        "caminata",
+        "truco"
+      ],
+      "slots": [
+        "sat-morning",
+        "thu-evening"
+      ],
+      "eligibleSeatIds": [
+        "shangrila_caminata_sat-morning",
+        "shangrila_caminata_thu-evening",
+        "shangrila_truco_sat-morning",
+        "shangrila_truco_thu-evening",
+        "san-jose-de-carrasco_caminata_sat-morning",
+        "san-jose-de-carrasco_caminata_thu-evening",
+        "san-jose-de-carrasco_truco_sat-morning",
+        "san-jose-de-carrasco_truco_thu-evening",
+        "lagomar-sur_caminata_sat-morning",
+        "lagomar-sur_caminata_thu-evening",
+        "lagomar-sur_truco_sat-morning",
+        "lagomar-sur_truco_thu-evening",
+        "lagomar-norte_caminata_sat-morning",
+        "lagomar-norte_caminata_thu-evening",
+        "lagomar-norte_truco_sat-morning",
+        "lagomar-norte_truco_thu-evening",
+        "solymar-sur_caminata_sat-morning",
+        "solymar-sur_caminata_thu-evening",
+        "solymar-sur_truco_sat-morning",
+        "solymar-sur_truco_thu-evening",
+        "solymar-norte_caminata_sat-morning",
+        "solymar-norte_caminata_thu-evening",
+        "solymar-norte_truco_sat-morning",
+        "solymar-norte_truco_thu-evening",
+        "lomas-de-solymar_caminata_sat-morning",
+        "lomas-de-solymar_caminata_thu-evening",
+        "lomas-de-solymar_truco_sat-morning",
+        "lomas-de-solymar_truco_thu-evening",
+        "el-pinar-sur_caminata_sat-morning",
+        "el-pinar-sur_caminata_thu-evening",
+        "el-pinar-sur_truco_sat-morning",
+        "el-pinar-sur_truco_thu-evening",
+        "el-pinar-norte_caminata_sat-morning",
+        "el-pinar-norte_caminata_thu-evening",
+        "el-pinar-norte_truco_sat-morning",
+        "el-pinar-norte_truco_thu-evening"
+      ]
+    }
+  ],
+  "avoidPairs": [
+    [
+      "demo-005",
+      "demo-006"
+    ]
+  ]
+}
