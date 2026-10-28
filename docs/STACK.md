@@ -126,6 +126,50 @@ with exit 64).
   onTap: …, excludeSemantics: true)`. A bare `Semantics(identifier:)` lands on a wrapper with no
   action.
 
+## End-to-end flows (Maestro)
+
+The flows live in `flows/`, one YAML file each, and reach widgets only through their
+`Semantics(identifier:)` (§ Quality bar), never through visible text. On Android an identifier is
+the node's `resource-id`, so `maestro hierarchy` shows what a flow can target. Chips and switches
+end in the Dart enum name (`onboarding.barrio.solymarNorte`); a slot cell ends in its day and
+band indexes (`onboarding.slots.6.1` is Sunday afternoon).
+
+| Flow | Starts from | Ends on |
+|---|---|---|
+| `flows/onboarding_buttons.yaml` | a reset, signed out | Mi ronda (`myRonda`), with `users/{uid}` and its `private/eligible` written |
+
+Each flow runs the development flavor against the local emulators, on an Android emulator or a
+USB phone; checked with Maestro 2.12.0 on an Android 15 emulator. `maestro` must be on `PATH`
+(the installer puts it under `~/.maestro/bin`). `<serial>` is the device's name in `adb devices`;
+pass it everywhere, so nothing lands on another attached device.
+
+1. **Emulators:** `firebase emulators:start` from the repo root (§ Native and project checklist).
+2. **Device:** an Android emulator (`emulator -avd <avd>`) reaches the emulators at `10.0.2.2`
+   without setup. A USB phone needs
+   `for p in 9099 8088 5001 9199; do adb -s <serial> reverse tcp:$p tcp:$p; done` after every
+   reconnect, and the build below with `--dart-define=FIREBASE_EMULATOR_HOST=127.0.0.1` added.
+3. **Build and install** the development flavor with the demo Google account, so sign-in needs no
+   browser:
+   `flutter build apk --debug --flavor development -t lib/main_development.dart --dart-define=EMULATOR_GOOGLE_CREDENTIAL=true`,
+   then `adb -s <serial> install -r build/app/outputs/flutter-apk/app-development-debug.apk`
+   (the app id is `com.ciroapps.ronda.dev`).
+4. **Reset before every run:**
+   `FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 uv run --python 3.13 scripts/reset.py`
+   leaves no Auth accounts and Firestore with the seat facts and the 30 demo sign-ups
+   (§ Native and project checklist, Demo data). A flow
+   signs in as the same demo account every time (`vecina@example.com`), and once that account has
+   a profile the app skips onboarding, so a second run without a reset fails on the first
+   question. `launchApp` with `clearState: true` signs the phone out and clears its needs.
+5. **Run:** `maestro --device <serial> test flows/onboarding_buttons.yaml`, or `flows/` for every
+   flow.
+6. **Check what it wrote** with the emulator's REST API, which skips the rules with the `owner`
+   token:
+   `curl -H "Authorization: Bearer owner" "http://127.0.0.1:8088/v1/projects/ronda-uy/databases/(default)/documents/users/<uid>/private/eligible"`.
+   After `onboarding_buttons` the profile is Marta, 60-69, Solymar Norte, mate, Sunday afternoon,
+   pan, and the eligible ids are the 32 seats of Solymar Norte and Solymar Sur, the barrios
+   within ten blocks of Solymar Norte ("Caminar mucho" leaves out the far ones; the need itself
+   stays on the phone).
+
 ## Security (from `static-security`)
 - Meta and Baseten keys exist only in Cloud Functions config. The app ships Firebase's web/app
   config, which is public by design: restrict those API keys to the Firebase APIs and the app ids

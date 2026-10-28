@@ -24,6 +24,24 @@ void main() {
 
         expect(find.text('Estamos armando tu grupo'), findsOneWidget);
       });
+
+      testWidgets('its content under the identifier Maestro waits for', (
+        tester,
+      ) async {
+        final handle = tester.ensureSemantics();
+        await tester.pumpApp(const MyRondaPage());
+
+        expect(
+          tester.getSemantics(
+            find.bySemanticsIdentifier(MyRondaPage.identifier),
+          ),
+          isSemantics(
+            identifier: MyRondaPage.identifier,
+            label: 'Estamos armando tu grupo',
+          ),
+        );
+        handle.dispose();
+      });
     });
   });
 }

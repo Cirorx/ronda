@@ -1,0 +1,115 @@
+# Onboarding by buttons, the golden path: welcome door → Google sign-in → the seven questions →
+# the read-back → "Está bien, guardalo" → Mi ronda.
+#
+# Needs the development flavor built with --dart-define=EMULATOR_GOOGLE_CREDENTIAL=true, the
+# local Firebase emulators, and a reset before every run: the flow always signs in as the same
+# demo Google account, and once that account has a profile the app skips onboarding. How to boot,
+# reset, build, install and run: docs/STACK.md § End-to-end flows (Maestro).
+#
+# The answers sit on a seat the demo data has (solymar-norte_mate_sun-afternoon). "Caminar mucho"
+# stays on the phone and leaves only the seats within ten blocks of Solymar Norte eligible.
+#
+# Every target is a Semantics(identifier:), never visible text. Chips and switches end in the
+# Dart enum name; a slot cell ends in <day index>.<band index> (Monday 0 … Sunday 6; morning 0,
+# afternoon 1, evening 2).
+appId: com.ciroapps.ronda.dev
+name: Onboarding by buttons
+tags:
+  - onboarding
+---
+- launchApp:
+    clearState: true
+
+# Welcome: tapping a door accepts the terms and moves on to sign-in. A debug build takes a few
+# seconds to draw its first frame.
+- extendedWaitUntil:
+    visible:
+      id: welcome.buttons
+    timeout: 30000
+- tapOn:
+    id: welcome.buttons
+
+# Sign-in with the emulator's demo Google account, then the terms write and the profile read.
+- extendedWaitUntil:
+    visible:
+      id: login_google
+    timeout: 15000
+- tapOn:
+    id: login_google
+
+# 1 of 7: what they'd like to do.
+- extendedWaitUntil:
+    visible:
+      id: onboarding.pretexts.mate
+    timeout: 30000
+- tapOn:
+    id: onboarding.pretexts.mate
+- tapOn:
+    id: onboarding.next
+
+# 2 of 7: what they bring.
+- tapOn:
+    id: onboarding.brings.pan
+- tapOn:
+    id: onboarding.next
+
+# 3 of 7: when they can (Sunday afternoon, the grid's last row).
+- scrollUntilVisible:
+    element:
+      id: onboarding.slots.6.1
+    direction: DOWN
+- tapOn:
+    id: onboarding.slots.6.1
+- tapOn:
+    id: onboarding.next
+
+# 4 of 7: barrio.
+- scrollUntilVisible:
+    element:
+      id: onboarding.barrio.solymarNorte
+    direction: DOWN
+- tapOn:
+    id: onboarding.barrio.solymarNorte
+- tapOn:
+    id: onboarding.next
+
+# 5 of 7: age band.
+- scrollUntilVisible:
+    element:
+      id: onboarding.ageBand.sixties
+    direction: DOWN
+- tapOn:
+    id: onboarding.ageBand.sixties
+- tapOn:
+    id: onboarding.next
+
+# 6 of 7, optional: what makes going hard. Kept on this phone only.
+- tapOn:
+    id: onboarding.needs.walkALot
+- tapOn:
+    id: onboarding.next
+
+# 7 of 7: first name. The field takes focus on its own, so the flow types without tapping it: on
+# the Android emulator a Maestro tap on a text field opens Gboard's stylus tutorial over the app.
+# No hideKeyboard either: on Android it can press Back, which steps onboarding back.
+- assertVisible:
+    id: onboarding.firstName
+- inputText: Marta
+- tapOn:
+    id: onboarding.next
+
+# The read-back, then the save: needs on the phone, eligible seat ids, then the profile.
+- extendedWaitUntil:
+    visible:
+      id: onboarding.review.firstName
+    timeout: 10000
+- tapOn:
+    id: onboarding.save
+
+# Saved: the router leaves onboarding for the Mi ronda tab.
+- extendedWaitUntil:
+    visible:
+      id: myRonda
+    timeout: 30000
+- assertNotVisible:
+    id: onboarding.save
