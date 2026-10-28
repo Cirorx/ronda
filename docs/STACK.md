@@ -302,6 +302,14 @@ on both Android apps; the release ones are added when a release key exists.
   because web dev servers often hold that port. `ping` answers at
   `http://127.0.0.1:5001/ronda-uy/southamerica-east1/ping`. No hosting emulator, so node 26 works;
   `.nvmrc` says 24 for when hosting joins.
+- **Demo data** (`docs/ARCHITECTURE.md` § Demo data), from the repo root with the emulators up:
+  `FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 uv run --python 3.13 scripts/reset.py`
+  restores the golden path (no Auth accounts; seat facts and the 30 invented sign-ups), and
+  `FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 uv run --python 3.13 scripts/seed.py 200` writes the
+  200 set on top (`reset.py 200` for that set alone). Both refuse to run without the emulator
+  hosts; the project is `GCLOUD_PROJECT`, else `.firebaserc`'s default. Tests: `cd scripts`,
+  `uv sync`, `uv run pytest`; the reset tests run only with both hosts set, on their own project
+  id (`demo-ronda-reset`), so they never wipe `ronda-uy`.
 - **Which host the development app uses:** `localhost` on web and the iOS simulator, `10.0.2.2`
   on the Android emulator, and on a USB phone `127.0.0.1` after
   `for p in 9099 8088 5001 9199; do adb reverse tcp:$p tcp:$p; done`, passed as

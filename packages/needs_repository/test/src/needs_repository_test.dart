@@ -229,8 +229,8 @@ void main() {
       );
 
       group('with the invented demo seat facts', () {
-        // The same file `scripts/seed/seed_seat_facts.py` loads into the
-        // emulator, read from the repo root.
+        // The same file `scripts/seed.py` loads into the emulator, read
+        // from the repo root.
         late Map<String, Object?> demoSeats;
 
         setUp(() {

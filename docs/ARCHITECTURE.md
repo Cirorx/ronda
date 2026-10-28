@@ -79,8 +79,9 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
     changes no grouping today and only keeps far ids from leaving the phone. And the server holds
     both the facts it published and the ids that came back, so it could infer a need from which
     ids are missing (all evening seats gone → "volver de noche"). The need itself is never sent.
-  - Demo data: `data/demo/invented_seat_facts.json` (invented), loaded into the emulator by
-    `scripts/seed/seed_seat_facts.py`.
+  - Demo data: `data/demo/invented_seat_facts.json` (invented: 14 hand-made seats, two with a
+    place an invented host has set) over seats generated the same way for every barrio ×
+    pretext × slot the demo people pick, loaded by `scripts/seed.py` (§ Demo data).
 - `users/{uid}/tokens/{token}`: platform (android | ios | web), updatedAt. The sender builds a
   different payload per platform (`docs/STACK.md` § Push).
 - Rules accept on `users/{uid}` only the fields above (typed: `ageBand` one of the bands,
@@ -106,6 +107,28 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 - `flyers/{id}`: spotId, stopId, rondaIds[], scans.
 - Public view for Cerca tuyo: `public_seats/{id}` (barrio, pretext, time band, age band, seats
   left, waiting count). No names.
+
+### Demo data (emulators)
+
+`scripts/reset.py` restores the golden-path state each demo beat is recorded from;
+`scripts/seed.py 30` (or `200`) writes a set on top. Commands in `docs/STACK.md` § Native and
+project checklist. Everything seeded is invented:
+
+- The people come from the solver's generator (`ronda_solver.demo`, fixed seed): the 30 set is
+  exactly `solver/fixtures/invented_demo_30.json`. `scripts/demo_data.py` adds a first name and
+  brings per uid, deterministically. Every uid starts with `demo-`: the rules leave no room for a
+  label field on `users/{uid}`, so the id is the label.
+- Documents: `seat_facts/{seatId}` (144: 9 barrios × 4 pretexts × the 4 demo slots);
+  `users/{uid}` with the profile, `plusOneUid` on whoever brings a +1 (as the generator gives
+  it) and the accepted terms; `users/{uid}/private/eligible` = `{seatIds, updatedAt}`; and
+  `avoid/{uidA}_{uidB}` per report-apart pair, uids in order (one pair in the 30 set). Needs are
+  never seeded. The 30 set is 205 documents.
+- Every timestamp is one fixed demo moment (`DEMO_TIME`), never the server's, so two resets leave
+  identical documents (Firestore's own create and update times aside).
+- Reset deletes every Auth account and document of the project through the emulators' clear
+  endpoints, then seeds the 30 set. The person on the phone has no account, so onboarding shows.
+  A new collection is one builder in `BUILDERS` (`scripts/demo_data.py`).
+- Emulator only: resetting the real project waits until Firestore is enabled there.
 
 ## Solver (Python, OR-Tools CP-SAT)
 

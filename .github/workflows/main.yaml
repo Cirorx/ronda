@@ -63,6 +63,20 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run pytest --cov
 
+  # Demo seed and reset; the emulator tests skip here (no emulator hosts in CI).
+  scripts:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scripts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest
+
   spell-check:
     uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/spell_check.yml@v1
     with:
