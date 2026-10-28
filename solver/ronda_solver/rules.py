@@ -2,12 +2,27 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
     from ronda_solver.problem import Candidate, Person, Problem
+
+
+@dataclass(frozen=True)
+class Violation:
+    """One place a grouping breaks a rule: the ronda (None for the whole grouping), who, how many
+    units it costs (blocks, seats short, people) and what the copy needs to say it."""
+
+    rule: str
+    ronda_id: str | None
+    uids: tuple[str, ...] = ()
+    units: int = 1
+    params: dict = field(default_factory=dict)
+
+    def as_json(self) -> dict:
+        return {"rondaId": self.ronda_id, "uids": list(self.uids), "params": self.params}
 
 
 class HardRule(StrEnum):
@@ -90,6 +105,9 @@ class SoftRule(StrEnum):
     TRUCO_CROSS_AGE = "trucoCrossAge"
     NEARBY_FIRST = "nearbyFirst"
 
+
+FEWER_SEATED = "fewerSeated"
+"""Not a rule: the reason a grouping gives when it seats fewer neighbours than the winner."""
 
 SEAT_REWARD = 1000
 """Per seated neighbour. One person's penalties add up to at most 730 (one +1 pair each), so the

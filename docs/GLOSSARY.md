@@ -20,6 +20,7 @@ issues, docs, code, commit messages.
 | `Waitlist` | lista de espera | Neighbours waiting for the same barrio × pretext × slot; opens a ronda at the threshold |
 | `Threshold` | "hay 4 anotados y hacen falta 6" | Six on a waitlist by a deadline starts a new ronda |
 | `Proposal` | propuesta | The solver's grouping, waiting for the owner's approval, with a rejected alternative |
+| `RejectedAlternative` | alternativa B ("Por qué no otra opción") | The next-best grouping the solver turned down, with its `reasons`: each rule it breaks that the proposal keeps |
 | `Season` | temporada | The run of weeks a ronda commits to after ¿seguimos? |
 | `Seguimos` | ¿seguimos? | The private vote after the first meeting; 4 of 6 yes sets the season |
 | `Rsvp` | voy / esta no | The weekly answer. Default is in; "esta no" never asks why |

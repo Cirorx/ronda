@@ -146,8 +146,9 @@ weights and limits are in `solver/README.md`; every rule name and number is in
 - Soft (weighted): nobody the only one of their age group (under 30, 30–59, 60+); shortfall from
   the target size (fútbol 10, truco 6, others 5); +1 pair together; ≤ 1 +1 pair per ronda;
   cross-age truco partners (weight 0 switches it off, #9); open a nearby ronda before seating far.
-- Output: proposals + the best rejected alternative with the rule it broke (shown to Ciro); a
-  checker re-verifies every hard rule on any output.
+- Output: proposals + the next-best rejected alternative with the rules it breaks, structured
+  and as an es-419 sentence (shown to Ciro); a checker re-verifies every hard rule on any output.
+  A hand-built grouping is explained the same way, hard rules through a CP-SAT core.
 - Time: 8 s for the solve, then 2 s for the alternative. 200 invented people: optimal in 6–9 s
   on 8 cores; on 1–4 cores the limit stops it 1–5 seats short of optimal, so size the function
   in #25 by cores.

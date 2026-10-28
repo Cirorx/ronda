@@ -50,6 +50,26 @@ def problem(people, *, avoid=(), barrios=None, options=None):
     return data
 
 
+def ronda(uids, *, barrio="solymar-sur", pretext="mate", slot="sat-afternoon"):
+    """A hand-built proposed ronda: its key and its members' uids."""
+    return {
+        "id": f"{barrio}_{pretext}_{slot}",
+        "barrio": barrio,
+        "pretext": pretext,
+        "slot": slot,
+        "members": [{"uid": uid} for uid in uids],
+    }
+
+
+def grouping(data, *rondas):
+    """A hand-built result: these rondas, and everyone else unseated."""
+    seated = {m["uid"] for r in rondas for m in r["members"]}
+    return {
+        "proposals": list(rondas),
+        "unseated": [p["uid"] for p in data["people"] if p["uid"] not in seated],
+    }
+
+
 def members_of(result):
     """Sorted member uids of each proposed ronda, keyed by ronda id."""
     return {r["id"]: sorted(m["uid"] for m in r["members"]) for r in result["proposals"]}

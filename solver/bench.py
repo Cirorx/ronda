@@ -37,7 +37,7 @@ def measure(people: int, seed: int = 23) -> dict:
         "solve": result["stats"]["solveSeconds"],
         "alt": alternative.get("solveSeconds", 0.0),
         "total": round(total, 2),
-        "brokenRule": alternative.get("brokenRule"),
+        "reason": alternative.get("reason"),
         "violations": violations,
         "valid": not violations and bool(result["proposals"]),
     }
@@ -49,13 +49,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--seed", type=int, default=23)
     args = parser.parse_args(argv)
 
-    print(" ".join(f"{c:>8}" for c in COLUMNS), "   check  rejected alternative")
+    print(" ".join(f"{c:>8}" for c in COLUMNS), "   check  why not the next best")
     ok = True
     for people in args.people:
         row = measure(people, args.seed)
         ok = ok and row["valid"]
         verdict = "PASS" if row["valid"] else "FAIL"
-        print(" ".join(f"{row[c]:>8}" for c in COLUMNS), f"{verdict:>7}  {row['brokenRule']}")
+        print(" ".join(f"{row[c]:>8}" for c in COLUMNS), f"{verdict:>7}  {row['reason']}")
         for violation in row["violations"]:
             print("   ", violation)
     print("seconds: build = model, solve = CP-SAT, alt = rejected alternative, total = wall clock")

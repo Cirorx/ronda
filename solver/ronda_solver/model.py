@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 from ortools.sat.python import cp_model
 
+from ronda_solver.explain import explain
 from ronda_solver.problem import Candidate, Problem
 from ronda_solver.rules import (
     SEAT_REWARD,
@@ -18,9 +19,6 @@ from ronda_solver.rules import (
     size_rule,
 )
 from ronda_solver.score import ronda_checks, score
-
-FEWER_SEATED = "fewerSeated"
-"""The rejected alternative's broken rule when it seats fewer neighbours."""
 
 SOLVED = (cp_model.OPTIMAL, cp_model.FEASIBLE)
 
@@ -230,7 +228,8 @@ def _groups(problem: Problem, solution: Solution) -> dict:
 def _rejected_alternative(
     problem: Problem, model: RondaModel, solution: Solution, proposal: dict
 ) -> dict | None:
-    """The best grouping that breaks a soft rule more (or seats fewer), and the rule it breaks."""
+    """Alternative B: the best grouping that breaks a soft rule more (or seats fewer), a cut on
+    the winner and everything as good, and why it loses (explain.py)."""
     kept = score(problem, proposal["proposals"])
     if kept["seated"] == 0:
         return None
@@ -240,12 +239,11 @@ def _rejected_alternative(
         return None
     alternative = _groups(problem, rejected)
     broken = score(problem, alternative["proposals"])
-    losses = {FEWER_SEATED: SEAT_REWARD * (kept["seated"] - broken["seated"])}
-    for rule in SoftRule:
-        losses[str(rule)] = problem.weights[rule] * (broken["units"][rule] - kept["units"][rule])
+    explained = explain(problem, proposal, alternative)
     return {
         **alternative,
-        "brokenRule": max(losses, key=losses.get),
+        "brokenRule": explained["reasons"][0]["rule"],
+        **explained,
         "objectiveLoss": kept["objective"] - broken["objective"],
         "solveSeconds": round(rejected.seconds, 3),
     }

@@ -1,5 +1,6 @@
 """Ronda's group solver: JSON in, JSON out. No Firebase imports."""
 
+from ronda_solver import explain as _explain
 from ronda_solver import score as _score
 from ronda_solver.check import check
 from ronda_solver.model import solve_problem
@@ -16,4 +17,10 @@ def score(data: dict, result: dict) -> dict:
     return _score.score(parse_problem(data), result["proposals"])
 
 
-__all__ = ["check", "score", "solve"]
+def explain(data: dict, result: dict, alternative: dict) -> dict:
+    """Why `alternative` loses to `result`: {"reasons": [...], "reason": es-419 sentence or None}.
+    Either grouping may come from anywhere: the solver, or the admin's own edit."""
+    return _explain.explain(parse_problem(data), result, alternative)
+
+
+__all__ = ["check", "explain", "score", "solve"]

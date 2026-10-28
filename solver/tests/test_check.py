@@ -3,19 +3,9 @@
 import pytest
 
 from ronda_solver import check
-from tests.builders import person, problem
+from tests.builders import person, problem, ronda
 
 RONDA_ID = "solymar-sur_mate_sat-afternoon"
-
-
-def ronda(uids, *, barrio="solymar-sur", pretext="mate", slot="sat-afternoon"):
-    return {
-        "id": f"{barrio}_{pretext}_{slot}",
-        "barrio": barrio,
-        "pretext": pretext,
-        "slot": slot,
-        "members": [{"uid": uid} for uid in uids],
-    }
 
 
 REGULARS = [person(f"demo-{i}") for i in range(5)]
