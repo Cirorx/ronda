@@ -20,6 +20,11 @@ on:
 
 jobs:
   license_check:
-    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/license_check.yml@v1
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/license_check.yml@v2
     with:
+      # v2 runs `dart pub get` unless told this is a Flutter package.
+      flutter_version: "3.47.x"
       allowed: "MIT,BSD-3-Clause,BSD-2-Clause,Apache-2.0"
+      # Dev-only, via bloc_lint. Its LICENSE is Apache-2.0, in a layout pub.dev
+      # can't classify, so the check reads it as "unknown".
+      skip_packages: "pubspec_lock_parse"
