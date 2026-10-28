@@ -6,7 +6,6 @@ plugins {
     // START: FlutterFire Configuration
     id("com.google.gms.google-services")
     // END: FlutterFire Configuration
-    id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -71,11 +70,9 @@ android {
     buildTypes {
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android.txt"),
-                "proguard-rules.pro"
-            )
+            // The Flutter Gradle plugin turns on R8 for release and adds
+            // proguard-android-optimize.txt, its own rules and proguard-rules.pro if present.
+            // AGP 9 rejects proguard-android.txt.
         }
         getByName("debug") {
             signingConfig = signingConfigs.getByName("debug")

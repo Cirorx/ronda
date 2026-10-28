@@ -10,7 +10,7 @@ vgv-ai-flutter-plugin skills (`layered-architecture`, `bloc`, `material-theming`
 | Tool | Version | Note |
 |---|---|---|
 | Flutter / Dart | 3.47.8 / 3.13.7 (stable 2026-10-23) | This Mac has 3.47.1: `flutter upgrade` |
-| Android | minSdk 24, compile/target 36, AGP ≥ 8.11.1, Kotlin 2.3.20 (`compilerOptions` DSL, not `kotlinOptions`), core-library desugaring on | FlutterFire BoM 35 and flutter_local_notifications set the floors; `firebase-auth` 25.0.0 ships Kotlin 2.4 metadata, which Kotlin 2.2 can't read (checked 2026-10-27); Flutter 3.47.8 warns that AGP 9.0.1 and Gradle 9.1 will soon be required |
+| Android | minSdk 24, compile/target 36, Gradle 9.3.1, AGP 9.1.0, Kotlin plugin 2.3.20 (`compilerOptions` DSL, not `kotlinOptions`), JDK 17+ (this Mac runs 23); core-library desugaring is not configured yet (add it with flutter_local_notifications) | Gradle 9.3.1 and AGP 9.1.0 are Flutter 3.47.8's template versions (AGP 9.1 needs Gradle ≥ 9.3.1; Flutter warns below Gradle 9.1 / AGP 9.0.1 / Kotlin 2.3.20). Like the template, `gradle.properties` keeps `android.builtInKotlin=false` and `android.newDsl=false`; `org.jetbrains.kotlin.android` stays in `settings.gradle.kts` (`apply false`) and the app module does not apply it, because the Flutter Gradle plugin applies it to the app and plugins while built-in Kotlin is off. FlutterFire BoM 35 sets the floors; `firebase-auth` 25.0.0 ships Kotlin 2.4 metadata, which Kotlin 2.2 can't read (checked 2026-10-27). Upgraded 2026-10-28 |
 | iOS | deployment target 15.5 (ML Kit), armv7 excluded in the Podfile | CocoaPods still used for ML Kit and flutter_tts |
 | Python (functions, scripts) | 3.13 (`uv python install 3.13`) | Firebase Python functions run 3.10–3.13; this Mac's 3.14 won't deploy |
 | firebase-tools | 15.34.1 via npm | Installed under nvm's node 26, but the Hosting emulator (`superstatic`) supports node 20, 22 and 24 only: run the emulators under node 24 (`nvm install 24`, `nvm use 24`, reinstall firebase-tools there) |
@@ -302,6 +302,19 @@ stdlib `wave` module (`audioop` is gone in 3.13).
 5. The FCM web service worker must use the Firebase JS SDK 13.1.0 compat scripts (the plugin's
    example still shows 9.10.0).
 6. `path_provider` and ML Kit don't exist on web: guard with `kIsWeb`.
+7. AGP 9: don't set `isMinifyEnabled` or `proguardFiles` in `android/app/build.gradle.kts`. The
+   Flutter Gradle plugin already turns on R8 for release with `proguard-android-optimize.txt`,
+   its own rules and `android/app/proguard-rules.pro` if present; AGP 9 fails on
+   `getDefaultProguardFile("proguard-android.txt")` and on a listed keep file that doesn't exist.
+   Its R8 keep rules are stricter too (`-keep class A` no longer keeps the constructor), so check
+   a release APK on a device after adding a rule. Flutter's "plugins that apply Kotlin Gradle
+   Plugin" warning names cloud_functions, firebase_auth, firebase_core and firebase_storage. It
+   comes from a text match on FlutterFire's own `apply plugin: 'kotlin-android'` line, which only
+   runs while built-in Kotlin is off. It shows with the flag on or off, and the latest FlutterFire
+   still prints it, so leave it.
+8. On the Pixel 8 emulator, Gboard's "Try out your stylus" sheet can open over the app during
+   Maestro's `inputText`, and the next tap then fails. Press Back, reset and run again; it doesn't
+   come back.
 
 ## Push with "Voy / Esta no"
 
