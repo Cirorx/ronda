@@ -14,10 +14,10 @@ on:
 
 jobs:
   semantic-pull-request:
-    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/semantic_pull_request.yml@v1
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/semantic_pull_request.yml@v2
 
   build:
-    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v2
     with:
       flutter_version: "3.47.x"
       run_bloc_lint: true
@@ -37,13 +37,13 @@ jobs:
           - packages/needs_repository
           - packages/profile_repository
           - packages/ronda_api
-    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v2
     with:
       flutter_version: "3.47.x"
       working_directory: ${{ matrix.package }}
 
   ronda_ui:
-    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v2
     with:
       flutter_version: "3.47.x"
       working_directory: packages/ronda_ui
@@ -56,8 +56,8 @@ jobs:
       run:
         working-directory: solver
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --frozen
       - run: uv run ruff check .
       - run: uv run ruff format --check .
@@ -70,15 +70,15 @@ jobs:
       run:
         working-directory: scripts
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --frozen
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pytest
 
   spell-check:
-    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/spell_check.yml@v1
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/spell_check.yml@v2
     with:
       includes: |
         **/*.md
