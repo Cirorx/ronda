@@ -73,7 +73,8 @@ Counts toward "Use of Meta AI tooling" (25% of the score); mention what was used
 
 ## Smoke tests (day 1, tests 1–5; day 2, tests 6–7)
 Scripted in `scripts/smoke/` (`uv run scripts/smoke/s1_access.py`, `s2_structured.py`,
-`s3_transcribe.py note.wav`, `s4_baseten_tools.py`, `s5_sam.py photo.png out/`). They read keys
+`s3_transcribe.py note.wav`, `s4_baseten_tools.py`, `s5_sam.py photo.png out/`, `s6_image.py`,
+`s7_public_data.py`). They read keys
 from the environment or `.env` and never print them. Log latency and cost of each in
 `notes/NOW.md`.
 
@@ -89,6 +90,13 @@ Results from Uruguay, 2026-10-28:
   "bizcochos", "mate", "mate gourd", "gourd" and "cup" found nothing; confidence was omitted.
   The mask-at-box cutout came out clean. Muse Image read "rambla" as a Spanish boulevard: name
   Montevideo's coastal promenade in prompts.
+- 6 (`s6_image.py cutout.png out/`): generation 13 s, edit with the thermos cutout 12 s, $0.01
+  each. The headline came out legible with its accents, but the model added copy nobody asked
+  for (a shop list, "Se fía", "Desde 1978"). **Decision: the model draws the picture with no
+  text; the flyer's words and the QR are drawn in code**, so every word passes the gates.
+- 7 (`s7_public_data.py`): Open-Meteo 0.8 s (72 hours plus sunset); the DNT GTFS zip (2.7 MB,
+  8 s) has `stop_times.txt`; Overpass 37 s for 100 places in Ciudad de la Costa, so cache it per
+  barrio.
 
 1. **Access from Uruguay.**
    `curl -s https://api.meta.ai/v1/responses -H "Authorization: Bearer $MODEL_API_KEY" -H "Content-Type: application/json" -d '{"model":"muse-spark-1.3","input":"Decí hola en rioplatense."}'`
