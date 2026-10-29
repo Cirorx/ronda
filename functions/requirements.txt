@@ -11,3 +11,5 @@ pydantic==2.14.1
 meta-sam-parser==0.1.0
 Pillow==13.0.0
 segno==1.6.6
+# rsvp: Montevideo's time zone for the push's lead time, whatever the image's zoneinfo holds.
+tzdata==2026.6

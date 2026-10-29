@@ -9,14 +9,21 @@ import 'package:ronda_repository/ronda_repository.dart';
 
 class _MockProposalsApi extends Mock implements ProposalsApi;
 
+class _MockRondasApi extends Mock implements RondasApi;
+
 void main() {
   group(RondaRepository, () {
     late ProposalsApi proposalsApi;
+    late RondasApi rondasApi;
     late RondaRepository subject;
 
     setUp(() {
       proposalsApi = _MockProposalsApi();
-      subject = RondaRepository(proposalsApi: proposalsApi);
+      rondasApi = _MockRondasApi();
+      subject = RondaRepository(
+        proposalsApi: proposalsApi,
+        rondasApi: rondasApi,
+      );
     });
 
     final createdAt = DateTime.utc(2026, 10, 27, 15);

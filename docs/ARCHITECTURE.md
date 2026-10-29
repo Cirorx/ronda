@@ -25,10 +25,11 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   ├─ Firestore: users, rondas, weeks, waitlists, proposals, reports, acta, agent_runs
   ├─ Storage: audio + blurred photos; deleted on success, hourly sweeper, lifecycle as backstop
   ├─ Functions (Python 3.13, 2nd gen):
-  │    callables  extract (Transcribe → Spark), propose_groups (CP-SAT, admin), rsvp,
-  │               run_job(name, now) (admin, for tests and the demo), make_mate_flyer
+  │    callables  extract (Transcribe → Spark), propose_groups (CP-SAT, admin), answer_rsvp,
+  │               run_job(name, now?, force?) (admin, for tests and the demo), make_mate_flyer
   │               (SAM → cutouts, Muse Image background → text + QR in code)
-  │    scheduled  one hourly dispatcher → run_<job>(now); hourly audio sweeper (`sweep_audio`
+  │    scheduled  one dispatcher on the hour in Montevideo (`dispatch`) → run_<job>(db, now)
+  │               for every job in `jobs.JOBS`; hourly audio sweeper (`sweep_audio`
   │               deletes `audio/` objects older than 1 h); hourly Cerca counts (`refresh_cerca`,
   │               until the dispatcher adopts `run_refresh_cerca`)
   │    http       flyer_landing (public: counts a flyer's scan, answers /f/{id})
@@ -48,8 +49,10 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   widgets and cubits never import `cloud_firestore`.
 - The solver is a pure Python package: JSON in, JSON out, no Firebase imports. The function is
   a thin wrapper.
-- Every scheduled job is a plain `run_<job>(now)`: the dispatcher, the admin `run_job` callable
-  and the tests all call the same function with an injected clock.
+- Every scheduled job is a plain `run_<job>(db, now)` that is safe to run again: the dispatcher,
+  the admin `run_job` callable and the tests all call the same function with an injected clock
+  (`functions/jobs.py`). A job sends nothing itself: it builds FCM HTTP v1 messages as dicts and
+  `fcm.send` delivers them, skipping every one under the functions emulator.
 - Extraction is a callable the app awaits after upload (synchronous read-back), not a Storage
   trigger.
 
@@ -98,13 +101,38 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 - `rondas/{id}`: pretext, barrio, slot {day, time}, place {name, landmark, lat, lng} (public
   places only), size, status (forming | active | paused | ended), hosts {anfitrion, cola,
   rotatesOn}, despues {kind: none | place | home, label, address?, hostOk}
-  (members-only read; the address is deleted at the end of the day and never sent in a push), season {start, end}, openSeatFromWeek: 4.
-- `rondas/{id}/members/{uid}`: brings, state (active | paused | left), joinedAt.
+  (members-only read; the address is deleted at the end of the day and never sent in a push), season {start, end}, openSeatFromWeek: 4,
+  rsvpLead {daysBefore 1–6, hour 9–20}? (when the RSVP push goes out, Montevideo time; missing
+  or out of range reads as two days before at 19:00, so a Saturday ronda takes Friday with
+  `{daysBefore: 1, hour: 19}`).
+- `rondas/{id}/members/{uid}`: brings, state (active | paused | left), joinedAt, pausedUntil?
+  (the first meeting date they are back for, `YYYY-MM-DD`; "Pausar 2 semanas").
 - Rules: a ronda and its members list are read by that ronda's members only (a
   `members/{uid}` document for the caller); no client writes either.
-- `rondas/{id}/weeks/{isoWeek}`: date, placeOverride?, rsvp {uid: yes | no}, attendance
-  {uid: bool}, plan {uid: item}. Members never read the raw `rsvp` map: "who's coming" shows
-  the yeses' first names and only counts for the rest (PRODUCT § The weekly loop).
+- `users/{uid}/rondas/{rondaId}`: joinedAt. How a member's phone finds their ronda (a query on
+  `rondas` can't pass the members-only rule); written and deleted with the ronda by
+  `approve_proposal`, read by that member only.
+- `rondas/{id}/weeks/{isoWeek}`: date, placeOverride?, rsvp {uid: yes | no}, rsvpSentAt,
+  attendance {uid: bool}, plan {uid: item}. The id is the meeting's ISO week (`2026-W44`), even
+  when the push goes out the week before. Read by no client: members never read the raw `rsvp`
+  map (rules test: `rules/rsvp.test.js`). `rsvpSentAt` is set in a transaction before the push
+  goes out, which makes it once per ronda and week.
+- `rondas/{id}/views/week` (built in #45, `functions/rsvp.py`): "who's coming" to the upcoming
+  meeting, read by the ronda's members: week, date, going [{uid, firstName, brings}] (the
+  yeses, by first name), noCount, unansweredCount (only counts for the rest; a member paused over
+  the meeting counts as "no puede"), updatedAt. Rewritten with every answer, and by the RSVP job
+  when the meeting it shows has passed.
+- `rondas/{id}/answers/{uid}`: week, answer (yes | no), at. The member's own last answer, read by
+  that member only, so a "no" never shows to the others.
+- The weekly RSVP (#45): `answer_rsvp {rondaId, answer, week?, pauseWeeks?}` (members of that
+  ronda only) writes the raw answer, the view and the member's own answer in one transaction;
+  `week`, sent from the push, must still be the upcoming meeting's, so an old notification can't
+  answer next week. The `rsvp_push` job (`run_rsvp_push(db, now)`) sends each open ronda's push
+  once a week at its `rsvpLead`, catching up on a later run until the meeting day, never from
+  21:00 to 09:00 Montevideo (held and tried on the next run), and only to members who are in,
+  not paused and haven't answered. `run_job {name: 'rsvp_push', force: true}` (the admin's
+  "Mandarlo ahora") skips the lead time and the meeting-day limit, never the gate or the
+  once-a-week mark.
 - `rondas/{id}/private/seguimos`: {uid: yes | no}, written by a callable, read by no client; at
   the close only the outcome lands on the ronda (`season`), the admin sees counts (#9).
 - `waitlists/{barrio_pretext_slot}`: entries[{uid, at}], threshold: 6, deadline.
@@ -128,9 +156,9 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   - `approve_proposal {proposalId}` writes one `rondas/{autoId}` (seatId, pretext, barrio,
     slot {day, time}, size, status forming, openSeatFromWeek 4, createdAt; no place, hosts or
     season yet) and `rondas/{id}/members/{uid}` (brings, state active, joinedAt) per group in one
-    batch, then marks the proposal approved. `{proposalId, undo: true}` deletes them and puts it
+    batch, with `users/{uid}/rondas/{id}` for each member, then marks the proposal approved. `{proposalId, undo: true}` deletes them and puts it
     back to pending ([Deshacer]; nothing has been sent yet: the Tuesday push is the agent's).
-    One batch holds 500 writes, enough for about 400 members.
+    One batch holds 500 writes, enough for about 240 members.
   - The admin claim is set by `scripts/set_admin.py <email>` after the owner signs in once.
 - `cerca/{barrio}` (built in #43, `functions/cerca_tuyo.py`): what Cerca tuyo shows, one
   document per barrio, counts only. `rondas[{pretext, slot, ageFrom, ageTo (null for 80+),

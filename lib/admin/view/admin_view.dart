@@ -6,7 +6,8 @@ import 'package:ronda_ui/ronda_ui.dart';
 
 /// The newest proposal: "Nadie recibe nada hasta que lo aprobás.", each
 /// ronda with its checks, "Por qué no otra opción", and Aprobar; once
-/// approved, "Aprobado. Les llega el martes a las 19." with Deshacer.
+/// approved, "Aprobado. Les llega el martes a las 19." with Deshacer. Under
+/// it, "El ¿Venís? de esta semana" with "Mandarlo ahora".
 class const AdminView({super.key}) extends StatelessWidget {
   /// Maestro's handles on the screen's buttons.
   static const proposeIdentifier = 'admin_propose';
@@ -151,6 +152,8 @@ class const _Proposal(final ProposalsState state) extends StatelessWidget {
           ],
           if (pending) propose,
         ],
+        Divider(height: spacing.xlg),
+        const RsvpPushSection(),
       ],
     );
   }

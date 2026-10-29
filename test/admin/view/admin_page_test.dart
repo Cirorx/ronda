@@ -29,6 +29,10 @@ void main() {
       await tester.pump();
 
       expect(find.byType(AdminView), findsOneWidget);
+      expect(
+        tester.element(find.byType(AdminView)).read<RsvpPushCubit>().state,
+        const RsvpPushState(),
+      );
       expect(find.byType(AdminProposalCard), findsOneWidget);
       verify(rondaRepository.watchLatestProposal).called(1);
     });

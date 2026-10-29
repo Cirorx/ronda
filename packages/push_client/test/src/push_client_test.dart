@@ -26,6 +26,22 @@ const _invitation = RemoteMessage(
   data: {'title': 'Jueves 16:00 · mate', 'body': '¿Venís?'},
 );
 
+const _rsvp = RemoteMessage(
+  messageId: 'message-3',
+  data: {
+    'type': 'rsvp',
+    'rondaId': 'r1',
+    'week': '2026-W44',
+    'title': 'Sábado a la tarde · mate en la rambla',
+    'body': '¿Venís?',
+  },
+);
+
+const _labels = RsvpActionLabels(yes: 'Voy', no: 'Esta no');
+
+@pragma('vm:entry-point')
+void _onRsvpAction(NotificationResponse response) {}
+
 void main() {
   setUpAll(() {
     registerFallbackValue(const InitializationSettings());
@@ -45,8 +61,14 @@ void main() {
       android = _MockAndroidNotifications();
       foreground = StreamController<RemoteMessage>.broadcast();
       addTearDown(foreground.close);
-      when(() => notifications.initialize(settings: any(named: 'settings')))
-          .thenAnswer((_) async => true);
+      when(
+        () => notifications.initialize(
+          settings: any(named: 'settings'),
+          onDidReceiveBackgroundNotificationResponse: any(
+            named: 'onDidReceiveBackgroundNotificationResponse',
+          ),
+        ),
+      ).thenAnswer((_) async => true);
       when(
         () => notifications
             .resolvePlatformSpecificImplementation<
@@ -61,6 +83,7 @@ void main() {
           title: any(named: 'title'),
           body: any(named: 'body'),
           notificationDetails: any(named: 'notificationDetails'),
+          payload: any(named: 'payload'),
         ),
       ).thenAnswer((_) async {});
     });
@@ -69,10 +92,12 @@ void main() {
       bool isWeb = false,
       TargetPlatform targetPlatform = TargetPlatform.android,
       String? vapidKey,
+      RsvpActionLabels? rsvpLabels,
     }) => PushClient(
       messaging: messaging,
       notifications: notifications,
       vapidKey: vapidKey,
+      rsvpLabels: rsvpLabels,
       foregroundMessages: foreground.stream,
       isWeb: isWeb,
       targetPlatform: targetPlatform,
@@ -84,6 +109,7 @@ void main() {
         title: any(named: 'title'),
         body: any(named: 'body'),
         notificationDetails: any(named: 'notificationDetails'),
+        payload: any(named: 'payload'),
       ),
     );
 
@@ -346,6 +372,163 @@ void main() {
       test('listens to nothing on web', () {
         expect(buildSubject(isWeb: true).showForegroundMessages(), isNull);
         expect(foreground.hasListener, isFalse);
+      });
+      group('the weekly RSVP push', () {
+        NotificationDetails shown({String? payload}) =>
+            verify(
+                  () => notifications.show(
+                    id: 'message-3'.hashCode,
+                    title: 'Sábado a la tarde · mate en la rambla',
+                    body: '¿Venís?',
+                    payload: payload,
+                    notificationDetails: captureAny(
+                      named: 'notificationDetails',
+                    ),
+                  ),
+                ).captured.single
+                as NotificationDetails;
+
+        test('gets Voy and Esta no, carrying its ronda and week', () async {
+          await buildSubject(rsvpLabels: _labels).showMessage(_rsvp);
+
+          final details = shown(payload: '{"rondaId":"r1","week":"2026-W44"}');
+          final actions = details.android!.actions!;
+          expect(
+            actions.map((a) => (a.id, a.title)),
+            equals([
+              (PushClient.rsvpYesAction, 'Voy'),
+              (PushClient.rsvpNoAction, 'Esta no'),
+            ]),
+          );
+          for (final action in actions) {
+            expect(action.showsUserInterface, isFalse);
+            expect(action.cancelNotification, isTrue);
+          }
+          expect(details.android?.channelId, equals(PushClient.rsvpChannelId));
+        });
+
+        test('shows without buttons when no labels were given', () async {
+          await buildSubject().showMessage(_rsvp);
+
+          expect(shown().android!.actions, isEmpty);
+        });
+
+        test('shows without buttons when it carries no ronda', () async {
+          await buildSubject(rsvpLabels: _labels).showMessage(
+            const RemoteMessage(
+              messageId: 'message-3',
+              data: {
+                'type': 'rsvp',
+                'title': 'Sábado a la tarde · mate en la rambla',
+                'body': '¿Venís?',
+              },
+            ),
+          );
+
+          expect(shown().android!.actions, isEmpty);
+        });
+
+        test('initialize hands the tap handler to the plugin', () async {
+          await buildSubject().initialize(
+            channelName: 'Tu ronda de la semana',
+            channelDescription: 'La pregunta del martes',
+            onRsvpAction: _onRsvpAction,
+          );
+
+          verify(
+            () => notifications.initialize(
+              settings: any(named: 'settings'),
+              onDidReceiveBackgroundNotificationResponse: _onRsvpAction,
+            ),
+          ).called(1);
+        });
+
+        group('rsvpActionFrom', () {
+          NotificationResponse tap(String? actionId, String? payload) =>
+              NotificationResponse(
+                notificationResponseType:
+                    NotificationResponseType.selectedNotificationAction,
+                id: 7,
+                actionId: actionId,
+                payload: payload,
+              );
+
+          const payload = '{"rondaId":"r1","week":"2026-W44"}';
+
+          test('reads Voy', () {
+            final action = PushClient.rsvpActionFrom(
+              tap(PushClient.rsvpYesAction, payload),
+            )!;
+
+            expect((
+              action.rondaId,
+              action.week,
+              action.going,
+            ), equals(('r1', '2026-W44', true)));
+          });
+
+          test('reads Esta no', () {
+            final action = PushClient.rsvpActionFrom(
+              tap(PushClient.rsvpNoAction, payload),
+            )!;
+
+            expect(action.going, isFalse);
+          });
+
+          test('reads nothing from a tap on the notification itself', () {
+            expect(PushClient.rsvpActionFrom(tap(null, payload)), isNull);
+          });
+
+          test('reads nothing from a payload of another shape', () {
+            expect(
+              PushClient.rsvpActionFrom(tap(PushClient.rsvpYesAction, '{}')),
+              isNull,
+            );
+            expect(
+              PushClient.rsvpActionFrom(tap(PushClient.rsvpYesAction, 'x')),
+              isNull,
+            );
+            expect(
+              PushClient.rsvpActionFrom(tap(PushClient.rsvpYesAction, null)),
+              isNull,
+            );
+          });
+        });
+      });
+
+      group('showNotice', () {
+        test('replaces the notification with a plain one', () async {
+          await buildSubject().showNotice(
+            id: 7,
+            title: 'Listo, vas.',
+            body: 'Podés cambiarlo en Ronda.',
+          );
+
+          final details =
+              verify(
+                    () => notifications.show(
+                      id: 7,
+                      title: 'Listo, vas.',
+                      body: 'Podés cambiarlo en Ronda.',
+                      notificationDetails: captureAny(
+                        named: 'notificationDetails',
+                      ),
+                    ),
+                  ).captured.single
+                  as NotificationDetails;
+          expect(details.android?.channelId, equals(PushClient.rsvpChannelId));
+          expect(details.android?.actions, isEmpty);
+        });
+
+        test('does nothing on web', () async {
+          await buildSubject(isWeb: true).showNotice(
+            id: 7,
+            title: 'Listo, vas.',
+            body: 'Podés cambiarlo en Ronda.',
+          );
+
+          verifyNothingShown();
+        });
       });
     });
   });

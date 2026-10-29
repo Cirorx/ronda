@@ -242,3 +242,93 @@ def flyer_landing(req: https_fn.Request) -> https_fn.Response:
     return https_fn.Response(
         body, status=status, content_type="application/json", headers={"Cache-Control": "no-store"}
     )
+
+
+# --- The weekly loop (#45): the RSVP push, the answers and the jobs' dispatcher -------------
+
+MONTEVIDEO = "America/Montevideo"
+
+
+# On the hour in Montevideo, so a 19:00 lead time goes out at 19:00.
+@scheduler_fn.on_schedule(
+    schedule="0 * * * *",
+    timezone=scheduler_fn.Timezone(MONTEVIDEO),
+    region=REGION,
+    max_instances=1,
+    timeout_sec=300,
+    memory=options.MemoryOption.MB_512,
+)
+def dispatch(event: scheduler_fn.ScheduledEvent) -> None:
+    """Runs every job that is due at the scheduled time (jobs.JOBS)."""
+    import jobs
+
+    jobs.run_due(_firestore(), event.schedule_time, jobs.context())
+
+
+@https_fn.on_call(
+    region=REGION,
+    max_instances=1,
+    timeout_sec=300,
+    memory=options.MemoryOption.MB_512,
+    invoker="public",
+)
+def run_job(req: https_fn.CallableRequest) -> dict:
+    """Runs one job by `name` now, or at `now` (ISO 8601 with an offset) for tests and the demo.
+    `force: true` skips the job's own timing, as the admin's "send the RSVP now". Admin only."""
+    from datetime import datetime
+
+    import jobs
+
+    _require_admin(req)
+    data = req.data if isinstance(req.data, dict) else {}
+    error = https_fn.FunctionsErrorCode.INVALID_ARGUMENT
+    now = _now()
+    if (at := data.get("now")) is not None:
+        try:
+            now = datetime.fromisoformat(at)
+        except (TypeError, ValueError) as e:
+            raise https_fn.HttpsError(error, "now is an ISO 8601 time") from e
+        if now.tzinfo is None:
+            raise https_fn.HttpsError(error, "now needs an offset")
+    name = data.get("name")
+    try:
+        counts = jobs.run(name, _firestore(), now, jobs.context(force=data.get("force") is True))
+    except jobs.UnknownJob as e:
+        raise https_fn.HttpsError(error, "no such job") from e
+    return {"name": name, **counts}
+
+
+# Several members can answer in the same minute the push lands.
+@https_fn.on_call(
+    region=REGION,
+    max_instances=5,
+    memory=options.MemoryOption.MB_512,
+    invoker="public",
+)
+def answer_rsvp(req: https_fn.CallableRequest) -> dict:
+    """Records the caller's "voy" or "esta no" for their ronda's upcoming meeting:
+    `{rondaId, answer: yes | no, week?, pauseWeeks?}`. Members of that ronda only."""
+    import rsvp
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "sign in first")
+    data = req.data if isinstance(req.data, dict) else {}
+    ronda_id, week = data.get("rondaId"), data.get("week")
+    if not isinstance(ronda_id, str) or not ronda_id or "/" in ronda_id:
+        raise https_fn.HttpsError(
+            https_fn.FunctionsErrorCode.INVALID_ARGUMENT, "rondaId is required"
+        )
+    if week is not None and not isinstance(week, str):
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.INVALID_ARGUMENT, "week is a string")
+    try:
+        return rsvp.answer(
+            _firestore(),
+            req.auth.uid,
+            ronda_id,
+            data.get("answer"),
+            _now(),
+            week=week,
+            pause_weeks=data.get("pauseWeeks"),
+        )
+    except rsvp.RsvpError as e:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e

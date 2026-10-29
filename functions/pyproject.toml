@@ -9,10 +9,15 @@
 pythonpath = ["."]
 testpaths = ["tests"]
 # ortools' protobuf bindings use `~` on a bool at import time (Python 3.13 deprecation).
-filterwarnings = ["ignore:Bitwise inversion:DeprecationWarning"]
+# firebase-admin 7 deprecates `Message.token` for installation ids; the app still saves
+# registration tokens (docs/STACK.md § Push), so the sender addresses those.
+filterwarnings = [
+    "ignore:Bitwise inversion:DeprecationWarning",
+    "ignore:Message.token is deprecated:DeprecationWarning",
+]
 
 [tool.coverage.run]
-source = ["proposals", "main", "voice_signup", "audio_sweeper", "cerca_tuyo", "mate_flyer"]
+source = ["proposals", "main", "voice_signup", "audio_sweeper", "cerca_tuyo", "mate_flyer", "rsvp", "jobs", "fcm"]
 branch = true
 
 [tool.coverage.report]

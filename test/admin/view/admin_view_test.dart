@@ -12,12 +12,18 @@ import '../fixtures.dart';
 class _MockProposalsCubit extends MockCubit<ProposalsState>
     implements ProposalsCubit;
 
+class _MockRsvpPushCubit extends MockCubit<RsvpPushState>
+    implements RsvpPushCubit;
+
 void main() {
   group(AdminView, () {
     late ProposalsCubit cubit;
+    late RsvpPushCubit rsvpPushCubit;
 
     setUp(() {
       cubit = _MockProposalsCubit();
+      rsvpPushCubit = _MockRsvpPushCubit();
+      when(() => rsvpPushCubit.state).thenReturn(const RsvpPushState());
       when(cubit.propose).thenAnswer((_) async {});
       when(cubit.approve).thenAnswer((_) async {});
       when(cubit.undo).thenAnswer((_) async {});
@@ -26,7 +32,13 @@ void main() {
     Future<void> pump(WidgetTester tester, ProposalsState state) {
       when(() => cubit.state).thenReturn(state);
       return tester.pumpApp(
-        BlocProvider.value(value: cubit, child: const AdminView()),
+        MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: cubit),
+            BlocProvider.value(value: rsvpPushCubit),
+          ],
+          child: const AdminView(),
+        ),
       );
     }
 
@@ -201,7 +213,13 @@ void main() {
     testWidgets('reads in English', (tester) async {
       when(() => cubit.state).thenReturn(ready(AdminFixtures.proposal()));
       await tester.pumpApp(
-        BlocProvider.value(value: cubit, child: const AdminView()),
+        MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: cubit),
+            BlocProvider.value(value: rsvpPushCubit),
+          ],
+          child: const AdminView(),
+        ),
         locale: const Locale('en'),
       );
 
@@ -210,6 +228,12 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Marta and their guest go together'), findsOneWidget);
+    });
+
+    testWidgets('ends with the weekly RSVP section', (tester) async {
+      await pump(tester, ready(null));
+
+      expect(find.byType(RsvpPushSection), findsOneWidget);
     });
   });
 }

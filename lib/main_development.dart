@@ -1,5 +1,6 @@
 import 'package:auth_repository/auth_repository.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/app_bloc_observer.dart';
 import 'package:ronda/bootstrap.dart';
@@ -18,6 +19,28 @@ String _emulatorHost() {
   }
   return 'localhost';
 }
+
+/// The emulators as this device sees them. A second functions emulator
+/// beside the main one is reached with
+/// `--dart-define=FIREBASE_FUNCTIONS_PORT=…`.
+FirebaseEmulators _emulators() => FirebaseEmulators(
+  host: _emulatorHost(),
+  // Equal to the default only while no port is defined.
+  // ignore: avoid_redundant_argument_values
+  functionsPort: const int.fromEnvironment(
+    'FIREBASE_FUNCTIONS_PORT',
+    defaultValue: FirebaseEmulators.defaultFunctionsPort,
+  ),
+);
+
+/// "Voy" or "Esta no" tapped on the weekly push, against the emulators.
+@pragma('vm:entry-point')
+Future<void> answerRsvpFromNotification(NotificationResponse response) =>
+    answerRsvpInBackground(
+      response,
+      firebaseOptions: DefaultFirebaseOptions.currentPlatform,
+      emulators: _emulators(),
+    );
 
 /// Signs in with the Auth emulator's account picker: a popup on web,
 /// `signInWithProvider` in a browser tab on phones. Pass
@@ -51,7 +74,8 @@ Future<void> main() async {
     ),
     firebaseOptions: DefaultFirebaseOptions.currentPlatform,
     googleSignInFlow: _googleSignInFlow(),
-    emulators: FirebaseEmulators(host: _emulatorHost()),
+    emulators: _emulators(),
     blocObserver: const AppBlocObserver(),
+    onRsvpAction: answerRsvpFromNotification,
   );
 }

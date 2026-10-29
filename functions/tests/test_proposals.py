@@ -196,6 +196,7 @@ class TestApprove:
             "state": "active",
             "joinedAt": NOW,
         }
+        assert db.documents[f"users/{uid}/rondas/{first_id}"] == {"joinedAt": NOW}
         approved = db.documents[f"proposals/{proposal_id}"]
         assert approved["status"] == "approved"
         assert approved["rondaIds"] == result["rondaIds"]
@@ -252,6 +253,7 @@ class TestUndoApproval:
         proposals.undo_approval(db, proposal_id)
 
         assert not [p for p in db.documents if p.startswith("rondas/")]
+        assert not [p for p in db.documents if "/rondas/" in p]
         assert db.documents[f"proposals/{proposal_id}"] == pending
 
     def test_refuses_a_pending_proposal(self):

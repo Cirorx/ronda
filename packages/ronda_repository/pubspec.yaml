@@ -1,5 +1,5 @@
 name: ronda_repository
-description: Rondas and the admin's proposals, over ronda_api.
+description: Rondas, their weekly RSVP and the admin's proposals, over ronda_api.
 version: 0.1.0+1
 publish_to: none
 
@@ -14,6 +14,7 @@ dependencies:
     sdk: flutter
   ronda_api:
     path: ../ronda_api
+  rxdart: ^0.28.0
 
 dev_dependencies:
   cloud_firestore: ^7.1.0

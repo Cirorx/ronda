@@ -62,7 +62,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | Package | Layer | Wraps / owns | First issue |
 |---|---|---|---|
 | `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
-| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `rsvp`, `run_job`) | #13 |
+| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `run_job`) | #13 |
 | `device_store` | Data | flutter_secure_storage (needs); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
@@ -329,7 +329,7 @@ stdlib `wave` module (`audioop` is gone in 3.13).
 |---|---|---|---|
 | Payload | Data-only, `android.priority: HIGH` | Notification with `aps.category: "RSVP"` (data messages are dropped after force-quit) | Plain notification |
 | Buttons | flutter_local_notifications actions on a high-importance "rsvp" channel | Category registered through flutter_local_notifications; both actions `.foreground` | None: the card has big buttons |
-| Tap | FLN response handlers; "Voy" → callable `rsvp` | `RemoteMessage.actionIdentifier` via firebase_messaging | Opens the card |
+| Tap | FLN background response handler; "Voy" / "Esta no" → callable `answer_rsvp` | `RemoteMessage.actionIdentifier` via firebase_messaging | Opens the card |
 
 Store `platform` with each FCM token. iPhone web users get push only after Add to Home Screen.
 
@@ -370,6 +370,29 @@ Built in #27 (`packages/push_client`, `packages/push_repository`, `lib/push/`):
   `FCM_VAPID_KEY` environment variable). It is public by design (browsers receive it),
   so the rule against keys in dart-defines doesn't apply. Without it the JS SDK falls back to
   Firebase's default key, which may not work.
+
+Built in #45 (`functions/rsvp.py`, `functions/fcm.py`, `packages/push_client`, `lib/bootstrap.dart`,
+`lib/my_ronda/`):
+- **Payload** (`rsvp.rsvp_messages`): Android gets `data: {type: "rsvp", rondaId, week, title,
+  body}` with `android.priority: HIGH` and no `notification`; web gets `notification: {title,
+  body}` with `webpush.fcm_options.link` to `/app/ronda` on the project's Hosting; `ios` tokens
+  are skipped until the Apple Developer Program exists. The title is the ronda's line ("Sábado a
+  la tarde · mate en la rambla", plus the public place's name once a host sets one) and the body
+  who's going so far, what this member brings and "¿Venís?", in es-419, written by the server.
+  No address ever goes into a push. A token FCM answers `UNREGISTERED` for is deleted.
+- **Buttons:** `PushClient` draws a `type: rsvp` message with "Voy" and "Esta no"
+  (`rsvp.yes` / `rsvp.no`, labelled in the phone's language), `showsUserInterface: false`, and
+  the ronda and week as the payload. The manifest declares FLN's `ActionBroadcastReceiver`. A
+  tap runs `answerRsvpFromNotification` (top level in each `main_<flavor>.dart`, so it knows the
+  flavor's options and emulators) in a background engine, even with the app's process gone:
+  `answerRsvpInBackground` starts Firebase, waits for the signed-in member, calls `answer_rsvp`
+  through `RondaRepository` like the card does, and replaces the push with "Listo, vas." /
+  "Listo, esta no." or, when it failed, "No se guardó tu respuesta". Checked 2026-10-29 on a
+  Pixel 8 emulator with the app's process killed: [Voy] recorded the answer through the callable
+  and the notice replaced the push.
+- **Emulators:** FCM has no emulator, so `fcm.send` sends nothing under `FUNCTIONS_EMULATOR`. A
+  second functions emulator is reached with `--dart-define=FIREBASE_FUNCTIONS_PORT=<port>` on
+  `main_development.dart`.
 
 ## Native and project checklist
 

@@ -1,8 +1,9 @@
 """Proposals: the solver's groups waiting for the admin, and what approving one writes.
 
 `propose(db, admin_uid, now)` reads the sign-ups, runs the solver and writes `proposals/{id}`.
-`approve(db, proposal_id, admin_uid, now)` turns a pending proposal into `rondas/{id}` and
-`rondas/{id}/members/{uid}`; `undo_approval` deletes them again and puts it back to pending.
+`approve(db, proposal_id, admin_uid, now)` turns a pending proposal into `rondas/{id}`,
+`rondas/{id}/members/{uid}` and `users/{uid}/rondas/{id}`; `undo_approval` deletes them again
+and puts it back to pending.
 Nothing here sends anything to a member: before approval only the admin can read a proposal
 (firestore.rules), and the Tuesday push is the organiser's job.
 
@@ -119,7 +120,8 @@ def ronda_documents(
     proposal: dict, ronda_ids: list[str], users: dict[str, dict], now: datetime
 ) -> dict[str, dict]:
     """`rondas/{id}` and `rondas/{id}/members/{uid}` for each group of an approved proposal,
-    keyed by document path; `ronda_ids[i]` names group i.
+    and `users/{uid}/rondas/{id}`, how a member's phone finds their ronda, keyed by document
+    path; `ronda_ids[i]` names group i.
 
     A ronda starts `forming`, with no place yet (its host sets a public one) and no season: the
     first ¿seguimos? starts that.
@@ -143,6 +145,7 @@ def ronda_documents(
                 "state": "active",
                 "joinedAt": now,
             }
+            documents[f"users/{member['uid']}/rondas/{ronda_id}"] = {"joinedAt": now}
     return documents
 
 
@@ -195,7 +198,8 @@ def approve(db, proposal_id: str, admin_uid: str, now: datetime) -> dict:
 
 
 def undo_approval(db, proposal_id: str) -> dict:
-    """Deletes the rondas an approval wrote and puts the proposal back to pending."""
+    """Deletes the rondas an approval wrote, and each member's link to theirs, and puts the
+    proposal back to pending."""
     from google.cloud.firestore import DELETE_FIELD
 
     reference = db.document(f"proposals/{proposal_id}")
@@ -204,6 +208,7 @@ def undo_approval(db, proposal_id: str) -> dict:
     for ronda_id in proposal.get("rondaIds", []):
         ronda = db.document(f"rondas/{ronda_id}")
         for member in ronda.collection("members").list_documents():
+            batch.delete(db.document(f"users/{member.id}/rondas/{ronda_id}"))
             batch.delete(member)
         batch.delete(ronda)
     batch.update(

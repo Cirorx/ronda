@@ -167,5 +167,23 @@ service cloud.firestore {
           .data.get('hosts', {});
       return request.auth.uid in [hosts.get('anfitrion', ''), hosts.get('cola', '')];
     }
+
+    // The weekly loop (#45). The raw `rsvp` map lives in rondas/{id}/weeks/{isoWeek}, which no
+    // client reads (nothing matches it). Members read the derived "who's coming" view of their
+    // own ronda, and each member only their own answer. The answer_rsvp callable and the RSVP
+    // job write all three with the admin SDK; no client writes any of them.
+    match /rondas/{rondaId}/views/{view} {
+      allow read: if isMemberOf(rondaId);
+    }
+
+    match /rondas/{rondaId}/answers/{uid} {
+      allow read: if isOwner(uid) && isMemberOf(rondaId);
+    }
+
+    // The rondas a member is in, so their phone finds theirs: one document per ronda,
+    // written by approve_proposal and read by that member only.
+    match /users/{uid}/rondas/{rondaId} {
+      allow read: if isOwner(uid);
+    }
   }
 }

@@ -41,6 +41,12 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_notification" />
+        <!-- The weekly push's [Voy] / [Esta no] buttons answer without opening the app:
+             flutter_local_notifications receives the tap here and runs the app's handler
+             in a background isolate (lib/bootstrap.dart, answerRsvpInBackground). -->
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

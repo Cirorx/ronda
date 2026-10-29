@@ -1,6 +1,10 @@
-"""An in-memory stand-in for the slice of google.cloud.firestore that proposals.py uses, so the
-tests run without the emulator. test_emulator.py runs the same calls against the real one."""
+"""An in-memory stand-in for the slice of google.cloud.firestore that proposals.py and rsvp.py
+use, so the tests run without the emulator.
 
+`transaction()` returns a stand-in the real `firestore.transactional` decorator can drive: it
+buffers writes until `_commit`, like a batch, and drops them on `_rollback`."""
+
+import copy
 import itertools
 
 from google.cloud.firestore import DELETE_FIELD
@@ -19,6 +23,9 @@ class FakeFirestore:
 
     def batch(self) -> "FakeBatch":
         return FakeBatch(self)
+
+    def transaction(self) -> "FakeTransaction":
+        return FakeTransaction(self)
 
     def next_id(self) -> str:
         return f"auto{next(self._ids):03d}"
@@ -50,11 +57,17 @@ class FakeDocument:
         self.path = path
         self.id = path.rsplit("/", 1)[-1]
 
-    def get(self) -> "FakeSnapshot":
+    def get(self, transaction: "FakeTransaction | None" = None) -> "FakeSnapshot":
         return FakeSnapshot(self.id, self._db.documents.get(self.path))
 
-    def set(self, fields: dict) -> None:
-        self._db.documents[self.path] = dict(fields)
+    def set(self, fields: dict, merge: bool = False) -> None:
+        _write(self._db, ("set", self.path, fields, merge))
+
+    def update(self, fields: dict) -> None:
+        _write(self._db, ("update", self.path, fields, False))
+
+    def delete(self) -> None:
+        _write(self._db, ("delete", self.path, None, False))
 
     def collection(self, name: str) -> FakeCollection:
         return FakeCollection(self._db, f"{self.path}/{name}")
@@ -75,25 +88,62 @@ class FakeBatch:
         self._db = db
         self._writes: list = []
 
-    def set(self, reference: FakeDocument, fields: dict) -> None:
-        self._writes.append(("set", reference.path, fields))
+    def set(self, reference: FakeDocument, fields: dict, merge: bool = False) -> None:
+        self._writes.append(("set", reference.path, fields, merge))
 
     def update(self, reference: FakeDocument, fields: dict) -> None:
-        self._writes.append(("update", reference.path, fields))
+        self._writes.append(("update", reference.path, fields, False))
 
     def delete(self, reference: FakeDocument) -> None:
-        self._writes.append(("delete", reference.path, None))
+        self._writes.append(("delete", reference.path, None, False))
 
     def commit(self) -> None:
-        for kind, path, fields in self._writes:
-            if kind == "set":
-                self._db.documents[path] = dict(fields)
-            elif kind == "update":
-                current = self._db.documents[path]
-                for key, value in fields.items():
-                    if value is DELETE_FIELD:
-                        current.pop(key, None)
-                    else:
-                        current[key] = value
+        for write in self._writes:
+            _write(self._db, write)
+
+
+class FakeTransaction(FakeBatch):
+    """What `google.cloud.firestore.transactional` calls on a transaction, and its writes."""
+
+    _read_only = False
+    _max_attempts = 1
+    _id = b"fake-transaction"
+
+    def _clean_up(self) -> None:
+        pass
+
+    def _begin(self, retry_id: bytes | None = None) -> None:
+        self._writes = []
+
+    def _commit(self) -> list:
+        self.commit()
+        return []
+
+    def _rollback(self) -> None:
+        self._writes = []
+
+
+def _merge(current: dict, fields: dict) -> None:
+    for key, value in fields.items():
+        if isinstance(value, dict) and isinstance(current.get(key), dict):
+            _merge(current[key], value)
+        else:
+            current[key] = value
+
+
+def _write(db: FakeFirestore, write: tuple) -> None:
+    kind, path, fields, merge = write
+    fields = copy.deepcopy(fields, {id(DELETE_FIELD): DELETE_FIELD})
+    if kind == "set" and merge:
+        _merge(db.documents.setdefault(path, {}), fields)
+    elif kind == "set":
+        db.documents[path] = fields
+    elif kind == "update":
+        current = db.documents[path]
+        for key, value in fields.items():
+            if value is DELETE_FIELD:
+                current.pop(key, None)
             else:
-                self._db.documents.pop(path, None)
+                current[key] = value
+    else:
+        db.documents.pop(path, None)

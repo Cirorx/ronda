@@ -981,5 +981,229 @@
     "mateFlyerShareError": "We couldn't open the options to share it.",
     "@mateFlyerShareError": {
         "description": "The share sheet couldn't open"
+    },
+    "thisWeekDate": "{month}/{day}",
+    "@thisWeekDate": {
+        "description": "A meeting's date, short",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            },
+            "month": {
+                "type": "String"
+            }
+        }
+    },
+    "thisWeekLine": "{when} · {pretext}",
+    "@thisWeekLine": {
+        "description": "The Mi ronda card's first line: when and what",
+        "placeholders": {
+            "when": {
+                "type": "String"
+            },
+            "pretext": {
+                "type": "String"
+            }
+        }
+    },
+    "thisWeekQuestion": "Are you coming?",
+    "@thisWeekQuestion": {
+        "description": "The weekly question on the card"
+    },
+    "thisWeekYes": "I'm in",
+    "@thisWeekYes": {
+        "description": "The yes button, on the card and the push"
+    },
+    "thisWeekNo": "Not this one",
+    "@thisWeekNo": {
+        "description": "The no button, on the card and the push; never asks why"
+    },
+    "thisWeekYourTurn": "It's your turn to bring {item}.",
+    "@thisWeekYourTurn": {
+        "description": "Under the question: what the member brings",
+        "placeholders": {
+            "item": {
+                "type": "String"
+            }
+        }
+    },
+    "thisWeekGoing": "You're going.",
+    "@thisWeekGoing": {
+        "description": "The card after a yes, with nothing to bring"
+    },
+    "thisWeekGoingBring": "You're going. Bring {item}.",
+    "@thisWeekGoingBring": {
+        "description": "The card after a yes",
+        "placeholders": {
+            "item": {
+                "type": "String"
+            }
+        }
+    },
+    "thisWeekNotGoing": "You're skipping this one.",
+    "@thisWeekNotGoing": {
+        "description": "The card after a no"
+    },
+    "thisWeekPausedUntil": "You're taking a few weeks. You're back on {date}.",
+    "@thisWeekPausedUntil": {
+        "description": "The card while the member is paused",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "thisWeekChange": "Change my answer",
+    "@thisWeekChange": {
+        "description": "Shows the question again"
+    },
+    "thisWeekWhoTitle": "Who's going",
+    "@thisWeekWhoTitle": {
+        "description": "Heading of the yeses on the card"
+    },
+    "thisWeekYou": "You",
+    "@thisWeekYou": {
+        "description": "The member's own row among the yeses"
+    },
+    "thisWeekGoingCount": "{count, plural, =0{Nobody yet} =1{1 going} other{{count} going}}",
+    "@thisWeekGoingCount": {
+        "description": "How many said yes",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "thisWeekNoCount": "{count, plural, =1{1 can't} other{{count} can't}}",
+    "@thisWeekNoCount": {
+        "description": "How many said no; never their names",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "thisWeekUnansweredCount": "{count, plural, =1{1 hasn't answered} other{{count} haven't answered}}",
+    "@thisWeekUnansweredCount": {
+        "description": "How many haven't answered; never their names",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "thisWeekYourAnswerMissing": "yours is missing",
+    "@thisWeekYourAnswerMissing": {
+        "description": "In the counts, while the member hasn't answered"
+    },
+    "thisWeekSaveError": "We couldn't save your answer. Try again.",
+    "@thisWeekSaveError": {
+        "description": "An answer that didn't reach the server"
+    },
+    "thisWeekLoadError": "We couldn't load your ronda. Try again.",
+    "@thisWeekLoadError": {
+        "description": "The card couldn't be read"
+    },
+    "thisWeekRetry": "Try again",
+    "@thisWeekRetry": {
+        "description": "Reads the card again"
+    },
+    "bringItemPan": "the bread",
+    "@bringItemPan": {
+        "description": "Pan, as a thing to bring"
+    },
+    "bringItemYerba": "the yerba",
+    "@bringItemYerba": {
+        "description": "Yerba, as a thing to bring"
+    },
+    "bringItemTermo": "the thermos",
+    "@bringItemTermo": {
+        "description": "Termo, as a thing to bring"
+    },
+    "bringItemSillas": "the chairs",
+    "@bringItemSillas": {
+        "description": "Sillas, as a thing to bring"
+    },
+    "estaNoTitle": "Done, not this one.",
+    "@estaNoTitle": {
+        "description": "The Esta no sheet's title"
+    },
+    "estaNoBody": "Nobody asks why.",
+    "@estaNoBody": {
+        "description": "The Esta no sheet's body"
+    },
+    "estaNoNextWeeks": "And the next weeks?",
+    "@estaNoNextWeeks": {
+        "description": "The Esta no sheet's question"
+    },
+    "estaNoStay": "I'm staying in",
+    "@estaNoStay": {
+        "description": "Keeps the member in the ronda"
+    },
+    "estaNoPause": "Pause for 2 weeks",
+    "@estaNoPause": {
+        "description": "Pauses the member through the meeting after next"
+    },
+    "estaNoMistake": "My mistake, I'm going",
+    "@estaNoMistake": {
+        "description": "Turns the no into a yes"
+    },
+    "rsvpNoticeYes": "Done, you're going.",
+    "@rsvpNoticeYes": {
+        "description": "Replaces the push after a tap on the yes button"
+    },
+    "rsvpNoticeNo": "Done, not this one.",
+    "@rsvpNoticeNo": {
+        "description": "Replaces the push after a tap on the no button"
+    },
+    "rsvpNoticeBody": "If you change your mind, change it in Ronda.",
+    "@rsvpNoticeBody": {
+        "description": "Under either answer's notice"
+    },
+    "rsvpNoticeFailedTitle": "Your answer wasn't saved",
+    "@rsvpNoticeFailedTitle": {
+        "description": "Replaces the push when the answer failed"
+    },
+    "rsvpNoticeFailedBody": "Open Ronda and answer on the card.",
+    "@rsvpNoticeFailedBody": {
+        "description": "Under the failed answer's notice"
+    },
+    "adminRsvpTitle": "This week's RSVP",
+    "@adminRsvpTitle": {
+        "description": "Admin: the weekly push section"
+    },
+    "adminRsvpBody": "It goes out on its own at each ronda's time. This button sends it now: once a week, never at night.",
+    "@adminRsvpBody": {
+        "description": "Admin: what the button does"
+    },
+    "adminRsvpSend": "Send it now",
+    "@adminRsvpSend": {
+        "description": "Admin: sends the RSVP push now"
+    },
+    "adminRsvpSending": "Sending…",
+    "@adminRsvpSending": {
+        "description": "Admin: while it sends"
+    },
+    "adminRsvpSent": "{count, plural, =0{It reached no phone.} =1{It reached 1 phone.} other{It reached {count} phones.}}",
+    "@adminRsvpSent": {
+        "description": "Admin: how many phones got it",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "adminRsvpAlready": "{count, plural, =1{1 ronda already had it this week.} other{{count} rondas already had it this week.}}",
+    "@adminRsvpAlready": {
+        "description": "Admin: rondas skipped because they had it",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "adminRsvpHeld": "Held: outside hours. It goes out between 9:00 and 21:00.",
+    "@adminRsvpHeld": {
+        "description": "Admin: the quiet-hours gate stopped it"
     }
 }

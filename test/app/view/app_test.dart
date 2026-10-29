@@ -80,6 +80,8 @@ void main() {
           .thenAnswer((_) async => PushPermission.blocked);
       when(rondaRepository.watchLatestProposal)
           .thenAnswer((_) => Stream.value(null));
+      when(() => rondaRepository.watchThisWeek(any()))
+          .thenAnswer((_) => Stream.value(null));
       users = StreamController<User>.broadcast();
       profiles = StreamController<Profile?>.broadcast();
       addTearDown(users.close);

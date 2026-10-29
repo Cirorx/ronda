@@ -1,8 +1,17 @@
 import 'package:auth_repository/auth_repository.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/bootstrap.dart';
 import 'package:ronda/firebase_options_production.dart';
+
+/// "Voy" or "Esta no" tapped on the weekly push.
+@pragma('vm:entry-point')
+Future<void> answerRsvpFromNotification(NotificationResponse response) =>
+    answerRsvpInBackground(
+      response,
+      firebaseOptions: DefaultFirebaseOptions.currentPlatform,
+    );
 
 Future<void> main() async {
   await bootstrap(
@@ -28,5 +37,6 @@ Future<void> main() async {
     googleSignInFlow: kIsWeb
         ? GoogleSignInFlow.popup
         : GoogleSignInFlow.provider,
+    onRsvpAction: answerRsvpFromNotification,
   );
 }

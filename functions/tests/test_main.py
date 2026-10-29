@@ -288,3 +288,144 @@ class TestMakeMateFlyer:
         with pytest.raises(https_fn.HttpsError) as excinfo:
             call(main.make_mate_flyer, MEMBER, {})
         assert error_code(excinfo) == https_fn.FunctionsErrorCode.FAILED_PRECONDITION
+
+
+class TestDispatch:
+    def test_runs_on_the_hour_in_montevideo_in_the_region_on_one_instance(self):
+        endpoint = main.dispatch.__firebase_endpoint__
+
+        assert endpoint.scheduleTrigger["schedule"] == "0 * * * *"
+        assert endpoint.scheduleTrigger["timeZone"] == "America/Montevideo"
+        assert endpoint.region == [main.REGION]
+        assert endpoint.maxInstances == 1
+
+    def test_runs_every_job_at_the_scheduled_time(self, monkeypatch):
+        import jobs
+
+        seen = {}
+        monkeypatch.setattr(main, "_firestore", lambda: "db")
+        monkeypatch.setattr(jobs, "run_due", lambda db, now, context: seen.update(db=db, now=now))
+
+        event = scheduler_fn.ScheduledEvent(job_name="dispatch", schedule_time=SWEEP_TIME)
+        inspect.unwrap(main.dispatch)(event)
+
+        assert seen == {"db": "db", "now": SWEEP_TIME}
+
+
+class TestRunJob:
+    @pytest.fixture
+    def runs(self, monkeypatch):
+        import jobs
+
+        seen: dict = {}
+        monkeypatch.setattr(main, "_firestore", lambda: "db")
+
+        def run(name, db, now, context):
+            if name != "rsvp_push":
+                raise jobs.UnknownJob(name)
+            seen.update(name=name, db=db, now=now, force=context.force)
+            return {"pushed": 1}
+
+        monkeypatch.setattr(jobs, "run", run)
+        return seen
+
+    @pytest.mark.parametrize(
+        ("auth", "code"),
+        [
+            (None, https_fn.FunctionsErrorCode.UNAUTHENTICATED),
+            (MEMBER, https_fn.FunctionsErrorCode.PERMISSION_DENIED),
+        ],
+    )
+    def test_is_for_the_admin_only(self, runs, auth, code):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.run_job, auth, {"name": "rsvp_push"})
+        assert error_code(excinfo) == code
+        assert runs == {}
+
+    def test_runs_a_job_now(self, runs):
+        before = datetime.now(UTC)
+
+        assert call(main.run_job, ADMIN, {"name": "rsvp_push"}) == {
+            "name": "rsvp_push",
+            "pushed": 1,
+        }
+        assert runs["now"] >= before
+        assert runs["force"] is False
+
+    def test_runs_a_job_at_a_given_time_and_forced(self, runs):
+        call(main.run_job, ADMIN, {"name": "rsvp_push", "now": "2026-10-29T19:00:00-03:00",
+                                   "force": True})  # fmt: skip
+
+        assert runs["now"] == datetime(2026, 10, 29, 22, 0, tzinfo=UTC)
+        assert runs["force"] is True
+
+    @pytest.mark.parametrize(
+        "data",
+        [
+            {"name": "nope"},
+            None,
+            {"name": "rsvp_push", "now": "yesterday"},
+            {"name": "rsvp_push", "now": 5},
+            {"name": "rsvp_push", "now": "2026-10-29T19:00:00"},
+        ],
+    )
+    def test_refuses_bad_arguments(self, runs, data):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.run_job, ADMIN, data)
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.INVALID_ARGUMENT
+
+
+class TestAnswerRsvp:
+    @pytest.fixture
+    def ronda(self, monkeypatch):
+        from tests.test_rsvp import documents
+
+        db = FakeFirestore(documents())
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setattr(main, "_now", lambda: datetime(2026, 10, 29, 22, 0, tzinfo=UTC))
+        return db
+
+    def test_refuses_a_signed_out_caller(self, ronda):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.answer_rsvp, None, {"rondaId": "ronda-1", "answer": "yes"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+
+    def test_records_the_callers_answer(self, ronda):
+        result = call(
+            main.answer_rsvp, MEMBER, {"rondaId": "ronda-1", "answer": "yes", "week": "2026-W44"}
+        )
+
+        assert result == {"week": "2026-W44", "answer": "yes"}
+        assert ronda.documents["rondas/ronda-1/weeks/2026-W44"]["rsvp"] == {"demo-001": "yes"}
+
+    def test_pauses_with_the_no(self, ronda):
+        call(main.answer_rsvp, MEMBER, {"rondaId": "ronda-1", "answer": "no", "pauseWeeks": 2})
+
+        assert ronda.documents["rondas/ronda-1/members/demo-001"]["state"] == "paused"
+
+    @pytest.mark.parametrize(
+        ("data", "code"),
+        [
+            (None, https_fn.FunctionsErrorCode.INVALID_ARGUMENT),
+            ({"answer": "yes"}, https_fn.FunctionsErrorCode.INVALID_ARGUMENT),
+            ({"rondaId": "a/b", "answer": "yes"}, https_fn.FunctionsErrorCode.INVALID_ARGUMENT),
+            ({"rondaId": "ronda-1", "answer": "yes", "week": 44},
+             https_fn.FunctionsErrorCode.INVALID_ARGUMENT),
+            ({"rondaId": "ronda-1", "answer": "maybe"},
+             https_fn.FunctionsErrorCode.INVALID_ARGUMENT),
+            ({"rondaId": "nope", "answer": "yes"}, https_fn.FunctionsErrorCode.NOT_FOUND),
+            ({"rondaId": "ronda-1", "answer": "yes", "week": "2026-W43"},
+             https_fn.FunctionsErrorCode.FAILED_PRECONDITION),
+        ],
+    )  # fmt: skip
+    def test_maps_each_refusal_to_its_code(self, ronda, data, code):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.answer_rsvp, MEMBER, data)
+        assert error_code(excinfo) == code
+
+    def test_refuses_someone_outside_the_ronda(self, ronda):
+        stranger = SimpleNamespace(uid="demo-999", token={})
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.answer_rsvp, stranger, {"rondaId": "ronda-1", "answer": "yes"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED

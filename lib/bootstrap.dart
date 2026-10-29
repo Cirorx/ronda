@@ -46,6 +46,10 @@ const functionsRegion = 'southamerica-east1';
 class const FirebaseEmulators({
   /// The machine running `firebase emulators:start`, as this device sees it.
   required final String host,
+
+  /// The functions emulator's port: [defaultFunctionsPort] unless a second
+  /// one runs beside it (`--dart-define=FIREBASE_FUNCTIONS_PORT=…`).
+  final int functionsPort = defaultFunctionsPort,
 }) {
   /// Auth emulator port.
   static const authPort = 9099;
@@ -53,8 +57,8 @@ class const FirebaseEmulators({
   /// Firestore emulator port (8080 is often taken by web dev servers).
   static const firestorePort = 8088;
 
-  /// Functions emulator port.
-  static const functionsPort = 5001;
+  /// Functions emulator port in `firebase.json`.
+  static const defaultFunctionsPort = 5001;
 
   /// Storage emulator port.
   static const storagePort = 9199;
@@ -66,16 +70,88 @@ class const FirebaseEmulators({
 /// it in the console; without it web uses Firebase's default key, if any.
 const fcmVapidKey = String.fromEnvironment('FCM_VAPID_KEY');
 
+/// The app's strings in the phone's language, for what shows outside a
+/// screen: the channel's name and the push's buttons.
+AppLocalizations _phoneStrings() => lookupAppLocalizations(
+  resolveAppLocale(PlatformDispatcher.instance.locales),
+);
+
+PushClient _pushClient(AppLocalizations strings) => PushClient(
+  messaging: FirebaseMessaging.instance,
+  notifications: FlutterLocalNotificationsPlugin(),
+  vapidKey: fcmVapidKey,
+  rsvpLabels: RsvpActionLabels(
+    yes: strings.thisWeekYes,
+    no: strings.thisWeekNo,
+  ),
+);
+
 /// Shows a data-only push that arrived while the app was in the background
 /// or closed (Android). FCM runs it in its own isolate, so it starts Firebase
 /// again before anything else.
 @pragma('vm:entry-point')
 Future<void> showPushInBackground(RemoteMessage message) async {
   await Firebase.initializeApp();
-  await PushClient(
-    messaging: FirebaseMessaging.instance,
-    notifications: FlutterLocalNotificationsPlugin(),
-  ).showMessage(message);
+  await _pushClient(_phoneStrings()).showMessage(message);
+}
+
+/// Answers the weekly push's "Voy" or "Esta no" without opening the app
+/// (Android). flutter_local_notifications runs it in a background isolate,
+/// even with the app closed, so it starts Firebase with the flavor's
+/// [firebaseOptions] and [emulators], waits for the signed-in member, calls
+/// `answer_rsvp` through the same repository as the card, and puts a notice
+/// in the push's place saying what happened.
+///
+/// Each flavor's entrypoint wraps it in a top-level
+/// `@pragma('vm:entry-point')` function and hands that to [bootstrap].
+Future<void> answerRsvpInBackground(
+  NotificationResponse response, {
+  required FirebaseOptions firebaseOptions,
+  FirebaseEmulators? emulators,
+}) async {
+  final action = PushClient.rsvpActionFrom(response);
+  if (action == null) return;
+  await Firebase.initializeApp(options: firebaseOptions);
+  final auth = FirebaseAuth.instance;
+  final functions = FirebaseFunctions.instanceFor(region: functionsRegion);
+  if (emulators != null) {
+    await auth.useAuthEmulator(emulators.host, FirebaseEmulators.authPort);
+    functions.useFunctionsEmulator(emulators.host, emulators.functionsPort);
+  }
+  final strings = _phoneStrings();
+  final pushClient = _pushClient(strings);
+  final repository = RondaRepository(
+    proposalsApi: ProposalsApi(
+      firestore: FirebaseFirestore.instance,
+      functions: functions,
+    ),
+    rondasApi: RondasApi(
+      firestore: FirebaseFirestore.instance,
+      functions: functions,
+    ),
+  );
+  try {
+    if (await auth.authStateChanges().first == null) {
+      throw const RsvpFailure(RsvpFailureReason.forbidden);
+    }
+    await repository.answerRsvp(
+      rondaId: action.rondaId,
+      week: action.week,
+      answer: action.going ? RsvpAnswer.yes : RsvpAnswer.no,
+    );
+    await pushClient.showNotice(
+      id: response.id ?? 0,
+      title: action.going ? strings.rsvpNoticeYes : strings.rsvpNoticeNo,
+      body: strings.rsvpNoticeBody,
+    );
+  } on RsvpFailure catch (failure) {
+    log('rsvp answer from the notification failed: ${failure.reason.name}');
+    await pushClient.showNotice(
+      id: response.id ?? 0,
+      title: strings.rsvpNoticeFailedTitle,
+      body: strings.rsvpNoticeFailedBody,
+    );
+  }
 }
 
 /// Starts Firebase, builds the data clients and repositories, then runs the
@@ -86,13 +162,15 @@ Future<void> showPushInBackground(RemoteMessage message) async {
 /// the local emulators instead of the real project. [googleSignInFlow] says
 /// how this platform reaches Google. [blocObserver] is installed only when
 /// given: the development entrypoint passes `AppBlocObserver`, production
-/// passes nothing.
+/// passes nothing. [onRsvpAction] answers the weekly push's buttons in the
+/// background ([answerRsvpInBackground]).
 Future<void> bootstrap(
   AppBuilder builder, {
   required FirebaseOptions firebaseOptions,
   required GoogleSignInFlow googleSignInFlow,
   FirebaseEmulators? emulators,
   BlocObserver? blocObserver,
+  DidReceiveBackgroundNotificationResponseCallback? onRsvpAction,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -122,28 +200,24 @@ Future<void> bootstrap(
     storage: storage,
     functions: functions,
   );
+  final rondasApi = RondasApi(firestore: firestore, functions: functions);
   final voiceRecorder = VoiceRecorder();
   // ML Kit is built on the first detection, which never happens on web.
   final faceBlur = FaceBlur();
   final flyersApi = FlyersApi(storage: storage, functions: functions);
   final shareSheet = ShareSheet();
-  final pushClient = PushClient(
-    messaging: FirebaseMessaging.instance,
-    notifications: FlutterLocalNotificationsPlugin(),
-    vapidKey: fcmVapidKey,
-  );
+  // The channel's name shows in the phone's settings, and the push's
+  // buttons, in the phone's language.
+  final strings = _phoneStrings();
+  final pushClient = _pushClient(strings);
 
   // Push: there is no FCM emulator, so even the development flavor gets its
   // token from the real project; the token is then saved in the emulator.
   if (!kIsWeb) FirebaseMessaging.onBackgroundMessage(showPushInBackground);
-  // The channel's name shows in the phone's settings, in the phone's
-  // language.
-  final strings = lookupAppLocalizations(
-    resolveAppLocale(PlatformDispatcher.instance.locales),
-  );
   await pushClient.initialize(
     channelName: strings.pushChannelName,
     channelDescription: strings.pushChannelDescription,
+    onRsvpAction: onRsvpAction,
   );
   pushClient.showForegroundMessages();
 
@@ -151,7 +225,7 @@ Future<void> bootstrap(
     final host = emulators.host;
     await firebaseAuth.useAuthEmulator(host, FirebaseEmulators.authPort);
     firestore.useFirestoreEmulator(host, FirebaseEmulators.firestorePort);
-    functions.useFunctionsEmulator(host, FirebaseEmulators.functionsPort);
+    functions.useFunctionsEmulator(host, emulators.functionsPort);
     await storage.useStorageEmulator(host, FirebaseEmulators.storagePort);
   }
 
@@ -162,7 +236,10 @@ Future<void> bootstrap(
   );
   const needsRepository = NeedsRepository(deviceStore: deviceStore);
   final profileRepository = ProfileRepository(rondaApi: rondaApi);
-  final rondaRepository = RondaRepository(proposalsApi: proposalsApi);
+  final rondaRepository = RondaRepository(
+    proposalsApi: proposalsApi,
+    rondasApi: rondasApi,
+  );
   final pushRepository = PushRepository(
     pushClient: pushClient,
     rondaApi: rondaApi,

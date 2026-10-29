@@ -5,6 +5,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -39,6 +40,39 @@ enum PushAuthorization {
   deniedPermanently,
 }
 
+/// {@template rsvp_action_labels}
+/// What the "Voy" and "Esta no" buttons on the weekly push say, in the
+/// phone's language.
+/// {@endtemplate}
+class const RsvpActionLabels({
+  /// "Voy".
+  required final String yes,
+
+  /// "Esta no".
+  required final String no,
+}) {
+  /// {@macro rsvp_action_labels}
+  this;
+}
+
+/// {@template rsvp_action}
+/// One tap on "Voy" or "Esta no" in the weekly push: which ronda, which
+/// meeting's week, and the answer.
+/// {@endtemplate}
+class const RsvpAction({
+  /// The ronda's id.
+  required final String rondaId,
+
+  /// The meeting's ISO week (`2026-W44`), as the push carried it.
+  required final String week,
+
+  /// Whether the tap was "Voy".
+  required final bool going,
+}) {
+  /// {@macro rsvp_action}
+  this;
+}
+
 /// {@template push_client}
 /// Firebase Cloud Messaging and the phone's notifications for Ronda.
 ///
@@ -47,7 +81,11 @@ enum PushAuthorization {
 /// Messages arrive data-only on Android (`docs/STACK.md` § Push), so the
 /// phone draws them with flutter_local_notifications: [showMessage] does it
 /// in the background isolate, [showForegroundMessages] while the app is
-/// open. On web, notifications are the service worker's and the browser's.
+/// open. The weekly RSVP push (`data.type == "rsvp"`) gets "Voy" and
+/// "Esta no" buttons that answer without opening the app: a tap reaches the
+/// handler given to [initialize] in a background isolate, and
+/// [rsvpActionFrom] reads it. On web, notifications are the service
+/// worker's and the browser's.
 ///
 /// It logs nothing, and the token it returns must never reach a log either.
 /// {@endtemplate}
@@ -57,6 +95,7 @@ class PushClient {
     required this._messaging,
     required this._notifications,
     this._vapidKey,
+    this._rsvpLabels,
     this._foregroundMessages,
     this._isWeb = kIsWeb,
     TargetPlatform? targetPlatform,
@@ -69,6 +108,10 @@ class PushClient {
   /// certificates in the console); empty until the owner makes one. Not a
   /// secret: browsers receive it to subscribe.
   final String? _vapidKey;
+
+  /// The RSVP buttons' labels; without them the weekly push shows no
+  /// buttons (a tap on it still opens the card).
+  final RsvpActionLabels? _rsvpLabels;
 
   /// `FirebaseMessaging.onMessage` unless a test passes its own.
   final Stream<RemoteMessage>? _foregroundMessages;
@@ -88,6 +131,15 @@ class PushClient {
   /// a background message arriving before the app ever started needs it).
   static const fallbackChannelName = 'Ronda';
 
+  /// `data.type` of the weekly RSVP push (`functions/rsvp.py`).
+  static const rsvpType = 'rsvp';
+
+  /// The "Voy" button's action id.
+  static const rsvpYesAction = 'rsvp.yes';
+
+  /// The "Esta no" button's action id.
+  static const rsvpNoAction = 'rsvp.no';
+
   /// The service worker on web, `web/firebase-messaging-sw.js`. Given as a
   /// relative path it resolves against the page's base href, so it works
   /// under `/app/` too (Firebase's default is the origin's root).
@@ -103,12 +155,18 @@ class PushClient {
   /// Prepares the phone's notifications and creates the [rsvpChannelId]
   /// channel named [channelName] (shown in the phone's settings), without
   /// asking for any permission. A no-op on web.
+  ///
+  /// [onRsvpAction] runs in a background isolate when "Voy" or "Esta no" is
+  /// tapped, even with the app closed; it must be a top-level or static
+  /// function marked `@pragma('vm:entry-point')`.
   Future<void> initialize({
     required String channelName,
     required String channelDescription,
+    DidReceiveBackgroundNotificationResponseCallback? onRsvpAction,
   }) async {
     if (_isWeb) return;
     await _notifications.initialize(
+      onDidReceiveBackgroundNotificationResponse: onRsvpAction,
       settings: const InitializationSettings(
         android: AndroidInitializationSettings(notificationIcon),
         // The permission is asked from a tap, never at launch.
@@ -189,25 +247,95 @@ class PushClient {
 
   /// Draws [message] on the [rsvpChannelId] channel: `title` and `body` from
   /// its data (Ronda's own payload), else from its notification. A message
-  /// with neither is not shown.
+  /// with neither is not shown. The weekly RSVP push gets "Voy" and
+  /// "Esta no", carrying its ronda and week to [rsvpActionFrom].
   Future<void> _show(RemoteMessage message) async {
     final data = message.data;
     final title = data['title'] ?? message.notification?.title;
     final body = data['body'] ?? message.notification?.body;
     if (title is! String || body is! String) return;
+    final rsvp = switch ((data, _rsvpLabels)) {
+      (
+        {
+          'type': rsvpType,
+          'rondaId': final String rondaId,
+          'week': final String week,
+        },
+        final RsvpActionLabels labels,
+      ) =>
+        (
+          payload: jsonEncode({'rondaId': rondaId, 'week': week}),
+          labels: labels,
+        ),
+      _ => null,
+    };
     await _notifications.show(
       id: message.messageId.hashCode,
       title: title,
       body: body,
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          rsvpChannelId,
-          fallbackChannelName,
-          icon: notificationIcon,
-          importance: Importance.high,
-          priority: Priority.high,
+      payload: rsvp?.payload,
+      notificationDetails: NotificationDetails(
+        android: _details(
+          actions: [
+            if (rsvp != null) ...[
+              AndroidNotificationAction(rsvpYesAction, rsvp.labels.yes),
+              AndroidNotificationAction(rsvpNoAction, rsvp.labels.no),
+            ],
+          ],
         ),
       ),
     );
+  }
+
+  /// Shows a plain notification [id] on the [rsvpChannelId] channel, in
+  /// place of any showing with that id: what became of a tap on "Voy" or
+  /// "Esta no". A no-op on web.
+  Future<void> showNotice({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    if (_isWeb) return;
+    await _notifications.show(
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: NotificationDetails(android: _details()),
+    );
+  }
+
+  static AndroidNotificationDetails _details({
+    List<AndroidNotificationAction> actions = const [],
+  }) => AndroidNotificationDetails(
+    rsvpChannelId,
+    fallbackChannelName,
+    icon: notificationIcon,
+    importance: Importance.high,
+    priority: Priority.high,
+    // Each button answers in the background (no app opens) and takes the
+    // notification away.
+    actions: actions,
+  );
+
+  /// The answer in a tap on "Voy" or "Esta no", or `null` for any other
+  /// tap (the notification itself, a malformed payload).
+  static RsvpAction? rsvpActionFrom(NotificationResponse response) {
+    final going = switch (response.actionId) {
+      rsvpYesAction => true,
+      rsvpNoAction => false,
+      _ => null,
+    };
+    if (going == null) return null;
+    try {
+      if (jsonDecode(response.payload ?? '') case {
+        'rondaId': final String rondaId,
+        'week': final String week,
+      }) {
+        return RsvpAction(rondaId: rondaId, week: week, going: going);
+      }
+    } on FormatException {
+      return null;
+    }
+    return null;
   }
 }
