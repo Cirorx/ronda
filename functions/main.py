@@ -19,3 +19,24 @@ def ping(req: https_fn.Request) -> https_fn.Response:
         status=200,
         content_type="application/json",
     )
+
+
+# Callables check auth in code; Cloud Run must let the request reach it.
+@https_fn.on_call(
+    region=REGION,
+    max_instances=1,
+    memory=options.MemoryOption.MB_512,
+    invoker="public",
+)
+def solver_ping(req: https_fn.CallableRequest) -> dict:
+    """Solves a three-variable CP-SAT model to prove OR-Tools loads and runs here."""
+    from ortools.sat.python import cp_model
+
+    model = cp_model.CpModel()
+    x, y, z = (model.new_int_var(0, 10, name) for name in "xyz")
+    model.add(x + y + z == 12)
+    model.add(x > y)
+    model.maximize(z - x)
+    solver = cp_model.CpSolver()
+    status = solver.solve(model)
+    return {"status": solver.status_name(status), "objective": solver.objective_value}

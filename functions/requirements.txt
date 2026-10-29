@@ -1,2 +1,5 @@
 firebase-functions==0.6.0
 firebase-admin==7.7.0
+# The only pair both ortools and google-cloud-firestore accept.
+ortools==9.15.6755
+protobuf==6.33.6
