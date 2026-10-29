@@ -249,6 +249,15 @@ FLYER = {
     "scans": 0,
     "createdAt": NOW,
 }
+MATE_FLYER = {
+    "kind": "mate",
+    "rondaId": "ronda-secret-1",
+    "barrio": "solymar-norte",
+    "createdBy": "demo-host-uid",
+    "imagePath": "flyers/demo-host-uid/m4t3m4t3.jpg",
+    "scans": 0,
+    "createdAt": NOW,
+}
 ROW = {
     "pretext": "mate",
     "slot": "sat-afternoon",
@@ -265,6 +274,7 @@ def scan_db() -> ScanFirestore:
     return ScanFirestore(
         {
             "flyers/k3m9x2pq": dict(FLYER),
+            "flyers/m4t3m4t3": dict(MATE_FLYER),
             "cerca/solymar-norte": {
                 "barrio": "solymar-norte",
                 "rondas": [ROW],
@@ -355,6 +365,60 @@ class TestLanding:
 
         assert (status, json.loads(body)) == (404, {"error": "not-found"})
         assert scan_db.documents["flyers/k3m9x2pq"]["scans"] == 0
+
+    def test_reads_a_flyer_marked_tear_off_like_one_without_a_kind(self, scan_db):
+        scan_db.documents["flyers/k3m9x2pq"]["kind"] = "tearOff"
+
+        _, marked = cerca_tuyo.landing(scan_db, "GET", "/api/f/k3m9x2pq", NOW)
+        del scan_db.documents["flyers/k3m9x2pq"]["kind"]
+        _, unmarked = cerca_tuyo.landing(scan_db, "GET", "/api/f/k3m9x2pq", NOW)
+
+        assert marked == unmarked
+        assert json.loads(marked)["kind"] == "tearOff"
+
+    def test_answers_not_found_for_a_kind_it_does_not_know_and_counts_nothing(self, scan_db):
+        scan_db.documents["flyers/k3m9x2pq"]["kind"] = "poster"
+
+        status, body = cerca_tuyo.landing(scan_db, "POST", "/api/f/k3m9x2pq", NOW)
+
+        assert (status, json.loads(body)) == (404, {"error": "not-found"})
+        assert scan_db.documents["flyers/k3m9x2pq"]["scans"] == 0
+
+    def test_a_mate_flyer_counts_its_scan_and_shows_its_rondas_barrio_with_no_bus(self, scan_db):
+        status, body = cerca_tuyo.landing(scan_db, "POST", "/api/f/m4t3m4t3", NOW)
+
+        assert status == 200
+        assert scan_db.documents["flyers/m4t3m4t3"]["scans"] == 1
+        assert scan_db.documents["flyers/m4t3m4t3"]["lastScanAt"] == NOW
+        page = json.loads(body)
+        assert page["kind"] == "mate"
+        assert page["barrio"] == "solymar-norte"
+        assert {row["barrio"] for row in page["rondas"]} == {"solymar-norte"}
+        assert page["waiting"] == [{"barrio": "solymar-norte", "pretext": "caminata", "count": 3}]
+        assert page["lastBus"] == {"stop": None, "weekday": None, "saturday": None, "sunday": None}
+
+    def test_never_answers_a_mate_flyers_ronda_host_or_image(self, scan_db):
+        _, body = cerca_tuyo.landing(scan_db, "POST", "/api/f/m4t3m4t3", NOW)
+
+        for secret in ("ronda-secret-1", "demo-host-uid", "flyers/", "rondaId", "createdBy"):
+            assert secret not in body
+        assert set(json.loads(body)) == {
+            "kind",
+            "barrio",
+            "rondas",
+            "waiting",
+            "lastBus",
+            "updatedAt",
+        }
+
+    def test_a_mate_flyer_whose_ronda_had_no_barrio_shows_nothing(self, scan_db):
+        del scan_db.documents["flyers/m4t3m4t3"]["barrio"]
+
+        status, body = cerca_tuyo.landing(scan_db, "GET", "/api/f/m4t3m4t3", NOW)
+
+        page = json.loads(body)
+        assert status == 200
+        assert (page["barrio"], page["rondas"], page["waiting"]) == (None, [], [])
 
     def test_refuses_any_other_method(self, scan_db):
         status, _ = cerca_tuyo.landing(scan_db, "DELETE", "/api/f/k3m9x2pq", NOW)

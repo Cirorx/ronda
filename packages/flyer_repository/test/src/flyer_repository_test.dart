@@ -29,7 +29,7 @@ void main() {
     final flyer = MateFlyer(
       id: 'flyer-1',
       image: image,
-      landingUrl: 'https://ronda-uy.web.app/f/flyer-1',
+      landingUrl: 'https://ronda-uy.firebaseapp.com/f/flyer-1',
     );
 
     setUpAll(() {
@@ -64,7 +64,7 @@ void main() {
         (_) async => const MateFlyerResult(
           flyerId: 'flyer-1',
           imagePath: 'flyers/demo-uid/flyer-1.jpg',
-          landingUrl: 'https://ronda-uy.web.app/f/flyer-1',
+          landingUrl: 'https://ronda-uy.firebaseapp.com/f/flyer-1',
         ),
       );
       when(() => flyersApi.downloadFlyer(any())).thenAnswer((_) async => image);

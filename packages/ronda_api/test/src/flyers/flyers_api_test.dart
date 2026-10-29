@@ -45,7 +45,7 @@ void main() {
     const answer = {
       'flyerId': 'flyer-1',
       'imagePath': 'flyers/demo-uid/flyer-1.jpg',
-      'landingUrl': 'https://ronda-uy.web.app/f/flyer-1',
+      'landingUrl': 'https://ronda-uy.firebaseapp.com/f/flyer-1',
     };
 
     setUpAll(() {
@@ -114,7 +114,7 @@ void main() {
             const MateFlyerResult(
               flyerId: 'flyer-1',
               imagePath: 'flyers/demo-uid/flyer-1.jpg',
-              landingUrl: 'https://ronda-uy.web.app/f/flyer-1',
+              landingUrl: 'https://ronda-uy.firebaseapp.com/f/flyer-1',
             ),
           ),
         );

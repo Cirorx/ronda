@@ -142,8 +142,10 @@ def flyer_document(
     buses: dict[str, dict | None],
     now: datetime,
 ) -> dict:
-    """`flyers/{id}`: no coordinates, no person. `scans` starts at zero for flyer_landing."""
+    """`flyers/{id}`: no coordinates, no person. `kind` tells it from an "Un mate de más" flyer
+    in the same collection; `scans` starts at zero for flyer_landing."""
     return {
+        "kind": "tearOff",
         "label": label,
         "pretext": pretext,
         "slot": slot,

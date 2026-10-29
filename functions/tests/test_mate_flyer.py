@@ -306,7 +306,7 @@ class TestWords:
         assert "No people, no text" in m.background_prompt("truco")
 
     def test_draws_the_qr_module_by_module(self):
-        url = "https://ronda-uy.web.app/f/flyer-1"
+        url = "https://ronda-uy.firebaseapp.com/f/flyer-1"
         qr = segno.make(url, error="m")
         modules = qr.symbol_size(scale=1, border=2)[0]
 
@@ -387,14 +387,16 @@ class TestMakeMateFlyer:
         assert answer == {
             "flyerId": flyer_id,
             "imagePath": f"flyers/{UID}/{flyer_id}.jpg",
-            "landingUrl": f"https://ronda-uy.web.app/f/{flyer_id}",
+            "landingUrl": f"https://ronda-uy.firebaseapp.com/f/{flyer_id}",
         }
         assert world.db.documents[f"flyers/{flyer_id}"] == {
             "kind": "mate",
             "rondaId": "r1",
+            "barrio": "solymar-norte",
             "createdBy": UID,
-            "createdAt": NOW,
             "imagePath": f"flyers/{UID}/{flyer_id}.jpg",
+            "scans": 0,
+            "createdAt": NOW,
         }
         stored = world.bucket.objects[f"flyers/{UID}/{flyer_id}.jpg"].data
         assert Image.open(io.BytesIO(stored)).size == m.FLYER_SIZE
@@ -446,6 +448,44 @@ class TestMakeMateFlyer:
         assert excinfo.value.code == code
         assert PHOTO not in world.bucket.objects
         assert not [p for p in world.db.documents if p.startswith("flyers/")]
+
+    def test_takes_an_id_the_landing_reads_and_never_one_already_taken(self, world, monkeypatch):
+        import cerca_tuyo
+
+        world.db.documents["flyers/22222222"] = {"kind": "tearOff"}
+        draws = iter("2" * m.ID_LENGTH + "abcdefgh")
+        monkeypatch.setattr(m.secrets, "choice", lambda _: next(draws))
+
+        flyer_id = make(world)["flyerId"]
+
+        assert flyer_id == "abcdefgh"
+        assert cerca_tuyo.FLYER_ID.fullmatch(flyer_id)
+        assert world.db.documents["flyers/22222222"] == {"kind": "tearOff"}
+
+    def test_its_qr_opens_a_landing_that_shows_the_rondas_barrio(self, world):
+        import json
+
+        import cerca_tuyo
+
+        world.db.documents["cerca/solymar-norte"] = {"rondas": [], "waiting": [], "updatedAt": NOW}
+        answer = make(world)
+
+        status, body = cerca_tuyo.landing(world.db, "GET", f"/api/f/{answer['flyerId']}", NOW)
+
+        assert answer["landingUrl"].endswith(f"/f/{answer['flyerId']}")
+        assert status == 200
+        assert json.loads(body)["kind"] == "mate"
+        assert json.loads(body)["barrio"] == "solymar-norte"
+        assert "r1" not in body and UID not in body
+
+    def test_answers_unavailable_when_no_id_is_free(self, world, monkeypatch):
+        world.db.documents["flyers/22222222"] = {"kind": "tearOff"}
+        monkeypatch.setattr(m.secrets, "choice", lambda _: "2")
+
+        with pytest.raises(m.FlyerError) as excinfo:
+            make(world)
+        assert excinfo.value.code == "unavailable"
+        assert PHOTO not in world.bucket.objects
 
     def test_answers_failed_precondition_when_nothing_was_found(self, world):
         with pytest.raises(m.FlyerError) as excinfo:

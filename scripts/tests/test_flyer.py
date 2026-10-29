@@ -144,6 +144,7 @@ class TestMain:
 
         document = client.documents["flyers/k3m9x2pq"]
         assert set(document) == {
+            "kind",
             "label",
             "pretext",
             "slot",
@@ -154,6 +155,7 @@ class TestMain:
             "scans",
             "createdAt",
         }
+        assert document["kind"] == "tearOff"
         assert document["barrio"] == "lomas-de-solymar"
         assert document["nearBarrios"] == ["lomas-de-solymar"]
         assert document["stop"] == {"id": "B", "name": "Rambla y Calle Inventada"}

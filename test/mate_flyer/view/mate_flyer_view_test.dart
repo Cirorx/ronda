@@ -24,7 +24,7 @@ void main() {
   final flyer = MateFlyer(
     id: 'flyer-1',
     image: Uint8List.fromList([1, 2]),
-    landingUrl: 'https://ronda-uy.web.app/f/flyer-1',
+    landingUrl: 'https://ronda-uy.firebaseapp.com/f/flyer-1',
   );
 
   group(MateFlyerPage, () {

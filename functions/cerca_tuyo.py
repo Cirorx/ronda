@@ -5,10 +5,12 @@ active ronda its pretext, slot, age range, taken seats, capacity and how many wa
 per pretext how many neighbours wait for a ronda to start. Counts only: no uid, name or place
 leaves this module. firestore.rules lets anyone `get` those documents and nothing else.
 
-`landing(db, method, path, now)` answers the flyer's QR page through Hosting
-(`/api/f/{id}`, firebase.json): a POST counts one scan on `flyers/{id}`, a GET only reads; both
-return the rows of the barrios within walking distance of where the flyer hangs and the last bus
-scripts/flyer.py stored when it made the flyer. The flyer's label is the admin's and stays in.
+`landing(db, method, path, now)` answers every flyer's QR page through Hosting
+(`/api/f/{id}`, firebase.json): a POST counts one scan on `flyers/{id}`, a GET only reads. For a
+tear-off flyer both return the rows of the barrios within walking distance of where it hangs and
+the last bus scripts/flyer.py stored when it made the flyer; for an "Un mate de más" flyer
+(functions/mate_flyer.py), the rows of its ronda's barrio and no bus. The tear-off flyer's label,
+and the mate flyer's ronda, host and image, stay in.
 """
 
 import json
@@ -17,7 +19,11 @@ from collections.abc import Callable, Iterable
 from datetime import datetime
 
 FLYER_ID = re.compile(r"[a-z0-9]{8}")
-"""scripts/flyer.py's ids: eight lowercase letters and digits. Anything else is never read."""
+"""scripts/flyer.py's and mate_flyer.py's ids: eight lowercase letters and digits. Anything else
+is never read."""
+
+TEAR_OFF, MATE = "tearOff", "mate"
+"""The flyers' kinds. A flyer without one is a tear-off: scripts/flyer.py wrote none before."""
 
 OPEN_STATUSES = ("forming", "active")
 """A ronda Cerca shows: approved and not paused or ended."""
@@ -168,27 +174,46 @@ def landing(db, method: str, path: str, now: datetime) -> tuple[int, str]:
     if not snapshot.exists:
         return 404, json.dumps({"error": "not-found"})
     flyer = snapshot.to_dict()
+    if flyer_kind(flyer) is None:
+        return 404, json.dumps({"error": "not-found"})
     if method == "POST":
         from google.cloud.firestore import Increment
 
         reference.update({"scans": Increment(1), "lastScanAt": now})
     aggregates = {}
-    for barrio in flyer.get("nearBarrios") or [flyer["barrio"]]:
+    for barrio in landing_barrios(flyer):
         aggregate = db.document(f"cerca/{barrio}").get()
         if aggregate.exists:
             aggregates[barrio] = aggregate.to_dict()
     return 200, json.dumps(landing_body(flyer, aggregates))
 
 
+def flyer_kind(flyer: dict) -> str | None:
+    """The flyer's kind, `tearOff` when it has none, or `None` for one this page can't show."""
+    kind = flyer.get("kind", TEAR_OFF)
+    return kind if kind in (TEAR_OFF, MATE) else None
+
+
+def landing_barrios(flyer: dict) -> list[str]:
+    """The barrios whose rows the page shows: a tear-off flyer's near barrios (or its own), a
+    mate flyer's ronda's barrio."""
+    barrio = flyer.get("barrio")
+    if flyer_kind(flyer) == MATE:
+        return [barrio] if barrio else []
+    return flyer.get("nearBarrios") or [barrio]
+
+
 def landing_body(flyer: dict, aggregates: dict[str, dict]) -> dict:
-    """What `/f/{id}` shows: the nearby barrios' rows, each tagged with its barrio, the flyer's
-    own barrio first, and the stop's last bus. Only the fields named here leave."""
-    barrios = sorted(aggregates, key=lambda barrio: barrio != flyer["barrio"])
+    """What `/f/{id}` shows: the flyer's kind, the nearby barrios' rows, each tagged with its
+    barrio, the flyer's own barrio first, and the stop's last bus (none on a mate flyer). Only
+    the fields named here leave."""
+    barrios = sorted(aggregates, key=lambda barrio: barrio != flyer.get("barrio"))
     updated = [aggregates[barrio]["updatedAt"] for barrio in barrios]
     stop = flyer.get("stop") or {}
     last_bus = flyer.get("lastBus") or {}
     return {
-        "barrio": flyer["barrio"],
+        "kind": flyer_kind(flyer),
+        "barrio": flyer.get("barrio"),
         "rondas": [
             {"barrio": barrio, **row} for barrio in barrios for row in aggregates[barrio]["rondas"]
         ],

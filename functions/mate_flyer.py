@@ -21,6 +21,7 @@ import io
 import logging
 import pathlib
 import re
+import secrets
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -44,8 +45,15 @@ from voice_signup import BARRIOS, META_BASE, PRETEXTS
 SAM_MODEL = "sam-3.1"
 IMAGE_MODEL = "muse-image-1.0"
 
-# The landing #43 serves for every flyer: one constant, so a custom domain is one edit.
-LANDING_BASE = "https://ronda-uy.web.app"
+# The landing every flyer's QR opens, on the web app's own sign-in domain like the tear-off
+# flyer's (scripts/flyer.py): iPhone sign-in needs the same site (docs/STACK.md § Pilot builds).
+LANDING_BASE = "https://ronda-uy.firebaseapp.com"
+
+# The landing reads only ids of eight of these (functions/cerca_tuyo.py, scripts/flyer.py):
+# lowercase letters and digits without the ones read alike.
+ID_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyz"
+ID_LENGTH = 8
+ID_ATTEMPTS = 5
 
 PHOTO_PATH = re.compile(
     r"^flyer_photos/(?P<uid>[A-Za-z0-9_-]{1,128})/(?P<id>[A-Za-z0-9_-]{1,64})\.jpg$"
@@ -458,6 +466,17 @@ async def _with_meta_models(
             await client.close()
 
 
+def new_flyer(db, attempts: int = ID_ATTEMPTS):
+    """A reference to a `flyers/{id}` nobody has taken yet, under an id the landing accepts.
+    Ids are random over 31⁸ (about 850 billion), so a second try is already rare."""
+    for _ in range(attempts):
+        flyer_id = "".join(secrets.choice(ID_ALPHABET) for _ in range(ID_LENGTH))
+        reference = db.collection("flyers").document(flyer_id)
+        if not reference.get().exists:
+            return reference
+    raise FlyerError("unavailable", f"no free flyer id after {attempts} tries")
+
+
 def photo_uid(path: object) -> str:
     """The uid in `flyer_photos/{uid}/{id}.jpg`, or `INVALID_ARGUMENT` for any other path."""
     if not isinstance(path, str) or not (match := PHOTO_PATH.match(path)):
@@ -518,7 +537,7 @@ def make_mate_flyer(
         if not masks:
             raise FlyerError("failed-precondition", "no termo, mazo or mate in the photo")
 
-        reference = db.collection("flyers").document()
+        reference = new_flyer(db)
         flyer_id = reference.id
         landing_url = f"{LANDING_BASE}/f/{flyer_id}"
         with Image.open(io.BytesIO(painted)) as background:
@@ -531,9 +550,11 @@ def make_mate_flyer(
             {
                 "kind": "mate",
                 "rondaId": ronda_id,
+                "barrio": ronda.get("barrio"),
                 "createdBy": uid,
-                "createdAt": now,
                 "imagePath": image_path,
+                "scans": 0,
+                "createdAt": now,
             }
         )
         log.info(
