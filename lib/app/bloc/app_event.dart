@@ -12,10 +12,13 @@ final class AppUserSubscriptionRequested extends AppEvent {
   const new();
 }
 
-/// The person tapped a door on the welcome screen, which accepts the
+/// The person tapped [door] on the welcome screen, which accepts the
 /// conditions linked under it.
-final class AppTermsAccepted extends AppEvent {
-  const new();
+final class const AppTermsAccepted({
+  final OnboardingDoor door = OnboardingDoor.buttons,
+}) extends AppEvent {
+  @override
+  List<Object> get props => [door];
 }
 
 /// Firebase Auth reported a sign-in or a sign-out.

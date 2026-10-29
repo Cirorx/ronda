@@ -1,9 +1,12 @@
+import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:needs_repository/needs_repository.dart';
+import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
+import 'package:ronda/app/app.dart';
 import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/onboarding/view/steps/steps.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -12,6 +15,10 @@ import '../../helpers/helpers.dart';
 
 class _MockOnboardingCubit extends MockCubit<OnboardingState>
     implements OnboardingCubit;
+
+class _MockAppBloc extends MockBloc<AppEvent, AppState> implements AppBloc;
+
+class _MockOnboardingRepository extends Mock implements OnboardingRepository;
 
 const _thursday = Slot(SlotDay.thursday, SlotBand.afternoon);
 
@@ -325,6 +332,135 @@ void main() {
         );
 
         expect(find.text('Escribí tu nombre de pila.'), findsNothing);
+      });
+    });
+
+    group('by voice', () {
+      late OnboardingRepository repository;
+      late AppBloc appBloc;
+
+      setUp(() {
+        repository = _MockOnboardingRepository();
+        appBloc = _MockAppBloc();
+        when(() => repository.startVoiceNote()).thenAnswer((_) async {});
+        when(() => repository.discardVoiceNote()).thenAnswer((_) async {});
+        when(() => appBloc.state).thenReturn(
+          const AppState(
+            status: AppStatus.onboarding,
+            user: User(id: 'demo-uid'),
+          ),
+        );
+      });
+
+      Future<void> pumpRecording(WidgetTester tester) {
+        when(() => cubit.state)
+            .thenReturn(const OnboardingState(recording: true));
+        return tester.pumpApp(
+          RepositoryProvider<OnboardingRepository>.value(
+            value: repository,
+            child: MultiBlocProvider(
+              providers: [
+                BlocProvider<AppBloc>.value(value: appBloc),
+                BlocProvider<OnboardingCubit>.value(value: cubit),
+              ],
+              child: const OnboardingView(),
+            ),
+          ),
+        );
+      }
+
+      testWidgets('shows the recorder while recording', (tester) async {
+        await pumpRecording(tester);
+
+        expect(find.byType(VoiceNoteStep), findsOneWidget);
+        expect(find.byType(PretextsStep), findsNothing);
+      });
+
+      testWidgets('leaves the recorder on the system back button', (
+        tester,
+      ) async {
+        await pumpRecording(tester);
+
+        await tester.binding.handlePopRoute();
+        await tester.pump();
+
+        verify(() => cubit.voiceCancelled()).called(1);
+        verifyNever(() => cubit.back());
+      });
+
+      group('read-back', () {
+        final fromVoice = _answered.copyWith(fromVoice: true);
+
+        testWidgets('says what was understood and that the audio is gone', (
+          tester,
+        ) async {
+          await pumpSubject(tester, fromVoice);
+
+          expect(find.text('¿Entendimos bien?'), findsOneWidget);
+          expect(find.text('¿Está todo bien?'), findsNothing);
+          await tester.ensureVisible(find.text('Tu audio ya se borró.'));
+          expect(find.text('Tu audio ya se borró.'), findsOneWidget);
+          expect(find.byIcon(Icons.check_circle), findsNWidgets(4));
+          expect(_byId(OnboardingStepLayout.backIdentifier), findsNothing);
+        });
+
+        testWidgets('ticks only the ideas the note covered', (tester) async {
+          final handle = tester.ensureSemantics();
+          await pumpSubject(
+            tester,
+            fromVoice.copyWith(slots: const {}, brings: const {}),
+          );
+
+          expect(find.byIcon(Icons.check_circle), findsNWidgets(2));
+          expect(find.byIcon(Icons.radio_button_unchecked), findsNWidgets(2));
+          expect(find.bySemanticsLabel(RegExp('Qué días')), findsOneWidget);
+          expect(
+            tester.getSemantics(find.text('Qué días y a qué hora podés')),
+            isSemantics(value: 'Faltó'),
+          );
+          handle.dispose();
+        });
+
+        testWidgets('asks for what the note missed and holds the save', (
+          tester,
+        ) async {
+          await pumpSubject(tester, fromVoice.copyWith(slots: const {}));
+
+          expect(find.text('Falta: tocá «Cambiar»'), findsOneWidget);
+          await tapVisible(tester, _byId(ReviewStep.saveIdentifier));
+          verifyNever(() => cubit.save());
+        });
+
+        testWidgets('records again with "Grabar de nuevo"', (tester) async {
+          await pumpSubject(tester, fromVoice);
+
+          await tapVisible(tester, _byId(ReviewStep.recordAgainIdentifier));
+
+          verify(() => cubit.recordAgain()).called(1);
+        });
+
+        testWidgets('saves through the same "Está bien, guardalo"', (
+          tester,
+        ) async {
+          await pumpSubject(tester, fromVoice);
+
+          await tapVisible(tester, _byId(ReviewStep.saveIdentifier));
+
+          verify(() => cubit.save()).called(1);
+        });
+
+        testWidgets('in English', (tester) async {
+          when(() => cubit.state).thenReturn(fromVoice);
+          await tester.pumpApp(
+            BlocProvider<OnboardingCubit>.value(
+              value: cubit,
+              child: const OnboardingView(),
+            ),
+            locale: const Locale('en'),
+          );
+
+          expect(find.text('Did we get it right?'), findsOneWidget);
+        });
       });
     });
 

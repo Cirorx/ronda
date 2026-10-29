@@ -56,6 +56,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
         AppState(
           status: AppStatus.unauthenticated,
           pendingTerms: state.pendingTerms,
+          door: state.door,
         ),
       );
       return;
@@ -66,6 +67,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
         status: AppStatus.loadingProfile,
         user: user,
         pendingTerms: state.pendingTerms,
+        door: state.door,
       ),
     );
     if (state.pendingTerms case final terms?) {
@@ -95,9 +97,10 @@ class AppBloc extends Bloc<AppEvent, AppState> {
   ) async {
     final terms = TermsAcceptance(version: termsVersion, acceptedAt: _now());
     if (state.user.isEmpty) {
-      emit(state.withPendingTerms(terms));
+      emit(state.withDoor(event.door).withPendingTerms(terms));
       return;
     }
+    if (state.door != event.door) emit(state.withDoor(event.door));
     try {
       await _profileRepository.acceptTerms(state.user.id, terms);
     } on AcceptTermsFailure catch (error, stackTrace) {

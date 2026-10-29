@@ -33,6 +33,9 @@ class const OnboardingStepLayout({
   /// Called by the back button; no back button when `null`.
   final VoidCallback? onBack,
 
+  /// Shows the back button as this word ("Cancelar") instead of an arrow.
+  final String? backLabel,
+
   /// An optional action under the primary one ("Saltear").
   final Widget? secondaryAction,
   super.key,
@@ -53,15 +56,22 @@ class const OnboardingStepLayout({
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        leadingWidth: backLabel == null ? null : spacing.lg * 6,
         leading: switch (onBack) {
           final onBack? => MergeSemantics(
             child: Semantics(
               identifier: backIdentifier,
-              child: IconButton(
-                tooltip: l10n.onboardingBack,
-                onPressed: onBack,
-                icon: const Icon(Icons.arrow_back),
-              ),
+              child: switch (backLabel) {
+                final label? => TextButton(
+                  onPressed: onBack,
+                  child: Text(label),
+                ),
+                null => IconButton(
+                  tooltip: l10n.onboardingBack,
+                  onPressed: onBack,
+                  icon: const Icon(Icons.arrow_back),
+                ),
+              },
             ),
           ),
           null => null,

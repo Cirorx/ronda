@@ -33,6 +33,8 @@ dependencies:
   material_ui: ^1.8.0
   needs_repository:
     path: packages/needs_repository
+  onboarding_repository:
+    path: packages/onboarding_repository
   profile_repository:
     path: packages/profile_repository
   ronda_api:
@@ -41,6 +43,8 @@ dependencies:
     path: packages/ronda_repository
   ronda_ui:
     path: packages/ronda_ui
+  voice_recorder:
+    path: packages/voice_recorder
 
 dev_dependencies:
   bloc_lint: ^0.4.3

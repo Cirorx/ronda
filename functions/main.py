@@ -5,11 +5,15 @@ sets ``max_instances`` so a loop or a flood can't run up the bill.
 """
 
 import firebase_admin
-from firebase_functions import https_fn, options
+from firebase_functions import https_fn, options, params
 
 REGION = "southamerica-east1"
 
 options.set_global_options(region=REGION, max_instances=2)
+
+# Meta Model API key, from Secret Manager (`firebase functions:secrets:set MODEL_API_KEY`).
+MODEL_API_KEY = params.SecretParam("MODEL_API_KEY")
+
 
 # Callables verify the caller's ID token with the default Admin app, so it must exist before
 # the first request, not only when a function first touches Firestore.
@@ -60,6 +64,12 @@ def _firestore():
     from firebase_admin import firestore
 
     return firestore.client()
+
+
+def _bucket():
+    from firebase_admin import storage
+
+    return storage.bucket()
 
 
 def _now():
@@ -114,3 +124,54 @@ def approve_proposal(req: https_fn.CallableRequest) -> dict:
         return proposals.approve(_firestore(), proposal_id, admin_uid, _now())
     except proposals.ProposalError as error:
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode(error.code), str(error)) from error
+
+
+@https_fn.on_call(
+    region=REGION,
+    max_instances=2,
+    timeout_sec=120,
+    memory=options.MemoryOption.MB_512,
+    secrets=[MODEL_API_KEY],
+    invoker="public",
+)
+def extract(req: https_fn.CallableRequest) -> dict:
+    """Reads the caller's voice note at `audio/{uid}/{id}.wav` into sign-up fields.
+
+    Voice Transcribe, then Spark 1.3; the note is deleted before the answer goes back. Refuses
+    callers who haven't accepted the terms (`users/{uid}.terms`).
+    """
+    import httpx
+    from google.api_core.exceptions import NotFound
+    from openai import OpenAI
+
+    import voice_signup as voice
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "Sign in first.")
+    uid = req.auth.uid
+    path = req.data.get("path") if isinstance(req.data, dict) else None
+    user = _firestore().collection("users").document(uid).get().to_dict()
+    bucket = _bucket()
+    key = MODEL_API_KEY.value
+    error = https_fn.FunctionsErrorCode
+    try:
+        with httpx.Client() as http:
+            return voice.read_voice_note(
+                uid=uid,
+                path=path,
+                user=user,
+                blob=bucket.blob,
+                api_key=key,
+                http=http,
+                client=OpenAI(base_url=voice.META_BASE, api_key=key, timeout=60, max_retries=2),
+            )
+    except voice.TermsMissing as e:
+        raise https_fn.HttpsError(error.FAILED_PRECONDITION, "Accept the terms first.") from e
+    except voice.BadVoiceNote as e:
+        raise https_fn.HttpsError(error.INVALID_ARGUMENT, "We couldn't read the note.") from e
+    except PermissionError as e:
+        raise https_fn.HttpsError(error.PERMISSION_DENIED, "Not your note.") from e
+    except NotFound as e:
+        raise https_fn.HttpsError(error.NOT_FOUND, "No note at that path.") from e
+    except voice.ModelUnavailable as e:
+        raise https_fn.HttpsError(error.UNAVAILABLE, "Try again in a moment.") from e

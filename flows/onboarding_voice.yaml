@@ -1,0 +1,53 @@
+# Onboarding by voice: "Con un audio" → Google sign-in → the recorder → "Terminé" → the read-back
+# ("¿Entendimos bien?"), or "No te entendimos bien" when the microphone heard nothing (an
+# emulator without host audio input records silence).
+#
+# Same setup as onboarding_buttons.yaml (development flavor with
+# --dart-define=EMULATOR_GOOGLE_CREDENTIAL=true, the local emulators, a reset first), plus the
+# Functions emulator with access to the MODEL_API_KEY secret: `extract` calls the real Meta
+# models. On a real phone, speak for 15 s while the flow waits: your name, barrio, what you'd
+# like to do, when, and what you can bring. Voice notes never go in git.
+appId: com.ciroapps.ronda.dev
+name: Onboarding by voice
+tags:
+  - onboarding
+---
+- launchApp:
+    clearState: true
+    permissions:
+      microphone: allow
+
+- extendedWaitUntil:
+    visible:
+      id: welcome.buttons
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      id: welcome.voice
+- tapOn:
+    id: welcome.voice
+
+- extendedWaitUntil:
+    visible:
+      id: login_google
+    timeout: 15000
+- tapOn:
+    id: login_google
+
+# The recorder starts on its own. Wait about 15 s while the note records.
+- extendedWaitUntil:
+    visible:
+      id: voice.done
+      enabled: true
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "the 15 seconds of the note"
+    timeout: 15000
+    optional: true
+- tapOn:
+    id: voice.done
+
+# Upload, Voice Transcribe, Spark 1.3 and the delete take a few seconds.
+- extendedWaitUntil:
+    visible: "¿Entendimos bien?|No te entendimos bien"
+    timeout: 90000

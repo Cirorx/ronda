@@ -1,19 +1,23 @@
 # ronda_api
 
-Data layer. Ronda's client over Firebase: Firestore documents in their wire shape, and the Cloud
-Functions callables once the first one exists. No domain logic; repositories turn what it returns
+Data layer. Ronda's client over Firebase: Firestore documents in their wire shape, voice notes in
+Storage, and the Cloud Functions callables. No domain logic; repositories turn what it returns
 into domain models.
 
-Depends on `cloud_firestore`. The `FirebaseFirestore` instance is built in bootstrap (pointed at
-the Firestore emulator in the development flavor) and passed in. Callables join as a
-`FirebaseFunctions` built with `FirebaseFunctions.instanceFor(region: RondaApi.region)`: without
-the region the plugin calls `us-central1`.
+Depends on `cloud_firestore`, `firebase_storage` and `cloud_functions`. Every instance is built in
+bootstrap (pointed at the emulators in the development flavor) and passed in. `functions` must be
+`FirebaseFunctions.instanceFor(region: RondaApi.region)`: without the region the plugin calls
+`us-central1`.
 
 ## API
 
 | Member | Does |
 |---|---|
-| `RondaApi(firestore: FirebaseFirestore)` | Built in bootstrap; tests pass `FakeFirebaseFirestore` |
+| `RondaApi(firestore:, storage:, functions:)` | Built in bootstrap; tests pass `FakeFirebaseFirestore` and mocks |
+| `Future<UserDocument?> readUser(String uid)` | `users/{uid}` once; `null` while it doesn't exist |
+| `Future<String> uploadVoiceNote({uid, noteId, wav})` | Puts `audio/{uid}/{noteId}.wav` (`audio/wav`), logs bytes and ms, returns the path |
+| `Future<void> deleteVoiceNote(String path)` | For a note `extract` never read |
+| `Future<ExtractedFields> extract(String path)` | The `extract` callable (120 s timeout); `UnreadableVoiceNoteException` on `invalid-argument` |
 | `RondaApi.region` | `southamerica-east1`, where every function and callable runs |
 | `RondaApi.usersCollection` | `users`, one document per Firebase uid |
 | `Stream<UserDocument?> watchUser(String uid)` | `users/{uid}` now and on every change; `null` while it doesn't exist |
@@ -26,6 +30,8 @@ the region the plugin calls `us-central1`.
   arrive first (a welcome door) and the profile later (onboarding saved); fields of the wrong
   type are skipped. Existence alone does not mean onboarding is done.
 - `TermsRecord(version, acceptedAt)`: `acceptedAt` is a Firestore `Timestamp` on the wire.
+- `ExtractedFields`: what `extract` read, as the ids `users/{uid}` stores; `null` or empty for
+  what wasn't said.
 
 The `users/{uid}` fields are in `docs/ARCHITECTURE.md` § Data model; `firestore.rules` allows
 only those, typed. Needs, mood and audio never go through this client.

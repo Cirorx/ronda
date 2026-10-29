@@ -6,3 +6,4 @@ export 'needs_step.dart';
 export 'pretexts_step.dart';
 export 'review_step.dart';
 export 'slots_step.dart';
+export 'voice_note_step.dart';

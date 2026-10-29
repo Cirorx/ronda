@@ -137,6 +137,7 @@ band indexes (`onboarding.slots.6.1` is Sunday afternoon).
 | Flow | Starts from | Ends on |
 |---|---|---|
 | `flows/onboarding_buttons.yaml` | a reset, signed out | Mi ronda (`myRonda`), with `users/{uid}` and its `private/eligible` written |
+| `flows/onboarding_voice.yaml` | a reset, signed out, the Functions emulator with `MODEL_API_KEY` | "¿Entendimos bien?" (or "No te entendimos bien" on a silent emulator mic), with no `audio/` object left |
 
 Each flow runs the development flavor against the local emulators, on an Android emulator or a
 USB phone; checked with Maestro 2.12.0 on an Android 15 emulator. `maestro` must be on `PATH`

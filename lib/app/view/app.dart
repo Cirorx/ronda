@@ -2,6 +2,7 @@ import 'package:auth_repository/auth_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:needs_repository/needs_repository.dart';
+import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/l10n/l10n.dart';
@@ -13,6 +14,7 @@ import 'package:ronda_ui/ronda_ui.dart';
 class const App({
   required final AuthRepository authRepository,
   required final NeedsRepository needsRepository,
+  required final OnboardingRepository onboardingRepository,
   required final ProfileRepository profileRepository,
   required final RondaRepository rondaRepository,
   super.key,
@@ -23,6 +25,7 @@ class const App({
       providers: [
         RepositoryProvider.value(value: authRepository),
         RepositoryProvider.value(value: needsRepository),
+        RepositoryProvider.value(value: onboardingRepository),
         RepositoryProvider.value(value: profileRepository),
         RepositoryProvider.value(value: rondaRepository),
       ],

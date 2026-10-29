@@ -101,3 +101,82 @@ def test_firestore_is_the_admin_client(monkeypatch):
 
 def test_now_is_aware_utc():
     assert main._now().utcoffset().total_seconds() == 0
+
+
+NOTE_PATH = "audio/demo-001/note-1.wav"
+FIELDS = {"firstName": "Graciela", "ageBand": "60-69"}
+
+
+class TestExtract:
+    @pytest.fixture
+    def reads(self, monkeypatch):
+        """Stands in for the Admin clients and `read_voice_note`; returns what it was given."""
+        import voice_signup
+
+        db = FakeFirestore({"users/demo-001": {"terms": {"version": "2026-10-27"}}})
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setattr(main, "_bucket", lambda: SimpleNamespace(blob=lambda path: path))
+        monkeypatch.setenv("MODEL_API_KEY", "test-key")
+        seen: dict = {}
+
+        def read(**kwargs):
+            seen.update(kwargs)
+            if error := seen.get("raise"):
+                raise error
+            return FIELDS
+
+        monkeypatch.setattr(voice_signup, "read_voice_note", read)
+        return seen
+
+    def test_refuses_a_signed_out_caller(self, reads):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.extract, None, {"path": NOTE_PATH})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+
+    def test_reads_the_callers_note_with_their_user_document(self, reads):
+        assert call(main.extract, MEMBER, {"path": NOTE_PATH}) == FIELDS
+        assert reads["uid"] == "demo-001"
+        assert reads["path"] == NOTE_PATH
+        assert reads["user"] == {"terms": {"version": "2026-10-27"}}
+        assert reads["blob"](NOTE_PATH) == NOTE_PATH
+        assert reads["api_key"] == "test-key"
+
+    def test_passes_no_path_when_the_data_is_not_a_map(self, reads):
+        call(main.extract, MEMBER, "audio/demo-001/note-1.wav")
+        assert reads["path"] is None
+
+    @pytest.mark.parametrize(
+        ("error", "code"),
+        [
+            ("TermsMissing", https_fn.FunctionsErrorCode.FAILED_PRECONDITION),
+            ("BadVoiceNote", https_fn.FunctionsErrorCode.INVALID_ARGUMENT),
+            ("PermissionError", https_fn.FunctionsErrorCode.PERMISSION_DENIED),
+            ("NotFound", https_fn.FunctionsErrorCode.NOT_FOUND),
+            ("ModelUnavailable", https_fn.FunctionsErrorCode.UNAVAILABLE),
+        ],
+    )
+    def test_maps_each_failure_to_its_code(self, reads, monkeypatch, error, code):
+        from google.api_core.exceptions import NotFound
+
+        import voice_signup
+
+        raised = {
+            "TermsMissing": voice_signup.TermsMissing("demo-001"),
+            "BadVoiceNote": voice_signup.BadVoiceNote("x"),
+            "PermissionError": PermissionError("x"),
+            "NotFound": NotFound("x"),
+            "ModelUnavailable": voice_signup.ModelUnavailable("x"),
+        }[error]
+        reads["raise"] = raised
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.extract, MEMBER, {"path": NOTE_PATH})
+        assert error_code(excinfo) == code
+
+
+def test_bucket_is_the_default_admin_bucket(monkeypatch):
+    from firebase_admin import storage
+
+    monkeypatch.setattr(storage, "bucket", lambda: "bucket")
+
+    assert main._bucket() == "bucket"

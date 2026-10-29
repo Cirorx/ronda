@@ -61,6 +61,13 @@ final class const OnboardingState({
   /// "Seguir" returns there.
   final bool editingFromReview = false,
   final OnboardingStatus status = OnboardingStatus.editing,
+
+  /// Whether the voice recorder is open instead of the open step.
+  final bool recording = false,
+
+  /// Whether the answers came from a voice note, so the read-back says
+  /// what was understood and offers "Grabar de nuevo".
+  final bool fromVoice = false,
 }) extends Equatable {
   /// Whether the open step has what it needs for "Seguir".
   bool get canContinue => switch (step) {
@@ -83,6 +90,15 @@ final class const OnboardingState({
       ageBand != null &&
       firstName.isValid;
 
+  /// Which "Ideas de qué contar" the answers cover, in the recorder's order:
+  /// name and barrio, pretexts, slots, brings.
+  List<bool> get coveredIdeas => [
+    firstName.isValid && barrio != null,
+    pretexts.isNotEmpty,
+    slots.isNotEmpty,
+    brings.isNotEmpty,
+  ];
+
   OnboardingState copyWith({
     OnboardingStep? step,
     Set<Pretext>? pretexts,
@@ -94,6 +110,8 @@ final class const OnboardingState({
     FirstName? firstName,
     bool? editingFromReview,
     OnboardingStatus? status,
+    bool? recording,
+    bool? fromVoice,
   }) => OnboardingState(
     step: step ?? this.step,
     pretexts: pretexts ?? this.pretexts,
@@ -105,6 +123,8 @@ final class const OnboardingState({
     firstName: firstName ?? this.firstName,
     editingFromReview: editingFromReview ?? this.editingFromReview,
     status: status ?? this.status,
+    recording: recording ?? this.recording,
+    fromVoice: fromVoice ?? this.fromVoice,
   );
 
   @override
@@ -119,5 +139,7 @@ final class const OnboardingState({
     firstName,
     editingFromReview,
     status,
+    recording,
+    fromVoice,
   ];
 }

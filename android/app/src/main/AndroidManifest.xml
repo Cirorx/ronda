@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Onboarding by voice: the note is recorded only while the recorder is open. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <application
         android:label="${appName}"
         android:name="${applicationName}"

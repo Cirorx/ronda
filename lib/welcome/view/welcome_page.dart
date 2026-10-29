@@ -6,9 +6,8 @@ import 'package:ronda/login/login.dart';
 import 'package:ronda/welcome/welcome.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
-/// Whether the welcome screen shows "Con un audio". Off until the voice
-/// onboarding (#19) exists, so no door leads nowhere.
-const voiceDoorEnabled = false;
+/// Whether the welcome screen shows "Con un audio".
+const voiceDoorEnabled = true;
 
 /// Where signed-out people land: what Ronda is, the doors in, and the
 /// conditions they accept by going through one.
@@ -38,7 +37,8 @@ class const WelcomePage({
     final textTheme = theme.textTheme;
     final spacing = context.appSpacing;
 
-    void acceptTerms() => context.read<AppBloc>().add(const AppTermsAccepted());
+    void acceptTerms(OnboardingDoor door) =>
+        context.read<AppBloc>().add(AppTermsAccepted(door: door));
 
     return BlocListener<AppBloc, AppState>(
       listenWhen: (previous, current) =>
@@ -100,14 +100,14 @@ class const WelcomePage({
                             icon: Icons.mic_none,
                             title: l10n.welcomeVoiceDoorTitle,
                             subtitle: l10n.welcomeVoiceDoorSubtitle,
-                            onTap: acceptTerms,
+                            onTap: () => acceptTerms(OnboardingDoor.voice),
                           ),
                         WelcomeDoor(
                           identifier: buttonsDoorIdentifier,
                           icon: Icons.touch_app_outlined,
                           title: l10n.welcomeButtonsDoorTitle,
                           subtitle: l10n.welcomeButtonsDoorSubtitle,
-                          onTap: acceptTerms,
+                          onTap: () => acceptTerms(OnboardingDoor.buttons),
                         ),
                         TermsNote(
                           identifier: termsLinkIdentifier,

@@ -278,6 +278,37 @@ void main() {
       );
 
       blocTest<AppBloc, AppState>(
+        'remembers the voice door across sign-in',
+        build: buildBloc,
+        act: (bloc) =>
+            bloc.add(const AppTermsAccepted(door: OnboardingDoor.voice)),
+        expect: () => [
+          AppState(
+            status: AppStatus.unauthenticated,
+            pendingTerms: _terms,
+            door: OnboardingDoor.voice,
+          ),
+        ],
+      );
+
+      blocTest<AppBloc, AppState>(
+        'switches the door when someone signed in taps another',
+        setUp: () {
+          when(() => authRepository.currentUser).thenReturn(_user);
+        },
+        build: buildBloc,
+        act: (bloc) =>
+            bloc.add(const AppTermsAccepted(door: OnboardingDoor.voice)),
+        expect: () => const [
+          AppState(
+            status: AppStatus.loadingProfile,
+            user: _user,
+            door: OnboardingDoor.voice,
+          ),
+        ],
+      );
+
+      blocTest<AppBloc, AppState>(
         'adds the error when writing at once fails',
         setUp: () {
           when(() => authRepository.currentUser).thenReturn(_user);
@@ -309,6 +340,24 @@ void main() {
       });
     });
 
+    test('withDoor keeps everything else', () {
+      expect(
+        AppState(
+          status: AppStatus.onboarding,
+          user: _user,
+          pendingTerms: _terms,
+        ).withDoor(OnboardingDoor.voice),
+        equals(
+          AppState(
+            status: AppStatus.onboarding,
+            user: _user,
+            pendingTerms: _terms,
+            door: OnboardingDoor.voice,
+          ),
+        ),
+      );
+    });
+
     test('withStatus keeps the user and the held terms', () {
       expect(
         AppState(
@@ -328,9 +377,12 @@ void main() {
   });
 
   group(AppEvent, () {
-    test('carries no props', () {
+    test('carries the door as its only prop', () {
       expect(const AppUserSubscriptionRequested().props, isEmpty);
-      expect(const AppTermsAccepted().props, isEmpty);
+      expect(
+        const AppTermsAccepted(door: OnboardingDoor.voice).props,
+        equals([OnboardingDoor.voice]),
+      );
     });
   });
 }

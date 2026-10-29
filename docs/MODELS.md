@@ -81,6 +81,11 @@ from the environment or `.env` and never print them. Log latency and cost of eac
 Results from Uruguay, 2026-10-28:
 - 1: 200 in ~4 s. Spark 1.3 reasons by default: a one-line hello used 557 reasoning tokens.
 - 2: the strict `Signup` schema parsed on the first try in ~6 s (~1,100 reasoning tokens).
+- `extract` (#19, `functions/voice_signup.py`): Voice Transcribe answers JSON
+  `{"sessionId", "transcript", "audioDurationMs", "turns"}`; read `transcript`. Spark 1.3 with
+  `reasoning_effort: "low"` filled the strict sign-up schema (app ids as enums, `unknown` for
+  what wasn't said) right on a 13 s invented note in ~2 s, against ~6 s at the default. The
+  whole callable on the emulator: 7 s (transcribe ~4 s, fields ~2 s, upload and delete).
 - 3: a 10 s synthetic note in 3–5 s. `languageBias: ["Spanish"]` gave the cleaner transcript;
   auto-detect repeated words. Real rioplatense notes are still #21.
 - 4: `-1026` called the tool with valid arguments at low and xhigh, plain and streamed, 1–3 s,

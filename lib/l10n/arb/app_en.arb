@@ -670,5 +670,175 @@
                 "type": "int"
             }
         }
+    },
+    "voiceTitle": "We're listening",
+    "@voiceTitle": {
+        "description": "Heading of the voice recorder"
+    },
+    "voiceBody": "Take your time, like a voice message to a friend.",
+    "@voiceBody": {
+        "description": "Under the recorder heading"
+    },
+    "voiceCancel": "Cancel",
+    "@voiceCancel": {
+        "description": "Leaves the recorder for the buttons questions"
+    },
+    "voiceElapsed": "{elapsed} of {limit}",
+    "@voiceElapsed": {
+        "description": "Recording timer, such as 0:23 of 1:00",
+        "placeholders": {
+            "elapsed": {
+                "type": "String",
+                "example": "0:23"
+            },
+            "limit": {
+                "type": "String",
+                "example": "1:00"
+            }
+        }
+    },
+    "voiceIdeasHeading": "Ideas for what to say",
+    "@voiceIdeasHeading": {
+        "description": "Heading of the checklist of things to mention"
+    },
+    "voiceIdeaNameAndBarrio": "Your first name and your barrio",
+    "@voiceIdeaNameAndBarrio": {
+        "description": "Idea to mention"
+    },
+    "voiceIdeaPretexts": "What you'd like to do",
+    "@voiceIdeaPretexts": {
+        "description": "Idea to mention"
+    },
+    "voiceIdeaSlots": "Which days and times suit you",
+    "@voiceIdeaSlots": {
+        "description": "Idea to mention"
+    },
+    "voiceIdeaBrings": "What you can bring or teach",
+    "@voiceIdeaBrings": {
+        "description": "Idea to mention"
+    },
+    "voiceIdeaCovered": "You mentioned it",
+    "@voiceIdeaCovered": {
+        "description": "Screen reader state of an idea the recording covered"
+    },
+    "voiceIdeaNotCovered": "Not mentioned",
+    "@voiceIdeaNotCovered": {
+        "description": "Screen reader state of an idea the recording missed"
+    },
+    "voiceDone": "I'm done",
+    "@voiceDone": {
+        "description": "Stops recording and sends the note to be read"
+    },
+    "voiceRestart": "Delete and start over",
+    "@voiceRestart": {
+        "description": "Throws the recording away and starts again"
+    },
+    "voiceDeletedOnRead": "The recording is deleted as soon as we read it.",
+    "@voiceDeletedOnRead": {
+        "description": "Note under the recorder buttons"
+    },
+    "voiceReadingTitle": "We're reading your recording",
+    "@voiceReadingTitle": {
+        "description": "Heading while the note is read"
+    },
+    "voiceReadingBody": "It takes a few seconds. Don't close the app.",
+    "@voiceReadingBody": {
+        "description": "Under the reading heading"
+    },
+    "voiceReadingTranscribe": "We turn it into text",
+    "@voiceReadingTranscribe": {
+        "description": "Reading step"
+    },
+    "voiceReadingFields": "We pick out what matters",
+    "@voiceReadingFields": {
+        "description": "Reading step"
+    },
+    "voiceReadingDelete": "We delete the recording",
+    "@voiceReadingDelete": {
+        "description": "Reading step"
+    },
+    "voiceNotUnderstoodTitle": "We didn't quite catch that",
+    "@voiceNotUnderstoodTitle": {
+        "description": "Heading when nothing could be understood"
+    },
+    "voiceNotUnderstoodBody": "Maybe it was noisy, or very short. The recording is already deleted and nothing was saved.",
+    "@voiceNotUnderstoodBody": {
+        "description": "Under the not-understood heading"
+    },
+    "voiceTipsHeading": "Next time",
+    "@voiceTipsHeading": {
+        "description": "Heading of the recording tips"
+    },
+    "voiceTipQuiet": "Find a quiet spot.",
+    "@voiceTipQuiet": {
+        "description": "Recording tip"
+    },
+    "voiceTipClose": "Talk close to the phone, as in a call.",
+    "@voiceTipClose": {
+        "description": "Recording tip"
+    },
+    "voiceTipLength": "Take at least 20 seconds.",
+    "@voiceTipLength": {
+        "description": "Recording tip"
+    },
+    "voiceRecordAgain": "Record again",
+    "@voiceRecordAgain": {
+        "description": "Opens the recorder again"
+    },
+    "voicePreferButtons": "I'd rather tap buttons",
+    "@voicePreferButtons": {
+        "description": "Leaves voice for the buttons questions"
+    },
+    "voiceFailureTitle": "We couldn't read the recording",
+    "@voiceFailureTitle": {
+        "description": "Heading when reading the note failed"
+    },
+    "voiceFailureBody": "Try again in a while. Nothing was saved.",
+    "@voiceFailureBody": {
+        "description": "Under the failure heading"
+    },
+    "microphoneDeniedTitle": "We can't use the microphone",
+    "@microphoneDeniedTitle": {
+        "description": "Heading when the microphone is blocked"
+    },
+    "microphoneDeniedBody": "Your phone said no. That's fine: you can allow it, or carry on with buttons.",
+    "@microphoneDeniedBody": {
+        "description": "Under the microphone heading"
+    },
+    "microphoneDeniedStepsHeading": "To allow it",
+    "@microphoneDeniedStepsHeading": {
+        "description": "Heading of the steps to allow the microphone"
+    },
+    "microphoneDeniedStepSettings": "Open your phone's settings.",
+    "@microphoneDeniedStepSettings": {
+        "description": "Step 1"
+    },
+    "microphoneDeniedStepPermission": "Go to Permissions and turn on Microphone.",
+    "@microphoneDeniedStepPermission": {
+        "description": "Step 2"
+    },
+    "microphoneDeniedStepReturn": "Come back to Ronda and record.",
+    "@microphoneDeniedStepReturn": {
+        "description": "Step 3"
+    },
+    "microphoneDeniedRetry": "I've allowed it",
+    "@microphoneDeniedRetry": {
+        "description": "Tries the microphone again"
+    },
+    "reviewVoiceTitle": "Did we get it right?",
+    "@reviewVoiceTitle": {
+        "description": "Heading of the read-back after a recording"
+    },
+    "reviewVoiceBody": "This is what we understood from your recording. If something is wrong, tap Change. Nothing is saved yet.",
+    "@reviewVoiceBody": {
+        "description": "Under the voice read-back heading"
+    },
+    "reviewVoiceAudioDeleted": "Your recording is already deleted.",
+    "@reviewVoiceAudioDeleted": {
+        "description": "Note on the voice read-back"
+    },
+    "reviewMissing": "Missing: tap Change",
+    "@reviewMissing": {
+        "description": "Value of a read-back field the recording didn't cover"
     }
 }

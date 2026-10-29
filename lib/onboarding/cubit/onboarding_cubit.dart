@@ -1,12 +1,14 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:needs_repository/needs_repository.dart';
+import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda/onboarding/models/models.dart';
 
 part 'onboarding_state.dart';
 
-/// Onboarding by buttons: one question per step, a read-back, and the save.
+/// Onboarding: by buttons, one question per step, or by voice, a recording
+/// read into the same answers; then the read-back and the save.
 ///
 /// The profile goes to `users/{uid}` through [ProfileRepository]; the needs
 /// stay on this phone through [NeedsRepository] and never reach the profile.
@@ -18,11 +20,38 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     required this._uid,
     required this._profileRepository,
     required this._needsRepository,
-  }) : super(const OnboardingState());
+    bool startWithVoice = false,
+  }) : super(OnboardingState(recording: startWithVoice));
 
   final String _uid;
   final ProfileRepository _profileRepository;
   final NeedsRepository _needsRepository;
+
+  /// What a voice note said: the answers it understood replace the ones
+  /// held, and the read-back opens. Ids nobody stores are dropped.
+  void voiceRead(VoiceSignup signup) => emit(
+    OnboardingState(
+      step: OnboardingStep.review,
+      pretexts: {for (final id in signup.pretexts) ?Pretext.fromId(id)},
+      brings: {for (final id in signup.brings) ?Bring.fromId(id)},
+      slots: {for (final id in signup.slots) ?Slot.fromId(id)},
+      barrio: Barrio.fromId(signup.barrio),
+      ageBand: AgeBand.fromId(signup.ageBand),
+      needs: state.needs,
+      firstName: switch (signup.firstName) {
+        final name? => FirstName.dirty(name),
+        null => const FirstName.pure(),
+      },
+      fromVoice: true,
+    ),
+  );
+
+  /// "Grabar de nuevo" on the voice read-back: the recorder opens again.
+  void recordAgain() => emit(state.copyWith(recording: true));
+
+  /// "Cancelar" or "Prefiero tocar botones" on the recorder: the questions
+  /// by buttons, from the first one.
+  void voiceCancelled() => emit(const OnboardingState());
 
   /// What the person would like to do.
   void pretextsChanged(Set<Pretext> pretexts) =>

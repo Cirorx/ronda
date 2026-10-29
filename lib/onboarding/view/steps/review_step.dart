@@ -6,13 +6,18 @@ import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// The read-back: every answer with its "Cambiar", what stays on the phone,
-/// and "Está bien, guardalo".
+/// and "Está bien, guardalo". After a voice note it says what was
+/// understood, ticks the ideas the note covered, says the audio is already
+/// deleted and offers "Grabar de nuevo".
 class const ReviewStep({super.key}) extends StatelessWidget {
   /// Prefix of every "Cambiar" action's semantics identifier.
   static const identifier = 'onboarding.review';
 
   /// Maestro's handle on "Está bien, guardalo".
   static const saveIdentifier = 'onboarding.save';
+
+  /// Maestro's handle on "Grabar de nuevo".
+  static const recordAgainIdentifier = 'onboarding.recordAgain';
 
   @override
   Widget build(BuildContext context) {
@@ -32,20 +37,31 @@ class const ReviewStep({super.key}) extends StatelessWidget {
     ) => ReadBackField(
       id: step.name,
       label: label,
-      value: value,
+      value: value.isEmpty ? l10n.reviewMissing : value,
       editSemanticsLabel: editLabel,
       onEdit: () => cubit.edit(step),
     );
 
     return OnboardingStepLayout(
-      title: l10n.reviewTitle,
-      body: l10n.reviewBody,
-      onBack: cubit.back,
+      title: state.fromVoice ? l10n.reviewVoiceTitle : l10n.reviewTitle,
+      body: state.fromVoice ? l10n.reviewVoiceBody : l10n.reviewBody,
+      onBack: state.fromVoice ? null : cubit.back,
+      secondaryAction: state.fromVoice
+          ? MergeSemantics(
+              child: Semantics(
+                identifier: recordAgainIdentifier,
+                child: TextButton(
+                  onPressed: saving ? null : cubit.recordAgain,
+                  child: Text(l10n.voiceRecordAgain),
+                ),
+              ),
+            )
+          : null,
       primaryAction: MergeSemantics(
         child: Semantics(
           identifier: saveIdentifier,
           child: FilledButton(
-            onPressed: saving ? null : cubit.save,
+            onPressed: saving || !state.isComplete ? null : cubit.save,
             child: Text(l10n.reviewSave),
           ),
         ),
@@ -129,6 +145,14 @@ class const ReviewStep({super.key}) extends StatelessWidget {
             icon: Icons.smartphone,
             message: l10n.reviewNeedsKeptOnPhone,
           ),
+          if (state.fromVoice) ...[
+            NoteBanner(
+              variant: NoteBannerVariant.keptOnPhone,
+              icon: Icons.delete_outline,
+              message: l10n.reviewVoiceAudioDeleted,
+            ),
+            VoiceIdeas(covered: state.coveredIdeas),
+          ],
           if (state.status == OnboardingStatus.failure)
             NoteBanner(
               variant: NoteBannerVariant.warning,

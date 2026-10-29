@@ -14,6 +14,15 @@ enum AppStatus {
   authenticated,
 }
 
+/// The welcome door the person went through.
+enum OnboardingDoor {
+  /// "Con un audio": onboarding opens on the recorder.
+  voice,
+
+  /// "Tocando botones": the seven questions.
+  buttons,
+}
+
 final class const AppState({
   required final AppStatus status,
   final User user = User.empty,
@@ -21,6 +30,10 @@ final class const AppState({
   /// Conditions accepted on the welcome screen and not yet written to
   /// `users/{uid}`, because nobody was signed in when the door was tapped.
   final TermsAcceptance? pendingTerms,
+
+  /// The welcome door tapped last, so onboarding opens on its path after
+  /// sign-in.
+  final OnboardingDoor door = OnboardingDoor.buttons,
 }) extends Equatable {
   /// [AppStatus.unauthenticated] for [User.empty]; otherwise
   /// [AppStatus.loadingProfile] for [user], until the profile is read.
@@ -29,13 +42,29 @@ final class const AppState({
       : AppState(status: AppStatus.loadingProfile, user: user);
 
   /// This state with [status].
-  AppState withStatus(AppStatus status) =>
-      AppState(status: status, user: user, pendingTerms: pendingTerms);
+  AppState withStatus(AppStatus status) => AppState(
+    status: status,
+    user: user,
+    pendingTerms: pendingTerms,
+    door: door,
+  );
 
   /// This state with [pendingTerms], or none when `null`.
-  AppState withPendingTerms(TermsAcceptance? pendingTerms) =>
-      AppState(status: status, user: user, pendingTerms: pendingTerms);
+  AppState withPendingTerms(TermsAcceptance? pendingTerms) => AppState(
+    status: status,
+    user: user,
+    pendingTerms: pendingTerms,
+    door: door,
+  );
+
+  /// This state with [door].
+  AppState withDoor(OnboardingDoor door) => AppState(
+    status: status,
+    user: user,
+    pendingTerms: pendingTerms,
+    door: door,
+  );
 
   @override
-  List<Object?> get props => [status, user, pendingTerms];
+  List<Object?> get props => [status, user, pendingTerms, door];
 }

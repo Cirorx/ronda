@@ -1,11 +1,25 @@
 rules_version = '2';
 
-// Deny by default. Audio and blurred-photo uploads open their own paths with
-// the features that need them (voice onboarding, face blur).
+// Deny by default. Blurred-photo uploads open their own path with face blur.
 service firebase.storage {
   match /b/{bucket}/o {
     match /{allPaths=**} {
       allow read, write: if false;
+    }
+
+    // A voice note for the extract callable: only the owner writes it, only
+    // after users/{uid}.terms exists (the tap on a welcome door), only a WAV
+    // of at most 3 MB (60 s of 16 kHz mono 16-bit is ~1.9 MB). The callable
+    // deletes it once read; the owner may delete it after a failed read.
+    // Nobody reads it back from a client.
+    match /audio/{uid}/{noteId} {
+      allow create: if request.auth != null && request.auth.uid == uid
+          && noteId.matches('[A-Za-z0-9_-]{1,64}[.]wav')
+          && request.resource.contentType == 'audio/wav'
+          && request.resource.size <= 3 * 1024 * 1024
+          && firestore.exists(/databases/(default)/documents/users/$(uid))
+          && 'terms' in firestore.get(/databases/(default)/documents/users/$(uid)).data;
+      allow delete: if request.auth != null && request.auth.uid == uid;
     }
   }
 }

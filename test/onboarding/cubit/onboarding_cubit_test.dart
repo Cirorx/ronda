@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:needs_repository/needs_repository.dart';
+import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda/onboarding/onboarding.dart';
 
@@ -552,6 +553,82 @@ void main() {
         expect: () => const <OnboardingState>[],
       );
     });
+
+    group('by voice', () {
+      test('opens on the recorder when it starts with voice', () {
+        final cubit = OnboardingCubit(
+          uid: 'demo-uid',
+          profileRepository: profileRepository,
+          needsRepository: needsRepository,
+          startWithVoice: true,
+        );
+
+        expect(cubit.state, equals(const OnboardingState(recording: true)));
+      });
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'voiceRead opens the read-back with what was understood',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          recording: true,
+          needs: {Need.noCar},
+          brings: {Bring.pan},
+        ),
+        act: (cubit) => cubit.voiceRead(
+          const VoiceSignup(
+            firstName: 'Graciela',
+            ageBand: '60-69',
+            barrio: 'solymar-norte',
+            pretexts: ['mate', 'bochas'],
+            slots: ['thu-afternoon', 'never'],
+            brings: ['termo'],
+          ),
+        ),
+        expect: () => [
+          OnboardingState(
+            step: OnboardingStep.review,
+            pretexts: const {Pretext.mate},
+            brings: const {Bring.termo},
+            slots: {_thursday},
+            barrio: Barrio.solymarNorte,
+            ageBand: AgeBand.sixties,
+            needs: const {Need.noCar},
+            firstName: const FirstName.dirty('Graciela'),
+            fromVoice: true,
+          ),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'voiceRead leaves out what was not said',
+        build: buildCubit,
+        seed: () => const OnboardingState(recording: true),
+        act: (cubit) => cubit.voiceRead(const VoiceSignup(pretexts: ['truco'])),
+        expect: () => const [
+          OnboardingState(
+            step: OnboardingStep.review,
+            pretexts: {Pretext.truco},
+            fromVoice: true,
+          ),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'recordAgain opens the recorder',
+        build: buildCubit,
+        seed: () => _answered.copyWith(fromVoice: true),
+        act: (cubit) => cubit.recordAgain(),
+        expect: () => [_answered.copyWith(fromVoice: true, recording: true)],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'voiceCancelled opens the first question by buttons',
+        build: buildCubit,
+        seed: () => const OnboardingState(recording: true),
+        act: (cubit) => cubit.voiceCancelled(),
+        expect: () => const [OnboardingState()],
+      );
+    });
   });
 
   group(OnboardingState, () {
@@ -577,6 +654,17 @@ void main() {
     test('questions lists every step but the read-back', () {
       expect(OnboardingStep.questions, hasLength(7));
       expect(OnboardingStep.questions, isNot(contains(OnboardingStep.review)));
+    });
+    test('coveredIdeas ticks every idea of a complete answer', () {
+      expect(_answered.coveredIdeas, equals([true, true, true, true]));
+    });
+
+    test('coveredIdeas needs both the name and the barrio first', () {
+      expect(
+        const OnboardingState(firstName: FirstName.dirty('Graciela'))
+            .coveredIdeas,
+        equals([false, false, false, false]),
+      );
     });
   });
 }

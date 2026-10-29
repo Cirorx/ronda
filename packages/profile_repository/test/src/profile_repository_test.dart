@@ -1,11 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda_api/ronda_api.dart';
 
 class _MockRondaApi extends Mock implements RondaApi;
+
+class _MockFirebaseStorage extends Mock implements FirebaseStorage;
+
+class _MockFirebaseFunctions extends Mock implements FirebaseFunctions;
 
 void main() {
   group(ProfileRepository, () {
@@ -182,7 +188,13 @@ void main() {
 
       setUp(() {
         firestore = FakeFirebaseFirestore();
-        subject = ProfileRepository(rondaApi: RondaApi(firestore: firestore));
+        subject = ProfileRepository(
+          rondaApi: RondaApi(
+            firestore: firestore,
+            storage: _MockFirebaseStorage(),
+            functions: _MockFirebaseFunctions(),
+          ),
+        );
       });
 
       group('publishedSeats', () {

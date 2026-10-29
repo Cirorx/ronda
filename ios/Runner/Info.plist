@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Ronda usa el micrófono solo mientras grabás tu presentación. El audio se borra apenas lo leemos.</string>
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>en</string>

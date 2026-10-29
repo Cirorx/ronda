@@ -22,7 +22,8 @@
         "*.local",
         "tests",
         "pyproject.toml",
-        "requirements-dev.txt"
+        "requirements-dev.txt",
+        ".ruff_cache"
       ]
     }
   ],

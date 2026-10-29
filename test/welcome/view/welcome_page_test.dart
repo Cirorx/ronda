@@ -34,8 +34,8 @@ void main() {
       locale: locale,
     );
 
-    test('ships with the voice door off', () {
-      expect(voiceDoorEnabled, isFalse);
+    test('ships with the voice door on', () {
+      expect(voiceDoorEnabled, isTrue);
     });
 
     group('renders', () {
@@ -58,14 +58,14 @@ void main() {
       });
 
       testWidgets('no voice door while it is off', (tester) async {
-        await pumpSubject(tester);
+        await pumpSubject(tester, showVoiceDoor: false);
 
         expect(find.text('Con un audio'), findsNothing);
         expect(_byId(WelcomePage.voiceDoorIdentifier), findsNothing);
       });
 
       testWidgets('the voice door when it is on', (tester) async {
-        await pumpSubject(tester, showVoiceDoor: true);
+        await pumpSubject(tester);
 
         expect(find.text('Con un audio'), findsOneWidget);
         expect(
@@ -76,7 +76,7 @@ void main() {
 
       testWidgets('doors Maestro finds by their identifiers', (tester) async {
         final handle = tester.ensureSemantics();
-        await pumpSubject(tester, showVoiceDoor: true);
+        await pumpSubject(tester);
 
         expect(
           tester.getSemantics(_byId(WelcomePage.buttonsDoorIdentifier)),
@@ -100,7 +100,7 @@ void main() {
         tester.platformDispatcher.textScaleFactorTestValue = 2;
         addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
-        await pumpSubject(tester, showVoiceDoor: true);
+        await pumpSubject(tester);
         await tester.scrollUntilVisible(find.text('condiciones de Ronda'), 200);
 
         expect(tester.takeException(), isNull);
@@ -125,17 +125,20 @@ void main() {
       testWidgets('when the buttons door is tapped', (tester) async {
         await pumpSubject(tester);
 
+        await tester.ensureVisible(_byId(WelcomePage.buttonsDoorIdentifier));
         await tester.tap(_byId(WelcomePage.buttonsDoorIdentifier));
 
         verify(() => appBloc.add(const AppTermsAccepted())).called(1);
       });
 
       testWidgets('when the voice door is tapped', (tester) async {
-        await pumpSubject(tester, showVoiceDoor: true);
+        await pumpSubject(tester);
 
         await tester.tap(_byId(WelcomePage.voiceDoorIdentifier));
 
-        verify(() => appBloc.add(const AppTermsAccepted())).called(1);
+        verify(
+          () => appBloc.add(const AppTermsAccepted(door: OnboardingDoor.voice)),
+        ).called(1);
       });
     });
   });

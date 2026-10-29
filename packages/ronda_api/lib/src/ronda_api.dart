@@ -1,17 +1,29 @@
+import 'dart:developer';
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:ronda_api/src/models/models.dart';
+import 'package:ronda_api/src/ronda_api_exceptions.dart';
 
 /// {@template ronda_api}
 /// Ronda's data client over Firebase.
 ///
-/// [firestore] is built in bootstrap, pointed at the Firestore emulator in
-/// the development flavor. Callables join as a `FirebaseFunctions` built with
-/// `FirebaseFunctions.instanceFor(region: RondaApi.region)` when the first one
-/// exists; without the region the plugin calls `us-central1`.
+/// Every client is built in bootstrap, pointed at the emulators in the
+/// development flavor. [functions] must be
+/// `FirebaseFunctions.instanceFor(region: RondaApi.region)`: without the
+/// region the plugin calls `us-central1`.
 /// {@endtemplate}
 class const RondaApi({
   /// The Firestore instance every read and write goes through.
   required final FirebaseFirestore firestore,
+
+  /// The Storage bucket voice notes are uploaded to.
+  required final FirebaseStorage storage,
+
+  /// The callables, in [region].
+  required final FirebaseFunctions functions,
 }) {
   /// {@macro ronda_api}
   this;
@@ -35,6 +47,13 @@ class const RondaApi({
       null => null,
     },
   );
+
+  /// `users/{uid}` once, or `null` when it doesn't exist.
+  Future<UserDocument?> readUser(String uid) async =>
+      switch ((await _user(uid).get()).data()) {
+        final data? => UserDocument.fromJson(data),
+        null => null,
+      };
 
   /// Writes `terms` on `users/{uid}`, creating the document if needed and
   /// leaving every other field as it is.
@@ -60,4 +79,55 @@ class const RondaApi({
     'brings': brings,
     'createdAt': FieldValue.serverTimestamp(),
   }, SetOptions(merge: true));
+
+  /// How long the app waits for `extract`: Voice Transcribe and Spark 1.3
+  /// take a few seconds each, a cold start a few more.
+  static const extractTimeout = Duration(seconds: 120);
+
+  /// Uploads a WAV voice note to `audio/{uid}/{noteId}.wav` and returns
+  /// that path. Logs its size and how long the upload took, never the audio.
+  Future<String> uploadVoiceNote({
+    required String uid,
+    required String noteId,
+    required Uint8List wav,
+  }) async {
+    final path = 'audio/$uid/$noteId.wav';
+    final watch = Stopwatch()..start();
+    await storage
+        .ref(path)
+        .putData(wav, SettableMetadata(contentType: 'audio/wav'));
+    log(
+      'voice note uploaded: ${wav.length} bytes '
+      'in ${watch.elapsedMilliseconds} ms',
+    );
+    return path;
+  }
+
+  /// Deletes the voice note at [path], for when `extract` never read it.
+  Future<void> deleteVoiceNote(String path) => storage.ref(path).delete();
+
+  /// Calls `extract` on the voice note at [path]. The callable deletes the
+  /// note before it answers.
+  ///
+  /// Throws an [UnreadableVoiceNoteException] when the callable couldn't
+  /// read the note; any other failure passes through.
+  Future<ExtractedFields> extract(String path) async {
+    try {
+      final result = await functions
+          .httpsCallable(
+            'extract',
+            options: HttpsCallableOptions(timeout: extractTimeout),
+          )
+          .call<Object?>({'path': path});
+      return switch (result.data) {
+        final Map<Object?, Object?> json => ExtractedFields.fromJson(json),
+        _ => const ExtractedFields(),
+      };
+    } on FirebaseFunctionsException catch (error) {
+      if (error.code == 'invalid-argument') {
+        throw const UnreadableVoiceNoteException();
+      }
+      rethrow;
+    }
+  }
 }

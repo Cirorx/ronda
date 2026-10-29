@@ -9,11 +9,13 @@ Future<void> main() async {
     ({
       required authRepository,
       required needsRepository,
+      required onboardingRepository,
       required profileRepository,
       required rondaRepository,
     }) => App(
       authRepository: authRepository,
       needsRepository: needsRepository,
+      onboardingRepository: onboardingRepository,
       profileRepository: profileRepository,
       rondaRepository: rondaRepository,
     ),

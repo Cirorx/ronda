@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:needs_repository/needs_repository.dart';
+import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda/admin/admin.dart';
 import 'package:ronda/app/app.dart';
@@ -25,6 +26,8 @@ class _MockNeedsRepository extends Mock implements NeedsRepository;
 class _MockProfileRepository extends Mock implements ProfileRepository;
 
 class _MockRondaRepository extends Mock implements RondaRepository;
+
+class _MockOnboardingRepository extends Mock implements OnboardingRepository;
 
 const _user = User(id: 'demo-uid');
 
@@ -77,6 +80,7 @@ void main() {
     Widget buildSubject() => App(
       authRepository: authRepository,
       needsRepository: needsRepository,
+      onboardingRepository: _MockOnboardingRepository(),
       profileRepository: profileRepository,
       rondaRepository: rondaRepository,
     );
