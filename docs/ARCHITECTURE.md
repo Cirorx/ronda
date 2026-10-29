@@ -28,9 +28,11 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   │    callables  extract (Transcribe → Spark), propose_groups (CP-SAT, admin), rsvp,
   │               run_job(name, now) (admin, for tests and the demo)
   │    scheduled  one hourly dispatcher → run_<job>(now); hourly audio sweeper (`sweep_audio`
-  │               deletes `audio/` objects older than 1 h)
+  │               deletes `audio/` objects older than 1 h); hourly Cerca counts (`refresh_cerca`,
+  │               until the dispatcher adopts `run_refresh_cerca`)
+  │    http       flyer_landing (public: counts a tear-off flyer's scan, answers /f/{id})
   │    agent, flyer (SAM → cutouts → Muse Image → text + QR in code)
-  ├─ Hosting: Flutter web app under /app; plain-HTML /cerca and /f/{id}
+  ├─ Hosting: Flutter web app under /app; plain-HTML Cerca tuyo at / and /f/{id}
   └─ FCM → APNs (iOS only with the Apple Developer Program)
 Meta Model API: Voice Transcribe, Spark 1.3, SAM 3.1, Muse Image
 Baseten: Muse Spark Open (agent)
@@ -129,9 +131,28 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
     back to pending ([Deshacer]; nothing has been sent yet: the Tuesday push is the agent's).
     One batch holds 500 writes, enough for about 400 members.
   - The admin claim is set by `scripts/set_admin.py <email>` after the owner signs in once.
-- `flyers/{id}`: spotId, stopId, rondaIds[], scans.
-- Public view for Cerca tuyo: `public_seats/{id}` (barrio, pretext, time band, age band, seats
-  left, waiting count). No names.
+- `cerca/{barrio}` (built in #43, `functions/cerca_tuyo.py`): what Cerca tuyo shows, one
+  document per barrio, counts only. `rondas[{pretext, slot, ageFrom, ageTo (null for 80+),
+  members, cap, waiting}]` for each forming or active ronda (`members` counts active and paused
+  members, `cap` is the pretext's largest ronda, 6 or 10; `waiting` counts sign-ups in that barrio
+  who picked its pretext and slot and sit in no ronda), `waiting[{pretext, count}]` the same
+  sign-ups by pretext, and updatedAt. No uid, name or place. Anyone may `get` one, signed in or
+  not; nobody lists or writes them from a client (rules test: `rules/public.test.js`). The
+  hourly `refresh_cerca` rewrites all of them with `run_refresh_cerca(db, now)`; once #28 writes
+  `waitlists`, their entries should feed the waiting counts too.
+- `flyers/{id}` (built in #43, `scripts/flyer.py`): label (the spot, for the admin's scans per
+  spot; never public), pretext, slot, barrio, nearBarrios[] (the barrios whose centroid is within
+  the solver's ten blocks of where it hangs, its own first), stop {id, name}, lastBus {weekday,
+  saturday, sunday: {time, estimated, route, published {time, stop}} or null}, scans, createdAt,
+  lastScanAt. No coordinates: the spot picks the barrio, the near barrios and the stop when the
+  flyer is made, and is dropped. The last bus is computed then, once, from the DNT timetable
+  (`scripts/last_bus.py`): the feed gives times at only a few stops of each trip, mostly its ends,
+  so a stop between two of them gets an estimate along the route, marked `estimated`, with the
+  published time it comes from. Closed to every client; the id is eight of `[a-z0-9]`.
+  - `flyer_landing` answers `/api/f/{id}` (a Hosting rewrite): a POST counts the scan with an
+    increment, a GET only reads; both return the `cerca` rows of the near barrios and the last
+    bus, never the label or the stop id, with `Cache-Control: no-store`. The page posts once
+    per tab and reads on reload; link previews run no script, so they count nothing.
 
 ### Demo data (emulators)
 

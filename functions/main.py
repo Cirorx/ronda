@@ -185,3 +185,30 @@ def sweep_audio(event: scheduler_fn.ScheduledEvent) -> None:
     import audio_sweeper
 
     audio_sweeper.run_sweep_audio(_bucket(), event.schedule_time)
+
+
+# The hourly dispatcher (#28) should adopt cerca_tuyo.run_refresh_cerca and drop this schedule.
+@scheduler_fn.on_schedule(
+    schedule="every 1 hours",
+    region=REGION,
+    max_instances=1,
+    memory=options.MemoryOption.MB_512,
+)
+def refresh_cerca(event: scheduler_fn.ScheduledEvent) -> None:
+    """Rewrites the per-barrio counts Cerca tuyo reads (`cerca/{barrio}`)."""
+    import cerca_tuyo
+
+    cerca_tuyo.run_refresh_cerca(_firestore(), event.schedule_time)
+
+
+# Public, no login: Hosting rewrites /api/f/** here (firebase.json) for the tear-off flyer's page,
+# so Cloud Run must let every request through.
+@https_fn.on_request(region=REGION, max_instances=2, invoker="public")
+def flyer_landing(req: https_fn.Request) -> https_fn.Response:
+    """Counts a scan of a tear-off flyer (POST) and answers what its page `/f/{id}` shows."""
+    import cerca_tuyo
+
+    status, body = cerca_tuyo.landing(_firestore(), req.method, req.path, _now())
+    return https_fn.Response(
+        body, status=status, content_type="application/json", headers={"Cache-Control": "no-store"}
+    )

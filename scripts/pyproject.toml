@@ -1,13 +1,15 @@
 [project]
 name = "ronda-scripts"
 version = "0.1.0"
-description = "Seed and reset the Firebase emulators with Ronda's invented demo data."
+description = "Seed and reset Ronda's invented demo data, and make tear-off flyers."
 requires-python = ">=3.13,<3.14"
-# Keep in step with the inline `# /// script` blocks of seed.py and reset.py (a test checks).
+# Every script's inline `# /// script` block takes its dependencies from this list, with the
+# same pins (a test checks); flyer.py alone draws the PDF.
 dependencies = [
     "google-cloud-firestore>=2.21,<3",
     "ortools==9.15.6755",
     "protobuf==6.33.6",
+    "reportlab==5.0.1",
 ]
 
 [dependency-groups]

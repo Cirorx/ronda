@@ -29,13 +29,13 @@ def _never(*args):
     raise AssertionError("reached the database")
 
 
-@pytest.mark.parametrize("script", ["seed.py", "reset.py"])
-def test_the_inline_dependencies_are_the_project_ones(script):
+@pytest.mark.parametrize("script", ["seed.py", "reset.py", "flyer.py"])
+def test_the_inline_dependencies_are_project_ones_with_the_same_pins(script):
     project = tomllib.loads((SCRIPTS / "pyproject.toml").read_text())["project"]
 
     metadata = _inline_metadata(SCRIPTS / script)
 
-    assert metadata["dependencies"] == project["dependencies"]
+    assert set(metadata["dependencies"]) <= set(project["dependencies"])
     assert metadata["requires-python"] == project["requires-python"]
 
 

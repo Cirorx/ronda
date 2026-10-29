@@ -1,0 +1,301 @@
+/* The public pages, in the app's tokens (docs/DESIGN.md): the barrio's own
+   paper. Light and dark follow the system. */
+
+@font-face {
+  font-family: 'Young Serif';
+  src: url('fonts/YoungSerif-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  src: url('fonts/AtkinsonHyperlegible-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  src: url('fonts/AtkinsonHyperlegible-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light dark;
+  --paper: #fffefa;
+  --surface: #ffffff;
+  --ink: #18202f;
+  --muted: #5a6477;
+  --line: #d6dde8;
+  --birome: #2341c0;
+  --birome-pressed: #1a3196;
+  --on-birome: #ffffff;
+  --birome-tint: #eef1fc;
+  --yerba: #1d7448;
+  --ambar: #985e00;
+  --ambar-tint: #fbf3e6;
+  --margen: #c8433c;
+  --neutral-tint: #f3f5fa;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0e1320;
+    --surface: #151b2b;
+    --ink: #e5e9f1;
+    --muted: #a3adbf;
+    --line: #2e384d;
+    --birome: #93a6ff;
+    --birome-pressed: #7189f0;
+    --on-birome: #0e1320;
+    --birome-tint: #1c2440;
+    --yerba: #5cc48e;
+    --ambar: #e2a53d;
+    --ambar-tint: #2a2416;
+    --margen: #e07a72;
+    --neutral-tint: #1a2234;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.45;
+}
+
+.page {
+  max-width: 36rem;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+.masthead {
+  border-left: 2px solid var(--margen);
+  padding-left: 12px;
+  margin-bottom: 24px;
+}
+
+.brand {
+  margin: 0;
+  color: var(--birome);
+  font-family: 'Young Serif', Georgia, serif;
+  font-size: 1.125rem;
+}
+
+h1,
+h2 {
+  font-family: 'Young Serif', Georgia, serif;
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+h1 {
+  margin: 4px 0 12px;
+  font-size: 2.25rem;
+}
+
+h2 {
+  margin: 32px 0 12px;
+  font-size: 1.375rem;
+}
+
+p {
+  margin: 0 0 12px;
+}
+
+.lead {
+  color: var(--muted);
+  margin: 0;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+select {
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--birome);
+  outline-offset: 2px;
+}
+
+#results {
+  margin-top: 16px;
+}
+
+.status {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--neutral-tint);
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seat {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.seat-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+}
+
+.seat-meta {
+  margin: 0;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.seat-places {
+  text-align: right;
+}
+
+/* Narrow screens and large text: the places go under the ronda, left. */
+@media (max-width: 22rem) {
+  .seat {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .seat-places {
+    text-align: left;
+  }
+}
+
+.seat-left {
+  margin: 0;
+  color: var(--yerba);
+  font-weight: 700;
+}
+
+.is-full .seat-left {
+  color: var(--ambar);
+}
+
+.seat-count {
+  margin: 0;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.waiting {
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--birome-tint);
+}
+
+.note {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.privacy {
+  margin-top: 24px;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  margin: 24px 0 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--birome);
+  color: var(--on-birome);
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+
+.button:hover,
+.button:active {
+  background: var(--birome-pressed);
+}
+
+a {
+  color: var(--birome);
+}
+
+.text-link {
+  display: inline-block;
+  min-height: 48px;
+  padding: 12px 0;
+}
+
+#bus {
+  margin-top: 8px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--ambar-tint);
+}
+
+#bus h2 {
+  margin-top: 0;
+}
+
+.bus-times {
+  margin: 0 0 12px;
+}
+
+.bus-times dt {
+  margin-top: 12px;
+  font-weight: 700;
+}
+
+.bus-times dd {
+  margin: 0;
+}
+
+.bus-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.bus-detail {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+@media (min-width: 40rem) {
+  h1 {
+    font-size: 2.75rem;
+  }
+}

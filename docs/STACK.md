@@ -407,7 +407,8 @@ on both Android apps, and release builds are signed with that key until a releas
 - **Rules tests** (`rules/`, `@firebase/rules-unit-testing` 6.0.0 on node's test runner):
   `cd rules && npm ci && npm run test:emulator` starts a Firestore emulator for them; with one
   already running on 8088, `npm test` uses it under the tests' own project ids
-  (`demo-ronda-rules`, `demo-ronda-users`: one per file, as node runs test files in parallel).
+  (`demo-ronda-rules`, `demo-ronda-users`, `demo-ronda-public`: one per file, as node runs test
+  files in parallel).
 - **Admin claim:** the owner signs in once, then
   `uv run --python 3.13 scripts/set_admin.py <email>` (real project, Application Default
   Credentials) or with `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099` for the emulator; sign out
@@ -465,7 +466,7 @@ localised in `es.lproj/InfoPlist.strings`; Podfile 15.5 + armv7 excluded; the
 
 **Web:** HTTPS (mic, secure storage); `usePathUrlStrategy()`; the Flutter app is built with
 `--base-href /app/` and served under `/app` with an SPA rewrite, so its `/app/cerca` route never
-collides with the public plain-HTML `/cerca` and `/f/{id}` pages (§ Pilot builds); ask
+collides with the public plain-HTML pages at `/` and `/f/{id}` (§ Pilot builds); ask
 notification permission only from a tap.
 
 **Needs on the phone:** one JSON blob under the key `needs`, shaped `{"needs":["walkALot","noCar"]}` (the `Need` enum names, so renaming a value loses what phones saved), in flutter_secure_storage with
@@ -507,8 +508,17 @@ warning is expected: AGP strips `libapp.so` when it packages the APK (no `.debug
 checked 2026-10-29).
 
 **Web on Hosting** (`firebase.json`). Hosting serves `hosting/`: the Flutter web app in
-`hosting/app/` (git-ignored, staged by `scripts/build_web.sh`), and the root left for the plain-HTML
-public pages (§ Choices), tracked in `hosting/` once they exist; until then `/` is a 404.
+`hosting/app/` (git-ignored, staged by `scripts/build_web.sh`), and at the root the plain-HTML
+public pages (§ Choices, built in #43), tracked: Cerca tuyo at `/` (`hosting/index.html`) and the
+tear-off flyer's page at `/f/{id}` (`hosting/f/index.html`), sharing `hosting/assets/` (styles,
+scripts, and the app's fonts with their OFL licences). No build step, no Firebase SDK.
+- Cerca tuyo reads one `cerca/{barrio}` with Firestore's REST API, taking the project id and web
+  key from Hosting's reserved `/__/firebase/init.json`; on `127.0.0.1` or `localhost` it reads the
+  Firestore emulator on 8088 instead. The flyer page calls `/api/f/{id}`, which rewrites to the
+  `flyer_landing` function in `southamerica-east1` (the Hosting emulator proxies it to the
+  functions emulator). Copy is es-419, or English when the browser prefers it or `?lang=en`.
+- `Cache-Control: no-cache` on the public pages' HTML, JS and CSS too, for the same reason as
+  below; the fonts keep Hosting's default caching.
 - `/app/**` rewrites to `/app/index.html`: the app uses the path URL strategy, so a deep link or a
   reload lands in the app.
 - `Cache-Control: no-cache` on everything under `/app`: `index.html` (also served for every route
@@ -532,6 +542,18 @@ public pages (§ Choices), tracked in `hosting/` once they exist; until then `/`
   Safari's third-party storage blocking can't get in its way. Not yet tried from a Home Screen
   install; if the popup never comes back there, the fix is `signInWithRedirect` on that same
   domain, in `auth_repository`.
+
+**Tear-off flyers** (`scripts/flyer.py`, #43). One command per spot writes `flyers/{id}` and a
+printable A4 PDF: seven strips, each with a QR to `{base}/f/{id}` and "Ronda nunca pide plata".
+From the repo root, with `--project ronda-uy` and Application Default Credentials for the real
+project (or `FIRESTORE_EMULATOR_HOST=127.0.0.1:8088` and no `--project` for the emulator):
+`uv run --python 3.13 scripts/flyer.py --lat <lat> --lng <lng> --label "<where it hangs>" --slot sat-afternoon --project ronda-uy`.
+It downloads the DNT timetable (2.7 MB) unless `--gtfs <zip>` names a copy, prints the five
+nearest stops with their last buses, uses the nearest unless `--stop <stop_id>` picks another
+(the nearest can be a stop with three buses a day, or the wrong side of the road), and writes
+`flyer-<id>.pdf`. `--base-url` defaults to `https://<project>.firebaseapp.com`, the sign-in domain,
+so [Quiero sumarme] signs in on the same site. Print at 100% (no "fit to page"): the QRs are
+24 mm. Scans are `flyers/{id}.scans` (Firestore console until the admin screen shows them).
 
 **Shipping both, in order** (the owner):
 1. `firebase login` with the account that owns `ronda-uy`.

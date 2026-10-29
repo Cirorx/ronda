@@ -139,5 +139,15 @@ service cloud.firestore {
           && data.platform in ['android', 'ios', 'web']
           && data.updatedAt == request.time;
     }
+
+    // Cerca tuyo's counts, one document per barrio: rondas by pretext, slot,
+    // age range and seats, and how many neighbours wait. No uid, name or place
+    // (functions/cerca_tuyo.py). Anyone may get one, signed in or not; nobody
+    // lists them or writes them from a client. The refresh_cerca function
+    // writes them with the admin SDK. `flyers/{id}` stays closed: the
+    // flyer_landing function counts scans and answers the QR page instead.
+    match /cerca/{barrio} {
+      allow get: if true;
+    }
   }
 }
