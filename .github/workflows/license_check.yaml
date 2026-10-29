@@ -29,4 +29,7 @@ jobs:
       # in a layout pub.dev can't classify, so the check reads it as "unknown".
       # dbus: MPL-2.0, pulled in only by flutter_local_notifications_linux.
       # Ronda has no linux/ app, so it never ships in a build.
-      skip_packages: "pubspec_lock_parse,dbus"
+      # image_picker_ios: via face_blur's image_picker. Its LICENSE is the same
+      # BSD-3-Clause plus Apache-2.0 file as image_picker_android's, but pub.dev
+      # has not classified 0.8.13+14 (no license tag on 2026-10-29).
+      skip_packages: "pubspec_lock_parse,dbus,image_picker_ios"

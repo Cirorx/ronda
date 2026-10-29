@@ -265,7 +265,7 @@ def read_photo(jpeg: bytes) -> Image.Image:
             if max(opened.size) > MAX_PHOTO_SIDE:
                 raise FlyerError("invalid-argument", "photo too large")
             return opened.convert("RGB")
-    except OSError as error:
+    except (OSError, Image.DecompressionBombError) as error:
         raise FlyerError("invalid-argument", "not an image") from error
 
 

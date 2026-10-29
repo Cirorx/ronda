@@ -222,6 +222,13 @@ class TestReadPhoto:
             m.read_photo(data)
         assert excinfo.value.code == "invalid-argument"
 
+    def test_refuses_a_header_that_claims_a_huge_image(self, monkeypatch):
+        monkeypatch.setattr(Image, "MAX_IMAGE_PIXELS", 1000)
+
+        with pytest.raises(m.FlyerError) as excinfo:
+            m.read_photo(jpeg())
+        assert excinfo.value.code == "invalid-argument"
+
     def test_scales_only_down(self):
         image = Image.new("RGB", (2560, 1000))
 
