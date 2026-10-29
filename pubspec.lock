@@ -872,6 +872,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0+1"
+  ronda_repository:
+    dependency: "direct main"
+    description:
+      path: "packages/ronda_repository"
+      relative: true
+    source: path
+    version: "0.1.0+1"
   ronda_ui:
     dependency: "direct main"
     description:

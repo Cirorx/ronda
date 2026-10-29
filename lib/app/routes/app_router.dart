@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:ronda/admin/admin.dart';
 import 'package:ronda/app/bloc/app_bloc.dart';
 import 'package:ronda/app/view/app_shell.dart';
 import 'package:ronda/cerca/cerca.dart';
@@ -18,7 +19,9 @@ import 'package:ronda/welcome/welcome.dart';
 ///   welcome door accepted the terms;
 /// - signed in, profile not read yet: wherever they are;
 /// - signed in without a profile: onboarding;
-/// - signed in with a profile: the tabs, never welcome or onboarding.
+/// - signed in with a profile: the tabs, never welcome or onboarding;
+/// - the admin screen: anyone signed in, with or without a profile (the
+///   owner need not onboard); the server decides who sees a proposal.
 ///
 /// `/` and any unknown location land on Mi ronda, which the rules above
 /// then redirect as needed.
@@ -35,6 +38,7 @@ GoRouter createAppRouter({
           location == WelcomePage.path ||
           location.startsWith('${WelcomePage.path}/');
       final onOnboarding = location == OnboardingPage.path;
+      final onAdmin = location == AdminPage.path;
       final app = appBloc.state;
       return switch (app.status) {
         AppStatus.unauthenticated when !onWelcome => WelcomePage.path,
@@ -42,7 +46,8 @@ GoRouter createAppRouter({
             when location == LoginPage.path && app.pendingTerms == null =>
           WelcomePage.path,
         AppStatus.unauthenticated || AppStatus.loadingProfile => null,
-        AppStatus.onboarding => onOnboarding ? null : OnboardingPage.path,
+        AppStatus.onboarding =>
+          onOnboarding || onAdmin ? null : OnboardingPage.path,
         AppStatus.authenticated =>
           onWelcome || onOnboarding ? MyRondaPage.path : null,
       };
@@ -68,6 +73,7 @@ GoRouter createAppRouter({
         path: OnboardingPage.path,
         builder: (_, _) => const OnboardingPage(),
       ),
+      GoRoute(path: AdminPage.path, builder: (_, _) => const AdminPage()),
       StatefulShellRoute.indexedStack(
         builder: (_, _, navigationShell) =>
             AppShell(navigationShell: navigationShell),

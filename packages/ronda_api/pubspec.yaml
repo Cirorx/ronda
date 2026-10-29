@@ -9,6 +9,7 @@ environment:
 
 dependencies:
   cloud_firestore: ^7.1.0
+  cloud_functions: ^7.0.1
   equatable: ^2.0.7
   flutter:
     sdk: flutter

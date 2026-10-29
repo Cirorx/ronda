@@ -5,6 +5,7 @@ import 'package:needs_repository/needs_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// The app's root: provides the repositories bootstrap built and the
@@ -13,6 +14,7 @@ class const App({
   required final AuthRepository authRepository,
   required final NeedsRepository needsRepository,
   required final ProfileRepository profileRepository,
+  required final RondaRepository rondaRepository,
   super.key,
 }) extends StatelessWidget {
   @override
@@ -22,6 +24,7 @@ class const App({
         RepositoryProvider.value(value: authRepository),
         RepositoryProvider.value(value: needsRepository),
         RepositoryProvider.value(value: profileRepository),
+        RepositoryProvider.value(value: rondaRepository),
       ],
       child: BlocProvider(
         create: (_) => AppBloc(

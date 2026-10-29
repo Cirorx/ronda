@@ -8,6 +8,11 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == uid;
     }
 
+    // The owner, by the custom claim scripts/set_admin.py sets.
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
     // Needs, mood and audio never reach the server (split by sensitivity).
     function carriesNoSensitiveFields() {
       return !request.resource.data.keys().hasAny(['needs', 'mood', 'audio']);
@@ -74,6 +79,28 @@ service cloud.firestore {
           && data.seatIds is list
           && data.seatIds.size() <= 1000
           && data.updatedAt == request.time;
+    }
+
+    // The solver's groups waiting for approval: the admin reads them, nobody
+    // else, so nothing reaches a member before Aprobar. The propose_groups
+    // and approve_proposal callables write them with the admin SDK.
+    match /proposals/{proposalId} {
+      allow read: if isAdmin();
+    }
+
+    // An approved ronda and its member list, read by its own members only.
+    // approve_proposal writes both with the admin SDK.
+    function isMemberOf(rondaId) {
+      return request.auth != null && exists(
+          /databases/$(database)/documents/rondas/$(rondaId)/members/$(request.auth.uid));
+    }
+
+    match /rondas/{rondaId} {
+      allow read: if isMemberOf(rondaId);
+
+      match /members/{uid} {
+        allow read: if isMemberOf(rondaId);
+      }
     }
   }
 }

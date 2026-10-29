@@ -141,3 +141,5 @@ app.*.map.json
 
 # Generated l10n files
 lib/l10n/gen/
+# rules tests (node)
+node_modules/

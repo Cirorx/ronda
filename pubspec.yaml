@@ -37,6 +37,8 @@ dependencies:
     path: packages/profile_repository
   ronda_api:
     path: packages/ronda_api
+  ronda_repository:
+    path: packages/ronda_repository
   ronda_ui:
     path: packages/ronda_ui
 

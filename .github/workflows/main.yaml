@@ -37,6 +37,7 @@ jobs:
           - packages/needs_repository
           - packages/profile_repository
           - packages/ronda_api
+          - packages/ronda_repository
     uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v2
     with:
       flutter_version: "3.47.x"
@@ -76,6 +77,39 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pytest
+
+  # propose_groups and approve_proposal, over an in-memory Firestore.
+  functions:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+      - run: uv venv --python 3.13 venv
+      - run: VIRTUAL_ENV=venv uv pip install -r requirements.txt -r requirements-dev.txt
+      - run: venv/bin/ruff check .
+      - run: venv/bin/ruff format --check .
+      - run: venv/bin/pytest --cov
+
+  # firestore.rules on the Firestore emulator (needs Java).
+  rules:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rules
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npx --yes firebase-tools@15.34.1 emulators:exec --only firestore --project demo-ronda-rules "node --test"
 
   spell-check:
     uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/spell_check.yml@v2

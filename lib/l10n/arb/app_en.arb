@@ -539,5 +539,136 @@
     "reviewSaveError": "We couldn't save it. Try again.",
     "@reviewSaveError": {
         "description": "Shown on the read-back when saving fails"
+    },
+    "adminTitle": "Proposals",
+    "@adminTitle": {
+        "description": "Title of the admin approval screen"
+    },
+    "adminForbidden": "This screen is only for whoever forms the rondas.",
+    "@adminForbidden": {
+        "description": "Shown on the approval screen to an account without the admin claim"
+    },
+    "adminLoadError": "We couldn't read the proposals. Try again.",
+    "@adminLoadError": {
+        "description": "Shown when reading the proposals fails"
+    },
+    "adminRetry": "Try again",
+    "@adminRetry": {
+        "description": "Button that reads the proposals again"
+    },
+    "adminEmpty": "No proposal yet. Form the groups from everyone signed up.",
+    "@adminEmpty": {
+        "description": "Shown when the solver has never run"
+    },
+    "adminPropose": "Form the groups",
+    "@adminPropose": {
+        "description": "Button that runs the solver on the current sign-ups"
+    },
+    "adminProposeAgain": "Form them again",
+    "@adminProposeAgain": {
+        "description": "Button that runs the solver again, replacing the shown proposal"
+    },
+    "adminProposing": "Forming the groups…",
+    "@adminProposing": {
+        "description": "Shown while the solver runs"
+    },
+    "adminNobodyYet": "Nobody gets anything until you approve it.",
+    "@adminNobodyYet": {
+        "description": "Banner over a pending proposal"
+    },
+    "adminApprove": "Approve and tell them",
+    "@adminApprove": {
+        "description": "Button that approves the proposal into rondas"
+    },
+    "adminApproved": "Approved. It reaches them on Tuesday at 7 pm.",
+    "@adminApproved": {
+        "description": "Banner over an approved proposal"
+    },
+    "adminUndo": "Undo",
+    "@adminUndo": {
+        "description": "Button that takes an approval back"
+    },
+    "adminActionError": "That didn't work. Try again.",
+    "@adminActionError": {
+        "description": "Shown when proposing, approving or undoing fails"
+    },
+    "adminRondaTitle": "{pretext} · {barrio}",
+    "@adminRondaTitle": {
+        "description": "A proposed ronda's heading: its pretext and barrio",
+        "placeholders": {
+            "pretext": {
+                "type": "String"
+            },
+            "barrio": {
+                "type": "String"
+            }
+        }
+    },
+    "adminMemberDetail": "{ageBand} · {blocks, plural, =0{in their barrio} =1{1 block away} other{{blocks} blocks away}}",
+    "@adminMemberDetail": {
+        "description": "A proposed member's age band and walk to the ronda",
+        "placeholders": {
+            "ageBand": {
+                "type": "String"
+            },
+            "blocks": {
+                "type": "int"
+            }
+        }
+    },
+    "adminCheckWithinTen": "Everyone lives less than 10 blocks from the spot",
+    "@adminCheckWithinTen": {
+        "description": "Check on a proposed ronda"
+    },
+    "adminCheckFarther": "Someone lives more than 10 blocks from the spot",
+    "@adminCheckFarther": {
+        "description": "Failed check on a proposed ronda"
+    },
+    "adminCheckSixtyPlus": "At least two are 60 or over",
+    "@adminCheckSixtyPlus": {
+        "description": "Check on a proposed ronda with people 60 or over"
+    },
+    "adminCheckSixtyPlusAlone": "Only one person is 60 or over",
+    "@adminCheckSixtyPlusAlone": {
+        "description": "Failed check on a proposed ronda"
+    },
+    "adminCheckPlusOneTogether": "{name} and their guest go together",
+    "@adminCheckPlusOneTogether": {
+        "description": "Check on a proposed ronda holding a +1 pair",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "adminCheckPlusOneApart": "{name} goes without their guest",
+    "@adminCheckPlusOneApart": {
+        "description": "Failed check: a +1 pair split across rondas",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "adminCheckKept": "Met",
+    "@adminCheckKept": {
+        "description": "Spoken before a check that holds"
+    },
+    "adminCheckBroken": "Not met",
+    "@adminCheckBroken": {
+        "description": "Spoken before a check that does not hold"
+    },
+    "adminWhyNotOther": "Why not another option",
+    "@adminWhyNotOther": {
+        "description": "Heading over the rejected alternative's reason"
+    },
+    "adminUnseated": "{count, plural, =0{Everyone has a seat.} =1{1 person has no seat yet.} other{{count} people have no seat yet.}}",
+    "@adminUnseated": {
+        "description": "How many sign-ups the proposal leaves without a ronda",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
     }
 }

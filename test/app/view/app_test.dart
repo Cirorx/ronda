@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:needs_repository/needs_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
+import 'package:ronda/admin/admin.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/cerca/cerca.dart';
 import 'package:ronda/login/login.dart';
@@ -14,6 +15,7 @@ import 'package:ronda/my_ronda/my_ronda.dart';
 import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/settings/settings.dart';
 import 'package:ronda/welcome/welcome.dart';
+import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 class _MockAuthRepository extends Mock implements AuthRepository;
@@ -21,6 +23,8 @@ class _MockAuthRepository extends Mock implements AuthRepository;
 class _MockNeedsRepository extends Mock implements NeedsRepository;
 
 class _MockProfileRepository extends Mock implements ProfileRepository;
+
+class _MockRondaRepository extends Mock implements RondaRepository;
 
 const _user = User(id: 'demo-uid');
 
@@ -41,6 +45,7 @@ void main() {
     late AuthRepository authRepository;
     late NeedsRepository needsRepository;
     late ProfileRepository profileRepository;
+    late RondaRepository rondaRepository;
     late StreamController<User> users;
     late StreamController<Profile?> profiles;
 
@@ -54,6 +59,9 @@ void main() {
       authRepository = _MockAuthRepository();
       needsRepository = _MockNeedsRepository();
       profileRepository = _MockProfileRepository();
+      rondaRepository = _MockRondaRepository();
+      when(rondaRepository.watchLatestProposal)
+          .thenAnswer((_) => Stream.value(null));
       users = StreamController<User>.broadcast();
       profiles = StreamController<Profile?>.broadcast();
       addTearDown(users.close);
@@ -70,6 +78,7 @@ void main() {
       authRepository: authRepository,
       needsRepository: needsRepository,
       profileRepository: profileRepository,
+      rondaRepository: rondaRepository,
     );
 
     /// Pumps the app with [_user] signed in and [profile] read, `_profile`
@@ -376,6 +385,50 @@ void main() {
           await tester.pumpAndSettle();
           expect(find.byType(MyRondaPage), findsOneWidget, reason: path);
         }
+      });
+
+      testWidgets('by opening $AdminPage for anyone signed in', (tester) async {
+        await pumpSignedIn(tester);
+
+        GoRouter.of(tester.element(find.byType(MyRondaPage)))
+            .go(AdminPage.path);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AdminPage), findsOneWidget);
+        expect(
+          RepositoryProvider.of<RondaRepository>(
+            tester.element(find.byType(AdminPage)),
+          ),
+          same(rondaRepository),
+        );
+      });
+
+      testWidgets('by opening $AdminPage without a profile too', (
+        tester,
+      ) async {
+        await tester.pumpWidget(buildSubject());
+        users.add(_user);
+        await tester.pump();
+        profiles.add(null);
+        await tester.pumpAndSettle();
+
+        GoRouter.of(tester.element(find.byType(OnboardingPage)))
+            .go(AdminPage.path);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AdminPage), findsOneWidget);
+      });
+
+      testWidgets('by keeping signed-out people off $AdminPage', (
+        tester,
+      ) async {
+        await pumpSignedOut(tester);
+
+        GoRouter.of(tester.element(find.byType(WelcomePage)))
+            .go(AdminPage.path);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(WelcomePage), findsOneWidget);
       });
 
       testWidgets('by returning to $WelcomePage when the person signs out', (

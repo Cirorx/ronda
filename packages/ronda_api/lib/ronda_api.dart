@@ -4,5 +4,6 @@
 library;
 
 export 'src/models/models.dart';
+export 'src/proposals/proposals.dart';
 export 'src/ronda_api.dart';
 export 'src/seat_facts/seat_facts.dart';

@@ -93,6 +93,8 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   rotatesOn}, despues {kind: none | place | home, label, address?, hostOk}
   (members-only read; the address is deleted at the end of the day and never sent in a push), season {start, end}, openSeatFromWeek: 4.
 - `rondas/{id}/members/{uid}`: brings, state (active | paused | left), joinedAt.
+- Rules: a ronda and its members list are read by that ronda's members only (a
+  `members/{uid}` document for the caller); no client writes either.
 - `rondas/{id}/weeks/{isoWeek}`: date, placeOverride?, rsvp {uid: yes | no}, attendance
   {uid: bool}, plan {uid: item}, seguimos {uid: yes | no} (week 1 only).
 - `waitlists/{barrio_pretext_slot}`: entries[{uid, at}], threshold: 6, deadline.
@@ -102,8 +104,24 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 - `acta/{rondaId}/entries/{id}`: tool, summary, decidedBy (agent | host), ts.
 - `agent_runs/{runId}/steps/{n}`: ts, tool, argsSummary, reason, resultSummary, latencyMs, model,
   gate (allowed | blocked). Admin-only; rendered live as the agent trace.
-- `proposals/{id}`: groups, checks, rejected alternative + broken rules, status (pending |
-  approved). Admin-only; nothing reaches members before approval.
+- `proposals/{id}` (built in #25, `functions/proposals.py`): status (pending | approved),
+  solverStatus, groups[{id (seat id), barrio, pretext, slot, checks, members[{uid, firstName,
+  ageBand, distanceBlocks, plusOneInGroup?}]}], unseated[uids], rejectedAlternative {brokenRule,
+  reason (es-419), reasons} or null, createdAt, createdBy; once approved also rondaIds,
+  approvedAt, approvedBy. `plusOneInGroup` is set only when the member's +1 also signed up.
+  Read by the admin claim only (`request.auth.token.admin == true`), written only by the
+  callables, so nothing reaches members before approval (rules test: `rules/`).
+  - `propose_groups` (admin only, 2 GiB, 4 vCPU, max 1 instance, no min instances) reads
+    `users`, `users/{uid}/private/eligible` and `avoid`, keeps people with a profile in a known
+    barrio and eligible ids, solves, joins first names and writes a pending proposal. The
+    barrio centroids are the solver's demo table (`ronda_solver.demo.DEMO_BARRIOS`).
+  - `approve_proposal {proposalId}` writes one `rondas/{autoId}` (seatId, pretext, barrio,
+    slot {day, time}, size, status forming, openSeatFromWeek 4, createdAt; no place, hosts or
+    season yet) and `rondas/{id}/members/{uid}` (brings, state active, joinedAt) per group in one
+    batch, then marks the proposal approved. `{proposalId, undo: true}` deletes them and puts it
+    back to pending ([Deshacer]; nothing has been sent yet: the Tuesday push is the agent's).
+    One batch holds 500 writes, enough for about 400 members.
+  - The admin claim is set by `scripts/set_admin.py <email>` after the owner signs in once.
 - `flyers/{id}`: spotId, stopId, rondaIds[], scans.
 - Public view for Cerca tuyo: `public_seats/{id}` (barrio, pretext, time band, age band, seats
   left, waiting count). No names.
