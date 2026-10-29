@@ -100,7 +100,10 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 - Rules: a ronda and its members list are read by that ronda's members only (a
   `members/{uid}` document for the caller); no client writes either.
 - `rondas/{id}/weeks/{isoWeek}`: date, placeOverride?, rsvp {uid: yes | no}, attendance
-  {uid: bool}, plan {uid: item}, seguimos {uid: yes | no} (week 1 only).
+  {uid: bool}, plan {uid: item}. Members never read the raw `rsvp` map: "who's coming" shows
+  the yeses' first names and only counts for the rest (PRODUCT § The weekly loop).
+- `rondas/{id}/private/seguimos`: {uid: yes | no}, written by a callable, read by no client; at
+  the close only the outcome lands on the ronda (`season`), the admin sees counts (#9).
 - `waitlists/{barrio_pretext_slot}`: entries[{uid, at}], threshold: 6, deadline.
 - `bench/{rondaId}`: ordered uids.
 - `avoid/{pairId}`: uidA, uidB (report-apart; read by the solver only).
@@ -170,7 +173,7 @@ weights and limits are in `solver/README.md`; every rule name and number is in
   within its size bounds (fútbol 8–10, every other pretext 4–6).
 - Soft (weighted): nobody the only one of their age group (under 30, 30–59, 60+); shortfall from
   the target size (fútbol 10, truco 6, others 5); +1 pair together; ≤ 1 +1 pair per ronda;
-  cross-age truco partners (weight 0 switches it off, #9); open a nearby ronda before seating far.
+  cross-age truco partners (kept by #9); open a nearby ronda before seating far.
 - Output: proposals + the next-best rejected alternative with the rules it breaks, structured
   and as an es-419 sentence (shown to Ciro); a checker re-verifies every hard rule on any output.
   A hand-built grouping is explained the same way, hard rules through a CP-SAT core.

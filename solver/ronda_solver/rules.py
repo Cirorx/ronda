@@ -146,7 +146,7 @@ def age_group(age_band: str) -> str:
 
 
 # SoftRule.TRUCO_CROSS_AGE (docs/PRODUCT.md § Truco): under-30 partnered with over-60 where both
-# exist. The owner may revise or drop it (issue #9): edit these names, or set its weight to 0.
+# exist. Kept by issue #9; setting its weight to 0 still switches it off.
 TRUCO_PRETEXT = "truco"
 TRUCO_YOUNG = UNDER_30
 TRUCO_OLD = SIXTY_PLUS

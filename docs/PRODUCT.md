@@ -124,11 +124,13 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   min)"; the push names the home but never carries the address, since it shows on lock screens.
 - **Attendance:** "¿Quién vino hoy?" — the host taps [Vino] / [No vino] per person; "Nadie más
   ve esta lista." No check-in codes.
-- **Buddy:** chosen after the first ronda: "Si un día faltás sin avisar, ¿a quién le avisamos?"
-  — "Nadie más se entera, y no avisamos a tu familia." After one miss without "esta no", only
-  that person gets "Graciela no vino el jueves. Te eligió a vos para estas cosas. ¿Le escribís?
-  Ella no sabe que te avisamos." [Le escribo] opens an empty WhatsApp chat; [Ahora no]. No
-  escalation, no family.
+- **Buddy:** chosen after the first ronda: "Si un día faltás sin avisar, ¿a quién le avisamos?
+  Elegí a alguien que ya tenga tu WhatsApp." (a +1 is the natural pick) — "Nadie más se entera,
+  y no avisamos a tu familia." After one miss without "esta no", only that person gets "Graciela
+  no vino el jueves. Te eligió a vos para estas cosas. ¿Le escribís? Ella no sabe que te
+  avisamos." [Le escribo] opens WhatsApp with no number and no text: the buddy opens the chat
+  they already have. Ronda never asks for, stores or sends the number (#9). Hidden where WhatsApp
+  can't be opened. [Ahora no]. No escalation, no family.
 - **Pause:** "Tomarte unas semanas" — 2 semanas / Un mes / Hasta que yo vuelva, each with its
   return date. "Nadie pregunta por qué." Longer than two weeks, the seat is held two weeks and
   then offered to the bench.
@@ -148,9 +150,14 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   [Sí, viene] [Esta semana no] [No sé]; "No sé" holds the seat until Wednesday 19:00. "Nico no
   se entera de que te preguntamos."
 - **¿Seguimos?** after meeting 1, private: "¿Seguimos los jueves? Solo Ronda ve tu respuesta.
-  Nadie del grupo se entera de lo que digas." 4 of 6 yes sets the season (owner may change to
-  5). A "no" gets "Gracias por venir." and two nearby alternatives; their seat reopens. Result:
-  "Seguimos los jueves", the season's end date, "Nadie sabe qué contestó cada uno."
+  Nadie del grupo se entera de lo que digas." Every active member is asked; the answer can change
+  until the question closes with the next RSVP push. The season starts when the yeses alone
+  could be a ronda: the pretext's floor (4; fútbol 8), whatever the group's size (#9). "Si no
+  contestás, seguís en la ronda, pero no cuenta como un sí." A "no" gets "Gracias por venir."
+  and two nearby alternatives; their seat reopens at the close, not on answering, so the timing
+  gives nobody away. Result, with that push: "Seguimos los jueves", the season's end date,
+  "Nadie sabe qué contestó cada uno." No count, no names; the admin sees counts only. Below the
+  floor there is no season, and everyone still in gets the **Didn't fill** choices.
 
 ## Organiser agent (what members see)
 - **First message:** "Hola, Graciela. Soy un programa. Ronda me usa para avisar horarios,
@@ -194,11 +201,13 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   code. Preview: "Así queda tu volante" [Imprimir o compartir]. Phone app only (no face
   detection on web): the web app says "Hacelo desde la app del teléfono".
 
-## Truco (if kept)
+## Truco
 - "Campeonato de los martes", 3 v 3, "Los equipos cambian cada semana. Así todos juegan con
   todos." Under-30 paired with over-60 where both exist; the +1 stays on the friend's team. A
   table where each win gives 2 points to the three on the team. Sold as a campeonato, never
   "intergenerational".
+- Kept (#9): the solver's cross-age rule ships. The in-app team draw and the points table come
+  after 11-04; until then the card states the house rule and teams are drawn at the table.
 
 ## Safety
 - **Contar algo que pasó** (voice or text): "Contá qué pasó. Lo lee una persona, no un

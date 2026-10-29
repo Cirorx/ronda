@@ -22,7 +22,7 @@ issues, docs, code, commit messages.
 | `Proposal` | propuesta | The solver's grouping, waiting for the owner's approval, with a rejected alternative |
 | `RejectedAlternative` | alternativa B ("Por qué no otra opción") | The next-best grouping the solver turned down, with its `reasons`: each rule it breaks that the proposal keeps |
 | `Season` | temporada | The run of weeks a ronda commits to after ¿seguimos? |
-| `Seguimos` | ¿seguimos? | The private vote after the first meeting; 4 of 6 yes sets the season |
+| `Seguimos` | ¿seguimos? | The private vote after the first meeting; the season starts when the yeses reach the pretext's floor (4; fútbol 8) |
 | `Rsvp` | voy / esta no | The weekly answer. Default is in; "esta no" never asks why |
 | `Anfitrion` | abre ("llega primero") | The host who opens the meeting this month |
 | `Cola` | cierra ("se queda al final") | The co-host who closes; asked first when the anfitrión can't |
