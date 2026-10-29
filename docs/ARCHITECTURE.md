@@ -27,7 +27,8 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   ├─ Functions (Python 3.13, 2nd gen):
   │    callables  extract (Transcribe → Spark), propose_groups (CP-SAT, admin), rsvp,
   │               run_job(name, now) (admin, for tests and the demo)
-  │    scheduled  one hourly dispatcher → run_<job>(now); hourly audio sweeper
+  │    scheduled  one hourly dispatcher → run_<job>(now); hourly audio sweeper (`sweep_audio`
+  │               deletes `audio/` objects older than 1 h)
   │    agent, flyer (SAM → cutouts → Muse Image → text + QR in code)
   ├─ Hosting: Flutter web app under /app; plain-HTML /cerca and /f/{id}
   └─ FCM → APNs (iOS only with the Apple Developer Program)
@@ -69,8 +70,8 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
     server republishes the document then, and phones recompute.
   - `endsAfterDark` is per seat: the slot's end against that week's Open-Meteo sunset.
   - The phone writes `users/{uid}/private/eligible` = exactly `{seatIds, updatedAt}` (rules check
-    the keys, a list, at most 1000 ids and `updatedAt == request.time`; that each id is a string
-    is the client's half). No client reads it back.
+    the keys, a list of at most 1000 strings shaped `{barrio}_{pretext}_{slot}`, and
+    `updatedAt == request.time`). No client reads it back, not even its owner or the admin.
   - When: on "Está bien, guardalo", after the needs are saved on the phone and before the
     profile. The phone filters by needs only (pretext and slot are the solver's match). If
     reading the seats or writing the ids fails, the save fails and no profile is written, so
@@ -85,9 +86,11 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 - `users/{uid}/tokens/{token}`: platform (android | ios | web), updatedAt. The sender builds a
   different payload per platform (`docs/STACK.md` § Push).
 - Rules accept on `users/{uid}` only the fields above (typed: `ageBand` one of the bands,
-  `firstName` 1–30 characters, `terms` exactly `{version, acceptedAt}`), so any write carrying a
-  `needs`, mood, audio or address field is rejected. The `terms` write comes first and creates
-  the document; the profile lands on it when onboarding is saved.
+  `firstName` 1–30 characters, `terms` exactly `{version, acceptedAt}`, `slots`, `pretexts` and
+  `brings` lists of id strings), so any write carrying a `needs`, mood, audio or address field is
+  rejected, at the top level or inside a list element (rules test: `rules/users.test.js`). The
+  `terms` write comes first and creates the document; the profile lands on it when onboarding is
+  saved.
 - `rondas/{id}`: pretext, barrio, slot {day, time}, place {name, landmark, lat, lng} (public
   places only), size, status (forming | active | paused | ended), hosts {anfitrion, cola,
   rotatesOn}, despues {kind: none | place | home, label, address?, hostOk}

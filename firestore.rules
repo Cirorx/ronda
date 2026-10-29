@@ -18,6 +18,25 @@ service cloud.firestore {
       return !request.resource.data.keys().hasAny(['needs', 'mood', 'audio']);
     }
 
+    // Rules can't loop over a list, but they can join it: a list of ids
+    // joins into one string that `pattern` matches comma by comma. A map
+    // can't be joined, so no field (a need, a mood, an audio path) rides
+    // inside a list element under a key of its own.
+    function isIdList(values, pattern) {
+      return values is list
+          && values.join(',').matches('(' + pattern + '(,' + pattern + ')*)?');
+    }
+
+    // The ids the app stores: `termo`, `futbol5`, `solymar-norte`.
+    function idPattern() {
+      return '[a-z][a-z0-9-]*';
+    }
+
+    // `{day}-{band}`, as in `tue-afternoon`.
+    function slotPattern() {
+      return '(mon|tue|wed|thu|fri|sat|sun)-(morning|afternoon|evening)';
+    }
+
     // A member reads and writes only their own profile. Subcollections are
     // not matched here: private/eligible has its own block below, and any
     // other (tokens) stays closed until its rules are written.
@@ -39,9 +58,9 @@ service cloud.firestore {
           && isOptional(data, 'ageBand', data.ageBand in [
               '18-29', '30-39', '40-49', '50-59', '60-69', '70-79', '80+'])
           && isOptional(data, 'barrio', data.barrio is string)
-          && isOptional(data, 'slots', data.slots is list)
-          && isOptional(data, 'pretexts', data.pretexts is list)
-          && isOptional(data, 'brings', data.brings is list)
+          && isOptional(data, 'slots', isIdList(data.slots, slotPattern()))
+          && isOptional(data, 'pretexts', isIdList(data.pretexts, idPattern()))
+          && isOptional(data, 'brings', isIdList(data.brings, idPattern()))
           && isOptional(data, 'plusOneUid', data.plusOneUid is string)
           && isOptional(data, 'buddyUid', data.buddyUid is string)
           && isOptional(data, 'terms', data.terms is map
@@ -69,15 +88,17 @@ service cloud.firestore {
       allow create, update: if isOwner(uid) && isEligibleSeatIds();
     }
 
-    // Rules can't check each element's type, so "a list of seat id strings"
-    // is the client's half; the size bound stays above every possible seat
-    // (9 barrios x 4 pretexts x 21 slots = 756).
+    // Each id is a seat id, `{barrio}_{pretext}_{slot}`; the size bound
+    // stays above every possible seat (9 barrios x 4 pretexts x 21 slots =
+    // 756).
     function isEligibleSeatIds() {
       let data = request.resource.data;
       return data.keys().hasOnly(['seatIds', 'updatedAt'])
           && data.keys().hasAll(['seatIds', 'updatedAt'])
           && data.seatIds is list
           && data.seatIds.size() <= 1000
+          && isIdList(data.seatIds,
+              idPattern() + '_' + idPattern() + '_' + slotPattern())
           && data.updatedAt == request.time;
     }
 

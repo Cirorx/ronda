@@ -357,11 +357,12 @@ on both Android apps; the release ones are added when a release key exists.
   `VIRTUAL_ENV=functions/venv uv pip install -r functions/requirements.txt`. The solver reaches
   the functions through the symlink `functions/ronda_solver → ../solver/ronda_solver`; the
   deploy archive follows it. Functions tests: add `-r functions/requirements-dev.txt`, then
-  `cd functions && venv/bin/pytest --cov` (100%, over an in-memory Firestore stand-in,
-  `functions/tests/fake_firestore.py`) and `venv/bin/ruff check . && venv/bin/ruff format --check .`.
+  `cd functions && venv/bin/pytest --cov` (100%, over in-memory Firestore and Storage stand-ins,
+  `functions/tests/fake_firestore.py` and `fake_storage.py`) and `venv/bin/ruff check . && venv/bin/ruff format --check .`.
 - **Rules tests** (`rules/`, `@firebase/rules-unit-testing` 6.0.0 on node's test runner):
   `cd rules && npm ci && npm run test:emulator` starts a Firestore emulator for them; with one
-  already running on 8088, `npm test` uses it under its own project id (`demo-ronda-rules`).
+  already running on 8088, `npm test` uses it under the tests' own project ids
+  (`demo-ronda-rules`, `demo-ronda-users`: one per file, as node runs test files in parallel).
 - **Admin claim:** the owner signs in once, then
   `uv run --python 3.13 scripts/set_admin.py <email>` (real project, Application Default
   Credentials) or with `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099` for the emulator; sign out

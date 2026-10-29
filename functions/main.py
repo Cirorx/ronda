@@ -5,7 +5,7 @@ sets ``max_instances`` so a loop or a flood can't run up the bill.
 """
 
 import firebase_admin
-from firebase_functions import https_fn, options, params
+from firebase_functions import https_fn, options, params, scheduler_fn
 
 REGION = "southamerica-east1"
 
@@ -175,3 +175,13 @@ def extract(req: https_fn.CallableRequest) -> dict:
         raise https_fn.HttpsError(error.NOT_FOUND, "No note at that path.") from e
     except voice.ModelUnavailable as e:
         raise https_fn.HttpsError(error.UNAVAILABLE, "Try again in a moment.") from e
+
+
+# Delete-on-success in `extract` is the main control and the bucket's 1-day lifecycle rule the
+# backstop; this catches what the first missed within the hour. It only lists and deletes.
+@scheduler_fn.on_schedule(schedule="every 1 hours", region=REGION, max_instances=1)
+def sweep_audio(event: scheduler_fn.ScheduledEvent) -> None:
+    """Deletes every voice note under `audio/` created more than an hour before this run."""
+    import audio_sweeper
+
+    audio_sweeper.run_sweep_audio(_bucket(), event.schedule_time)

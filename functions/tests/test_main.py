@@ -1,14 +1,17 @@
 """The callables' own code: auth checks, arguments and error codes, over the Firestore stand-in.
 `inspect.unwrap` reaches the function under the firebase_functions decorator."""
 
+import copy
 import inspect
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
-from firebase_functions import https_fn
+from firebase_functions import https_fn, scheduler_fn
 
 import main
 from tests.fake_firestore import FakeFirestore
+from tests.fake_storage import FakeBucket, StoredObject
 from tests.test_proposals import invented_sign_ups
 
 ADMIN = SimpleNamespace(uid="demo-admin", token={"admin": True})
@@ -180,3 +183,59 @@ def test_bucket_is_the_default_admin_bucket(monkeypatch):
     monkeypatch.setattr(storage, "bucket", lambda: "bucket")
 
     assert main._bucket() == "bucket"
+
+
+class TestVoiceSignUp:
+    """`extract` end to end with only Meta faked: the real `read_voice_note` over the Firestore and
+    Storage stand-ins. The phone's writes after it are proven in `rules/users.test.js`."""
+
+    def test_extract_writes_no_document_and_leaves_no_note(self, monkeypatch):
+        import httpx
+        import openai
+
+        from tests.test_voice_signup import GRACIELA, spark_returning, transcript, wav
+
+        documents = {"users/demo-001": {"terms": {"version": "2026-10-27"}}}
+        db = FakeFirestore(copy.deepcopy(documents))
+        bucket = FakeBucket({NOTE_PATH: StoredObject(wav(), datetime.now(UTC))})
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setattr(main, "_bucket", lambda: bucket)
+        monkeypatch.setenv("MODEL_API_KEY", "test-key")
+        voice_transcribe = httpx.MockTransport(lambda _: transcript("Hola, soy Graciela"))
+        client = httpx.Client
+        monkeypatch.setattr(httpx, "Client", lambda: client(transport=voice_transcribe))
+        monkeypatch.setattr(openai, "OpenAI", lambda **_: spark_returning(GRACIELA)[0])
+
+        fields = call(main.extract, MEMBER, {"path": NOTE_PATH})
+
+        assert fields["firstName"] == "Graciela"
+        assert set(fields) == {"firstName", "ageBand", "barrio", "pretexts", "slots", "brings"}
+        assert "audio/" not in repr(fields)
+        assert db.documents == documents
+        assert bucket.objects == {}
+
+
+SWEEP_TIME = datetime(2026, 10, 29, 15, 0, tzinfo=UTC)
+
+
+class TestSweepAudio:
+    def test_runs_every_hour_in_the_region_on_one_instance(self):
+        endpoint = main.sweep_audio.__firebase_endpoint__
+
+        assert endpoint.scheduleTrigger["schedule"] == "every 1 hours"
+        assert endpoint.region == [main.REGION]
+        assert endpoint.maxInstances == 1
+
+    def test_deletes_the_notes_older_than_an_hour_before_the_scheduled_time(self, monkeypatch):
+        bucket = FakeBucket(
+            {
+                "audio/demo-001/old.wav": StoredObject(b"", SWEEP_TIME - timedelta(hours=2)),
+                "audio/demo-001/new.wav": StoredObject(b"", SWEEP_TIME - timedelta(minutes=5)),
+            }
+        )
+        monkeypatch.setattr(main, "_bucket", lambda: bucket)
+
+        event = scheduler_fn.ScheduledEvent(job_name="sweep", schedule_time=SWEEP_TIME)
+        inspect.unwrap(main.sweep_audio)(event)
+
+        assert set(bucket.objects) == {"audio/demo-001/new.wav"}

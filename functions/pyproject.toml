@@ -12,7 +12,7 @@ testpaths = ["tests"]
 filterwarnings = ["ignore:Bitwise inversion:DeprecationWarning"]
 
 [tool.coverage.run]
-source = ["proposals", "main", "voice_signup"]
+source = ["proposals", "main", "voice_signup", "audio_sweeper"]
 branch = true
 
 [tool.coverage.report]
