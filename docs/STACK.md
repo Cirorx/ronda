@@ -10,7 +10,7 @@ vgv-ai-flutter-plugin skills (`layered-architecture`, `bloc`, `material-theming`
 | Tool | Version | Note |
 |---|---|---|
 | Flutter / Dart | 3.47.8 / 3.13.7 (stable 2026-10-23) | This Mac has 3.47.1: `flutter upgrade` |
-| Android | minSdk 24, compile/target 36, Gradle 9.3.1, AGP 9.1.0, Kotlin plugin 2.3.20 (`compilerOptions` DSL, not `kotlinOptions`), JDK 17+ (this Mac runs 23); core-library desugaring is not configured yet (add it with flutter_local_notifications) | Gradle 9.3.1 and AGP 9.1.0 are Flutter 3.47.8's template versions (AGP 9.1 needs Gradle ≥ 9.3.1; Flutter warns below Gradle 9.1 / AGP 9.0.1 / Kotlin 2.3.20). Like the template, `gradle.properties` keeps `android.builtInKotlin=false` and `android.newDsl=false`; `org.jetbrains.kotlin.android` stays in `settings.gradle.kts` (`apply false`) and the app module does not apply it, because the Flutter Gradle plugin applies it to the app and plugins while built-in Kotlin is off. FlutterFire BoM 35 sets the floors; `firebase-auth` 25.0.0 ships Kotlin 2.4 metadata, which Kotlin 2.2 can't read (checked 2026-10-27). Upgraded 2026-10-28 |
+| Android | minSdk 24, compile/target 36, Gradle 9.3.1, AGP 9.1.0, Kotlin plugin 2.3.20 (`compilerOptions` DSL, not `kotlinOptions`), JDK 17+ (this Mac runs 23); core-library desugaring on (`desugar_jdk_libs` 2.1.4, the version flutter_local_notifications 22's README names; added in #27) | Gradle 9.3.1 and AGP 9.1.0 are Flutter 3.47.8's template versions (AGP 9.1 needs Gradle ≥ 9.3.1; Flutter warns below Gradle 9.1 / AGP 9.0.1 / Kotlin 2.3.20). Like the template, `gradle.properties` keeps `android.builtInKotlin=false` and `android.newDsl=false`; `org.jetbrains.kotlin.android` stays in `settings.gradle.kts` (`apply false`) and the app module does not apply it, because the Flutter Gradle plugin applies it to the app and plugins while built-in Kotlin is off. FlutterFire BoM 35 sets the floors; `firebase-auth` 25.0.0 ships Kotlin 2.4 metadata, which Kotlin 2.2 can't read (checked 2026-10-27). Upgraded 2026-10-28 |
 | iOS | deployment target 15.5 (ML Kit), armv7 excluded in the Podfile | CocoaPods still used for ML Kit and flutter_tts |
 | Python (functions, scripts) | 3.13 (`uv python install 3.13`) | Firebase Python functions run 3.10–3.13; this Mac's 3.14 won't deploy |
 | firebase-tools | 15.34.1 via npm | Installed under nvm's node 26, but the Hosting emulator (`superstatic`) supports node 20, 22 and 24 only: run the emulators under node 24 (`nvm install 24`, `nvm use 24`, reinstall firebase-tools there) |
@@ -66,6 +66,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | `device_store` | Data | flutter_secure_storage (needs); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
+| `push_repository` | Repository | The notification permission and the FCM token under `users/{uid}/tokens` (over `push_client` + `ronda_api`); the token never leaves it | #27 |
 | `face_blur` | Data | ML Kit face detection + `image` pixelation (native only) | #30 |
 | `auth_repository` | Repository | `FirebaseAuth` passed in from bootstrap | #13 |
 | `profile_repository` | Repository | Profile, eligible seat ids (over `ronda_api`) | #18 |
@@ -327,6 +328,37 @@ stdlib `wave` module (`audioop` is gone in 3.13).
 
 Store `platform` with each FCM token. iPhone web users get push only after Add to Home Screen.
 
+Built in #27 (`packages/push_client`, `packages/push_repository`, `lib/push/`):
+- **Token:** `users/{uid}/tokens/{token}` = exactly `{platform, updatedAt}` (server time), written
+  by the owner only and never read by a client (`firestore.rules`, tested in
+  `rules/tokens.test.js`). Saved when notifications are allowed, on every launch that lands on
+  Mi ronda, and again on every FCM token refresh. The token stays inside `push_repository`: no
+  state, log or failure carries it. There is no FCM emulator, so the development flavor gets its
+  token from the real `ronda-uy` sender and saves it in the Firestore emulator. It is read with
+  `getToken()`, which firebase_messaging 17 deprecates for installation ids (`register()`); the
+  console's test message and the HTTP v1 API address registration tokens, so it stays until the
+  sender moves.
+- **The ask:** never at launch. Mi ronda shows "¿Te avisamos los martes?" (PRODUCT copy) while
+  the phone can still ask; [Sí, avisame] opens the system prompt (`POST_NOTIFICATIONS` on
+  Android 13+, the browser's on web), [Ahora no] hides it until the next launch. A phone that
+  refuses for good gets one line on how to turn notifications on in its settings. Maestro taps
+  `push.allow` / `push.later`; `launchApp` grants the permission itself, so the card only shows
+  after `adb shell pm revoke <app id> android.permission.POST_NOTIFICATIONS`.
+- **Android:** the app creates the high-importance `rsvp` channel at start, named in the phone's
+  language ("Tu ronda de la semana"). Data-only messages are drawn by `showPushInBackground` in
+  `lib/bootstrap.dart` (top level, `@pragma('vm:entry-point')`, its own isolate) and by
+  `showForegroundMessages` while the app is open; Ronda's payload is `data: {title, body}`. The
+  manifest makes `rsvp` FCM's default channel and `ic_notification` its icon, so a notification
+  message (the console's "Send test message") lands on the same channel. Checked 2026-10-29 on
+  the Pixel 8 emulator: one HTTP v1 data message with the app in the background showed on `rsvp`
+  at high importance.
+- **Web:** the service worker `web/firebase-messaging-sw.js` is generated (§ Native and project
+  checklist) and registered relative to the base href, so it works under `/app/`. The token needs
+  the Web Push certificate's public key, passed as `--dart-define=FCM_VAPID_KEY=<key>` to
+  `flutter run -d chrome` and `flutter build web`. It is public by design (browsers receive it),
+  so the rule against keys in dart-defines doesn't apply. Without it the JS SDK falls back to
+  Firebase's default key, which may not work.
+
 ## Native and project checklist
 
 **Firebase project `ronda-uy`** (Blaze, decided 2026-10-27; budget alert at $20, `max_instances`
@@ -347,13 +379,16 @@ on both Android apps; the release ones are added when a release key exists.
   (fake values) to both Dart names in the workflow's `setup:` step, so analyze and test pass on a
   clean checkout. The app reads its config from the Dart options; the iOS plists are written but
   not bundled (flutterfire's per-configuration build phase needs the CLI at build time and app ids
-  in `firebase.json`, so it was left out).
+  in `firebase.json`, so it was left out). The FCM web worker carries the web config inline, so it
+  is generated and git-ignored too: `dart tool/firebase_messaging_sw.dart` (from the repo root)
+  writes `web/firebase-messaging-sw.js` from `lib/firebase_options_development.dart` (both flavors
+  share the web app); CI runs it on the stub.
 - **Fresh clone:** `firebase login`, then for each flavor
   `flutterfire configure --project=ronda-uy --platforms=android,ios,web --yes --out=lib/firebase_options_<flavor>.dart --android-package-name=<id> --android-out=android/app/src/<flavor>/google-services.json --ios-bundle-id=<id> --ios-out=ios/config/<flavor>/GoogleService-Info.plist --ios-build-config=Debug-<flavor>`
   (`<id>` is `com.ciroapps.ronda` or `com.ciroapps.ronda.dev`). Without `--ios-build-config` the
   CLI stops at an interactive prompt even with `--yes`. Afterwards revert what it adds to
   `ios/Runner.xcodeproj/project.pbxproj` and the `flutter` block it writes into `firebase.json`
-  (both carry app ids). Functions: `uv venv --seed --python 3.13 functions/venv` and
+  (both carry app ids), and run `dart tool/firebase_messaging_sw.dart`. Functions: `uv venv --seed --python 3.13 functions/venv` and
   `VIRTUAL_ENV=functions/venv uv pip install -r functions/requirements.txt`. The solver reaches
   the functions through the symlink `functions/ronda_solver → ../solver/ronda_solver`; the
   deploy archive follows it. Functions tests: add `-r functions/requirements-dev.txt`, then

@@ -38,8 +38,8 @@ service cloud.firestore {
     }
 
     // A member reads and writes only their own profile. Subcollections are
-    // not matched here: private/eligible has its own block below, and any
-    // other (tokens) stays closed until its rules are written.
+    // not matched here: private/eligible and tokens have their own blocks
+    // below, and any other stays closed.
     //
     // Only the fields docs/ARCHITECTURE.md § Data model names, each optional
     // (the terms arrive first, when a welcome door is tapped; the profile
@@ -122,6 +122,22 @@ service cloud.firestore {
       match /members/{uid} {
         allow read: if isMemberOf(rondaId);
       }
+    }
+
+    // The member's phones for push, one document per FCM token: exactly the
+    // platform and when it was saved, by the owner only. No client reads a
+    // token back; the sender reads them with the admin SDK.
+    match /users/{uid}/tokens/{token} {
+      allow create, update: if isOwner(uid) && isDeviceToken();
+      allow delete: if isOwner(uid);
+    }
+
+    function isDeviceToken() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['platform', 'updatedAt'])
+          && data.keys().hasAll(['platform', 'updatedAt'])
+          && data.platform in ['android', 'ios', 'web']
+          && data.updatedAt == request.time;
     }
   }
 }

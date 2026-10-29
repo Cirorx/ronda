@@ -8,11 +8,17 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:device_store/device_store.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:needs_repository/needs_repository.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
+import 'package:push_client/push_client.dart';
+import 'package:push_repository/push_repository.dart';
+import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_api/ronda_api.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -24,6 +30,7 @@ typedef AppBuilder = FutureOr<Widget> Function({
   required NeedsRepository needsRepository,
   required OnboardingRepository onboardingRepository,
   required ProfileRepository profileRepository,
+  required PushRepository pushRepository,
   required RondaRepository rondaRepository,
 });
 
@@ -47,6 +54,24 @@ class const FirebaseEmulators({
 
   /// Storage emulator port.
   static const storagePort = 9199;
+}
+
+/// The web push certificate's public key, passed as
+/// `--dart-define=FCM_VAPID_KEY=…` (`docs/STACK.md` § Push). It is public by
+/// design: browsers receive it to subscribe. Empty until the owner creates
+/// it in the console; without it web uses Firebase's default key, if any.
+const fcmVapidKey = String.fromEnvironment('FCM_VAPID_KEY');
+
+/// Shows a data-only push that arrived while the app was in the background
+/// or closed (Android). FCM runs it in its own isolate, so it starts Firebase
+/// again before anything else.
+@pragma('vm:entry-point')
+Future<void> showPushInBackground(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  await PushClient(
+    messaging: FirebaseMessaging.instance,
+    notifications: FlutterLocalNotificationsPlugin(),
+  ).showMessage(message);
 }
 
 /// Starts Firebase, builds the data clients and repositories, then runs the
@@ -94,6 +119,25 @@ Future<void> bootstrap(
     functions: functions,
   );
   final voiceRecorder = VoiceRecorder();
+  final pushClient = PushClient(
+    messaging: FirebaseMessaging.instance,
+    notifications: FlutterLocalNotificationsPlugin(),
+    vapidKey: fcmVapidKey,
+  );
+
+  // Push: there is no FCM emulator, so even the development flavor gets its
+  // token from the real project; the token is then saved in the emulator.
+  if (!kIsWeb) FirebaseMessaging.onBackgroundMessage(showPushInBackground);
+  // The channel's name shows in the phone's settings, in the phone's
+  // language.
+  final strings = lookupAppLocalizations(
+    resolveAppLocale(PlatformDispatcher.instance.locales),
+  );
+  await pushClient.initialize(
+    channelName: strings.pushChannelName,
+    channelDescription: strings.pushChannelDescription,
+  );
+  pushClient.showForegroundMessages();
 
   if (emulators != null) {
     final host = emulators.host;
@@ -111,6 +155,10 @@ Future<void> bootstrap(
   const needsRepository = NeedsRepository(deviceStore: deviceStore);
   final profileRepository = ProfileRepository(rondaApi: rondaApi);
   final rondaRepository = RondaRepository(proposalsApi: proposalsApi);
+  final pushRepository = PushRepository(
+    pushClient: pushClient,
+    rondaApi: rondaApi,
+  );
   final onboardingRepository = OnboardingRepository(
     voiceRecorder: voiceRecorder,
     rondaApi: rondaApi,
@@ -122,6 +170,7 @@ Future<void> bootstrap(
       needsRepository: needsRepository,
       onboardingRepository: onboardingRepository,
       profileRepository: profileRepository,
+      pushRepository: pushRepository,
       rondaRepository: rondaRepository,
     ),
   );

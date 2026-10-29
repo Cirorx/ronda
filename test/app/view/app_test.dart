@@ -8,6 +8,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:needs_repository/needs_repository.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
+import 'package:push_repository/push_repository.dart';
 import 'package:ronda/admin/admin.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/cerca/cerca.dart';
@@ -26,6 +27,8 @@ class _MockNeedsRepository extends Mock implements NeedsRepository;
 class _MockProfileRepository extends Mock implements ProfileRepository;
 
 class _MockRondaRepository extends Mock implements RondaRepository;
+
+class _MockPushRepository extends Mock implements PushRepository;
 
 class _MockOnboardingRepository extends Mock implements OnboardingRepository;
 
@@ -49,6 +52,7 @@ void main() {
     late NeedsRepository needsRepository;
     late ProfileRepository profileRepository;
     late RondaRepository rondaRepository;
+    late PushRepository pushRepository;
     late StreamController<User> users;
     late StreamController<Profile?> profiles;
 
@@ -63,6 +67,9 @@ void main() {
       needsRepository = _MockNeedsRepository();
       profileRepository = _MockProfileRepository();
       rondaRepository = _MockRondaRepository();
+      pushRepository = _MockPushRepository();
+      when(pushRepository.permission)
+          .thenAnswer((_) async => PushPermission.blocked);
       when(rondaRepository.watchLatestProposal)
           .thenAnswer((_) => Stream.value(null));
       users = StreamController<User>.broadcast();
@@ -82,6 +89,7 @@ void main() {
       needsRepository: needsRepository,
       onboardingRepository: _MockOnboardingRepository(),
       profileRepository: profileRepository,
+      pushRepository: pushRepository,
       rondaRepository: rondaRepository,
     );
 
@@ -150,6 +158,10 @@ void main() {
         expect(
           RepositoryProvider.of<AuthRepository>(context),
           same(authRepository),
+        );
+        expect(
+          RepositoryProvider.of<PushRepository>(context),
+          same(pushRepository),
         );
       });
     });

@@ -840,5 +840,45 @@
     "reviewMissing": "Missing: tap Change",
     "@reviewMissing": {
         "description": "Value of a read-back field the recording didn't cover"
+    },
+    "pushPromptTitle": "Shall we let you know on Tuesdays?",
+    "@pushPromptTitle": {
+        "description": "Heading of the card that asks before the system's notification prompt"
+    },
+    "pushPromptWeekly": "One a week, Tuesday at 7 pm",
+    "@pushPromptWeekly": {
+        "description": "First line of the notifications card"
+    },
+    "pushPromptChanges": "Another one only if something changes",
+    "@pushPromptChanges": {
+        "description": "Second line of the notifications card"
+    },
+    "pushPromptNever": "Never at night: only between 9 am and 9 pm.",
+    "@pushPromptNever": {
+        "description": "Third line of the notifications card"
+    },
+    "pushPromptAllow": "Yes, let me know",
+    "@pushPromptAllow": {
+        "description": "Button that opens the system's notification prompt"
+    },
+    "pushPromptLater": "Not now",
+    "@pushPromptLater": {
+        "description": "Button that hides the notifications card"
+    },
+    "pushPromptBlocked": "Notifications are off for Ronda on this phone. If you want them, turn them on in the phone's settings.",
+    "@pushPromptBlocked": {
+        "description": "Shown on the card when the phone won't show its notification prompt"
+    },
+    "pushChannelName": "Your weekly ronda",
+    "@pushChannelName": {
+        "description": "Name of the notification channel in the phone's settings"
+    },
+    "pushChannelDescription": "The Tuesday question and any change to your ronda",
+    "@pushChannelDescription": {
+        "description": "Description of the notification channel in the phone's settings"
+    },
+    "pushPromptGotIt": "Got it",
+    "@pushPromptGotIt": {
+        "description": "Button that hides the notifications card after the phone refused"
     }
 }

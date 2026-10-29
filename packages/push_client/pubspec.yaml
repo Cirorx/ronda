@@ -1,0 +1,20 @@
+name: push_client
+description: FCM tokens, the notification permission and the "rsvp" channel, over firebase_messaging and flutter_local_notifications.
+version: 0.1.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ^3.47.0
+
+dependencies:
+  firebase_messaging: ^17.0.1
+  flutter:
+    sdk: flutter
+  flutter_local_notifications: ^22.3.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+  very_good_analysis: ^11.0.0

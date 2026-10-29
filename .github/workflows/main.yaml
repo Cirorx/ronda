@@ -23,10 +23,12 @@ jobs:
       run_bloc_lint: true
       min_coverage: 90
       coverage_excludes: "lib/l10n/gen/*.dart"
-      # The generated Firebase options are git-ignored; stand in fake ones.
+      # The generated Firebase options and the web worker made from them are
+      # git-ignored; stand in fake ones (the worker run checks the generator).
       setup: |
         cp tool/firebase_options_stub.dart lib/firebase_options_development.dart
         cp tool/firebase_options_stub.dart lib/firebase_options_production.dart
+        dart tool/firebase_messaging_sw.dart tool/firebase_options_stub.dart
 
   packages:
     strategy:
@@ -37,6 +39,8 @@ jobs:
           - packages/needs_repository
           - packages/onboarding_repository
           - packages/profile_repository
+          - packages/push_client
+          - packages/push_repository
           - packages/ronda_api
           - packages/ronda_repository
           - packages/voice_recorder

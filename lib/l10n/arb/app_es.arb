@@ -190,5 +190,15 @@
     "reviewVoiceTitle": "¿Entendimos bien?",
     "reviewVoiceBody": "Esto es lo que entendimos de tu audio. Si algo está mal, tocá «Cambiar». Todavía no guardamos nada.",
     "reviewVoiceAudioDeleted": "Tu audio ya se borró.",
-    "reviewMissing": "Falta: tocá «Cambiar»"
+    "reviewMissing": "Falta: tocá «Cambiar»",
+    "pushPromptTitle": "¿Te avisamos los martes?",
+    "pushPromptWeekly": "Uno por semana, el martes a las 19",
+    "pushPromptChanges": "Algún otro solo si cambia algo",
+    "pushPromptNever": "Nunca de noche: solo entre las 9 y las 21.",
+    "pushPromptAllow": "Sí, avisame",
+    "pushPromptLater": "Ahora no",
+    "pushPromptBlocked": "Los avisos de Ronda están apagados en este teléfono. Si los querés, prendelos en los ajustes del teléfono.",
+    "pushChannelName": "Tu ronda de la semana",
+    "pushChannelDescription": "La pregunta del martes y cualquier cambio en tu ronda",
+    "pushPromptGotIt": "Entendido"
 }
