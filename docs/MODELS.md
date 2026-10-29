@@ -72,8 +72,23 @@ Counts toward "Use of Meta AI tooling" (25% of the score); mention what was used
   recipes that mirror the acta and the approval screen. Cite them in the README if used.
 
 ## Smoke tests (day 1, tests 1–5; day 2, tests 6–7)
-Run from `scripts/smoke/` in a Python 3.13 venv with `openai httpx pydantic meta-sam-parser
-Pillow`. Log latency and cost of each in `notes/NOW.md`.
+Scripted in `scripts/smoke/` (`uv run scripts/smoke/s1_access.py`, `s2_structured.py`,
+`s3_transcribe.py note.wav`, `s4_baseten_tools.py`, `s5_sam.py photo.png out/`). They read keys
+from the environment or `.env` and never print them. Log latency and cost of each in
+`notes/NOW.md`.
+
+Results from Uruguay, 2026-10-28:
+- 1: 200 in ~4 s. Spark 1.3 reasons by default: a one-line hello used 557 reasoning tokens.
+- 2: the strict `Signup` schema parsed on the first try in ~6 s (~1,100 reasoning tokens).
+- 3: a 10 s synthetic note in 3–5 s. `languageBias: ["Spanish"]` gave the cleaner transcript;
+  auto-detect repeated words. Real rioplatense notes are still #21.
+- 4: `-1026` called the tool with valid arguments at low and xhigh, plain and streamed, 1–3 s,
+  no `<atem:` text; the second turn answered in Spanish **with Markdown bold**, so the gates must
+  strip Markdown before a push.
+- 5: SAM answers English noun phrases only: "thermos" and "cookies" found, "termo",
+  "bizcochos", "mate", "mate gourd", "gourd" and "cup" found nothing; confidence was omitted.
+  The mask-at-box cutout came out clean. Muse Image read "rambla" as a Spanish boulevard: name
+  Montevideo's coastal promenade in prompts.
 
 1. **Access from Uruguay.**
    `curl -s https://api.meta.ai/v1/responses -H "Authorization: Bearer $MODEL_API_KEY" -H "Content-Type: application/json" -d '{"model":"muse-spark-1.3","input":"Decí hola en rioplatense."}'`
