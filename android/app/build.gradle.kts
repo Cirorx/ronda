@@ -15,6 +15,25 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+// Release builds use the real keystore when ANDROID_KEYSTORE_* or android/key.properties
+// names one, and the debug key otherwise: the pilot default, whose SHAs are already
+// registered (docs/STACK.md § Pilot builds).
+val hasReleaseKeystore =
+    System.getenv("ANDROID_KEYSTORE_PATH") != null || keystorePropertiesFile.exists()
+
+if (!hasReleaseKeystore) {
+    gradle.taskGraph.whenReady {
+        if (allTasks.any { it.name.contains("Release") }) {
+            // quiet, not warn: Flutter runs Gradle with -q.
+            logger.quiet(
+                "WARNING: no release keystore (android/key.properties or ANDROID_KEYSTORE_PATH), " +
+                    "so this release build is signed with the debug key. Fine for App " +
+                    "Distribution, never for a store (docs/STACK.md § Pilot builds).",
+            )
+        }
+    }
+}
+
 android {
     namespace = "com.ciroapps.ronda"
     compileSdk = flutter.compileSdkVersion
@@ -71,7 +90,7 @@ android {
 
     buildTypes {
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.getByName(if (hasReleaseKeystore) "release" else "debug")
             // The Flutter Gradle plugin turns on R8 for release and adds
             // proguard-android-optimize.txt, its own rules and proguard-rules.pro if present.
             // AGP 9 rejects proguard-android.txt.

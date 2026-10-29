@@ -70,7 +70,7 @@ Phone app (Flutter: Android, iOS, web)
   ├─ needs → on-device filters → eligible seat ids
   └─ weekly push: [Voy] [Esta no]
 Firebase (São Paulo)
-  ├─ Firestore, Storage (audio deleted on success), Hosting (plain-HTML public pages)
+  ├─ Firestore, Storage (audio deleted on success), Hosting (the web app under /app, plain-HTML public pages)
   └─ Python functions: voice extraction · CP-SAT group solver · organiser agent · flyer
 Meta Model API (Voice Transcribe, Spark 1.3, SAM 3.1, Muse Image) · Baseten (Muse Spark Open)
 Open data: Open-Meteo · DNT bus timetables (GTFS) · OpenStreetMap

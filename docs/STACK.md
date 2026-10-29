@@ -13,7 +13,7 @@ vgv-ai-flutter-plugin skills (`layered-architecture`, `bloc`, `material-theming`
 | Android | minSdk 24, compile/target 36, Gradle 9.3.1, AGP 9.1.0, Kotlin plugin 2.3.20 (`compilerOptions` DSL, not `kotlinOptions`), JDK 17+ (this Mac runs 23); core-library desugaring on (`desugar_jdk_libs` 2.1.4, the version flutter_local_notifications 22's README names; added in #27) | Gradle 9.3.1 and AGP 9.1.0 are Flutter 3.47.8's template versions (AGP 9.1 needs Gradle ≥ 9.3.1; Flutter warns below Gradle 9.1 / AGP 9.0.1 / Kotlin 2.3.20). Like the template, `gradle.properties` keeps `android.builtInKotlin=false` and `android.newDsl=false`; `org.jetbrains.kotlin.android` stays in `settings.gradle.kts` (`apply false`) and the app module does not apply it, because the Flutter Gradle plugin applies it to the app and plugins while built-in Kotlin is off. FlutterFire BoM 35 sets the floors; `firebase-auth` 25.0.0 ships Kotlin 2.4 metadata, which Kotlin 2.2 can't read (checked 2026-10-27). Upgraded 2026-10-28 |
 | iOS | deployment target 15.5 (ML Kit), armv7 excluded in the Podfile | CocoaPods still used for ML Kit and flutter_tts |
 | Python (functions, scripts) | 3.13 (`uv python install 3.13`) | Firebase Python functions run 3.10–3.13; this Mac's 3.14 won't deploy |
-| firebase-tools | 15.34.1 via npm | Installed under nvm's node 26, but the Hosting emulator (`superstatic`) supports node 20, 22 and 24 only: run the emulators under node 24 (`nvm install 24`, `nvm use 24`, reinstall firebase-tools there) |
+| firebase-tools | 15.34.1 via npm | Installed under nvm's node 26. The Hosting emulator's `superstatic` 10.0.0 declares node 20, 22 and 24 only, but served the `/app` rewrite and headers correctly under node 26.5.1 (checked 2026-10-29). If it stops working: `nvm install 24`, `nvm use 24` (`.nvmrc`), reinstall firebase-tools there |
 | ortools | 9.15.6755, with `protobuf==6.33.6` pinned | Only 6.33.5/6.33.6 satisfy both ortools and google-cloud-firestore |
 | scrcpy | 5.0.1 (`brew upgrade scrcpy`) | Two-phone recording |
 | Maestro | latest (`curl -fsSL "https://get.maestro.mobile.dev" \| bash`) | Needs Java 17+ (this Mac has 23) |
@@ -182,7 +182,8 @@ pass it everywhere, so nothing lands on another attached device.
   out of `log()`, `debugPrint()` and the BlocObserver.
 - Form fields (first name) are validated `formz` inputs held in Cubit state; the
   submit reads state, never a `TextEditingController`.
-- Release builds use `--obfuscate --split-debug-info`; `osv-scanner --lockfile=pubspec.lock`
+- Release builds use `--obfuscate --split-debug-info` (`scripts/distribute_android.sh`, § Pilot
+  builds); `osv-scanner --lockfile=pubspec.lock`
   before the submission (#32).
 - **Photos leave the phone without location or faces, in this order:** `flutter_image_compress`
   first (long side 1600 px, `keepExif: false`, `autoCorrectionAngle: true`), so the pixels are
@@ -353,9 +354,16 @@ Built in #27 (`packages/push_client`, `packages/push_repository`, `lib/push/`):
   the Pixel 8 emulator: one HTTP v1 data message with the app in the background showed on `rsvp`
   at high importance.
 - **Web:** the service worker `web/firebase-messaging-sw.js` is generated (§ Native and project
-  checklist) and registered relative to the base href, so it works under `/app/`. The token needs
+  checklist) and registered relative to the base href, so it works under `/app/`. Its scope is the
+  base href, the same as Flutter's own `flutter_service_worker.js`, which since 3.47 only
+  unregisters itself: Flutter's default bootstrap registers it whenever a worker already covers
+  the page, so every launch after the first would drop the push subscription. `web/flutter_bootstrap.js`
+  therefore calls `_flutter.loader.load()` without `serviceWorkerSettings` (checked 2026-10-29 in
+  headless Chrome under the Hosting emulator: with the default bootstrap an FCM-style worker at
+  `/app/` was gone after a reload; with this one it stayed). The token needs
   the Web Push certificate's public key, passed as `--dart-define=FCM_VAPID_KEY=<key>` to
-  `flutter run -d chrome` and `flutter build web`. It is public by design (browsers receive it),
+  `flutter run -d chrome` and `flutter build web` (`scripts/build_web.sh` takes it from the
+  `FCM_VAPID_KEY` environment variable). It is public by design (browsers receive it),
   so the rule against keys in dart-defines doesn't apply. Without it the JS SDK falls back to
   Firebase's default key, which may not work.
 
@@ -371,7 +379,8 @@ after the hackathon (callables require `auth != null` meanwhile).
 **Firebase in this repo** (set up 2026-10-27, #13). Five apps are registered in `ronda-uy`: Android
 `com.ciroapps.ronda` (production) and `com.ciroapps.ronda.dev` (development), the same two
 bundle ids on iOS, and one web app both flavors share. The debug keystore's SHA-1 and SHA-256 are
-on both Android apps; the release ones are added when a release key exists.
+on both Android apps, and release builds are signed with that key until a release keystore exists
+(§ Pilot builds).
 
 - **Generated config stays out of git:** `lib/firebase_options_development.dart`,
   `lib/firebase_options_production.dart`, `android/app/src/<flavor>/google-services.json` and
@@ -382,7 +391,8 @@ on both Android apps; the release ones are added when a release key exists.
   in `firebase.json`, so it was left out). The FCM web worker carries the web config inline, so it
   is generated and git-ignored too: `dart tool/firebase_messaging_sw.dart` (from the repo root)
   writes `web/firebase-messaging-sw.js` from `lib/firebase_options_development.dart` (both flavors
-  share the web app); CI runs it on the stub.
+  share the web app); CI runs it on the stub, and `scripts/build_web.sh` runs it on the options of
+  the flavor it builds.
 - **Fresh clone:** `firebase login`, then for each flavor
   `flutterfire configure --project=ronda-uy --platforms=android,ios,web --yes --out=lib/firebase_options_<flavor>.dart --android-package-name=<id> --android-out=android/app/src/<flavor>/google-services.json --ios-bundle-id=<id> --ios-out=ios/config/<flavor>/GoogleService-Info.plist --ios-build-config=Debug-<flavor>`
   (`<id>` is `com.ciroapps.ronda` or `com.ciroapps.ronda.dev`). Without `--ios-build-config` the
@@ -403,10 +413,11 @@ on both Android apps; the release ones are added when a release key exists.
   Credentials) or with `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099` for the emulator; sign out
   and in again for the claim to reach the token. The approval screen is `/admin` (web).
 - **Emulators:** `firebase emulators:start` from the repo root (auth 9099, firestore **8088**,
-  functions 5001, storage 9199, pubsub 8085, UI on :4000). Firestore is off its default 8080
-  because web dev servers often hold that port. `ping` answers at
-  `http://127.0.0.1:5001/ronda-uy/southamerica-east1/ping`. No hosting emulator, so node 26 works;
-  `.nvmrc` says 24 for when hosting joins.
+  functions 5001, storage 9199, pubsub 8085, hosting **5002**, UI on :4000). Firestore is off its
+  default 8080 because web dev servers often hold that port, and hosting off 5000 because macOS's
+  AirPlay Receiver holds it. `ping` answers at
+  `http://127.0.0.1:5001/ronda-uy/southamerica-east1/ping`. Hosting serves whatever `hosting/`
+  holds (§ Pilot builds); an empty or missing folder only gives 404s.
 - **Demo data** (`docs/ARCHITECTURE.md` § Demo data), from the repo root with the emulators up:
   `FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 uv run --python 3.13 scripts/reset.py`
   restores the golden path (no Auth accounts; seat facts and the 30 invented sign-ups), and
@@ -441,7 +452,7 @@ FlutterFire 7.0.1 plugin source, the iOS SDK source and the Android SDK 25.0.0 b
 rejects the unsigned token anyway. On iOS the provider flow against the real project also needs the
 reversed client id (or the encoded app id) as a URL scheme in `Info.plist`, per flavor.
 
-**Android:** SHA-1 and SHA-256 (debug and release) in the console; manifest: `RECORD_AUDIO`,
+**Android:** SHA-1 and SHA-256 of the signing key in the console (§ Pilot builds); manifest: `RECORD_AUDIO`,
 `POST_NOTIFICATIONS` (ask at runtime on 13+), the FLN `ActionBroadcastReceiver`, the TTS
 `<queries>` block, `allowBackup="false"` + `dataExtractionRules` excluding cloud backup **and**
 device transfer + `fullBackupContent`; handle `ImagePicker.retrieveLostData()`.
@@ -454,12 +465,93 @@ localised in `es.lproj/InfoPlist.strings`; Podfile 15.5 + armv7 excluded; the
 
 **Web:** HTTPS (mic, secure storage); `usePathUrlStrategy()`; the Flutter app is built with
 `--base-href /app/` and served under `/app` with an SPA rewrite, so its `/app/cerca` route never
-collides with the public plain-HTML `/cerca` and `/f/{id}` pages; ask notification permission only
-from a tap.
+collides with the public plain-HTML `/cerca` and `/f/{id}` pages (§ Pilot builds); ask
+notification permission only from a tap.
 
 **Needs on the phone:** one JSON blob under the key `needs`, shaped `{"needs":["walkALot","noCar"]}` (the `Need` enum names, so renaming a value loses what phones saved), in flutter_secure_storage with
 `IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device)`. On web it is
 experimental: say "lo sabe solo este navegador".
+
+## Pilot builds: Android on App Distribution, iPhone on the web app
+
+Set up in #34. The owner runs every command that ships (the upload, `firebase deploy`); an agent
+stops at `scripts/distribute_android.sh --build-only` and `scripts/build_web.sh development`.
+
+**Android signing** (`android/app/build.gradle.kts`). A release build is signed with the first of:
+the keystore in `ANDROID_KEYSTORE_PATH` (with `ANDROID_KEYSTORE_ALIAS`, `ANDROID_KEYSTORE_PASSWORD`
+and `ANDROID_KEYSTORE_PRIVATE_KEY_PASSWORD`); the one `android/key.properties` names (`storeFile`,
+`storePassword`, `keyAlias`, `keyPassword`; git-ignored); else **the debug key**, and Gradle prints
+a `WARNING: no release keystore` line. The debug key is the pilot default: its SHA-1 and SHA-256
+are already on both Android apps and on the Android API key's restriction, so a debug-signed
+release signs in with no console change. It can never go to a store, and only the Mac holding that
+`~/.android/debug.keystore` can sign updates that install over it. To switch to a real key:
+`keytool -genkeypair -v -keystore <path outside the repo>.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload`,
+write `android/key.properties`, register the key's SHAs (below) before shipping, and have testers
+uninstall the debug-signed app once (Android refuses an update signed by another key).
+
+**The SHAs to register** are those of the key that signs the build.
+`scripts/distribute_android.sh` prints them for the APK it built (`apksigner verify --print-certs
+build/app/outputs/flutter-apk/app-production-release.apk`, from the newest Android `build-tools`).
+Before any build: `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey
+-storepass android` for the debug key, `keytool -list -v -keystore <path>.jks -alias upload` for a
+release key.
+
+**Android build** (`scripts/distribute_android.sh ["<release notes>"]`): the production release
+APK with `--obfuscate`, uploaded to the `pilot` group with the notes (default: the last commit's
+subject). The app id comes from `lib/firebase_options_production.dart`. Symbols go to
+`symbols/android/<version>-<commit>/` (git-ignored): keep them, `flutter symbolize` needs them to
+read a crash. It stops early, saying what to do, when the production config files are missing or
+firebase-tools isn't logged in. Bump `version:` in `pubspec.yaml` (`1.0.0+2`, `+3`, …) before each
+upload, so testers see a new version. gen_snapshot's "unobfuscated DWARF debugging information"
+warning is expected: AGP strips `libapp.so` when it packages the APK (no `.debug_*` section left,
+checked 2026-10-29).
+
+**Web on Hosting** (`firebase.json`). Hosting serves `hosting/`: the Flutter web app in
+`hosting/app/` (git-ignored, staged by `scripts/build_web.sh`), and the root left for the plain-HTML
+public pages (§ Choices), tracked in `hosting/` once they exist; until then `/` is a 404.
+- `/app/**` rewrites to `/app/index.html`: the app uses the path URL strategy, so a deep link or a
+  reload lands in the app.
+- `Cache-Control: no-cache` on everything under `/app`: `index.html` (also served for every route
+  through the rewrite), `flutter_service_worker.js`, `firebase-messaging-sw.js`, and the rest,
+  because Flutter 3.47's file names carry no hash (`main.dart.js`, `flutter_bootstrap.js`,
+  `assets/`) and no Flutter service worker caches them (§ Push, Web). Browsers revalidate with the
+  ETag (a 304 when nothing changed), so a deploy reaches testers on their next launch.
+- `predeploy` runs `scripts/build_web.sh`, so a deploy always ships a fresh production build, never
+  a leftover development one, and needs `FCM_VAPID_KEY` set. With a `hosting` block a bare
+  `firebase deploy` deploys Hosting too: always pass `--only`.
+- `scripts/build_web.sh [production|development]` regenerates the FCM worker from that flavor's
+  options, runs `flutter build web --release --base-href /app/` on its entrypoint with
+  `--dart-define=FCM_VAPID_KEY` (required for production), and copies `build/web` to
+  `hosting/app/`. To try Hosting locally: `scripts/build_web.sh development` with the emulators
+  up, then `http://127.0.0.1:5002/app/`.
+- Add to Home Screen (iOS 16.4+, needed for push) uses what `web/` already has: `display:
+  standalone` and the name in `manifest.json`, `apple-touch-icon` and `apple-mobile-web-app-title`
+  in `index.html`.
+- iPhone testers get `https://ronda-uy.firebaseapp.com/app/` rather than the `web.app` address: it
+  is the web config's `authDomain`, so the Google sign-in popup stays on the app's own site and
+  Safari's third-party storage blocking can't get in its way. Not yet tried from a Home Screen
+  install; if the popup never comes back there, the fix is `signInWithRedirect` on that same
+  domain, in `auth_repository`.
+
+**Shipping both, in order** (the owner):
+1. `firebase login` with the account that owns `ronda-uy`.
+2. Console → App Distribution, on the Android app `com.ciroapps.ronda` (Get started if asked) →
+   Testers & Groups: create the group `pilot` (its alias must be `pilot`) and add the testers'
+   Google emails.
+3. Signing SHAs: nothing to do with the debug-signed default. With a release key, first add its
+   SHA-1 and SHA-256 to `com.ciroapps.ronda` (Project settings → Your apps) and its SHA-1 to the
+   Android API key's restriction (Google Cloud console → Credentials).
+4. Console → Authentication → Settings → Authorised domains: check that `ronda-uy.firebaseapp.com`
+   and `ronda-uy.web.app` are listed (Firebase adds both); add any custom domain.
+5. Console → Project settings → Cloud Messaging → Web configuration → Web Push certificates:
+   Generate key pair (unless one is listed), and copy the public key.
+6. `scripts/distribute_android.sh "<qué cambió>"` (from the second upload on, bump `version:` in
+   `pubspec.yaml` first). Testers get an email from App Distribution.
+7. `FCM_VAPID_KEY=<public key> firebase deploy --only hosting` (the predeploy builds the web app),
+   then send iPhone testers the link above: Safari → Share → Add to Home Screen, open Ronda from
+   the icon, sign in, tap [Sí, avisame].
+8. A test push: Console → Messaging → new notification campaign → Send test message, with a token
+   from Firestore (`users/{uid}/tokens`: the document id is the token).
 
 ## What doesn't work on web
 Face blur (no ML Kit): the photo flows say "Hacelo desde la app del teléfono". Push buttons

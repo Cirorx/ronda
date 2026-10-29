@@ -7,6 +7,23 @@
   "storage": {
     "rules": "storage.rules"
   },
+  "hosting": {
+    "public": "hosting",
+    "predeploy": ["scripts/build_web.sh"],
+    "ignore": ["**/.*"],
+    "rewrites": [
+      {
+        "source": "/app/**",
+        "destination": "/app/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "/app/**",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      }
+    ]
+  },
   "functions": [
     {
       "source": "functions",
@@ -42,6 +59,9 @@
     },
     "pubsub": {
       "port": 8085
+    },
+    "hosting": {
+      "port": 5002
     },
     "ui": {
       "enabled": true,

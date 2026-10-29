@@ -12,6 +12,9 @@ firebase-debug.*.log
 ios/firebase_app_id_file.json
 # FCM's web service worker carries the web config inline; tool/firebase_messaging_sw.dart writes it
 /web/firebase-messaging-sw.js
+# the web build scripts/build_web.sh stages for Hosting, and the release builds' debug symbols
+/hosting/app/
+/symbols/
 # Cloud Functions (Python)
 functions/venv/
 .firebase/
