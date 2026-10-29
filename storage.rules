@@ -21,5 +21,25 @@ service firebase.storage {
           && 'terms' in firestore.get(/databases/(default)/documents/users/$(uid)).data;
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
+
+    // A photo for the "Un mate de más" flyer, every face already pixelated
+    // on the phone (packages/face_blur): only the owner writes it, a JPEG of
+    // at most 3 MB (the phone sends 1600 px, well under 1 MB). The
+    // make_mate_flyer callable checks that they host the ronda and deletes
+    // it once read; the owner may delete it after a failed call. Nobody reads
+    // it back from a client.
+    match /flyer_photos/{uid}/{photoId} {
+      allow create: if request.auth != null && request.auth.uid == uid
+          && photoId.matches('[A-Za-z0-9_-]{1,64}[.]jpg')
+          && request.resource.contentType == 'image/jpeg'
+          && request.resource.size <= 3 * 1024 * 1024;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // The flyer make_mate_flyer drew, read by the host who made it. Only the
+    // callable writes it.
+    match /flyers/{uid}/{fileName} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+    }
   }
 }

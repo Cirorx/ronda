@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:auth_repository/auth_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flyer_repository/flyer_repository.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:needs_repository/needs_repository.dart';
@@ -13,6 +14,7 @@ import 'package:ronda/admin/admin.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/cerca/cerca.dart';
 import 'package:ronda/login/login.dart';
+import 'package:ronda/mate_flyer/mate_flyer.dart';
 import 'package:ronda/my_ronda/my_ronda.dart';
 import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/settings/settings.dart';
@@ -31,6 +33,8 @@ class _MockRondaRepository extends Mock implements RondaRepository;
 class _MockPushRepository extends Mock implements PushRepository;
 
 class _MockOnboardingRepository extends Mock implements OnboardingRepository;
+
+class _MockFlyerRepository extends Mock implements FlyerRepository;
 
 const _user = User(id: 'demo-uid');
 
@@ -53,6 +57,7 @@ void main() {
     late ProfileRepository profileRepository;
     late RondaRepository rondaRepository;
     late PushRepository pushRepository;
+    late FlyerRepository flyerRepository;
     late StreamController<User> users;
     late StreamController<Profile?> profiles;
 
@@ -68,6 +73,9 @@ void main() {
       profileRepository = _MockProfileRepository();
       rondaRepository = _MockRondaRepository();
       pushRepository = _MockPushRepository();
+      flyerRepository = _MockFlyerRepository();
+      when(() => flyerRepository.canBlurFaces).thenReturn(true);
+      when(flyerRepository.retrieveLostPhoto).thenAnswer((_) async => null);
       when(pushRepository.permission)
           .thenAnswer((_) async => PushPermission.blocked);
       when(rondaRepository.watchLatestProposal)
@@ -86,6 +94,7 @@ void main() {
 
     Widget buildSubject() => App(
       authRepository: authRepository,
+      flyerRepository: flyerRepository,
       needsRepository: needsRepository,
       onboardingRepository: _MockOnboardingRepository(),
       profileRepository: profileRepository,
@@ -433,6 +442,25 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(AdminPage), findsOneWidget);
+      });
+
+      testWidgets('by opening the $MateFlyerPage of a ronda', (tester) async {
+        await pumpSignedIn(tester);
+
+        GoRouter.of(tester.element(find.byType(MyRondaPage)))
+            .go(MateFlyerPage.location('ronda-1'));
+        await tester.pumpAndSettle();
+
+        expect(
+          tester.widget<MateFlyerPage>(find.byType(MateFlyerPage)).rondaId,
+          equals('ronda-1'),
+        );
+        expect(
+          RepositoryProvider.of<FlyerRepository>(
+            tester.element(find.byType(MateFlyerPage)),
+          ),
+          same(flyerRepository),
+        );
       });
 
       testWidgets('by keeping signed-out people off $AdminPage', (

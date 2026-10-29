@@ -1,11 +1,11 @@
 {
   "name": "ronda-rules-tests",
   "private": true,
-  "description": "firestore.rules against the Firestore emulator (docs/STACK.md § Choices).",
+  "description": "firestore.rules and storage.rules against the emulators (docs/STACK.md § Choices).",
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "test:emulator": "firebase emulators:exec --only firestore --project demo-ronda-rules 'node --test'"
+    "test:emulator": "firebase emulators:exec --only firestore,storage --project demo-ronda-rules 'node --test'"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "6.0.0",

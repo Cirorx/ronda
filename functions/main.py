@@ -177,6 +177,36 @@ def extract(req: https_fn.CallableRequest) -> dict:
         raise https_fn.HttpsError(error.UNAVAILABLE, "Try again in a moment.") from e
 
 
+# SAM 3.1 and Muse Image run side by side (~20 s); Pillow composes a 1240 × 1754 flyer.
+@https_fn.on_call(
+    region=REGION,
+    max_instances=2,
+    timeout_sec=120,
+    memory=options.MemoryOption.GB_1,
+    secrets=[MODEL_API_KEY],
+    invoker="public",
+)
+def make_mate_flyer(req: https_fn.CallableRequest) -> dict:
+    """Makes the "Un mate de más" flyer from the caller's blurred photo at
+    `flyer_photos/{uid}/{id}.jpg` for ronda `rondaId` (`mate_flyer.py`). The photo is deleted
+    whatever happens."""
+    import mate_flyer
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "Sign in first.")
+    try:
+        return mate_flyer.make_mate_flyer(
+            uid=req.auth.uid,
+            data=req.data,
+            db=_firestore(),
+            bucket=_bucket(),
+            api_key=MODEL_API_KEY.value,
+            now=_now(),
+        )
+    except mate_flyer.FlyerError as error:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(error.code), str(error)) from error
+
+
 # Delete-on-success in `extract` is the main control and the bucket's 1-day lifecycle rule the
 # backstop; this catches what the first missed within the hour. It only lists and deletes.
 @scheduler_fn.on_schedule(schedule="every 1 hours", region=REGION, max_instances=1)

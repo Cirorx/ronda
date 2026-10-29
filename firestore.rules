@@ -144,10 +144,28 @@ service cloud.firestore {
     // age range and seats, and how many neighbours wait. No uid, name or place
     // (functions/cerca_tuyo.py). Anyone may get one, signed in or not; nobody
     // lists them or writes them from a client. The refresh_cerca function
-    // writes them with the admin SDK. `flyers/{id}` stays closed: the
+    // writes them with the admin SDK. Tear-off `flyers/{id}` stay closed: the
     // flyer_landing function counts scans and answers the QR page instead.
     match /cerca/{barrio} {
       allow get: if true;
+    }
+
+    // "Un mate de más" flyers (docs/ARCHITECTURE.md § Data model), kind
+    // `mate`: read by the host who made one and by that ronda's hosts, never
+    // listed. Only the make_mate_flyer callable writes them, with the admin
+    // SDK. Tear-off flyers (kind `tearOff`) are not opened here.
+    match /flyers/{flyerId} {
+      allow get: if request.auth != null
+          && resource.data.kind == 'mate'
+          && (resource.data.createdBy == request.auth.uid
+              || isRondaHost(resource.data.rondaId));
+    }
+
+    // Whether the caller is ronda [rondaId]'s anfitrión or cola.
+    function isRondaHost(rondaId) {
+      let hosts = get(/databases/$(database)/documents/rondas/$(rondaId))
+          .data.get('hosts', {});
+      return request.auth.uid in [hosts.get('anfitrion', ''), hosts.get('cola', '')];
     }
   }
 }

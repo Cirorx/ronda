@@ -6,6 +6,7 @@ import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:device_store/device_store.dart';
+import 'package:face_blur/face_blur.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -13,6 +14,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:flyer_repository/flyer_repository.dart';
 import 'package:needs_repository/needs_repository.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
@@ -22,11 +24,13 @@ import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_api/ronda_api.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
+import 'package:share_sheet/share_sheet.dart';
 import 'package:voice_recorder/voice_recorder.dart';
 
 /// Builds the root widget from the repositories bootstrap constructs.
 typedef AppBuilder = FutureOr<Widget> Function({
   required AuthRepository authRepository,
+  required FlyerRepository flyerRepository,
   required NeedsRepository needsRepository,
   required OnboardingRepository onboardingRepository,
   required ProfileRepository profileRepository,
@@ -119,6 +123,10 @@ Future<void> bootstrap(
     functions: functions,
   );
   final voiceRecorder = VoiceRecorder();
+  // ML Kit is built on the first detection, which never happens on web.
+  final faceBlur = FaceBlur();
+  final flyersApi = FlyersApi(storage: storage, functions: functions);
+  final shareSheet = ShareSheet();
   final pushClient = PushClient(
     messaging: FirebaseMessaging.instance,
     notifications: FlutterLocalNotificationsPlugin(),
@@ -159,6 +167,11 @@ Future<void> bootstrap(
     pushClient: pushClient,
     rondaApi: rondaApi,
   );
+  final flyerRepository = FlyerRepository(
+    faceBlur: faceBlur,
+    flyersApi: flyersApi,
+    shareSheet: shareSheet,
+  );
   final onboardingRepository = OnboardingRepository(
     voiceRecorder: voiceRecorder,
     rondaApi: rondaApi,
@@ -167,6 +180,7 @@ Future<void> bootstrap(
   runApp(
     await builder(
       authRepository: authRepository,
+      flyerRepository: flyerRepository,
       needsRepository: needsRepository,
       onboardingRepository: onboardingRepository,
       profileRepository: profileRepository,

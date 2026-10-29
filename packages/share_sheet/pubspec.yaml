@@ -1,0 +1,19 @@
+name: share_sheet
+description: Hands a file to the phone's share sheet (print, WhatsApp, save), over share_plus.
+version: 0.1.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ^3.47.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  share_plus: ^13.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+  very_good_analysis: ^11.0.0

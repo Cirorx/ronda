@@ -1,0 +1,26 @@
+name: flyer_repository
+description: The "Un mate de más" flyer, from a photo with its faces blurred on the phone to the flyer to print or share, over face_blur, ronda_api and share_sheet.
+version: 0.1.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ^3.47.0
+
+dependencies:
+  equatable: ^2.0.7
+  face_blur:
+    path: ../face_blur
+  flutter:
+    sdk: flutter
+  ronda_api:
+    path: ../ronda_api
+  share_sheet:
+    path: ../share_sheet
+
+dev_dependencies:
+  cloud_functions: ^7.0.1
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+  very_good_analysis: ^11.0.0

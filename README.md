@@ -44,7 +44,7 @@ leave or switch without explaining · free: **Ronda nunca pide plata**.
 | Muse Spark 1.3 | Meta Model API | Turns that text into fields the member checks and edits |
 | Muse Spark Open | Baseten | The organiser agent: forecast, sunset, last bus, RSVPs, the bench, proposals to the host |
 | SAM 3.1 | Meta Model API | Cuts the group's things (termo, mate, mazo) out of a photo for a flyer |
-| Muse Image | Meta Model API | Lays out the "Hay un mate de más" flyer for the almacén board |
+| Muse Image | Meta Model API | Paints the "Hay un mate de más" flyer's background; its words and QR are drawn in code |
 
 Two jobs Meta has no model for run on the phone with the platform's own models: ML Kit face
 detection (faces are pixelated before any photo leaves the phone) and the phone's text-to-speech

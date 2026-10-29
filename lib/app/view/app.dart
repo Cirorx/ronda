@@ -1,5 +1,6 @@
 import 'package:auth_repository/auth_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flyer_repository/flyer_repository.dart';
 import 'package:go_router/go_router.dart';
 import 'package:needs_repository/needs_repository.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
@@ -14,6 +15,7 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// [AppBloc] that follows who is signed in and whether they have a profile.
 class const App({
   required final AuthRepository authRepository,
+  required final FlyerRepository flyerRepository,
   required final NeedsRepository needsRepository,
   required final OnboardingRepository onboardingRepository,
   required final ProfileRepository profileRepository,
@@ -26,6 +28,7 @@ class const App({
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider.value(value: authRepository),
+        RepositoryProvider.value(value: flyerRepository),
         RepositoryProvider.value(value: needsRepository),
         RepositoryProvider.value(value: onboardingRepository),
         RepositoryProvider.value(value: profileRepository),

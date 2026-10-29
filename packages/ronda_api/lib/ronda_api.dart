@@ -4,6 +4,7 @@
 library;
 
 export 'src/device_tokens/device_tokens.dart';
+export 'src/flyers/flyers.dart';
 export 'src/models/models.dart';
 export 'src/proposals/proposals.dart';
 export 'src/ronda_api.dart';

@@ -239,3 +239,52 @@ class TestSweepAudio:
         inspect.unwrap(main.sweep_audio)(event)
 
         assert set(bucket.objects) == {"audio/demo-001/new.wav"}
+
+
+class TestMakeMateFlyer:
+    @pytest.fixture
+    def made(self, monkeypatch):
+        """Stands in for the Admin clients and `make_mate_flyer`; returns what it was given."""
+        import mate_flyer
+
+        db, bucket = FakeFirestore(), FakeBucket()
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setattr(main, "_bucket", lambda: bucket)
+        monkeypatch.setenv("MODEL_API_KEY", "test-key")
+        seen: dict = {"db": db, "bucket": bucket}
+
+        def make(**kwargs):
+            seen["call"] = kwargs
+            if error := seen.get("raise"):
+                raise error
+            return {"flyerId": "flyer-1"}
+
+        monkeypatch.setattr(mate_flyer, "make_mate_flyer", make)
+        return seen
+
+    def test_refuses_a_signed_out_caller(self, made):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.make_mate_flyer, None, {"rondaId": "r1"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+        assert "call" not in made
+
+    def test_makes_the_callers_flyer_with_the_admin_clients_and_the_key(self, made):
+        data = {"rondaId": "r1", "photoPath": "flyer_photos/demo-001/p.jpg"}
+
+        assert call(main.make_mate_flyer, MEMBER, data) == {"flyerId": "flyer-1"}
+        seen = made["call"]
+        assert seen["uid"] == "demo-001"
+        assert seen["data"] == data
+        assert seen["db"] is made["db"]
+        assert seen["bucket"] is made["bucket"]
+        assert seen["api_key"] == "test-key"
+        assert seen["now"].utcoffset().total_seconds() == 0
+
+    def test_maps_a_flyer_error_to_its_code(self, made):
+        import mate_flyer
+
+        made["raise"] = mate_flyer.FlyerError("failed-precondition", "nothing found")
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.make_mate_flyer, MEMBER, {})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.FAILED_PRECONDITION

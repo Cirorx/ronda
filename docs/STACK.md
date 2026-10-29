@@ -62,12 +62,14 @@ Target package map (create each when its first feature needs it, with the Very G
 | Package | Layer | Wraps / owns | First issue |
 |---|---|---|---|
 | `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
-| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `rsvp`, `run_job`) | #13 |
+| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `rsvp`, `run_job`) | #13 |
 | `device_store` | Data | flutter_secure_storage (needs); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
 | `push_repository` | Repository | The notification permission and the FCM token under `users/{uid}/tokens` (over `push_client` + `ronda_api`); the token never leaves it | #27 |
-| `face_blur` | Data | ML Kit face detection + `image` pixelation (native only) | #30 |
+| `face_blur` | Data | `image_picker`, ML Kit face detection + `image` pixelation (native only); only it makes a `BlurredPhoto` | #44 |
+| `share_sheet` | Data | share_plus: one file to the phone's share sheet | #44 |
+| `flyer_repository` | Repository | The "Un mate de más" flyer: blurred photo → `make_mate_flyer` → share (over `face_blur`, `ronda_api`, `share_sheet`); its upload takes only a `BlurredPhoto` | #44 |
 | `auth_repository` | Repository | `FirebaseAuth` passed in from bootstrap | #13 |
 | `profile_repository` | Repository | Profile, eligible seat ids (over `ronda_api`) | #18 |
 | `needs_repository` | Repository | Needs and the seat filter, over `device_store` only: this repository has no network path | #18 |
@@ -265,7 +267,9 @@ flutter:
 
 Python functions (`functions/requirements.txt`): `firebase-functions`, `firebase-admin`,
 `ortools==9.15.6755`, `protobuf==6.33.6`, `openai` (Meta and Baseten are OpenAI-compatible), `httpx` (multipart Voice Transcribe),
-`pydantic`, `meta-sam-parser`, `Pillow`, `segno` (flyer QR). Check WAV headers with the
+`pydantic`, `meta-sam-parser`, `Pillow`, `segno` (flyer QR). The flyer's fonts are the app's:
+`functions/fonts` links to `packages/ronda_ui/assets/fonts` (OFL 1.1), as `functions/ronda_solver`
+links to the solver. Check WAV headers with the
 stdlib `wave` module (`audioop` is gone in 3.13).
 
 ## Choices

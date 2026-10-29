@@ -1,6 +1,6 @@
-"""An in-memory stand-in for the slice of a google.cloud.storage bucket that `extract` and the
-audio sweeper use: open an object by name, list by prefix, download and delete, with the
-`NotFound` the real client raises for a missing object."""
+"""An in-memory stand-in for the slice of a google.cloud.storage bucket that `extract`, the audio
+sweeper and `make_mate_flyer` use: open an object by name, list by prefix, download, upload and
+delete, with the `NotFound` the real client raises for a missing object."""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -34,6 +34,10 @@ class FakeBlob:
 
     def download_as_bytes(self) -> bytes:
         return self._stored().data
+
+    def upload_from_string(self, data: bytes, content_type: str | None = None) -> None:
+        self._bucket.objects[self.name] = StoredObject(data, None)
+        self.content_type = content_type
 
     def delete(self) -> None:
         self._stored()

@@ -36,6 +36,8 @@ jobs:
         package:
           - packages/auth_repository
           - packages/device_store
+          - packages/face_blur
+          - packages/flyer_repository
           - packages/needs_repository
           - packages/onboarding_repository
           - packages/profile_repository
@@ -43,6 +45,7 @@ jobs:
           - packages/push_repository
           - packages/ronda_api
           - packages/ronda_repository
+          - packages/share_sheet
           - packages/voice_recorder
     uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v2
     with:
@@ -84,7 +87,7 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run pytest
 
-  # propose_groups and approve_proposal, over an in-memory Firestore.
+  # The callables, over in-memory Firestore and Storage and fake models.
   functions:
     runs-on: ubuntu-latest
     defaults:
@@ -99,7 +102,7 @@ jobs:
       - run: venv/bin/ruff format --check .
       - run: venv/bin/pytest --cov
 
-  # firestore.rules on the Firestore emulator (needs Java).
+  # firestore.rules and storage.rules on the Firestore and Storage emulators (needs Java).
   rules:
     runs-on: ubuntu-latest
     defaults:
@@ -115,7 +118,7 @@ jobs:
           distribution: temurin
           java-version: 21
       - run: npm ci
-      - run: npx --yes firebase-tools@15.34.1 emulators:exec --only firestore --project demo-ronda-rules "node --test"
+      - run: npx --yes firebase-tools@15.34.1 emulators:exec --only firestore,storage --project demo-ronda-rules "node --test"
 
   spell-check:
     uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/spell_check.yml@v2

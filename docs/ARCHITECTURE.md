@@ -26,12 +26,13 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   ├─ Storage: audio + blurred photos; deleted on success, hourly sweeper, lifecycle as backstop
   ├─ Functions (Python 3.13, 2nd gen):
   │    callables  extract (Transcribe → Spark), propose_groups (CP-SAT, admin), rsvp,
-  │               run_job(name, now) (admin, for tests and the demo)
+  │               run_job(name, now) (admin, for tests and the demo), make_mate_flyer
+  │               (SAM → cutouts, Muse Image background → text + QR in code)
   │    scheduled  one hourly dispatcher → run_<job>(now); hourly audio sweeper (`sweep_audio`
   │               deletes `audio/` objects older than 1 h); hourly Cerca counts (`refresh_cerca`,
   │               until the dispatcher adopts `run_refresh_cerca`)
-  │    http       flyer_landing (public: counts a tear-off flyer's scan, answers /f/{id})
-  │    agent, flyer (SAM → cutouts → Muse Image → text + QR in code)
+  │    http       flyer_landing (public: counts a flyer's scan, answers /f/{id})
+  │    agent
   ├─ Hosting: Flutter web app under /app; plain-HTML Cerca tuyo at / and /f/{id}
   └─ FCM → APNs (iOS only with the Apple Developer Program)
 Meta Model API: Voice Transcribe, Spark 1.3, SAM 3.1, Muse Image
@@ -140,19 +141,40 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   not; nobody lists or writes them from a client (rules test: `rules/public.test.js`). The
   hourly `refresh_cerca` rewrites all of them with `run_refresh_cerca(db, now)`; once #28 writes
   `waitlists`, their entries should feed the waiting counts too.
-- `flyers/{id}` (built in #43, `scripts/flyer.py`): label (the spot, for the admin's scans per
-  spot; never public), pretext, slot, barrio, nearBarrios[] (the barrios whose centroid is within
-  the solver's ten blocks of where it hangs, its own first), stop {id, name}, lastBus {weekday,
-  saturday, sunday: {time, estimated, route, published {time, stop}} or null}, scans, createdAt,
-  lastScanAt. No coordinates: the spot picks the barrio, the near barrios and the stop when the
-  flyer is made, and is dropped. The last bus is computed then, once, from the DNT timetable
-  (`scripts/last_bus.py`): the feed gives times at only a few stops of each trip, mostly its ends,
-  so a stop between two of them gets an estimate along the route, marked `estimated`, with the
-  published time it comes from. Closed to every client; the id is eight of `[a-z0-9]`.
-  - `flyer_landing` answers `/api/f/{id}` (a Hosting rewrite): a POST counts the scan with an
-    increment, a GET only reads; both return the `cerca` rows of the near barrios and the last
-    bus, never the label or the stop id, with `Cache-Control: no-store`. The page posts once
-    per tab and reads on reload; link previews run no script, so they count nothing.
+- `flyers/{id}`: one collection for both printed flyers, told apart by `kind` (a document with
+  none is a `tearOff`, as flyers made before #44 are). Both QRs open `/f/{id}` on the web app's
+  domain, and the id is eight of `[a-z0-9]` (`scripts/flyer.py`'s alphabet) for both.
+  - `tearOff` (built in #43, `scripts/flyer.py`, which writes `kind: "tearOff"`): label (the
+    spot, for the admin's scans per spot; never public), pretext, slot, barrio, nearBarrios[] (the barrios whose centroid is within
+    the solver's ten blocks of where it hangs, its own first), stop {id, name}, lastBus {weekday,
+    saturday, sunday: {time, estimated, route, published {time, stop}} or null}, scans, createdAt,
+    lastScanAt. No coordinates: the spot picks the barrio, the near barrios and the stop when the
+    flyer is made, and is dropped. The last bus is computed then, once, from the DNT timetable
+    (`scripts/last_bus.py`): the feed gives times at only a few stops of each trip, mostly its ends,
+    so a stop between two of them gets an estimate along the route, marked `estimated`, with the
+    published time it comes from. Closed to every client.
+  - `mate` ("Un mate de más", built in #44, `functions/mate_flyer.py`): rondaId, barrio (the
+    ronda's, for the landing), createdBy (the host's uid), imagePath (`flyers/{uid}/{id}.jpg` in
+    Storage), scans, createdAt, lastScanAt. Written only by the `make_mate_flyer` callable; read
+    (`get`, never listed) by `createdBy` and by that ronda's `hosts.anfitrion` / `hosts.cola`
+    (rules test: `rules/flyers.test.js`).
+    - The phone pixelates every face (`packages/face_blur`) and uploads the JPEG to
+      `flyer_photos/{uid}/{photoId}.jpg` (owner-only create, `image/jpeg`, ≤ 3 MB, no client
+      read). `make_mate_flyer {rondaId, photoPath}` checks the path is the caller's and that they
+      host the ronda (a host once `hosts` is set; until then any active member, since
+      `approve_proposal` writes rondas without hosts), re-saves the photo without EXIF, then side
+      by side runs SAM 3.1 for the termo, the mazo and the mates (English phrases, one per
+      request, masks decoded with `meta-sam-parser`) and Muse Image for a background with no
+      people and no text. Pillow draws the words and the segno QR, and the flyer is stored at
+      `flyers/{uid}/{id}.jpg`, readable by its owner only. The photo is deleted whatever happens;
+      Storage's lifecycle rule on `flyer_photos/` (1 day) is the backstop. Nothing found to cut
+      out answers `failed-precondition`, and the app asks for another photo.
+  - `flyer_landing` answers `/api/f/{id}` (a Hosting rewrite) for both kinds: a POST counts the
+    scan with an increment, a GET only reads; both return the flyer's `kind` and the `cerca`
+    rows of the near barrios and the last bus (a `mate` flyer: its ronda's barrio, no bus),
+    never the label, the stop id, the ronda, the host or the image, with `Cache-Control:
+    no-store`. The page posts once per tab and reads on reload; link previews run no script, so
+    they count nothing.
 
 ### Demo data (emulators)
 

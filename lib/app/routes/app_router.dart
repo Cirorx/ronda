@@ -5,6 +5,7 @@ import 'package:ronda/app/bloc/app_bloc.dart';
 import 'package:ronda/app/view/app_shell.dart';
 import 'package:ronda/cerca/cerca.dart';
 import 'package:ronda/login/login.dart';
+import 'package:ronda/mate_flyer/mate_flyer.dart';
 import 'package:ronda/my_ronda/my_ronda.dart';
 import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/settings/settings.dart';
@@ -22,6 +23,8 @@ import 'package:ronda/welcome/welcome.dart';
 /// - signed in with a profile: the tabs, never welcome or onboarding;
 /// - the admin screen: anyone signed in, with or without a profile (the
 ///   owner need not onboard); the server decides who sees a proposal.
+/// - a ronda's flyer (`/volante/{rondaId}`): like the tabs; the server
+///   decides who may make it.
 ///
 /// `/` and any unknown location land on Mi ronda, which the rules above
 /// then redirect as needed.
@@ -74,6 +77,11 @@ GoRouter createAppRouter({
         builder: (_, _) => const OnboardingPage(),
       ),
       GoRoute(path: AdminPage.path, builder: (_, _) => const AdminPage()),
+      GoRoute(
+        path: MateFlyerPage.path,
+        builder: (_, state) =>
+            MateFlyerPage(rondaId: state.pathParameters['rondaId']!),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, navigationShell) =>
             AppShell(navigationShell: navigationShell),

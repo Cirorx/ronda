@@ -880,5 +880,106 @@
     "pushPromptGotIt": "Got it",
     "@pushPromptGotIt": {
         "description": "Button that hides the notifications card after the phone refused"
+    },
+    "mateFlyerTitle": "A spare mate",
+    "@mateFlyerTitle": {
+        "description": "Title of the newcomer-seat flyer screen and its entry card"
+    },
+    "mateFlyerEntryBody": "Your ronda keeps a seat for someone new. Make a flyer from a photo of the group's things to hang up in the barrio.",
+    "@mateFlyerEntryBody": {
+        "description": "Mi ronda card that leads hosts to the flyer"
+    },
+    "mateFlyerWebOnly": "Do it from the phone app",
+    "@mateFlyerWebOnly": {
+        "description": "Title shown on web, where faces can't be blurred"
+    },
+    "mateFlyerWebOnlyBody": "Ronda blurs faces on the phone before a photo goes anywhere, and a browser can't do that.",
+    "@mateFlyerWebOnlyBody": {
+        "description": "Why the flyer can only be made in the phone app"
+    },
+    "mateFlyerIntro": "Take a photo of the group's things. Better without people: if someone shows up, we blur them before uploading.",
+    "@mateFlyerIntro": {
+        "description": "Instruction before taking the flyer photo"
+    },
+    "mateFlyerTakePhoto": "Take a photo",
+    "@mateFlyerTakePhoto": {
+        "description": "Button that opens the camera"
+    },
+    "mateFlyerPickPhoto": "Choose one from the gallery",
+    "@mateFlyerPickPhoto": {
+        "description": "Button that opens the phone's gallery"
+    },
+    "mateFlyerBlurring": "Blurring faces…",
+    "@mateFlyerBlurring": {
+        "description": "Shown while faces are found and blurred on the phone"
+    },
+    "mateFlyerPreviewTitle": "Check it looks right",
+    "@mateFlyerPreviewTitle": {
+        "description": "Title of the blurred photo preview"
+    },
+    "mateFlyerBlurredFaces": "{count, plural, =0{We didn't see any faces.} =1{We blurred one face.} other{We blurred {count} faces.}}",
+    "@mateFlyerBlurredFaces": {
+        "description": "How many faces are blurred in the photo",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "mateFlyerTapToBlur": "Tap a face to blur it",
+    "@mateFlyerTapToBlur": {
+        "description": "Hint to tap a face the detector missed"
+    },
+    "mateFlyerPhotoSemantics": "The photo, faces blurred",
+    "@mateFlyerPhotoSemantics": {
+        "description": "Screen reader label of the blurred photo"
+    },
+    "mateFlyerMake": "Make the flyer",
+    "@mateFlyerMake": {
+        "description": "Button that sends the blurred photo to make the flyer"
+    },
+    "mateFlyerRetake": "Take another photo",
+    "@mateFlyerRetake": {
+        "description": "Button that starts again with a new photo"
+    },
+    "mateFlyerMaking": "Making your flyer. It takes about half a minute.",
+    "@mateFlyerMaking": {
+        "description": "Shown while the server makes the flyer"
+    },
+    "mateFlyerReadyTitle": "This is your flyer",
+    "@mateFlyerReadyTitle": {
+        "description": "Title of the finished flyer preview"
+    },
+    "mateFlyerPhotoUse": "We use the photo only for the flyer.",
+    "@mateFlyerPhotoUse": {
+        "description": "Note under the finished flyer"
+    },
+    "mateFlyerShare": "Print or share",
+    "@mateFlyerShare": {
+        "description": "Button that opens the share sheet with the flyer"
+    },
+    "mateFlyerImageSemantics": "The flyer: there's a spare mate, and it's yours.",
+    "@mateFlyerImageSemantics": {
+        "description": "Screen reader label of the finished flyer"
+    },
+    "mateFlyerPhotoError": "We couldn't open the photo. Try again.",
+    "@mateFlyerPhotoError": {
+        "description": "The photo couldn't be taken or blurred"
+    },
+    "mateFlyerNotHost": "Only the people who host the ronda make its flyer.",
+    "@mateFlyerNotHost": {
+        "description": "The person isn't a host of this ronda"
+    },
+    "mateFlyerNothingFound": "We couldn't find the thermos, the cards or the mates. Try another photo, closer up.",
+    "@mateFlyerNothingFound": {
+        "description": "Nothing to cut out of the photo"
+    },
+    "mateFlyerError": "We couldn't make the flyer. Try again in a moment.",
+    "@mateFlyerError": {
+        "description": "The flyer couldn't be made"
+    },
+    "mateFlyerShareError": "We couldn't open the options to share it.",
+    "@mateFlyerShareError": {
+        "description": "The share sheet couldn't open"
     }
 }

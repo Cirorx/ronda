@@ -7,3 +7,7 @@ protobuf==6.33.6
 httpx==0.28.1
 openai==3.41.0
 pydantic==2.14.1
+# make_mate_flyer: SAM 3.1's masks, the flyer drawn in code and its QR.
+meta-sam-parser==0.1.0
+Pillow==13.0.0
+segno==1.6.6
