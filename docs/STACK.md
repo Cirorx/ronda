@@ -364,9 +364,14 @@ on both Android apps; the release ones are added when a release key exists.
   restores the golden path (no Auth accounts; seat facts and the 30 invented sign-ups), and
   `FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 uv run --python 3.13 scripts/seed.py 200` writes the
   200 set on top (`reset.py 200` for that set alone). Both refuse to run without the emulator
-  hosts; the project is `GCLOUD_PROJECT`, else `.firebaserc`'s default. Tests: `cd scripts`,
-  `uv sync`, `uv run pytest`; the reset tests run only with both hosts set, on their own project
-  id (`demo-ronda-reset`), so they never wipe `ronda-uy`.
+  hosts; the project is `GCLOUD_PROJECT`, else `.firebaserc`'s default. **Real project:**
+  `uv run --python 3.13 scripts/reset.py --project ronda-uy`, with Application Default
+  Credentials and no emulator hosts, deletes only the demo documents (`users/demo-*` and what
+  hangs under them, `avoid` pairs naming a `demo-` uid, the demo seat facts) and writes the set
+  again; real members' documents and every Auth account stay. It deletes nothing if a demo seat
+  fact was changed (a host set a place). Tests: `cd scripts`, `uv sync`, `uv run pytest`; the
+  reset tests run only with both hosts set, on their own project id (`demo-ronda-reset`), so they
+  never wipe `ronda-uy`.
 - **Which host the development app uses:** `localhost` on web and the iOS simulator, `10.0.2.2`
   on the Android emulator, and on a USB phone `127.0.0.1` after
   `for p in 9099 8088 5001 9199; do adb reverse tcp:$p tcp:$p; done`, passed as

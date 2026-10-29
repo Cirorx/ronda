@@ -74,3 +74,8 @@ def test_the_project_is_the_firebaserc_default_otherwise(monkeypatch):
     monkeypatch.delenv("GCLOUD_PROJECT", raising=False)
 
     assert seed.project_id() == "ronda-uy"
+
+
+def test_reset_names_the_project_flag_when_it_refuses(no_emulators, capsys):
+    assert reset.main([]) == 1
+    assert "--project" in capsys.readouterr().out

@@ -128,7 +128,10 @@ project checklist. Everything seeded is invented:
 - Reset deletes every Auth account and document of the project through the emulators' clear
   endpoints, then seeds the 30 set. The person on the phone has no account, so onboarding shows.
   A new collection is one builder in `BUILDERS` (`scripts/demo_data.py`).
-- Emulator only: resetting the real project waits until Firestore is enabled there.
+- On the real project (`reset.py --project ronda-uy`) it deletes only what the `demo-` uids and
+  the demo seat ids identify, then seeds again; real members and Auth are never touched, so a
+  signed-in phone keeps its account and profile. It stops before deleting anything if a demo seat
+  fact differs from the invented one.
 
 ## Solver (Python, OR-Tools CP-SAT)
 

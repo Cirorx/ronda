@@ -115,3 +115,64 @@ def test_seeding_again_changes_nothing():
     assert seed.main(["30"]) == 0
 
     assert dump() == before
+
+
+def a_real_member() -> demo_data.Documents:
+    """What the pilot leaves behind on the real project: an account and documents not demo data."""
+    _auth("accounts", {"localId": "member-1", "email": "vecina@example.com"})
+    member = {
+        "users/member-1": {"firstName": "Vecina", "ageBand": "60-69"},
+        "users/member-1/private/eligible": {"seatIds": [], "updatedAt": demo_data.DEMO_TIME},
+        "avoid/member-1_member-2": {"uidA": "member-1", "uidB": "member-2"},
+        "seat_facts/real-seat": {"barrio": "solymar", "updatedAt": demo_data.DEMO_TIME},
+    }
+    seed.write(seed.firestore_client(PROJECT), member)
+    return member
+
+
+@pytest.mark.skipif(not shutil.which("uv"), reason="needs uv on PATH")
+def test_resetting_a_project_twice_replaces_only_the_demo_data():
+    command = ["uv", "run", "--python", "3.13", "scripts/reset.py", "--project", PROJECT]
+    member = a_real_member()
+
+    states = []
+    for _ in range(2):
+        subprocess.run(command, cwd=ROOT, check=True, capture_output=True)
+        assert auth_accounts() == 1
+        states.append(dump())
+
+    first, second = states
+    assert first == second
+    assert first == demo_data.documents(30) | member
+
+
+def test_a_project_reset_after_the_two_hundred_set_leaves_only_the_thirty():
+    member = a_real_member()
+    assert reset.main(["200", "--project", PROJECT]) == 0
+
+    assert reset.main(["--project", PROJECT]) == 0
+
+    assert dump() == demo_data.documents(30) | member
+
+
+def test_a_project_reset_deletes_what_hangs_under_a_demo_profile():
+    assert reset.main(["--project", PROJECT]) == 0
+    stray = {"users/demo-001/private/voice": {"note": "invented"}, "users/demo-9999": {}}
+    seed.write(seed.firestore_client(PROJECT), stray)
+
+    assert reset.main(["--project", PROJECT]) == 0
+
+    assert dump() == demo_data.documents(30)
+
+
+def test_a_project_reset_stops_before_deleting_when_a_seat_fact_was_changed(capsys):
+    assert reset.main(["--project", PROJECT]) == 0
+    seat = next(path for path in demo_data.documents(30) if path.startswith("seat_facts/"))
+    client = seed.firestore_client(PROJECT)
+    client.document(seat).update({"hasStairs": True})
+    before = dump()
+
+    assert reset.main(["--project", PROJECT]) == 1
+
+    assert dump() == before
+    assert seat in capsys.readouterr().out
