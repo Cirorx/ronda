@@ -25,6 +25,8 @@ jobs:
       # v2 runs `dart pub get` unless told this is a Flutter package.
       flutter_version: "3.47.x"
       allowed: "MIT,BSD-3-Clause,BSD-2-Clause,Apache-2.0"
-      # Dev-only, via bloc_lint. Its LICENSE is Apache-2.0, in a layout pub.dev
-      # can't classify, so the check reads it as "unknown".
-      skip_packages: "pubspec_lock_parse"
+      # pubspec_lock_parse: dev-only, via bloc_lint. Its LICENSE is Apache-2.0,
+      # in a layout pub.dev can't classify, so the check reads it as "unknown".
+      # dbus: MPL-2.0, pulled in only by flutter_local_notifications_linux.
+      # Ronda has no linux/ app, so it never ships in a build.
+      skip_packages: "pubspec_lock_parse,dbus"
