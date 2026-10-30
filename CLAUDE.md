@@ -30,10 +30,9 @@ runtime, built for the Meta Global AI Developer Hackathon.
 5. Commit with `Closes #<n>`, push, and add a line to `notes/NOW.md`.
 6. Once your work is on main, run `scripts/prune_worktrees.sh`. It removes every worktree whose
    work is already on main, together with its branch, because each one holds gigabytes of
-   build output. It keeps the ones with uncommitted changes, locked ones, and any sitting at
-   main's tip, since that may be a fresh worktree. Whoever fast-forwards a branch onto main
-   also removes that branch's worktree by hand with `git worktree remove`, followed by
-   `git branch -d`.
+   build output. It keeps the ones with uncommitted changes, locked ones, and any where nothing
+   was ever committed, since that may be a fresh worktree whose agent hasn't written anything
+   yet.
 
 ## End of a session
 Update `notes/NOW.md`: done, half-done, next step, and anything learned (model quirks, API

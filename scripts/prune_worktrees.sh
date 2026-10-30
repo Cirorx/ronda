@@ -6,16 +6,15 @@
 #   scripts/prune_worktrees.sh          # remove what's merged
 #   scripts/prune_worktrees.sh --dry    # only list it
 #
-# A worktree goes when its HEAD is on main, it has no uncommitted or untracked changes and it isn't
-# locked. One sitting exactly at main's tip is kept: it may be a fresh worktree whose agent hasn't
-# committed yet. Remove a branch you just fast-forwarded by hand (`git worktree remove`).
+# A worktree goes when its HEAD is on main, something was committed in it, it has no uncommitted or
+# untracked changes and it isn't locked. One where nothing was ever committed is kept: it may be a
+# fresh worktree whose agent hasn't written anything yet, even after main moved past it.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 dry=false
 [[ "${1:-}" == "--dry" ]] && dry=true
 
-main_tip=$(git rev-parse main)
 main_dir=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
 
 prune() {
@@ -25,8 +24,8 @@ prune() {
     echo "kept $dir: locked"
   elif ! git merge-base --is-ancestor "$head" main; then
     echo "kept $dir: has commits that aren't on main"
-  elif [[ "$head" == "$main_tip" ]]; then
-    echo "kept $dir: at main's tip (fresh, or just merged: remove by hand)"
+  elif ! git -C "$dir" reflog --format=%gs HEAD | grep -E '^(commit|rebase|merge|cherry-pick|pull)' >/dev/null; then
+    echo "kept $dir: nothing committed in it yet (may be a fresh worktree)"
   elif [[ -n "$(git -C "$dir" status --porcelain)" ]]; then
     echo "kept $dir: uncommitted changes"
   elif $dry; then
