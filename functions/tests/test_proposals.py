@@ -8,6 +8,7 @@ import pytest
 
 import proposals
 from tests.fake_firestore import FakeFirestore
+from tests.test_demo_users import on_a_demo_project, on_the_real_project, under_the_emulator
 
 FIXTURE = Path(__file__).resolve().parents[2] / "solver" / "fixtures" / "invented_demo_30.json"
 NOW = datetime(2026, 10, 27, 15, 0, tzinfo=UTC)
@@ -122,6 +123,73 @@ class TestPropose:
 
         assert summary["groups"] == 0
         assert db.documents[proposal_path(db)]["rejectedAlternative"] is None
+
+
+class TestDemoSignUps:
+    """Two real members (invented ids that don't start with `demo-`) next to the demo set."""
+
+    REAL = ("Xb3kQ9", "Pq7Lm2")
+
+    def sign_ups(self) -> dict[str, dict]:
+        real = {}
+        for uid in self.REAL:
+            real[f"users/{uid}"] = {
+                "firstName": "Vecina",
+                "ageBand": "60-69",
+                "barrio": "solymar-sur",
+                "pretexts": ["mate"],
+                "slots": ["sat-afternoon"],
+            }
+            real[f"users/{uid}/private/eligible"] = {"seatIds": ["solymar-sur_mate_sat-afternoon"]}
+        real["avoid/Pq7Lm2_Xb3kQ9"] = {"uidA": "Pq7Lm2", "uidB": "Xb3kQ9"}
+        real["avoid/Xb3kQ9_demo-001"] = {"uidA": "Xb3kQ9", "uidB": "demo-001"}
+        return invented_sign_ups() | real
+
+    def solver_input(self, monkeypatch) -> dict:
+        """What `propose` hands the solver, which answers with no groups."""
+        seen = []
+
+        def solve(data):
+            seen.append(data)
+            return {
+                "status": "optimal",
+                "proposals": [],
+                "unseated": [],
+                "rejectedAlternative": None,
+            }
+
+        monkeypatch.setattr(proposals, "solve", solve)
+        proposals.propose(FakeFirestore(self.sign_ups()), ADMIN, NOW)
+        [data] = seen
+        return data
+
+    def test_on_the_real_project_never_reach_the_solver(self, monkeypatch):
+        on_the_real_project(monkeypatch)
+
+        data = self.solver_input(monkeypatch)
+
+        assert [person["uid"] for person in data["people"]] == sorted(self.REAL)
+        assert data["avoidPairs"] == [["Pq7Lm2", "Xb3kQ9"]]
+
+    def test_on_the_real_project_alone_they_make_no_group(self, monkeypatch):
+        on_the_real_project(monkeypatch)
+        db = FakeFirestore(invented_sign_ups())
+
+        summary = proposals.propose(db, ADMIN, NOW)
+
+        assert (summary["groups"], summary["unseated"]) == (0, 0)
+
+    @pytest.mark.parametrize("where", [under_the_emulator, on_a_demo_project])
+    def test_under_the_emulator_and_on_a_demo_project_join_everyone_else(self, monkeypatch, where):
+        where(monkeypatch)
+
+        data = self.solver_input(monkeypatch)
+
+        uids = [person["uid"] for person in data["people"]]
+        assert len(uids) == 32
+        assert set(self.REAL) < set(uids)
+        assert ["demo-005", "demo-006"] in data["avoidPairs"]
+        assert ["Xb3kQ9", "demo-001"] in data["avoidPairs"]
 
 
 class TestProposalDocument:

@@ -302,6 +302,14 @@ project checklist. Everything seeded is invented:
   private). A proposal or ronda naming any other uid, or a ronda with no members, is kept and
   printed for the owner to decide. It stops before deleting anything if a demo seat fact differs
   from the invented one.
+- On the real project the demo sign-ups count for nothing (`functions/demo_users.py`): Cerca's
+  counts (`run_refresh_cerca`) and the solver's input (`propose_groups`) skip every uid that
+  starts with `demo-`, and every avoid pair naming one. A ronda whose members are all `demo-`
+  uids is left out of Cerca; a mixed one counts its real members only. They count as anyone
+  under the Functions emulator (`FUNCTIONS_EMULATOR=true`) and on a `demo-*` project
+  (`GCLOUD_PROJECT`), so demos and tests have people; a project with no id counts as real. The
+  `demo-` test is written once in `functions/demo_users.py` and once in `scripts/reset.py`
+  (`is_demo_uid`); `scripts/tests/test_demo_uids.py` checks that the two agree.
 
 ## Solver (Python, OR-Tools CP-SAT)
 

@@ -14,6 +14,7 @@ import cerca_tuyo
 import main
 from proposals import BARRIOS
 from tests.fake_firestore import FakeDocument, FakeFirestore
+from tests.test_demo_users import on_a_demo_project, on_the_real_project, under_the_emulator
 
 NOW = datetime(2026, 11, 1, 15, 0, tzinfo=UTC)
 
@@ -226,6 +227,75 @@ class TestRunRefreshCerca:
             {"pretext": "futbol5", "count": 1},
         ]
         assert db.documents["cerca/lomas-de-solymar"]["rondas"][0]["cap"] == 10
+
+
+class TestDemoSignUps:
+    """Real members (invented ids that don't start with `demo-`) next to demo sign-ups."""
+
+    @pytest.fixture
+    def db(self) -> FakeFirestore:
+        return FakeFirestore(
+            {
+                "users/Xb3kQ9": user("solymar-norte", "30-39"),
+                "users/Pq7Lm2": user("solymar-norte", "60-69"),
+                "users/demo-a": user("solymar-norte", "18-29"),
+                "users/demo-b": user("solymar-norte", "70-79", pretexts=("truco",)),
+                "users/demo-wait": user("solymar-norte"),
+                "users/demo-wait-futbol": user("solymar-norte", pretexts=("futbol5",)),
+                "rondas/mixed": ronda("solymar-norte"),
+                "rondas/mixed/members/Xb3kQ9": {"state": "active"},
+                "rondas/mixed/members/demo-a": {"state": "active"},
+                "rondas/demo": ronda("solymar-norte", "truco"),
+                "rondas/demo/members/demo-b": {"state": "active"},
+                "rondas/no-members": ronda("solymar-sur"),
+            }
+        )
+
+    def test_on_the_real_project_count_for_nothing(self, db, monkeypatch):
+        on_the_real_project(monkeypatch)
+
+        cerca_tuyo.run_refresh_cerca(db, NOW)
+
+        norte = db.documents["cerca/solymar-norte"]
+        assert norte["rondas"] == [
+            {
+                "pretext": "mate",
+                "slot": "sat-afternoon",
+                "ageFrom": 30,
+                "ageTo": 39,
+                "members": 1,
+                "cap": 6,
+                "waiting": 1,
+            }
+        ]
+        assert norte["waiting"] == [{"pretext": "mate", "count": 1}]
+
+    def test_on_the_real_project_a_ronda_with_no_members_still_shows(self, db, monkeypatch):
+        on_the_real_project(monkeypatch)
+
+        cerca_tuyo.run_refresh_cerca(db, NOW)
+
+        [row] = db.documents["cerca/solymar-sur"]["rondas"]
+        assert row["members"] == 0
+
+    @pytest.mark.parametrize("where", [under_the_emulator, on_a_demo_project])
+    def test_under_the_emulator_and_on_a_demo_project_count_like_anyone(
+        self, db, monkeypatch, where
+    ):
+        where(monkeypatch)
+
+        cerca_tuyo.run_refresh_cerca(db, NOW)
+
+        norte = db.documents["cerca/solymar-norte"]
+        assert [(row["pretext"], row["members"], row["ageFrom"]) for row in norte["rondas"]] == [
+            ("mate", 2, 18),
+            ("truco", 1, 70),
+        ]
+        assert norte["rondas"][0]["waiting"] == 2
+        assert norte["waiting"] == [
+            {"pretext": "mate", "count": 2},
+            {"pretext": "futbol5", "count": 1},
+        ]
 
 
 FLYER = {

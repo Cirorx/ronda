@@ -1,6 +1,8 @@
 """Proposals: the solver's groups waiting for the admin, and what approving one writes.
 
 `propose(db, admin_uid, now)` reads the sign-ups, runs the solver and writes `proposals/{id}`.
+On the real project the invented `demo-` sign-ups never reach the solver (demo_users.py), so no
+proposal groups them next to real members.
 `approve(db, proposal_id, admin_uid, now)` turns a pending proposal into `rondas/{id}`,
 `rondas/{id}/members/{uid}` and `users/{uid}/rondas/{id}`; `undo_approval` deletes them again
 and puts it back to pending.
@@ -13,6 +15,7 @@ tests cover them without Firestore; the three entry points only read and write a
 
 from datetime import datetime
 
+import demo_users
 from ronda_solver import solve
 from ronda_solver.demo import DEMO_BARRIOS
 
@@ -150,13 +153,20 @@ def ronda_documents(
 
 
 def _read_sign_ups(db) -> tuple[dict[str, dict], dict[str, list[str]], list[dict]]:
-    users = {snapshot.id: snapshot.to_dict() for snapshot in db.collection("users").stream()}
+    """The users who count here (demo_users.counts), their eligible seat ids and the avoid
+    pairs between two of them."""
+    users = {
+        snapshot.id: snapshot.to_dict()
+        for snapshot in db.collection("users").stream()
+        if demo_users.counts(snapshot.id)
+    }
     eligible = {}
     for uid in users:
         snapshot = db.document(f"users/{uid}/private/eligible").get()
         if snapshot.exists:
             eligible[uid] = snapshot.to_dict().get("seatIds", [])
-    avoid = [snapshot.to_dict() for snapshot in db.collection("avoid").stream()]
+    pairs = [snapshot.to_dict() for snapshot in db.collection("avoid").stream()]
+    avoid = [p for p in pairs if demo_users.counts(p["uidA"]) and demo_users.counts(p["uidB"])]
     return users, eligible, avoid
 
 

@@ -44,6 +44,9 @@ import seed
 
 AUTH_HOST = "FIREBASE_AUTH_EMULATOR_HOST"
 DEMO_UID_PREFIX = "demo-"
+"""Every invented uid starts with it. functions/demo_users.py holds the same test, which keeps
+these sign-ups out of the real project's Cerca counts and solver input; the scripts don't
+import functions/, so tests/test_demo_uids.py checks that the two agree."""
 
 
 class NotDemoData(Exception):
@@ -65,6 +68,7 @@ def _delete(url: str) -> None:
 
 
 def is_demo_uid(uid: object) -> bool:
+    """Whether `uid` is one of the invented sign-ups (functions/demo_users.py: the same test)."""
     return str(uid).startswith(DEMO_UID_PREFIX)
 
 

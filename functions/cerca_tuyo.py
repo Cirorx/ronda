@@ -3,7 +3,9 @@
 `run_refresh_cerca(db, now)` rewrites one `cerca/{barrio}` per barrio: for each forming or
 active ronda its pretext, slot, age range, taken seats, capacity and how many wait for it, and
 per pretext how many neighbours wait for a ronda to start. Counts only: no uid, name or place
-leaves this module. firestore.rules lets anyone `get` those documents and nothing else.
+leaves this module. firestore.rules lets anyone `get` those documents and nothing else. On the
+real project the invented `demo-` sign-ups count for nothing (demo_users.py): a ronda of demo
+members alone is left out, and a mixed one counts its real members only.
 
 `landing(db, method, path, now)` answers every flyer's QR page through Hosting
 (`/api/f/{id}`, firebase.json): a POST counts one scan on `flyers/{id}`, a GET only reads. For a
@@ -17,6 +19,8 @@ import json
 import re
 from collections.abc import Callable, Iterable
 from datetime import datetime
+
+import demo_users
 
 FLYER_ID = re.compile(r"[a-z0-9]{8}")
 """scripts/flyer.py's and mate_flyer.py's ids: eight lowercase letters and digits. Anything else
@@ -53,24 +57,36 @@ def run_refresh_cerca(db, now: datetime) -> int:
     """Rewrites every `cerca/{barrio}` from the rondas, their members and the sign-ups.
 
     Returns how many documents it wrote. The waiting counts come from sign-ups no ronda seats
-    yet; once #28 writes `waitlists/{seatId}`, its entries should feed them too.
+    yet; once #28 writes `waitlists/{seatId}`, its entries should feed them too. Where demo
+    sign-ups don't count, they are dropped here, before any count: a ronda whose members are all
+    demo uids, like scripts/reset.py's `built_from_demo`, and every demo member and sign-up.
     """
     # Both import the solver package, and with it OR-Tools: only this job pays for that.
     from proposals import BARRIOS
     from ronda_solver.rules import size_rule
 
-    users = {snapshot.id: snapshot.to_dict() for snapshot in db.collection("users").stream()}
+    users = {
+        snapshot.id: snapshot.to_dict()
+        for snapshot in db.collection("users").stream()
+        if demo_users.counts(snapshot.id)
+    }
     rondas = []
     for snapshot in db.collection("rondas").stream():
         ronda = snapshot.to_dict()
         if ronda.get("status") not in OPEN_STATUSES:
             continue
-        members = [
-            member.id
+        members = {
+            member.id: member.to_dict().get("state")
             for member in db.collection(f"rondas/{snapshot.id}/members").stream()
-            if member.to_dict().get("state") in TAKING_A_SEAT
+        }
+        if members and not any(demo_users.counts(uid) for uid in members):
+            continue
+        seated = [
+            uid
+            for uid, state in members.items()
+            if state in TAKING_A_SEAT and demo_users.counts(uid)
         ]
-        rondas.append((ronda, members))
+        rondas.append((ronda, seated))
     documents = cerca_documents(BARRIOS, rondas, users, lambda p: size_rule(p).cap, now)
     batch = db.batch()
     for path, fields in documents.items():
