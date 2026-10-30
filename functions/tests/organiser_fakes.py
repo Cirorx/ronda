@@ -5,7 +5,7 @@ error), the way `organiser.model.ChatModel` turns Baseten's stream into one; `st
 the stream itself, chunk by chunk, in the shapes `scripts/smoke/s4_baseten_tools.py` reads.
 `FakeWeather` answers every day with the same hours. Nothing here reaches a network.
 
-The ronda meets on Thursday 2026-11-05 in the afternoon (16:00, ISO week 45); the rain check
+The ronda meets on Thursday 2026-11-05 at 16:00 (its `slot.hour`, ISO week 45); the rain check
 runs the evening before, Wednesday 2026-11-04 at 18:00 in Montevideo (UTC-3). Every person and
 place is invented.
 """
@@ -51,7 +51,7 @@ def documents(*, hosts: dict | None = None, **ronda_fields) -> dict[str, dict]:
         "seatId": "el-pinar-sur_mate_thu-afternoon",
         "pretext": "mate",
         "barrio": "el-pinar-sur",
-        "slot": {"day": "thu", "time": "afternoon"},
+        "slot": {"day": "thu", "time": "afternoon", "hour": "16:00"},
         "size": 4,
         "status": "active",
         "place": {"name": "frente al quiosco", "landmark": "", "lat": -34.80, "lng": -55.885},

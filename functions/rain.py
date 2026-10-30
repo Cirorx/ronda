@@ -15,8 +15,11 @@ that one message to the members; without a pick by 21:00 the plan stays as it is
 - `answer_move(db, uid, ronda_id, week, choice, now, send=...)`: the `answer_move` callable's
   body, for the host's pick.
 
-The host is `hosts.anfitrion` while that member is in the ronda; until #47 sets hosts, the first
-active member (by joining time) stands in, and the trace and the move say so (`hostFallback`).
+The host is `hosts.anfitrion` while that member is active in the ronda, else `hosts.cola`; with
+neither (until the admin sets hosts), the first active member (by joining time) stands in, and
+the trace and the move say so (`hostFallback`). The meeting's hour and place are the ronda's
+(`slot.hour`, `place`); without an hour the forecast reads the whole band and the messages say
+"a la tarde", never a guessed hour.
 The model is built from the environment only when a ronda is due, so a dry hour costs nothing;
 tests pass a scripted model and a fake forecast.
 """
@@ -38,9 +41,6 @@ log = logging.getLogger(__name__)
 JOB = "rain_check"
 RAIN_CHECK_HOUR = 18
 """The evening before the meeting (Wednesday 18:00 for a Thursday ronda)."""
-
-BAND_HOURS = {"morning": 10, "afternoon": 16, "evening": 19}
-"""When a meeting starts, by its slot's time band, until a host sets an hour."""
 
 CIUDAD_DE_LA_COSTA = (-34.83, -55.96)
 """Where the forecast is read when neither the ronda's place nor its barrio is known."""
@@ -126,7 +126,7 @@ def run_rain_check(
                 ronda_id=ronda_id,
                 ronda=ronda,
                 day=day,
-                hour=BAND_HOURS.get(ronda["slot"].get("time"), BAND_HOURS["afternoon"]),
+                hour=rsvp.meeting_hour(ronda),
                 week=week,
                 lat=lat,
                 lng=lng,
@@ -183,15 +183,21 @@ def check_ronda(
         trace.step("stop", why="la ronda no tiene miembros activos", model="")
         trace.finish(STOPPED)
         return STOPPED
+    hosts = meeting.ronda.get("hosts") or {}
     if fallback:
         missing = (
-            "El anfitrión no está activo en la ronda"
-            if (meeting.ronda.get("hosts") or {}).get("anfitrion")
+            "Ni el anfitrión ni la cola están activos en la ronda"
+            if hosts.get("anfitrion") or hosts.get("cola")
             else "No hay anfitrión asignado"
         )
         trace.step(
             "note",
             note=f"{missing}: la propuesta iría a {host.first_name}, el primer miembro activo.",
+        )
+    elif host.uid != hosts.get("anfitrion"):
+        trace.step(
+            "note",
+            note=f"El anfitrión no está activo: la propuesta iría a {host.first_name}, que cierra.",
         )
     covered = _covered_places(db, meeting.ronda.get("barrio", ""))
     toolbox = Toolbox(
@@ -222,8 +228,8 @@ def task(meeting: Meeting, covered: dict[str, moves.CoveredPlace], now: datetime
     places = "\n".join(f"- {p.id}: {p.name}" for p in covered.values()) or "- ninguno"
     return (
         f"Ronda: {pretext}.\n"
-        f"Reunión: {moves.weekday(meeting.day)} {meeting.day.isoformat()} a las "
-        f"{meeting.hour:02d}:00{place}.\n"
+        f"Reunión: {moves.weekday(meeting.day)} {meeting.day.isoformat()} {meeting.at}"
+        f"{place}.\n"
         f"Ahora: {moves.weekday(here.date())} {here.date().isoformat()} {here:%H:%M}.\n"
         f"Lugares techados públicos cerca (id: nombre):\n{places}"
     )
@@ -242,12 +248,14 @@ def _location(ronda: dict) -> tuple[float, float]:
 
 
 def _host(db, ronda_id: str, ronda: dict) -> tuple[outbox.Recipient | None, bool]:
-    """The ronda's anfitrión, or the first active member standing in (`True`)."""
+    """The ronda's anfitrión, else its cola (asked first when the anfitrión can't), else the
+    first active member standing in (`True`)."""
     members = rsvp.counted(rsvp._members(db, ronda_id))
     active = {uid: m for uid, m in members.items() if m.get("state", "active") == "active"}
-    anfitrion = (ronda.get("hosts") or {}).get("anfitrion")
-    if anfitrion in active:
-        uid, fallback = anfitrion, False
+    hosts = ronda.get("hosts") or {}
+    host = next((h for h in (hosts.get("anfitrion"), hosts.get("cola")) if h in active), None)
+    if host is not None:
+        uid, fallback = host, False
     elif active:
         uid = min(active, key=lambda u: (str(active[u].get("joinedAt", "")), u))
         fallback = True

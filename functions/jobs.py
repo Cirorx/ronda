@@ -11,6 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 
+import attendance
 import fcm
 import rain
 import rsvp
@@ -46,6 +47,9 @@ JOBS: dict[str, Callable[[object, datetime, Context], dict]] = {
         db, now, send=context.send, app_url=context.app_url, force=context.force
     ),
     "rain_check": lambda db, now, context: rain.run_rain_check(
+        db, now, send=context.send, app_url=context.app_url, force=context.force
+    ),
+    "attendance_ask": lambda db, now, context: attendance.run_attendance_ask(
         db, now, send=context.send, app_url=context.app_url, force=context.force
     ),
 }

@@ -2,12 +2,12 @@
 option sends the members (docs/PRODUCT.md § Organiser agent, "Rain").
 
 `rondas/{rondaId}/moves/{isoWeek}`, one per meeting, read by its host only (firestore.rules):
-week, date, hour, hostUid, hostName, hostFallback (no `hosts.anfitrion` yet, so the first
-active member), title and body (the push to the host, without the introduction), runId,
-forecast {rainProbability, rainMm, gustsKmh}, options [{id, label, message, placeId?,
-placeName?, date?}], recipients (how many members the pick reaches), deadline (21:00 the
-evening before), status (`pending` | `decided` | `expired`), createdAt; once decided, choice,
-decidedAt, sent and held.
+week, date, hour ("16:00", or null while the ronda has none), hostUid, hostName, hostFallback
+(neither the anfitrión nor the cola is active, so the first active member), title and body (the
+push to the host, without the introduction), runId, forecast {rainProbability, rainMm,
+gustsKmh}, options [{id, label, message, placeId?, placeName?, date?}], recipients (how many
+members the pick reaches), deadline (21:00 the evening before), status (`pending` | `decided` |
+`expired`), createdAt; once decided, choice, decidedAt, sent and held.
 
 Every word here is written in code, never by the model: the host reads, before choosing, the
 message the members will get, and the gates check it again when it goes.
@@ -72,10 +72,11 @@ def deadline(meeting: date) -> datetime:
     return datetime.combine(day, time(DEADLINE_HOUR), tzinfo=rsvp.MONTEVIDEO)
 
 
-def host_message(meeting: date, hour: int, forecast: Forecast) -> tuple[str, str]:
-    """The push to the host: "El jueves puede llover" / "Jueves 16:00 · lluvia 80%. …"."""
+def host_message(meeting: date, when: str, forecast: Forecast) -> tuple[str, str]:
+    """The push to the host: "El jueves puede llover" / "Jueves 16:00 · lluvia 80%. …"; `when`
+    is the hour, or the band's words ("a la tarde") while the ronda has none."""
     title = f"El {weekday(meeting)} puede llover"
-    body = f"{weekday(meeting).capitalize()} {hour:02d}:00 · lluvia {forecast.rain_probability}%."
+    body = f"{weekday(meeting).capitalize()} {when} · lluvia {forecast.rain_probability}%."
     if forecast.gusts_kmh >= GUSTS_WORTH_SAYING:
         body += f" Ráfagas de {forecast.gusts_kmh} km/h."
     return title, f"{body} Pronóstico de {SOURCE}."
@@ -83,14 +84,15 @@ def host_message(meeting: date, hour: int, forecast: Forecast) -> tuple[str, str
 
 def options(
     meeting: date,
-    hour: int,
+    at: str,
     host_name: str,
     covered: CoveredPlace | None,
     postpone_to: date | None,
 ) -> list[dict]:
     """The host's choices, each with the one message the members get if it is picked. "Vamos
-    igual" is always there, last."""
-    day, at = weekday(meeting), f"{hour:02d}:00"
+    igual" is always there, last. `at` is "a las 16:00", or "a la tarde" while the ronda has no
+    hour."""
+    day = weekday(meeting)
     decided = f"Lo decidió {host_name}." if host_name else "Lo decidió quien abre la ronda."
     choices = []
     if covered is not None:
@@ -98,8 +100,7 @@ def options(
             {
                 "id": COVERED,
                 "label": towards(covered.name),
-                "message": f"Por la lluvia, el {day} nos vemos en {covered.name} a las {at}. "
-                + decided,
+                "message": f"Por la lluvia, el {day} nos vemos en {covered.name} {at}. " + decided,
                 "placeId": covered.id,
                 "placeName": covered.name,
             }
@@ -110,7 +111,7 @@ def options(
             {
                 "id": POSTPONE,
                 "label": f"Pasarla al {later}",
-                "message": f"Por la lluvia, la ronda del {day} pasa al {later} a las {at}, "
+                "message": f"Por la lluvia, la ronda del {day} pasa al {later} {at}, "
                 f"en el mismo lugar. {decided}",
                 "date": postpone_to.isoformat(),
             }
@@ -119,8 +120,7 @@ def options(
         {
             "id": AS_IS,
             "label": "Vamos igual",
-            "message": f"Puede llover, pero el {day} vamos igual, a las {at} como siempre. "
-            + decided,
+            "message": f"Puede llover, pero el {day} vamos igual, {at} como siempre. " + decided,
         }
     )
     return choices

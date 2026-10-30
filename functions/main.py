@@ -470,3 +470,49 @@ def pilot_numbers(req: https_fn.CallableRequest) -> dict:
     import pilot_numbers as numbers
 
     return numbers.numbers(_firestore(), _now())
+
+
+# --- Hosts, place and hour, and attendance (#47): hosts.py and attendance.py ---------------
+
+
+def _setup_call(req: https_fn.CallableRequest, run):
+    import hosts
+
+    _require_admin(req)
+    try:
+        return run(hosts)
+    except hosts.SetupError as e:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=1, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def ronda_setups(req: https_fn.CallableRequest) -> dict:
+    """Every ronda that still meets with its place, hour, hosts and members. Admin only."""
+    return _setup_call(req, lambda hosts: {"rondas": hosts.setups(_firestore())})
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=1, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def set_ronda_setup(req: https_fn.CallableRequest) -> dict:
+    """Sets a ronda's public place, hour and hosts. Admin only."""
+    return _setup_call(req, lambda hosts: hosts.set_setup(_firestore(), req.data, _now()))
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def record_attendance(req: https_fn.CallableRequest) -> dict:
+    """Records one [Vino] / [No vino], `{rondaId, week, uid, came}`. The ronda's hosts or the
+    admin (attendance.py)."""
+    import attendance
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "sign in first")
+    admin = req.auth.token.get("admin") is True
+    try:
+        return attendance.record(_firestore(), req.auth.uid, admin, req.data, _now())
+    except attendance.AttendanceError as e:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e

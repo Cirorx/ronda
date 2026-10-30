@@ -188,6 +188,56 @@ class TestPushText:
         assert line == "Martes a la noche · truco · Club Lagomar"
         assert "1234" not in line and "678" not in line
 
+    def test_the_line_says_the_hour_and_the_place_once_set(self):
+        ronda = documents(
+            slot={"day": "sat", "time": "afternoon", "hour": "16:30"},
+            place={"name": "frente al quiosco", "landmark": "al lado de la parada"},
+        )[f"rondas/{RONDA}"]
+
+        assert rsvp.ronda_line(ronda) == "Sábado 16:30 · mate en la rambla · frente al quiosco"
+        assert rsvp.to_confirm(ronda) == ""
+
+    @pytest.mark.parametrize(
+        ("fields", "words"),
+        [
+            ({}, "Lugar y hora a confirmar."),
+            ({"place": {"name": "la plaza"}}, "Hora a confirmar."),
+            ({"place": {"name": ""}}, "Lugar y hora a confirmar."),
+            ({"slot": {"day": "sat", "time": "afternoon", "hour": "16:00"}}, "Lugar a confirmar."),
+        ],
+    )
+    def test_what_isnt_set_yet_is_said_not_invented(self, fields, words):
+        assert rsvp.to_confirm(documents(**fields)[f"rondas/{RONDA}"]) == words
+
+    @pytest.mark.parametrize(
+        ("hour", "band", "fits"),
+        [
+            ("09:00", "morning", True),
+            ("11:00", "morning", True),
+            ("11:30", "morning", False),
+            ("16:30", "afternoon", True),
+            ("13:30", "afternoon", False),
+            ("20:00", "evening", True),
+            ("20:30", "evening", False),
+            ("9:00", "morning", False),
+            ("16h", "afternoon", False),
+            (16, "afternoon", False),
+            ("16:00", "night", False),
+        ],
+    )
+    def test_an_hour_fits_its_band_with_the_meeting_inside(self, hour, band, fits):
+        assert rsvp.hour_in_band(hour, band) is fits
+
+    def test_an_hour_outside_its_band_is_no_hour(self):
+        ronda = {"slot": {"day": "sat", "time": "morning", "hour": "16:00"}}
+
+        assert rsvp.meeting_hour(ronda) is None
+
+    def test_the_body_opens_with_what_is_still_to_confirm(self):
+        assert rsvp.push_body(["Marta"], [], unknown="Hora a confirmar.") == (
+            "Hora a confirmar. Ya va Marta. ¿Venís?"
+        )
+
     def test_the_line_keeps_an_unknown_pretext_id(self):
         assert rsvp.ronda_line({"pretext": "bochas", "slot": {}}) == "bochas"
 
@@ -382,7 +432,9 @@ class TestRunRsvpPush:
         assert week_doc(db)["rsvpSentAt"] == THU_19
         android = next(m for m in sender.messages if m["token"] == "tok-a2")
         assert android["data"]["title"] == "Sábado a la tarde · mate en la rambla"
-        assert android["data"]["body"] == "Te toca llevar el termo. ¿Venís?"
+        assert android["data"]["body"] == (
+            "Lugar y hora a confirmar. Te toca llevar el termo. ¿Venís?"
+        )
         assert android["data"]["week"] == "2026-W44"
         web = next(m for m in sender.messages if m["token"] == "tok-w1")
         assert web["webpush"]["fcm_options"]["link"] == "https://example.test/app/ronda"
@@ -453,7 +505,7 @@ class TestRunRsvpPush:
 
         assert sender.tokens == ["tok-a2"]
         assert sender.messages[0]["data"]["body"] == (
-            "Ya va Marta. Te toca llevar el termo. ¿Venís?"
+            "Lugar y hora a confirmar. Ya va Marta. Te toca llevar el termo. ¿Venís?"
         )
 
     def test_a_monday_meeting_pushed_on_saturday_belongs_to_the_meetings_week(self):

@@ -618,3 +618,71 @@ class TestPilotAdmin:
         numbers = call(main.pilot_numbers, ADMIN)
 
         assert numbers["seated"]["members"] == 4
+
+
+class TestHostsAndAttendance:
+    """The admin's place, hour and hosts, and the host's taps (#47): hosts.py and
+    attendance.py hold the rules; these check auth and the error codes."""
+
+    @pytest.fixture
+    def rain_db(self, monkeypatch) -> FakeFirestore:
+        import attendance
+        from tests.organiser_fakes import at
+        from tests.organiser_fakes import documents as rainy
+        from tests.test_rsvp import Sender
+
+        db = FakeFirestore(rainy(hosts={"anfitrion": "demo-101"}))
+        attendance.run_attendance_ask(db, at(5, 17), send=Sender())
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setattr(main, "_now", lambda: at(5, 18))
+        return db
+
+    TAP: ClassVar[dict] = {
+        "rondaId": "ronda-rain",
+        "week": "2026-W45",
+        "uid": "demo-102",
+        "came": True,
+    }
+
+    @pytest.mark.parametrize("function", [main.ronda_setups, main.set_ronda_setup])
+    def test_the_setup_is_the_admins(self, function, rain_db):
+        for auth, code in [
+            (None, https_fn.FunctionsErrorCode.UNAUTHENTICATED),
+            (MEMBER, https_fn.FunctionsErrorCode.PERMISSION_DENIED),
+        ]:
+            with pytest.raises(https_fn.HttpsError) as excinfo:
+                call(function, auth, {"rondaId": "ronda-rain"})
+            assert error_code(excinfo) == code
+
+    def test_lists_and_sets_a_rondas_setup(self, rain_db):
+        assert call(main.ronda_setups, ADMIN)["rondas"][0]["rondaId"] == "ronda-rain"
+
+        result = call(main.set_ronda_setup, ADMIN, {"rondaId": "ronda-rain", "hour": "15:00"})
+
+        assert result["hour"] == "15:00"
+        assert rain_db.documents["rondas/ronda-rain"]["slot"]["hour"] == "15:00"
+
+    def test_a_refused_setup_keeps_its_code(self, rain_db):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.set_ronda_setup, ADMIN, {"rondaId": "ronda-rain", "hour": "23:00"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.INVALID_ARGUMENT
+
+    def test_the_host_and_the_admin_record_a_tap(self, rain_db):
+        host = SimpleNamespace(uid="demo-101", token={})
+
+        assert call(main.record_attendance, host, self.TAP)["came"] is True
+        call(main.record_attendance, ADMIN, {**self.TAP, "came": False})
+
+        assert rain_db.documents["rondas/ronda-rain/weeks/2026-W45"]["attendance"] == {
+            "demo-102": False
+        }
+
+    def test_a_tap_needs_a_host(self, rain_db):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.record_attendance, None, self.TAP)
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+
+        member = SimpleNamespace(uid="demo-102", token={})
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.record_attendance, member, self.TAP)
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED

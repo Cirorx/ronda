@@ -375,7 +375,9 @@ class TestClose:
         rsvp_push = by_token["tok-1"]["data"]
         assert rsvp_push["type"] == "rsvp"
         assert rsvp_push["title"] == "Martes a la tarde · mate en la rambla"
-        assert rsvp_push["body"] == f"{lead} Ya va Jorge. Te toca llevar el pan. ¿Venís?"
+        assert rsvp_push["body"] == (
+            f"{lead} Lugar y hora a confirmar. Ya va Jorge. Te toca llevar el pan. ¿Venís?"
+        )
         assert rsvp_push["week"] == "2026-W45"
         assert by_token["tok-w1"]["notification"]["body"].startswith(lead)
         assert by_token["tok-6"]["data"]["type"] == "rsvp"

@@ -92,6 +92,10 @@ class Result:
     acta: bool = True
 
 
+MEETING_SPAN = 2
+"""How many hours of forecast a meeting with a set hour reads: its length."""
+
+
 @dataclass(frozen=True)
 class Meeting:
     """The meeting a run is about."""
@@ -99,10 +103,38 @@ class Meeting:
     ronda_id: str
     ronda: dict
     day: date
-    hour: int
+    hour: str | None
+    """When it starts ("16:00"), once the admin set it; until then only its band is known."""
     week: str
     lat: float
     lng: float
+
+    @property
+    def band(self) -> str:
+        """The slot's time band (`afternoon`)."""
+        band = (self.ronda.get("slot") or {}).get("time")
+        return band if band in rsvp.BANDS else "afternoon"
+
+    @property
+    def at(self) -> str:
+        """ "a las 16:00", or the band's words ("a la tarde") while there is no hour: the
+        messages never invent one."""
+        return f"a las {self.hour}" if self.hour else rsvp.BAND_LABELS[self.band]
+
+    @property
+    def when(self) -> str:
+        """ "16:00" or "a la tarde", after the weekday: "Jueves 16:00"."""
+        return self.hour or rsvp.BAND_LABELS[self.band]
+
+    @property
+    def window(self) -> tuple[int, int]:
+        """The forecast hours it reads: from its start for `MEETING_SPAN` hours (one more when
+        it starts at the half hour), or the whole band while there is no hour."""
+        if self.hour:
+            start, minutes = int(self.hour[:2]), int(self.hour[3:])
+            return start, MEETING_SPAN + (1 if minutes else 0)
+        first, end = rsvp.BANDS[self.band]
+        return first, end - first
 
     @property
     def place(self) -> gates.Place | None:
@@ -196,7 +228,7 @@ class Toolbox:
 
     def forecast(self, day: date):
         return self.weather.day(self.meeting.lat, self.meeting.lng, day).forecast(
-            day, self.meeting.hour
+            day, *self.meeting.window
         )
 
 
@@ -231,7 +263,7 @@ def get_forecast(box: Toolbox, args: DateArgs) -> Result:
             "rainLikely": likely,
             "source": SOURCE,
         },
-        f"Miró el pronóstico del {_day_label(day)} a las {forecast.hour:02d}:00: lluvia "
+        f"Miró el pronóstico del {_day_label(day)} {box.meeting.at}: lluvia "
         f"{forecast.rain_probability}%, ráfagas de {forecast.gusts_kmh} km/h ({SOURCE}).",
     )
 
@@ -334,7 +366,7 @@ def propose_move(box: Toolbox, args: ProposeArgs) -> Result:
     # The gates come first, before anything is written: a held proposal leaves no move behind,
     # so a later run inside the hours proposes cleanly.
     host = box.host
-    title, body = moves.host_message(meeting.day, meeting.hour, forecast)
+    title, body = moves.host_message(meeting.day, meeting.when, forecast)
     draft = outbox.prepare(
         box.db, host, title=title, text=body, kind=gates.HOST, week=meeting.week, now=box.now
     )
@@ -349,7 +381,7 @@ def propose_move(box: Toolbox, args: ProposeArgs) -> Result:
         )
     if rsvp.local(box.now) >= moves.deadline(meeting.day):
         return _refused("No propuso nada: ya pasó la hora para que el anfitrión elija.")
-    choices = moves.options(meeting.day, meeting.hour, host.first_name, covered, postpone_to)
+    choices = moves.options(meeting.day, meeting.at, host.first_name, covered, postpone_to)
     recipients = [uid for uid in _members_in(box) if uid != host.uid]
     move_ref.set(
         {

@@ -74,3 +74,11 @@ def test_runs_the_seguimos_ask_by_name():
 
     assert counts["asked"] == 1
     assert len(sender.messages) == 7
+
+
+def test_runs_the_attendance_ask_by_name():
+    counts = jobs.run(
+        "attendance_ask", FakeFirestore(), datetime(2026, 11, 5, 20, tzinfo=UTC), CONTEXT
+    )
+
+    assert counts["rondas"] == 0

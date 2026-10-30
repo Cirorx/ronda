@@ -275,7 +275,20 @@ class TestTheJob:
 
         assert move(db)["hostUid"] == HOST
         note = next(s for s in steps(db) if s["kind"] == "note")
-        assert note["note"].startswith("El anfitrión no está activo en la ronda: la propuesta")
+        assert note["note"].startswith(
+            "Ni el anfitrión ni la cola están activos en la ronda: la propuesta"
+        )
+
+    def test_the_cola_is_asked_when_the_anfitrion_cant(self):
+        db = FakeFirestore(documents(hosts={"anfitrion": HOST, "cola": "demo-103"}))
+        db.documents[f"rondas/{RONDA}/members/{HOST}"]["state"] = "paused"
+
+        check(db)
+
+        assert move(db)["hostUid"] == "demo-103"
+        assert move(db)["hostFallback"] is False
+        note = next(s for s in steps(db) if s["kind"] == "note")
+        assert note["note"] == "El anfitrión no está activo: la propuesta iría a Ana, que cierra."
 
     def test_without_hosts_the_first_active_member_stands_in_and_it_says_so(self):
         db = FakeFirestore(documents())
@@ -337,12 +350,32 @@ class TestTheJob:
         assert model.requests[0][0][1]["content"].endswith("(id: nombre):\n- ninguno")
         assert [o["id"] for o in move(db)["options"]] == ["postpone", "asIs"]
 
-    def test_an_evening_ronda_meets_at_19(self):
+    def test_without_an_hour_it_reads_the_whole_band_and_invents_none(self):
         db = FakeFirestore(documents(slot={"day": "thu", "time": "evening"}))
+        model = ScriptedModel(rain_script())
+
+        check(db, model=model)
+
+        proposal = move(db)
+        assert proposal["hour"] is None
+        assert proposal["body"].startswith("Jueves a la noche · lluvia 75%.")
+        assert [o["message"] for o in proposal["options"]][-1] == (
+            "Puede llover, pero el jueves vamos igual, a la noche como siempre. Lo decidió Mirta."
+        )
+        assert (
+            "Reunión: jueves 2026-11-05 a la noche, en frente al quiosco."
+            in (model.requests[0][0][1]["content"])
+        )
+
+    def test_a_set_hour_is_the_one_every_message_says(self):
+        db = FakeFirestore(documents(slot={"day": "thu", "time": "afternoon", "hour": "16:30"}))
 
         check(db)
 
-        assert move(db)["hour"] == 19
+        proposal = move(db)
+        assert proposal["hour"] == "16:30"
+        assert proposal["body"].startswith("Jueves 16:30 · lluvia 80%.")
+        assert "a las 16:30" in proposal["options"][0]["message"]
 
 
 class TestExpiry:
@@ -434,7 +467,7 @@ class TestAnswerMove:
         assert "placeOverride" not in week and "dateOverride" not in week
         assert (
             sender.messages[0]["data"]["title"]
-            == "Jueves a la tarde · mate en la rambla · frente al quiosco"
+            == "Jueves 16:00 · mate en la rambla · frente al quiosco"
         )
 
     def test_going_anyway_without_a_place_names_none(self):

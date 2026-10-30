@@ -233,5 +233,19 @@ service cloud.firestore {
     match /rondas/{rondaId}/moves/{week} {
       allow get: if request.auth != null && resource.data.hostUid == request.auth.uid;
     }
+
+    // Hosts, place and hour, and attendance (#47, functions/attendance.py). The admin reads each
+    // meeting's record, `weeks/{isoWeek}.attendance {uid: bool}`, for the numbers; that
+    // document also holds the raw `rsvp` map, which no member reads. The host's roll ("¿Quién
+    // vino hoy?": who is in for that meeting and the host's marks) is read with `get` by the
+    // ronda's anfitrión and cola and by the admin, never listed. The job and the
+    // record_attendance callable write both with the admin SDK; no client writes either.
+    match /rondas/{rondaId}/weeks/{week} {
+      allow read: if isAdmin();
+    }
+
+    match /rondas/{rondaId}/rolls/{week} {
+      allow get: if request.auth != null && (isAdmin() || isRondaHost(rondaId));
+    }
   }
 }

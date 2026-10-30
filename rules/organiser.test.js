@@ -187,6 +187,9 @@ describe('what stays on the server', () => {
     for (const db of [member('demo-101'), member('demo-102'), admin()]) {
       await assertFails(getDoc(doc(db, 'places/salon')));
       await assertFails(getDoc(doc(db, 'users/demo-102/private/agent')));
+    }
+    // The week, with the move's override, is the admin's since #47 (rules/hosts.test.js).
+    for (const db of [member('demo-101'), member('demo-102')]) {
       await assertFails(getDoc(doc(db, `rondas/r1/weeks/${WEEK}`)));
     }
   });

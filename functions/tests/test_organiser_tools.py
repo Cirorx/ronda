@@ -5,6 +5,7 @@ import json
 
 import pytest
 
+import rsvp
 from organiser import gates, outbox
 from organiser.model import ToolCall
 from organiser.tools import TOOLS, Meeting, Toolbox, ToolError
@@ -32,7 +33,7 @@ APP = "https://example.test/app/ronda"
 def toolbox(db=None, *, now=WED_18, weather=None, sender=None, fallback=False, **ronda_fields):
     db = db or FakeFirestore(documents(**ronda_fields))
     ronda = db.documents[f"rondas/{RONDA}"]
-    meeting = Meeting(RONDA, ronda, THURSDAY, 16, WEEK, -34.8, -55.885)
+    meeting = Meeting(RONDA, ronda, THURSDAY, rsvp.meeting_hour(ronda), WEEK, -34.8, -55.885)
     return Toolbox(
         db=db,
         now=now,

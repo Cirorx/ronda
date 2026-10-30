@@ -14,8 +14,9 @@ Where things live (docs/ARCHITECTURE.md § Data model):
 
 Nothing here talks to FCM: `rsvp_messages` builds HTTP v1 messages as plain dicts and the
 caller's `send` delivers them (main.py), so the tests and the emulator never reach Google. No
-address ever goes into a push: the line names the pretext and, once a host sets one, the public
-place's name. Logs carry counts only, never a token or a uid.
+address ever goes into a push: the line names the pretext and, once the admin sets them, the
+hour and the public place's name; until then the body says "Lugar y hora a confirmar.". Logs
+carry counts only, never a token or a uid.
 """
 
 import logging
@@ -64,6 +65,14 @@ DAY_LABELS = {
     "sun": "Domingo",
 }
 BAND_LABELS = {"morning": "a la mañana", "afternoon": "a la tarde", "evening": "a la noche"}
+BANDS = {"morning": (9, 12), "afternoon": (14, 18), "evening": (19, 21)}
+"""Each time band from its first hour to its end (docs/PRODUCT.md § Onboarding: "Mañana: de 9 a
+12 · Tarde: de 14 a 18 · Noche: de 19 a 21")."""
+
+MEETING_HOURS = 1
+"""A ronda's hour (`slot.hour`) starts inside its band at least this many hours before the
+band ends, so the meeting fits: 9:00 to 11:00, 14:00 to 17:00, 19:00 to 20:00."""
+
 PRETEXT_LABELS = {
     "mate": "mate en la rambla",
     "truco": "truco",
@@ -133,6 +142,48 @@ def inside_gate(now: datetime) -> bool:
     return QUIET_UNTIL <= local(now).hour < QUIET_FROM
 
 
+# --- Where and when a ronda meets ---------------------------------------------------------
+
+
+def hour_in_band(hour: object, band: object) -> bool:
+    """Whether `hour` ("16:30") is a start the ronda's time band allows (`MEETING_HOURS`)."""
+    if not isinstance(hour, str) or band not in BANDS:
+        return False
+    try:
+        start = time.fromisoformat(hour)
+    except ValueError:
+        return False
+    first, end = BANDS[band]
+    return len(hour) == 5 and time(first) <= start <= time(end - MEETING_HOURS)
+
+
+def meeting_hour(ronda: dict) -> str | None:
+    """The hour the ronda meets ("16:00"), once the admin set one inside its band."""
+    slot = ronda.get("slot") or {}
+    hour = slot.get("hour")
+    return hour if hour_in_band(hour, slot.get("time")) else None
+
+
+def place_name(ronda: dict) -> str | None:
+    """The public place's name, once the admin set one."""
+    place = ronda.get("place")
+    if isinstance(place, dict) and isinstance(place.get("name"), str) and place["name"]:
+        return place["name"]
+    return None
+
+
+def to_confirm(ronda: dict) -> str:
+    """ "Lugar y hora a confirmar.": what the ronda doesn't know yet, so nobody invents it."""
+    place, hour = place_name(ronda) is not None, meeting_hour(ronda) is not None
+    if place and hour:
+        return ""
+    if hour:
+        return "Lugar a confirmar."
+    if place:
+        return "Hora a confirmar."
+    return "Lugar y hora a confirmar."
+
+
 # --- The view members read ----------------------------------------------------------------
 
 
@@ -191,12 +242,14 @@ def week_view(
 
 
 def ronda_line(ronda: dict) -> str:
-    """ "Sábado a la tarde · mate en la rambla", and the public place once a host set one."""
+    """ "Sábado 16:00 · mate en la rambla · frente al quiosco": the hour and the public place
+    once the admin set them; until then the band ("Sábado a la tarde") and no place."""
     slot = ronda.get("slot", {})
-    when = f"{DAY_LABELS.get(slot.get('day'), '')} {BAND_LABELS.get(slot.get('time'), '')}"
+    hour = meeting_hour(ronda) or BAND_LABELS.get(slot.get("time"), "")
+    when = f"{DAY_LABELS.get(slot.get('day'), '')} {hour}"
     parts = [when.strip(), PRETEXT_LABELS.get(ronda.get("pretext"), ronda.get("pretext", ""))]
-    if (place := ronda.get("place")) and isinstance(place, dict) and place.get("name"):
-        parts.append(place["name"])
+    if place := place_name(ronda):
+        parts.append(place)
     return " · ".join(part for part in parts if part)
 
 
@@ -210,10 +263,10 @@ def _names(names: list[str]) -> str:
     return f"{', '.join(shown[:-1])} y {shown[-1]}"
 
 
-def push_body(going_names: list[str], brings: Iterable[str]) -> str:
+def push_body(going_names: list[str], brings: Iterable[str], *, unknown: str = "") -> str:
     """ "Ya van Mirta y Jorge. Te toca llevar el pan. ¿Venís?": who's coming so far, what this
-    member brings, and the question."""
-    sentences = []
+    member brings, and the question; `unknown` ("Lugar y hora a confirmar.") goes first."""
+    sentences = [unknown] if unknown else []
     if going_names:
         verb = "Ya va" if len(going_names) == 1 else "Ya van"
         sentences.append(f"{verb} {_names(going_names)}.")
@@ -485,7 +538,7 @@ def _send_ronda(
         if uid in rsvp or _paused_on(member, meeting):
             continue
         addressed.add(uid)
-        body = push_body(going, member.get("brings", []))
+        body = push_body(going, member.get("brings", []), unknown=to_confirm(ronda))
         for message in rsvp_messages(
             tokens=_tokens(db, uid),
             title=title,

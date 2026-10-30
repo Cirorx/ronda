@@ -103,8 +103,8 @@ describe('the raw rsvp map', () => {
     await assertFails(getDocs(collection(member('demo-001'), 'rondas/r1/weeks')));
   });
 
-  test('nor the admin from a client', async () => {
-    await assertFails(getDoc(doc(admin(), `rondas/r1/weeks/${WEEK}`)));
+  test('the admin reads it, for attendance and the numbers (#47, rules/hosts.test.js)', async () => {
+    await assertSucceeds(getDoc(doc(admin(), `rondas/r1/weeks/${WEEK}`)));
   });
 
   test('nobody writes an answer into it from a client', async () => {
