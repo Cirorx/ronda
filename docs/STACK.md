@@ -626,6 +626,21 @@ so [Quiero sumarme] signs in on the same site. Print at 100% (no "fit to page"):
 8. A test push: Console → Messaging → new notification campaign → Send test message, with a token
    from Firestore (`users/{uid}/tokens`: the document id is the token).
 
+## Deploying
+`scripts/deploy.sh` keeps the real project in step with main, one area at a time: Firestore
+rules, indexes, Storage rules, functions and hosting.
+- `scripts/deploy.sh --status` lists, per area, what changed on main since that area was last
+  deployed, plus the functions in `functions/main.py` that aren't live yet and the live ones no
+  longer in the code. It deploys nothing.
+- `scripts/deploy.sh` deploys only the pending areas, non-interactively, from a clean `main` in
+  step with `origin/main`. It then moves one tag per area to that commit
+  (`deploy/ronda-uy/functions`, …) and pushes it, so the status is right on any machine.
+- Hosting builds the production web app first, which needs the Web Push public key in
+  `FCM_VAPID_KEY` (environment or the git-ignored `.env`). Without it hosting is skipped and
+  stays pending.
+- Removing a function makes a non-interactive deploy stop; check the list, then run
+  `firebase deploy --only functions --force` yourself.
+
 ## What doesn't work on web
 Face blur (no ML Kit): the photo flows say "Hacelo desde la app del teléfono". Push buttons
 (Chromium only). iPhone push without a Home Screen install. Everything else works.
