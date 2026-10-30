@@ -3,6 +3,7 @@ import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:equatable/equatable.dart';
 import 'package:profile_repository/profile_repository.dart';
+import 'package:push_repository/push_repository.dart';
 
 part 'app_event.dart';
 part 'app_state.dart';
@@ -14,10 +15,14 @@ part 'app_state.dart';
 /// It also carries the conditions accepted on the welcome screen across
 /// sign-in: tapping a door is the acceptance, and it is written to
 /// `users/{uid}` only once the person is signed in.
+///
+/// Signing out goes through here too ([AppSignOutRequested]), so this
+/// phone's push token is forgotten while the member may still delete it.
 class AppBloc extends Bloc<AppEvent, AppState> {
   new({
     required AuthRepository authRepository,
     required this._profileRepository,
+    required this._pushRepository,
     this._now = DateTime.now,
   }) : _authRepository = authRepository,
        super(AppState.fromUser(authRepository.currentUser)) {
@@ -25,6 +30,8 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     // A new user cancels the previous user's profile subscription.
     on<_AppUserChanged>(_onUserChanged, transformer: restartable());
     on<AppTermsAccepted>(_onTermsAccepted);
+    // A second tap while the first sign-out runs does nothing.
+    on<AppSignOutRequested>(_onSignOutRequested, transformer: droppable());
   }
 
   /// The version of "Las condiciones, en corto" the welcome screen links.
@@ -33,6 +40,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
 
   final AuthRepository _authRepository;
   final ProfileRepository _profileRepository;
+  final PushRepository _pushRepository;
   final DateTime Function() _now;
 
   Future<void> _onUserSubscriptionRequested(
@@ -89,6 +97,28 @@ class AppBloc extends Bloc<AppEvent, AppState> {
       ),
       onError: addError,
     );
+  }
+
+  /// Deletes this phone's push token and its document first, while the
+  /// member is still signed in (only they may delete it), then signs out.
+  /// A token that can't be deleted is reported and never holds the sign-out
+  /// back. The state follows from the auth stream, as for any sign-out.
+  Future<void> _onSignOutRequested(
+    AppSignOutRequested event,
+    Emitter<AppState> emit,
+  ) async {
+    final user = state.user;
+    if (user.isEmpty) return;
+    try {
+      await _pushRepository.unregisterDevice(user.id);
+    } on UnregisterDeviceFailure catch (error, stackTrace) {
+      addError(error, stackTrace);
+    }
+    try {
+      await _authRepository.signOut();
+    } on SignOutFailure catch (error, stackTrace) {
+      addError(error, stackTrace);
+    }
   }
 
   Future<void> _onTermsAccepted(

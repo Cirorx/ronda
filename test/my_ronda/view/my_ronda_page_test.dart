@@ -47,6 +47,7 @@ void main() {
       );
       when(pushRepository.permission)
           .thenAnswer((_) async => PushPermission.notAsked);
+      when(pushRepository.promptSnoozed).thenAnswer((_) async => false);
       when(() => rondaRepository.watchThisWeek(MyRondaFixtures.uid))
           .thenAnswer((_) => Stream.value(null));
     });

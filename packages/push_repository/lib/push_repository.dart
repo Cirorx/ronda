@@ -1,6 +1,6 @@
 /// This phone's push notifications for a member: the permission and the
-/// FCM token saved under `users/{uid}/tokens`, over push_client and
-/// ronda_api.
+/// FCM token saved under `users/{uid}/tokens`, and when "Ahora no" was
+/// tapped, over push_client, ronda_api and device_store.
 library;
 
 export 'src/models/models.dart';

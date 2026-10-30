@@ -222,6 +222,11 @@ class PushClient {
         )
       : _messaging.getToken();
 
+  /// Deletes this app instance's FCM token: nothing sent to it arrives any
+  /// more, and the next [token] is a new one. On web it also drops the
+  /// browser's push subscription.
+  Future<void> deleteToken() => _messaging.deleteToken();
+
   /// A new token whenever FCM rotates this app instance's token.
   Stream<String> get tokenRefreshes => _messaging.onTokenRefresh;
 

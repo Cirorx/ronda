@@ -83,6 +83,8 @@ unlinked_spec.ds
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties
 **/android/.idea/
+# Kotlin's per-project compiler caches (Kotlin Gradle plugin 2.x)
+**/android/.kotlin/
 **/android/app/debug
 **/android/app/profile
 **/android/app/release

@@ -199,7 +199,10 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   termo, mazo, mates
   → Muse Image makes the background; "Hay un mate de más. Es tuyo." and the QR are drawn in
   code. Preview: "Así queda tu volante" [Imprimir o compartir]. Phone app only (no face
-  detection on web): the web app says "Hacelo desde la app del teléfono".
+  detection on web): the web app says "Hacelo desde la app del teléfono". Its QR opens the
+  same `/f/{id}` page under its own heading: "Hay un mate de más cerca tuyo", "Una ronda de este
+  barrio guarda un lugar para alguien nuevo: 5 o 6 vecinos que se juntan una vez por semana,
+  siempre en lugares públicos.", the rondas of that barrio, and no bus.
 
 ## Truco
 - "Campeonato de los martes", 3 v 3, "Los equipos cambian cada semana. Así todos juegan con

@@ -17,8 +17,8 @@ enum PushStatus {
   /// The phone refused without asking: the card says how to turn them on.
   blocked,
 
-  /// "Ahora no", a "no" in the system's prompt, or refused for good before
-  /// the card ever showed: nothing to show until the next launch.
+  /// "Ahora no" (now or lately), a "no" in the system's prompt, or refused
+  /// for good before the card ever showed: nothing to show for now.
   dismissed,
 }
 

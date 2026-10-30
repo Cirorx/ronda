@@ -90,7 +90,8 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
     place an invented host has set) over seats generated the same way for every barrio ×
     pretext × slot the demo people pick, loaded by `scripts/seed.py` (§ Demo data).
 - `users/{uid}/tokens/{token}`: platform (android | ios | web), updatedAt (server time). Written
-  and deleted by the owner only, never read by a client (rules test: `rules/tokens.test.js`). The
+  and deleted by the owner only, never read by a client (rules test: `rules/tokens.test.js`); the
+  phone deletes its own on sign-out, before the auth state changes. The
   sender builds a different payload per platform (`docs/STACK.md` § Push).
 - Rules accept on `users/{uid}` only the fields above (typed: `ageBand` one of the bands,
   `firstName` 1–30 characters, `terms` exactly `{version, acceptedAt}`, `slots`, `pretexts` and

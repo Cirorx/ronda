@@ -337,7 +337,10 @@ Built in #27 (`packages/push_client`, `packages/push_repository`, `lib/push/`):
 - **Token:** `users/{uid}/tokens/{token}` = exactly `{platform, updatedAt}` (server time), written
   by the owner only and never read by a client (`firestore.rules`, tested in
   `rules/tokens.test.js`). Saved when notifications are allowed, on every launch that lands on
-  Mi ronda, and again on every FCM token refresh. The token stays inside `push_repository`: no
+  Mi ronda, and again on every FCM token refresh. Signing out (`AppSignOutRequested` in
+  `AppBloc`) first deletes the document, while the member still may, then the FCM token itself
+  (`deleteToken`), each step giving up after 5 s; a browser that never allowed notifications is
+  skipped, since asking it for a token opens its prompt. The token stays inside `push_repository`: no
   state, log or failure carries it. There is no FCM emulator, so the development flavor gets its
   token from the real `ronda-uy` sender and saves it in the Firestore emulator. It is read with
   `getToken()`, which firebase_messaging 17 deprecates for installation ids (`register()`); the
@@ -345,7 +348,8 @@ Built in #27 (`packages/push_client`, `packages/push_repository`, `lib/push/`):
   sender moves.
 - **The ask:** never at launch. Mi ronda shows "¿Te avisamos los martes?" (PRODUCT copy) while
   the phone can still ask; [Sí, avisame] opens the system prompt (`POST_NOTIFICATIONS` on
-  Android 13+, the browser's on web), [Ahora no] hides it until the next launch. A phone that
+  Android 13+, the browser's on web), [Ahora no] hides it for 7 days across launches
+  (`push.promptSnoozedAt` in `device_store`, `PushRepository.promptSnooze`; #51). A phone that
   refuses for good gets one line on how to turn notifications on in its settings. Maestro taps
   `push.allow` / `push.later`; `launchApp` grants the permission itself, so the card only shows
   after `adb shell pm revoke <app id> android.permission.POST_NOTIFICATIONS`.

@@ -1,4 +1,4 @@
-// Shared by Cerca tuyo (/) and the tear-off flyer's page (/f/{id}): the copy in
+// Shared by Cerca tuyo (/) and the flyers' page (/f/{id}): the copy in
 // es-419 and English, the barrio names, and how a row of counts reads. Plain
 // browser JavaScript, no build step and no Firebase SDK: these pages must load
 // fast on old phones (docs/DESIGN.md § Tooling and scope).
@@ -45,6 +45,9 @@ const STRINGS = {
     landingTitle: 'Cerca de este volante',
     landingLead:
       'Rondas a pocas cuadras de acá: grupos de 5 o 6 vecinos que se juntan una vez por semana, siempre en lugares públicos.',
+    mateLandingTitle: 'Hay un mate de más cerca tuyo',
+    mateLandingLead:
+      'Una ronda de este barrio guarda un lugar para alguien nuevo: 5 o 6 vecinos que se juntan una vez por semana, siempre en lugares públicos.',
     noRondasHere: 'Todavía no hay rondas a pocas cuadras de acá.',
     notFound: 'No encontramos este volante.',
     allBarrios: 'Ver todos los barrios',
@@ -101,6 +104,9 @@ const STRINGS = {
     landingTitle: 'Near this flyer',
     landingLead:
       'Rondas a few blocks from here: groups of 5 or 6 neighbours who meet once a week, always in public places.',
+    mateLandingTitle: 'A spare mate near you',
+    mateLandingLead:
+      'A ronda in this barrio keeps a place for someone new: 5 or 6 neighbours who meet once a week, always in public places.',
     noRondasHere: 'No rondas a few blocks from here yet.',
     notFound: "We couldn't find this flyer.",
     allBarrios: 'See every barrio',

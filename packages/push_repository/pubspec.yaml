@@ -1,5 +1,5 @@
 name: push_repository
-description: This phone's push notifications for a member, over push_client and ronda_api.
+description: This phone's push notifications for a member, over push_client, ronda_api and device_store.
 version: 0.1.0+1
 publish_to: none
 
@@ -8,6 +8,8 @@ environment:
   flutter: ^3.47.0
 
 dependencies:
+  device_store:
+    path: ../device_store
   flutter:
     sdk: flutter
   push_client:
@@ -18,6 +20,7 @@ dependencies:
 dev_dependencies:
   cloud_firestore: ^7.1.0
   cloud_functions: ^7.0.1
+  fake_async: ^1.3.3
   fake_cloud_firestore: ^4.5.0
   firebase_storage: ^14.0.1
   flutter_test:

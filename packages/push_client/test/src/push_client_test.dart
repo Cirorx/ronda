@@ -275,6 +275,16 @@ void main() {
       });
     });
 
+    group('deleteToken', () {
+      test("deletes this app instance's FCM token", () async {
+        when(messaging.deleteToken).thenAnswer((_) async {});
+
+        await buildSubject().deleteToken();
+
+        verify(messaging.deleteToken).called(1);
+      });
+    });
+
     group('tokenRefreshes', () {
       test("are FCM's new tokens", () {
         when(() => messaging.onTokenRefresh)

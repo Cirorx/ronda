@@ -21,6 +21,11 @@ final class const AppTermsAccepted({
   List<Object> get props => [door];
 }
 
+/// The member asked to sign out of this phone.
+final class AppSignOutRequested extends AppEvent {
+  const new();
+}
+
 /// Firebase Auth reported a sign-in or a sign-out.
 final class const _AppUserChanged(final User user) extends AppEvent {
   @override

@@ -25,4 +25,19 @@ extension DeviceTokensApi on RondaApi {
       .collection(tokensCollection)
       .doc(token)
       .set({'platform': platform, 'updatedAt': FieldValue.serverTimestamp()});
+
+  /// Deletes `users/{uid}/tokens/{token}`, if it exists. Only [uid] may, so
+  /// it must run while they are still signed in.
+  ///
+  /// As with [saveDeviceToken], a failed delete's error can carry the token:
+  /// callers must not log errors from this method.
+  Future<void> deleteDeviceToken({
+    required String uid,
+    required String token,
+  }) => firestore
+      .collection(RondaApi.usersCollection)
+      .doc(uid)
+      .collection(tokensCollection)
+      .doc(token)
+      .delete();
 }

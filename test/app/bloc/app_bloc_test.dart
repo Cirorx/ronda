@@ -5,11 +5,14 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:profile_repository/profile_repository.dart';
+import 'package:push_repository/push_repository.dart';
 import 'package:ronda/app/app.dart';
 
 class _MockAuthRepository extends Mock implements AuthRepository;
 
 class _MockProfileRepository extends Mock implements ProfileRepository;
+
+class _MockPushRepository extends Mock implements PushRepository;
 
 const _user = User(id: 'demo-uid');
 
@@ -33,6 +36,7 @@ void main() {
   group(AppBloc, () {
     late AuthRepository authRepository;
     late ProfileRepository profileRepository;
+    late PushRepository pushRepository;
 
     setUpAll(() {
       registerFallbackValue(_terms);
@@ -41,6 +45,7 @@ void main() {
     setUp(() {
       authRepository = _MockAuthRepository();
       profileRepository = _MockProfileRepository();
+      pushRepository = _MockPushRepository();
       when(() => authRepository.currentUser).thenReturn(User.empty);
       when(() => authRepository.user)
           .thenAnswer((_) => const Stream<User>.empty());
@@ -53,6 +58,7 @@ void main() {
     AppBloc buildBloc() => AppBloc(
       authRepository: authRepository,
       profileRepository: profileRepository,
+      pushRepository: pushRepository,
       now: () => _tappedAt,
     );
 
@@ -77,8 +83,73 @@ void main() {
         AppBloc(
           authRepository: authRepository,
           profileRepository: profileRepository,
+          pushRepository: pushRepository,
         ).state.status,
         equals(AppStatus.unauthenticated),
+      );
+    });
+
+    group(AppSignOutRequested, () {
+      setUp(() {
+        when(() => authRepository.currentUser).thenReturn(_user);
+        when(() => pushRepository.unregisterDevice(any()))
+            .thenAnswer((_) async {});
+        when(authRepository.signOut).thenAnswer((_) async {});
+      });
+
+      blocTest<AppBloc, AppState>(
+        "forgets this phone's push token, then signs out",
+        build: buildBloc,
+        act: (bloc) => bloc.add(const AppSignOutRequested()),
+        expect: () => <AppState>[],
+        verify: (_) => verifyInOrder([
+          () => pushRepository.unregisterDevice('demo-uid'),
+          authRepository.signOut,
+        ]),
+      );
+
+      blocTest<AppBloc, AppState>(
+        'signs out and reports it when the token cannot be forgotten',
+        setUp: () =>
+            when(() => pushRepository.unregisterDevice(any()))
+                .thenThrow(const UnregisterDeviceFailure()),
+        build: buildBloc,
+        act: (bloc) => bloc.add(const AppSignOutRequested()),
+        errors: () => [isA<UnregisterDeviceFailure>()],
+        verify: (_) => verify(authRepository.signOut).called(1),
+      );
+
+      blocTest<AppBloc, AppState>(
+        'reports a sign-out that fails',
+        setUp: () =>
+            when(authRepository.signOut).thenThrow(const SignOutFailure()),
+        build: buildBloc,
+        act: (bloc) => bloc.add(const AppSignOutRequested()),
+        errors: () => [isA<SignOutFailure>()],
+      );
+
+      blocTest<AppBloc, AppState>(
+        'signs out once when asked twice in a row',
+        build: buildBloc,
+        act: (bloc) => bloc
+          ..add(const AppSignOutRequested())
+          ..add(const AppSignOutRequested()),
+        verify: (_) {
+          verify(() => pushRepository.unregisterDevice('demo-uid')).called(1);
+          verify(authRepository.signOut).called(1);
+        },
+      );
+
+      blocTest<AppBloc, AppState>(
+        'does nothing when nobody is signed in',
+        setUp: () =>
+            when(() => authRepository.currentUser).thenReturn(User.empty),
+        build: buildBloc,
+        act: (bloc) => bloc.add(const AppSignOutRequested()),
+        verify: (_) {
+          verifyNever(() => pushRepository.unregisterDevice(any()));
+          verifyNever(authRepository.signOut);
+        },
       );
     });
 
@@ -379,6 +450,7 @@ void main() {
   group(AppEvent, () {
     test('carries the door as its only prop', () {
       expect(const AppUserSubscriptionRequested().props, isEmpty);
+      expect(const AppSignOutRequested().props, isEmpty);
       expect(
         const AppTermsAccepted(door: OnboardingDoor.voice).props,
         equals([OnboardingDoor.voice]),

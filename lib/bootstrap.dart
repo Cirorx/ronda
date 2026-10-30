@@ -243,6 +243,7 @@ Future<void> bootstrap(
   final pushRepository = PushRepository(
     pushClient: pushClient,
     rondaApi: rondaApi,
+    deviceStore: deviceStore,
   );
   final flyerRepository = FlyerRepository(
     faceBlur: faceBlur,

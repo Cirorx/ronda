@@ -16,6 +16,7 @@ void main() {
     setUp(() {
       cubit = _MockPushCubit();
       when(() => cubit.allowTapped()).thenAnswer((_) async {});
+      when(() => cubit.dismissed()).thenAnswer((_) async {});
     });
 
     Future<void> pump(

@@ -1,6 +1,7 @@
-// The tear-off flyer's page, /f/{id}: the rondas a few blocks from where the
-// flyer hangs and that stop's last bus, from the flyer_landing function at
-// /api/f/{id} (firebase.json). The first load in a tab counts one scan (POST);
+// The flyers' page, /f/{id}: the rondas a few blocks from where the flyer
+// hangs and, for a tear-off, that stop's last bus, from the flyer_landing
+// function at /api/f/{id} (firebase.json). An "Un mate de más" flyer
+// (kind "mate") gets its own title and intro. The first load in a tab counts one scan (POST);
 // a reload in the same tab only reads (GET), so refreshing doesn't inflate it.
 // Link previews fetch the HTML and run no script, so they count nothing.
 import {
@@ -48,6 +49,7 @@ async function load() {
 }
 
 function render(page) {
+  if (page.kind === 'mate') renderMateHeading();
   const parts = [];
   if (page.rondas.length) {
     const list = element('ul', 'seats');
@@ -68,9 +70,18 @@ function render(page) {
   renderBus(page.lastBus);
 }
 
+// The tear-off's heading is the page's own; a mate flyer's names the seat its
+// ronda keeps for someone new (docs/PRODUCT.md § Flyers).
+function renderMateHeading() {
+  const title = t('mateLandingTitle');
+  document.querySelector('h1').textContent = title;
+  document.querySelector('.lead').textContent = t('mateLandingLead');
+  document.title = `${title} · Ronda`;
+}
+
 // "Último ómnibus desde {stop}": each day type's time, marked approximate
 // where the timetable has no time at this stop, with the published time it
-// comes from.
+// comes from. Stays hidden when no day has a bus, as on every mate flyer.
 function renderBus(lastBus) {
   if (!lastBus || !DAY_TYPES.some((dayType) => lastBus[dayType])) return;
   const title = lastBus.stop ? t('lastBusFrom', { stop: lastBus.stop }) : t('lastBus');

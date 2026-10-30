@@ -22,6 +22,8 @@ void main() {
       when(() => pushRepository.registerDevice(any())).thenAnswer((_) async {});
       when(() => pushRepository.keepDeviceRegistered(any()))
           .thenAnswer((_) => registrations.stream);
+      when(pushRepository.promptSnoozed).thenAnswer((_) async => false);
+      when(pushRepository.snoozePrompt).thenAnswer((_) async {});
     });
 
     PushCubit build() => PushCubit(uid: _uid, pushRepository: pushRepository);
@@ -68,7 +70,38 @@ void main() {
             verifyNever(pushRepository.askPermission);
           },
         );
+
+        blocTest<PushCubit, PushState>(
+          'shows nothing when the permission is $permission and "Ahora no" '
+          'was tapped lately',
+          setUp: () {
+            when(pushRepository.permission).thenAnswer((_) async => permission);
+            when(pushRepository.promptSnoozed).thenAnswer((_) async => true);
+          },
+          build: build,
+          act: (cubit) => cubit.started(),
+          expect: () => [state(PushStatus.dismissed)],
+        );
       }
+
+      blocTest<PushCubit, PushState>(
+        'emits nothing when closed while reading "Ahora no"',
+        setUp: () {
+          when(pushRepository.permission)
+              .thenAnswer((_) async => PushPermission.notAsked);
+          when(pushRepository.promptSnoozed).thenAnswer((_) async {
+            await Future<void>.delayed(Duration.zero);
+            return false;
+          });
+        },
+        build: build,
+        act: (cubit) async {
+          unawaited(cubit.started());
+          await Future<void>.delayed(Duration.zero);
+          await cubit.close();
+        },
+        expect: () => <PushState>[],
+      );
 
       blocTest<PushCubit, PushState>(
         'shows nothing when the phone refused for good before',
@@ -258,12 +291,36 @@ void main() {
 
     group('dismissed', () {
       blocTest<PushCubit, PushState>(
-        'hides the card',
+        'hides the card and remembers "Ahora no" on the phone',
         build: build,
         seed: () => state(PushStatus.offered),
         act: (cubit) => cubit.dismissed(),
         expect: () => [state(PushStatus.dismissed)],
-        verify: (cubit) => expect(cubit.state.showsPrompt, isFalse),
+        verify: (cubit) {
+          expect(cubit.state.showsPrompt, isFalse);
+          verify(pushRepository.snoozePrompt).called(1);
+        },
+      );
+
+      blocTest<PushCubit, PushState>(
+        'hides the card and reports it when "Ahora no" cannot be remembered',
+        setUp: () =>
+            when(pushRepository.snoozePrompt)
+                .thenThrow(const SnoozePromptFailure()),
+        build: build,
+        seed: () => state(PushStatus.offered),
+        act: (cubit) => cubit.dismissed(),
+        expect: () => [state(PushStatus.dismissed)],
+        errors: () => [isA<SnoozePromptFailure>()],
+      );
+
+      blocTest<PushCubit, PushState>(
+        'hides the blocked card ("Entendido") without remembering anything',
+        build: build,
+        seed: () => state(PushStatus.blocked),
+        act: (cubit) => cubit.dismissed(),
+        expect: () => [state(PushStatus.dismissed)],
+        verify: (_) => verifyNever(pushRepository.snoozePrompt),
       );
     });
   });

@@ -39,6 +39,7 @@ class const App({
         create: (_) => AppBloc(
           authRepository: authRepository,
           profileRepository: profileRepository,
+          pushRepository: pushRepository,
         )..add(const AppUserSubscriptionRequested()),
         child: const AppView(),
       ),

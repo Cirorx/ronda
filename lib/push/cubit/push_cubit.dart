@@ -8,7 +8,8 @@ part 'push_state.dart';
 
 /// "¿Te avisamos los martes?": asks for notifications from a tap, never on
 /// its own, and keeps this phone's token saved for [_uid] once they are
-/// allowed.
+/// allowed. "Ahora no" keeps the card away for
+/// [PushRepository.promptSnooze], across launches.
 ///
 /// A token that can't be saved (no network, an iPhone without APNs) is
 /// reported to the observer and tried again on the next launch; the person
@@ -22,7 +23,8 @@ class PushCubit extends Cubit<PushState> {
   StreamSubscription<void>? _registrations;
 
   /// Reads whether notifications are allowed: if they are, saves this
-  /// phone's token; if the phone can still ask, offers the card.
+  /// phone's token; if the phone can still ask, offers the card, unless
+  /// "Ahora no" was tapped lately.
   Future<void> started() async {
     final PushPermission permission;
     try {
@@ -38,7 +40,13 @@ class PushCubit extends Cubit<PushState> {
         emit(const PushState(status: PushStatus.allowed));
         await _register();
       case PushPermission.notAsked || PushPermission.refused:
-        emit(const PushState(status: PushStatus.offered));
+        final snoozed = await _pushRepository.promptSnoozed();
+        if (isClosed) return;
+        emit(
+          PushState(
+            status: snoozed ? PushStatus.dismissed : PushStatus.offered,
+          ),
+        );
       case PushPermission.blocked:
         emit(const PushState(status: PushStatus.dismissed));
     }
@@ -67,8 +75,21 @@ class PushCubit extends Cubit<PushState> {
     }
   }
 
-  /// "Ahora no" or "Entendido": the card goes until the next launch.
-  void dismissed() => emit(const PushState(status: PushStatus.dismissed));
+  /// "Ahora no" or "Entendido": the card goes. "Ahora no" is remembered on
+  /// the phone, so the card stays away on the next launches too; a failure
+  /// to remember it is reported, and the card comes back on the next launch.
+  /// "Entendido" needs nothing remembered: a phone that refused for good
+  /// never gets the card at launch.
+  Future<void> dismissed() async {
+    final later = state.status == PushStatus.offered;
+    emit(const PushState(status: PushStatus.dismissed));
+    if (!later) return;
+    try {
+      await _pushRepository.snoozePrompt();
+    } on SnoozePromptFailure catch (error, stackTrace) {
+      addError(error, stackTrace);
+    }
+  }
 
   Future<void> _register() async {
     try {

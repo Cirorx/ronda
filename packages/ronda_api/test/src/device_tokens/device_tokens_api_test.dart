@@ -62,5 +62,33 @@ void main() {
         expect(tokens.docs.single.data()['platform'], equals('web'));
       });
     });
+
+    group('deleteDeviceToken', () {
+      test("deletes that token's document and no other", () async {
+        for (final token in ['fake-token', 'other-token']) {
+          await subject.saveDeviceToken(
+            uid: 'demo-uid',
+            token: token,
+            platform: 'android',
+          );
+        }
+
+        await subject.deleteDeviceToken(uid: 'demo-uid', token: 'fake-token');
+
+        final tokens = await firestore
+            .collection('users/demo-uid/tokens')
+            .get();
+        expect(tokens.docs.map((doc) => doc.id), equals(['other-token']));
+      });
+
+      test('does nothing when the token was never saved', () async {
+        await subject.deleteDeviceToken(uid: 'demo-uid', token: 'fake-token');
+
+        final tokens = await firestore
+            .collection('users/demo-uid/tokens')
+            .get();
+        expect(tokens.docs, isEmpty);
+      });
+    });
   });
 }
