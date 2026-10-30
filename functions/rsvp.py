@@ -196,6 +196,13 @@ def counted(members: dict[str, dict]) -> dict[str, dict]:
     return {uid: m for uid, m in members.items() if m.get("state", "active") != "left"}
 
 
+def guests(snapshot) -> dict[str, dict]:
+    """`weeks/{w}.guests {uid: {firstName, brings, offerId, at}}`: who took a seat freed by an
+    "esta no" from the bench for that meeting (bench.py). A guest goes that week only and is no
+    member: the view lists them as going, nothing else counts them."""
+    return dict((snapshot.to_dict() or {}).get("guests", {})) if snapshot.exists else {}
+
+
 def yes_uids(rsvp: dict[str, str], members: dict[str, dict], names: dict[str, str]) -> list[str]:
     """The members who said yes, in first-name order."""
     uids = [uid for uid, value in rsvp.items() if value == YES and uid in counted(members)]
@@ -208,9 +215,11 @@ def week_view(
     first_names: dict[str, str],
     rsvp: dict[str, str],
     now: datetime,
+    guests: dict[str, dict] | None = None,
 ) -> dict:
     """`rondas/{id}/views/week`: the yeses by first name with what they bring, and only counts
-    for the rest. A member paused over this meeting who didn't answer counts as "no puede"."""
+    for the rest. A member paused over this meeting who didn't answer counts as "no puede".
+    `guests` (`weeks/{w}.guests`) go too, marked `guest`, in first-name order with the rest."""
     no = unanswered = 0
     for uid, member in counted(members).items():
         value = rsvp.get(uid)
@@ -228,6 +237,17 @@ def week_view(
         }
         for uid in yes_uids(rsvp, members, first_names)
     ]
+    going += [
+        {
+            "uid": uid,
+            "firstName": guest.get("firstName", ""),
+            "brings": list(guest.get("brings", [])),
+            "guest": True,
+        }
+        for uid, guest in (guests or {}).items()
+        if uid not in counted(members)
+    ]
+    going.sort(key=lambda person: (person["firstName"], person["uid"]))
     return {
         "week": iso_week(meeting),
         "date": meeting.isoformat(),
@@ -406,12 +426,13 @@ def answer(
     week_ref = db.document(f"rondas/{ronda_id}/weeks/{current}")
 
     def write(transaction) -> None:
-        rsvp = _rsvp(week_ref.get(transaction=transaction))
+        week = week_ref.get(transaction=transaction)
+        rsvp = _rsvp(week)
         rsvp[uid] = value
         transaction.set(week_ref, {"date": meeting.isoformat(), "rsvp": {uid: value}}, merge=True)
         transaction.set(
             db.document(f"rondas/{ronda_id}/views/{VIEW}"),
-            week_view(meeting, members, names, rsvp, now),
+            week_view(meeting, members, names, rsvp, now, guests(week)),
         )
         transaction.set(
             db.document(f"rondas/{ronda_id}/answers/{uid}"),
@@ -486,10 +507,11 @@ def _roll_view(db, ronda_id, week_ref, meeting, members, names, now) -> None:
 
     def roll(transaction) -> None:
         view = view_ref.get(transaction=transaction)
-        rsvp = _rsvp(week_ref.get(transaction=transaction))
+        week = week_ref.get(transaction=transaction)
         if view.exists and (view.to_dict() or {}).get("week") == iso_week(meeting):
             return
-        transaction.set(view_ref, week_view(meeting, members, names, rsvp, now))
+        view_now = week_view(meeting, members, names, _rsvp(week), now, guests(week))
+        transaction.set(view_ref, view_now)
 
     _in_transaction(db, roll)
 
@@ -513,8 +535,9 @@ def _send_week(db, ronda, ronda_id, week_ref, meeting, members, names, now, send
     closing = seguimos.close(db, ronda_id, ronda, members, meeting, now)
     if closing is None:
         return _send_ronda(db, ronda, ronda_id, week_ref, meeting, members, names, send, app_url)[0]
+    week = week_ref.get()
     db.document(f"rondas/{ronda_id}/views/{VIEW}").set(
-        week_view(meeting, closing.members, names, _rsvp(week_ref.get()), now)
+        week_view(meeting, closing.members, names, _rsvp(week), now, guests(week))
     )
     delivered, pushed = 0, set()
     if closing.rsvp_goes_out:

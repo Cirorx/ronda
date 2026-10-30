@@ -109,6 +109,21 @@ enum MessageOutcome {
   none,
 }
 
+/// Who decided a step, as the trace labels it (`functions/organiser/trace.py`).
+enum StepAuthor {
+  /// A rule in code: the gates, who is on a bench, what happens on expiry.
+  code,
+
+  /// The model's judgement: a turn, or a tool it chose to call.
+  model,
+
+  /// A person: the host's pick, or an answer to an offer.
+  person,
+
+  /// A step written before the label, or a label this app doesn't know.
+  unknown,
+}
+
 /// {@template agent_step}
 /// One step of a run. Which fields mean something depends on [kind]; the
 /// rest are empty. The words are the server's es-419, shown as they are.
@@ -122,6 +137,9 @@ class const AgentStep({
 
   /// What kind of step it is.
   required final AgentStepKind kind,
+
+  /// Who decided it.
+  final StepAuthor by = StepAuthor.unknown,
 
   /// The tool called, or the tools a model turn called, joined.
   final String tool = '',
@@ -170,6 +188,7 @@ class const AgentStep({
     n,
     at,
     kind,
+    by,
     tool,
     arguments,
     reason,

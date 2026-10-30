@@ -35,7 +35,10 @@ ROUTINE = "routine"
 CHANGE = "change"
 """A change the host decided, sent to the members."""
 HOST = "host"
-"""A proposal to the host."""
+"""A proposal to the host, or what the bench did (bench.py)."""
+OFFER = "offer"
+"""A seat freed by an "esta no", offered to one person on the bench (bench.py). Not routine:
+that person had no RSVP from the ronda, and code allows one offer per freed seat at a time."""
 
 PUBLIC = "public"
 """`places/{id}.kind` of a place the ronda itself may meet in."""

@@ -8,12 +8,16 @@ import 'package:mocktail/mocktail.dart';
 import 'package:push_repository/push_repository.dart';
 import 'package:ronda/acta/acta.dart';
 import 'package:ronda/app/app.dart';
+import 'package:ronda/my_ronda/cubit/bench_offer_cubit.dart';
 import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
 import 'package:ronda/my_ronda/cubit/this_week_cubit.dart';
+import 'package:ronda/my_ronda/cubit/waiting_cubit.dart';
 import 'package:ronda/my_ronda/my_ronda.dart';
+import 'package:ronda/my_ronda/widgets/bench_offer_card.dart';
 import 'package:ronda/my_ronda/widgets/esta_no_sheet.dart';
 import 'package:ronda/my_ronda/widgets/seguimos_card.dart';
 import 'package:ronda/my_ronda/widgets/this_week_card.dart';
+import 'package:ronda/my_ronda/widgets/waiting_card.dart';
 import 'package:ronda/push/push.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -34,6 +38,11 @@ class _MockThisWeekCubit extends MockCubit<ThisWeekState>
 
 class _MockSeguimosCubit extends MockCubit<SeguimosState>
     implements SeguimosCubit;
+
+class _MockBenchOfferCubit extends MockCubit<BenchOfferState>
+    implements BenchOfferCubit;
+
+class _MockWaitingCubit extends MockCubit<WaitingState> implements WaitingCubit;
 
 void main() {
   group(MyRondaPage, () {
@@ -57,6 +66,10 @@ void main() {
       when(() => rondaRepository.watchThisWeek(MyRondaFixtures.uid))
           .thenAnswer((_) => Stream.value(null));
       when(() => rondaRepository.watchSeguimos(MyRondaFixtures.uid))
+          .thenAnswer((_) => Stream.value(null));
+      when(() => rondaRepository.watchBenchOffers(MyRondaFixtures.uid))
+          .thenAnswer((_) => Stream.value(const []));
+      when(() => rondaRepository.watchWaiting(MyRondaFixtures.uid))
           .thenAnswer((_) => Stream.value(null));
     });
 
@@ -86,6 +99,14 @@ void main() {
         context.read<SeguimosCubit>().state,
         equals(const SeguimosState(status: SeguimosCardStatus.none)),
       );
+      expect(
+        context.read<BenchOfferCubit>().state,
+        equals(const BenchOfferState(status: BenchOfferCardStatus.none)),
+      );
+      expect(
+        context.read<WaitingCubit>().state,
+        equals(const WaitingState(status: WaitingCardStatus.none)),
+      );
       expect(find.text('¿Te avisamos los martes?'), findsOneWidget);
       expect(find.text('Todavía no tenés grupo'), findsOneWidget);
       verify(pushRepository.permission).called(1);
@@ -96,11 +117,19 @@ void main() {
     late PushCubit pushCubit;
     late ThisWeekCubit thisWeekCubit;
     late SeguimosCubit seguimosCubit;
+    late BenchOfferCubit benchOfferCubit;
+    late WaitingCubit waitingCubit;
 
     setUp(() {
       pushCubit = _MockPushCubit();
       thisWeekCubit = _MockThisWeekCubit();
       seguimosCubit = _MockSeguimosCubit();
+      benchOfferCubit = _MockBenchOfferCubit();
+      waitingCubit = _MockWaitingCubit();
+      when(() => benchOfferCubit.state)
+          .thenReturn(const BenchOfferState(status: BenchOfferCardStatus.none));
+      when(() => waitingCubit.state)
+          .thenReturn(const WaitingState(status: WaitingCardStatus.none));
       when(() => seguimosCubit.state)
           .thenReturn(const SeguimosState(status: SeguimosCardStatus.none));
       when(() => pushCubit.state)
@@ -117,6 +146,8 @@ void main() {
           BlocProvider.value(value: pushCubit),
           BlocProvider.value(value: thisWeekCubit),
           BlocProvider.value(value: seguimosCubit),
+          BlocProvider.value(value: benchOfferCubit),
+          BlocProvider.value(value: waitingCubit),
         ],
         child: const MyRondaView(uid: MyRondaFixtures.uid),
       ),
@@ -147,6 +178,29 @@ void main() {
             'para vos, te avisamos y lo vas a ver acá.',
           ),
           findsOneWidget,
+        );
+      });
+
+      testWidgets('the waiting list under "Todavía no tenés grupo", and an '
+          'offer of a freed seat on top', (tester) async {
+        when(() => waitingCubit.state).thenReturn(
+          WaitingState(
+            status: WaitingCardStatus.ready,
+            waiting: MyRondaFixtures.waiting(),
+          ),
+        );
+        when(() => benchOfferCubit.state).thenReturn(
+          BenchOfferState(
+            status: BenchOfferCardStatus.ready,
+            offer: MyRondaFixtures.offer(),
+          ),
+        );
+        await pump(tester);
+
+        expect(find.byType(WaitingCard), findsOneWidget);
+        expect(
+          tester.getTopLeft(find.byType(BenchOfferCard)).dy,
+          lessThan(tester.getTopLeft(find.text('Todavía no tenés grupo')).dy),
         );
       });
 

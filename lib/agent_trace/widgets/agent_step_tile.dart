@@ -4,8 +4,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 
 /// One step of a run in the trace: a model answer, a tool call with its
 /// reason and result, a message marked "Salió" or "Frenado" with the
-/// gate's reason, the host's pick, a note, or why the run stopped. The
-/// words are the server's es-419 (the admin reads Spanish).
+/// gate's reason, the host's pick, a note, or why the run stopped, with who
+/// decided it ("Código", "Modelo" or "Persona"). The words are the
+/// server's es-419 (the admin reads Spanish).
 class const AgentStepTile(final AgentStep step, {super.key})
     extends StatelessWidget {
   @override
@@ -59,7 +60,27 @@ class const AgentStepTile(final AgentStep step, {super.key})
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: spacing.xxs,
           children: [
-            Text('${step.n} · $when', style: textTheme.labelMedium),
+            Row(
+              spacing: spacing.xs,
+              children: [
+                Expanded(
+                  child: Text(
+                    '${step.n} · $when',
+                    style: textTheme.labelMedium,
+                  ),
+                ),
+                if (_author(context, step.by) case final author?)
+                  Semantics(
+                    container: true,
+                    label: l10n.traceBy(author),
+                    excludeSemantics: true,
+                    child: Chip(
+                      label: Text(author),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+              ],
+            ),
             Text(title, style: textTheme.titleSmall),
             DefaultTextStyle.merge(
               style: textTheme.bodyMedium,
@@ -75,6 +96,15 @@ class const AgentStepTile(final AgentStep step, {super.key})
     );
   }
 }
+
+/// "Código", "Modelo" or "Persona": who decided a step; `null` for a step
+/// written before the label.
+String? _author(BuildContext context, StepAuthor by) => switch (by) {
+  StepAuthor.code => context.l10n.traceByCode,
+  StepAuthor.model => context.l10n.traceByModel,
+  StepAuthor.person => context.l10n.traceByPerson,
+  StepAuthor.unknown => null,
+};
 
 class const _Outcome(final AgentStep step) extends StatelessWidget {
   @override

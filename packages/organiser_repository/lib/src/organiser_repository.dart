@@ -150,6 +150,7 @@ extension on AgentStepDocument {
       (value) => value.name == kind,
       orElse: () => AgentStepKind.other,
     ),
+    by: StepAuthor.values.asNameMap()[by] ?? StepAuthor.unknown,
     tool: kind == 'model' ? toolCalls.join(', ') : tool,
     arguments: argsSummary,
     reason: reason,

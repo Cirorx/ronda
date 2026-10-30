@@ -62,7 +62,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | Package | Layer | Wraps / owns | First issue |
 |---|---|---|---|
 | `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
-| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`) | #13 |
+| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`, `answer_bench_offer`, `answer_waitlist`) | #13 |
 | `device_store` | Data | flutter_secure_storage (needs, and the terms and answers held until sign-in); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
@@ -420,6 +420,19 @@ Built in #46 (`functions/seguimos.py`, `packages/push_client`, `lib/bootstrap.da
 - Checked 2026-10-29 on the Pixel 8 emulator: one HTTP v1 data message built by the real job
   showed with [Yes] [No]; [Yes] with the app's process killed recorded the answer through the
   callable and the notice replaced the push.
+
+Built in #48 (`functions/bench.py`, `packages/push_client`, `lib/bootstrap.dart`,
+`lib/my_ronda/`):
+- **The offer of a freed seat** goes through the organiser's outbox (gates, the introduction on
+  a first message) with `data: {type: "benchOffer", offerId, rondaId, title, body}`.
+  `PushClient` draws it with "Lo tomo" and "Esta vez no" (`bench.take` / `bench.pass`,
+  `BenchOfferActionLabels`), and `answerRsvpInBackground` answers it through
+  `answer_bench_offer` (`PushClient.benchOfferActionFrom`), replacing the push with "Listo, el
+  lugar es tuyo." or "Listo, esta vez no.". The same offer shows on Mi ronda with the same two
+  buttons. Not yet checked on the Pixel 8 emulator.
+- **The simulated week** (`functions/tests/test_week.py`) runs the RSVP push, the answers, the
+  bench, attendance and the ¿seguimos? close on the stand-in with every suite, and on the
+  Firestore emulator with `scripts/week_on_emulators.sh` (project `demo-ronda-bench`).
 
 ## Native and project checklist
 

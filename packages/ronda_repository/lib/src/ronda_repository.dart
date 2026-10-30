@@ -338,6 +338,107 @@ class RondaRepository {
     () => _rondasApi.answerSeguimos(rondaId: rondaId, choice: choice.name),
   );
 
+  /// The offers of freed seats made to [uid] that still matter: pending,
+  /// or taken; newest meeting first. The stream errors with an
+  /// [RsvpFailure].
+  Stream<List<BenchOffer>> watchBenchOffers(String uid) => _rondasApi
+      .watchOffers(uid)
+      .map(
+        (documents) =>
+            [for (final document in documents) ?_benchOffer(document)]
+              ..sort((a, b) => b.date.compareTo(a.date)),
+      )
+      .handleError(
+        (Object error) => throw const RsvpFailure(RsvpFailureReason.other),
+        test: (error) => error is Exception,
+      );
+
+  static BenchOffer? _benchOffer(BenchOfferDocument document) {
+    final date = DateTime.tryParse(document.date);
+    if (date == null) return null;
+    return BenchOffer(
+      offerId: document.id,
+      rondaId: document.rondaId,
+      date: date,
+      pretextId: document.pretext,
+      slotDayId: document.slotDay,
+      slotBandId: document.slotBand,
+      deadline: document.deadline,
+      status: switch (document.status) {
+        'pending' => BenchOfferStatus.pending,
+        'taken' => BenchOfferStatus.taken,
+        _ => BenchOfferStatus.over,
+      },
+      hour: document.hour,
+      placeName: document.placeName,
+      placeLandmark: document.placeLandmark,
+    );
+  }
+
+  /// "Lo tomo" ([take]) or "Esta vez no" on offer [offerId].
+  ///
+  /// Throws an [RsvpFailure]: [RsvpFailureReason.passed] once the offer is
+  /// over (its deadline passed, or the seat filled again).
+  Future<void> answerBenchOffer({
+    required String offerId,
+    required bool take,
+  }) => _rsvpGuard(
+    () => _rondasApi.answerBenchOffer(offerId: offerId, take: take),
+  );
+
+  /// [uid]'s place on the waiting list nearest to filling, now and on every
+  /// change; `null` while they wait on no list. The stream errors with an
+  /// [RsvpFailure].
+  Stream<Waiting?> watchWaiting(String uid) => _rondasApi
+      .watchWaiting(uid)
+      .map(_waiting)
+      .handleError(
+        (Object error) => throw const RsvpFailure(RsvpFailureReason.other),
+        test: (error) => error is Exception,
+      );
+
+  static Waiting? _waiting(WaitingDocument? document) {
+    if (document == null) return null;
+    final deadline = DateTime.tryParse(document.deadline);
+    final start = DateTime.tryParse(document.start);
+    final slot = document.slot.split('-');
+    if (deadline == null || start == null) return null;
+    return Waiting(
+      pretextId: document.pretext,
+      barrioId: document.barrio,
+      slotDayId: slot.first,
+      slotBandId: slot.last,
+      count: document.count,
+      threshold: document.threshold,
+      deadline: deadline,
+      start: start,
+      status:
+          WaitingStatus.values.asNameMap()[document.status] ??
+          WaitingStatus.open,
+      nearby: switch (document.alternatives) {
+        [final row, ...] when DateTime.tryParse(row.next) != null =>
+          NearbyRonda(
+            rondaId: row.rondaId,
+            pretextId: row.pretext,
+            barrioId: row.barrio,
+            slotDayId: row.slotDay,
+            slotBandId: row.slotBand,
+            placesLeft: row.placesLeft,
+            next: DateTime.parse(row.next),
+          ),
+        _ => null,
+      },
+      choice: WaitlistChoice.values.asNameMap()[document.choice],
+    );
+  }
+
+  /// Records [choice] after the caller's waiting list didn't fill.
+  ///
+  /// Throws an [RsvpFailure]: [RsvpFailureReason.passed] when there is
+  /// nothing to choose any more.
+  Future<void> chooseAfterWaitlist(WaitlistChoice choice) =>
+      _rsvpGuard(() => _rondasApi.answerWaitlist(choice.name));
+
   /// Every ronda's ¿seguimos? counts, now and on every change. Admin only:
   /// the stream errors with an [RsvpFailure], [RsvpFailureReason.forbidden]
   /// for anyone else.

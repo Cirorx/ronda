@@ -162,6 +162,11 @@ class Toolbox:
     model_name: Callable[[], str] = lambda: ""
     clock: Callable[[], float] = time.perf_counter
     _notes: set[str] = field(default_factory=set)
+    tools: dict[str, tuple[str, type[Args], Callable[[Any, Any], Result]]] = field(
+        default_factory=lambda: TOOLS
+    )
+    """What the model may call in this run: the rain check's `TOOLS` unless a job hands its own
+    (bench.py)."""
 
     def specs(self) -> list[dict]:
         """The tools as Chat Completions `tools`."""
@@ -174,17 +179,17 @@ class Toolbox:
                     "parameters": model.model_json_schema(),
                 },
             }
-            for name, (description, model, _) in TOOLS.items()
+            for name, (description, model, _) in self.tools.items()
         ]
 
     def parse(self, call: ToolCall) -> Args:
         """The call's arguments, validated; `ToolError` says what was wrong, for the retry."""
-        if call.name not in TOOLS:
+        if call.name not in self.tools:
             raise ToolError(
-                f"No existe la herramienta {call.name!r}. Usá una de: {', '.join(TOOLS)}."
+                f"No existe la herramienta {call.name!r}. Usá una de: {', '.join(self.tools)}."
             )
         try:
-            return TOOLS[call.name][1].model_validate_json(call.arguments or "{}")
+            return self.tools[call.name][1].model_validate_json(call.arguments or "{}")
         except ValidationError as error:
             problems = "; ".join(
                 f"{'.'.join(str(part) for part in e['loc']) or 'argumentos'}: {e['msg']}"
@@ -206,7 +211,7 @@ class Toolbox:
             latencyMs=0,
             model=self.model_name(),
         )
-        result = TOOLS[name][2](self, args)
+        result = self.tools[name][2](self, args)
         self.trace.update(
             n,
             resultSummary=result.summary,

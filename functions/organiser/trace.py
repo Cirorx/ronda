@@ -3,7 +3,8 @@
 - `agent_runs/{runId}`: job, rondaId, week, startedAt, endedAt, status (`running`, then `done`,
   `capped`, `stopped`, `failed` or `expired`), model, forced, note (the model's last words,
   Markdown stripped), stepCount and actaCount. Admin-only (firestore.rules).
-- `agent_runs/{runId}/steps/{n}` (`001`, `002`…): n, ts, kind and what that kind carries:
+- `agent_runs/{runId}/steps/{n}` (`001`, `002`…): n, ts, kind, by (who decided it: `code`,
+  `model` or `person`, `AUTHORS`) and what that kind carries:
   - `model`: one answer of the model: model, latencyMs, toolCalls (names), content;
   - `tool`: one tool call: tool, argsSummary, reason, model, then resultSummary, latencyMs and
     status (`running` while it runs, then `ok`, `refused`, `held` or `invalid`), so the trace
@@ -12,6 +13,8 @@
     gate (`allowed` | `blocked`), gateName, gateReason, releaseAt, outcome (`sent`, `held`,
     `unreachable`, `skipped`), latencyMs;
   - `host`: the host's pick, or the deadline passing without one;
+  - `answer`: a person's answer to an offer (bench.py): resultSummary;
+  - `note`: what code decided or noticed: note;
   - `stop`: why the loop stopped early.
 - `acta/{rondaId}/entries/{runId}-{k}`: week, ts, tool, summary (es-419, written in code, like
   the pushes), decidedBy (`agent` | `host`), runId. What the ronda's members read, as
@@ -28,6 +31,16 @@ from datetime import datetime, timedelta
 
 AGENT = "agent"
 HOST = "host"
+
+CODE = "code"
+MODEL = "model"
+PERSON = "person"
+AUTHORS = {"model": MODEL, "tool": MODEL, "host": PERSON, "answer": PERSON}
+"""Who decided each kind of step, so a reader of the trace tells the model's judgement from the
+rules in code. A `tool` step is the model's: it chose to call it and wrote the arguments; what
+the tool does with them is code, and its result line says so. A host's pick and a person's
+answer are a person's. Every other kind (`message`, through the gates; `note`; `stop`) is
+code's. A step may say otherwise with `by=`."""
 
 
 class Trace:
@@ -83,8 +96,10 @@ class Trace:
         )
 
     def step(self, kind: str, **fields) -> int:
-        """Writes the next step and returns its number."""
+        """Writes the next step, labelled with who decided it (`AUTHORS`, or `by=`), and returns
+        its number."""
         self._steps += 1
+        fields.setdefault("by", AUTHORS.get(kind, CODE))
         self._db.document(f"agent_runs/{self.run_id}/steps/{self._steps:03d}").set(
             {"n": self._steps, "ts": self.at(), "kind": kind, **fields}
         )

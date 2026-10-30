@@ -13,7 +13,8 @@ is left out whole, as Cerca does.
     paused over the meeting counts as no puede) among the members that week: joined by the
     meeting's date and not left before it;
   - attendance from `attendance {uid: bool}` (written by the host's "¿Quién vino hoy?"): how
-    many came of how many the host marked, `null` while unmarked;
+    many came of how many the host marked, `null` while unmarked; members only, so a guest who
+    took a freed seat from the bench (bench.py) counts in neither;
   - `cameBack`: of those who came to the ronda's first marked meeting, how many came to the
     next marked one; `null` until two meetings are marked;
   - `seguimos`: the ronda's `seguimos_counts/{id}` (sí / no / sin contestar of those asked).
@@ -59,7 +60,7 @@ def week_numbers(week_id: str, week: dict, members: dict[str, dict], now: dateti
     view = rsvp.week_view(meeting or rsvp.local(now).date(), those, {}, answers, now)
     attendance = week.get("attendance")
     marked = (
-        {uid: came for uid, came in attendance.items() if demo_users.counts(uid)}
+        {uid: came for uid, came in attendance.items() if demo_users.counts(uid) and uid in those}
         if isinstance(attendance, dict)
         else None
     )
@@ -75,13 +76,18 @@ def week_numbers(week_id: str, week: dict, members: dict[str, dict], now: dateti
     }
 
 
-def came_back(weeks: list[dict]) -> dict | None:
-    """Of who came to the first marked meeting, how many came to the next marked one; `weeks`
-    are week documents in order."""
+def came_back(weeks: list[dict], members: dict[str, dict] | None = None) -> dict | None:
+    """Of the members who came to the first marked meeting, how many came to the next marked
+    one; `weeks` are week documents in order. A guest from the bench (bench.py) is on a roll
+    but is no member, so `members`, when given, leaves them out."""
     marked = [w["attendance"] for w in weeks if isinstance(w.get("attendance"), dict)]
     if len(marked) < 2:
         return None
-    first = {uid for uid, came in marked[0].items() if came is True and demo_users.counts(uid)}
+    first = {
+        uid
+        for uid, came in marked[0].items()
+        if came is True and demo_users.counts(uid) and (members is None or uid in members)
+    }
     again = {uid for uid, came in marked[1].items() if came is True}
     return {"came": len(first & again), "of": len(first)}
 
@@ -111,7 +117,7 @@ def numbers(db, now: datetime) -> dict:
         weeks = sorted(
             (s.id, s.to_dict() or {}) for s in db.collection(f"rondas/{ronda_id}/weeks").stream()
         )
-        returned = came_back([week for _, week in weeks])
+        returned = came_back([week for _, week in weeks], members)
         if returned is not None:
             any_back = True
             back = {key: back[key] + returned[key] for key in back}

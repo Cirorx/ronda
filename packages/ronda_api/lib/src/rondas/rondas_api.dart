@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:ronda_api/src/rondas/bench_documents.dart';
 import 'package:ronda_api/src/rondas/cerca_document.dart';
 import 'package:ronda_api/src/rondas/hosts_documents.dart';
 import 'package:ronda_api/src/rondas/pilot_numbers_document.dart';
@@ -48,6 +49,55 @@ class const RondasApi({
 
   /// The admin's callable that sets a ronda's place, hour and hosts.
   static const setRondaSetupCallable = 'set_ronda_setup';
+
+  /// The callable that answers an offer of a freed seat.
+  static const answerBenchOfferCallable = 'answer_bench_offer';
+
+  /// The callable that records the pick after a waiting list didn't fill.
+  static const answerWaitlistCallable = 'answer_waitlist';
+
+  /// The offers of freed seats made to [uid] (`users/{uid}/offers`), now and
+  /// on every change. Only [uid] reads them.
+  Stream<List<BenchOfferDocument>> watchOffers(String uid) => firestore
+      .collection('users')
+      .doc(uid)
+      .collection('offers')
+      .snapshots()
+      .map(
+        (snapshot) => [
+          for (final doc in snapshot.docs)
+            BenchOfferDocument.fromJson(doc.id, doc.data()),
+        ],
+      );
+
+  /// Answers offer [offerId]: [take] is "Lo tomo", otherwise "Esta vez no".
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails:
+  /// `failed-precondition` once the offer is over.
+  Future<void> answerBenchOffer({
+    required String offerId,
+    required bool take,
+  }) async {
+    await functions.httpsCallable(answerBenchOfferCallable).call<Object?>({
+      'offerId': offerId,
+      'take': take,
+    });
+  }
+
+  /// [uid]'s waiting card (`waiting/{uid}`); `null` while they wait on no
+  /// list.
+  Stream<WaitingDocument?> watchWaiting(String uid) =>
+      _watch('waiting/$uid', WaitingDocument.fromJson);
+
+  /// Records the caller's [choice] (`join` or `wait`) after their waiting
+  /// list didn't fill.
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails.
+  Future<void> answerWaitlist(String choice) async {
+    await functions.httpsCallable(answerWaitlistCallable).call<Object?>({
+      'choice': choice,
+    });
+  }
 
   /// The ids of the rondas [uid] is in (`users/{uid}/rondas`), now and on
   /// every change.

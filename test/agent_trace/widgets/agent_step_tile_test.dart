@@ -38,6 +38,28 @@ void main() {
       expect(find.text('Listo.'), findsOneWidget);
     });
 
+    testWidgets('says who decided each step, and nothing for older steps', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      for (final (by, label) in [
+        (StepAuthor.code, 'Código'),
+        (StepAuthor.model, 'Modelo'),
+        (StepAuthor.person, 'Persona'),
+      ]) {
+        await pump(
+          tester,
+          AgentStep(n: 1, at: _at, kind: AgentStepKind.note, by: by),
+        );
+        expect(find.text(label), findsOneWidget);
+        expect(find.bySemanticsLabel('Lo decidió: $label'), findsOneWidget);
+      }
+
+      await pump(tester, AgentStep(n: 1, at: _at, kind: AgentStepKind.note));
+      expect(find.byType(Chip), findsNothing);
+      semantics.dispose();
+    });
+
     testWidgets('a quiet model answer shows only itself', (tester) async {
       await pump(
         tester,

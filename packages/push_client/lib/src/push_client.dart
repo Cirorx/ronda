@@ -104,6 +104,36 @@ class const SeguimosAction({
   this;
 }
 
+/// {@template bench_offer_action_labels}
+/// What the "Lo tomo" and "Esta vez no" buttons on the offer of a freed seat
+/// say, in the phone's language.
+/// {@endtemplate}
+class const BenchOfferActionLabels({
+  /// "Lo tomo".
+  required final String take,
+
+  /// "Esta vez no".
+  required final String pass,
+}) {
+  /// {@macro bench_offer_action_labels}
+  this;
+}
+
+/// {@template bench_offer_action}
+/// One tap on "Lo tomo" or "Esta vez no" in the offer of a freed seat: which
+/// offer, and the answer. The server refuses it once the offer is over.
+/// {@endtemplate}
+class const BenchOfferAction({
+  /// The offer's id.
+  required final String offerId,
+
+  /// Whether the tap was "Lo tomo".
+  required final bool take,
+}) {
+  /// {@macro bench_offer_action}
+  this;
+}
+
 /// {@template push_client}
 /// Firebase Cloud Messaging and the phone's notifications for Ronda.
 ///
@@ -117,7 +147,9 @@ class const SeguimosAction({
 /// handler given to [initialize] in a background isolate, and
 /// [rsvpActionFrom] reads it. The ¿seguimos? push (`data.type ==
 /// "seguimos"`) gets "Sí" and "No" the same way, read by
-/// [seguimosActionFrom]. On web, notifications are the service worker's and
+/// [seguimosActionFrom]. The offer of a freed seat (`data.type ==
+/// "benchOffer"`) gets "Lo tomo" and "Esta vez no", read by
+/// [benchOfferActionFrom]. On web, notifications are the service worker's and
 /// the browser's.
 ///
 /// It logs nothing, and the token it returns must never reach a log either.
@@ -130,6 +162,7 @@ class PushClient {
     this._vapidKey,
     this._rsvpLabels,
     this._seguimosLabels,
+    this._benchOfferLabels,
     this._foregroundMessages,
     this._isWeb = kIsWeb,
     TargetPlatform? targetPlatform,
@@ -150,6 +183,10 @@ class PushClient {
   /// The ¿seguimos? buttons' labels; without them that push shows no
   /// buttons (a tap on it still opens the card).
   final SeguimosActionLabels? _seguimosLabels;
+
+  /// The offer's buttons' labels; without them that push shows no buttons
+  /// (a tap on it still opens Mi ronda, where the offer is).
+  final BenchOfferActionLabels? _benchOfferLabels;
 
   /// `FirebaseMessaging.onMessage` unless a test passes its own.
   final Stream<RemoteMessage>? _foregroundMessages;
@@ -186,6 +223,15 @@ class PushClient {
 
   /// The "No" button's action id on the ¿seguimos? push.
   static const seguimosNoAction = 'seguimos.no';
+
+  /// `data.type` of the offer of a freed seat (`functions/bench.py`).
+  static const benchOfferType = 'benchOffer';
+
+  /// The "Lo tomo" button's action id.
+  static const benchTakeAction = 'bench.take';
+
+  /// The "Esta vez no" button's action id.
+  static const benchPassAction = 'bench.pass';
 
   /// The service worker on web, `web/firebase-messaging-sw.js`. Given as a
   /// relative path it resolves against the page's base href, so it works
@@ -322,6 +368,21 @@ class PushClient {
 
   ({String payload, List<AndroidNotificationAction> actions})? _buttons(
     Map<String, dynamic> data,
+  ) => switch (data) {
+    {'type': benchOfferType, 'offerId': final String offerId}
+        when _benchOfferLabels != null =>
+      (
+        payload: jsonEncode({'offerId': offerId}),
+        actions: [
+          AndroidNotificationAction(benchTakeAction, _benchOfferLabels.take),
+          AndroidNotificationAction(benchPassAction, _benchOfferLabels.pass),
+        ],
+      ),
+    _ => _answerButtons(data),
+  };
+
+  ({String payload, List<AndroidNotificationAction> actions})? _answerButtons(
+    Map<String, dynamic> data,
   ) => switch ((data, _rsvpLabels, _seguimosLabels)) {
     (
       {
@@ -402,6 +463,27 @@ class PushClient {
         'week': final String week,
       }) {
         return RsvpAction(rondaId: rondaId, week: week, going: going);
+      }
+    } on FormatException {
+      return null;
+    }
+    return null;
+  }
+
+  /// The answer in a tap on "Lo tomo" or "Esta vez no" in the offer of a
+  /// freed seat, or `null` for any other tap.
+  static BenchOfferAction? benchOfferActionFrom(NotificationResponse response) {
+    final take = switch (response.actionId) {
+      benchTakeAction => true,
+      benchPassAction => false,
+      _ => null,
+    };
+    if (take == null) return null;
+    try {
+      if (jsonDecode(response.payload ?? '') case {
+        'offerId': final String offerId,
+      }) {
+        return BenchOfferAction(offerId: offerId, take: take);
       }
     } on FormatException {
       return null;

@@ -247,5 +247,22 @@ service cloud.firestore {
     match /rondas/{rondaId}/rolls/{week} {
       allow get: if request.auth != null && (isAdmin() || isRondaHost(rondaId));
     }
+
+    // The bench (#48, functions/bench.py). A seat an "esta no" frees is offered to one person at
+    // a time, and each offer is read by that person only, as one document or as their list. The
+    // bench job and the answer_bench_offer callable write them with the admin SDK; no client
+    // does. Who is on a bench and each week's run (rondas/{id}/bench/{week}) stay on the server:
+    // nothing matches them. Who took a seat shows to the ronda's members only in views/week.
+    match /users/{uid}/offers/{offerId} {
+      allow read: if isOwner(uid);
+    }
+
+    // The waiting list's threshold and didn't-fill (#48, functions/waitlists.py). Each waiting
+    // person reads only their own card: counts and dates, never another person. The lists
+    // themselves (waitlists/{seatId}, with who waits and who picked what) stay on the server:
+    // nothing matches them. The job and the answer_waitlist callable write with the admin SDK.
+    match /waiting/{uid} {
+      allow read: if isOwner(uid);
+    }
   }
 }

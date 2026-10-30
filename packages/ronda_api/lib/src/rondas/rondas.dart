@@ -1,3 +1,4 @@
+export 'bench_documents.dart';
 export 'cerca_document.dart';
 export 'hosts_documents.dart';
 export 'pilot_numbers_document.dart';

@@ -265,8 +265,8 @@ def add(db, ronda_id: str, uid: str, now: datetime, *, move: bool = False) -> di
 
     def write(transaction) -> None:
         # Every read comes before the first write, as Firestore transactions require.
-        answers = {
-            changed_id: rsvp._rsvp(week_ref.get(transaction=transaction))
+        weeks = {
+            changed_id: week_ref.get(transaction=transaction)
             for changed_id, (_, week_ref, _) in views.items()
         }
         proposals = [
@@ -287,7 +287,14 @@ def add(db, ronda_id: str, uid: str, now: datetime, *, move: bool = False) -> di
             )
             transaction.set(
                 db.document(f"rondas/{changed_id}/views/{rsvp.VIEW}"),
-                rsvp.week_view(meeting, changed_members, names, answers[changed_id], now),
+                rsvp.week_view(
+                    meeting,
+                    changed_members,
+                    names,
+                    rsvp._rsvp(weeks[changed_id]),
+                    now,
+                    rsvp.guests(weeks[changed_id]),
+                ),
             )
         for ref, proposal in proposals:
             transaction.update(ref, regroup(proposal, ronda_id, uid, group_entry, plus_ones))

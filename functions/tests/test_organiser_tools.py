@@ -111,6 +111,7 @@ class TestToolbox:
             "n": 1,
             "ts": None,
             "kind": "tool",
+            "by": "model",
             "tool": "count_rsvps",
             "argsSummary": "",
             "reason": "contar",

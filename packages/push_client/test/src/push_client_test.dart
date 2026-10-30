@@ -51,6 +51,22 @@ const _seguimos = RemoteMessage(
 
 const _seguimosLabels = SeguimosActionLabels(yes: 'Sí', no: 'No');
 
+const _offer = RemoteMessage(
+  messageId: 'message-5',
+  data: {
+    'type': 'benchOffer',
+    'offerId': 'r1_2026-W45_01',
+    'rondaId': 'r1',
+    'title': 'Se liberó un lugar para mañana',
+    'body': '¿Lo tomás?',
+  },
+);
+
+const _offerLabels = BenchOfferActionLabels(
+  take: 'Lo tomo',
+  pass: 'Esta vez no',
+);
+
 @pragma('vm:entry-point')
 void _onRsvpAction(NotificationResponse response) {}
 
@@ -106,12 +122,14 @@ void main() {
       String? vapidKey,
       RsvpActionLabels? rsvpLabels,
       SeguimosActionLabels? seguimosLabels,
+      BenchOfferActionLabels? benchOfferLabels,
     }) => PushClient(
       messaging: messaging,
       notifications: notifications,
       vapidKey: vapidKey,
       rsvpLabels: rsvpLabels,
       seguimosLabels: seguimosLabels,
+      benchOfferLabels: benchOfferLabels,
       foregroundMessages: foreground.stream,
       isWeb: isWeb,
       targetPlatform: targetPlatform,
@@ -607,6 +625,95 @@ void main() {
             expect(
               PushClient.seguimosActionFrom(
                 tap(PushClient.seguimosYesAction, 'x'),
+              ),
+              isNull,
+            );
+          });
+        });
+      });
+
+      group('the offer of a freed seat', () {
+        NotificationDetails shown({String? payload}) =>
+            verify(
+                  () => notifications.show(
+                    id: 'message-5'.hashCode,
+                    title: 'Se liberó un lugar para mañana',
+                    body: '¿Lo tomás?',
+                    payload: payload,
+                    notificationDetails: captureAny(
+                      named: 'notificationDetails',
+                    ),
+                  ),
+                ).captured.single
+                as NotificationDetails;
+
+        test('gets Lo tomo and Esta vez no, carrying its offer', () async {
+          await buildSubject(
+            rsvpLabels: _labels,
+            benchOfferLabels: _offerLabels,
+          ).showMessage(_offer);
+
+          final details = shown(payload: '{"offerId":"r1_2026-W45_01"}');
+          final actions = details.android!.actions!;
+          expect(
+            actions.map((a) => (a.id, a.title)),
+            equals([
+              (PushClient.benchTakeAction, 'Lo tomo'),
+              (PushClient.benchPassAction, 'Esta vez no'),
+            ]),
+          );
+          for (final action in actions) {
+            expect(action.showsUserInterface, isFalse);
+          }
+        });
+
+        test('shows without buttons when no labels were given', () async {
+          await buildSubject(rsvpLabels: _labels).showMessage(_offer);
+
+          expect(shown().android!.actions, isEmpty);
+        });
+
+        group('benchOfferActionFrom', () {
+          NotificationResponse tap(String? actionId, String? payload) =>
+              NotificationResponse(
+                notificationResponseType:
+                    NotificationResponseType.selectedNotificationAction,
+                id: 9,
+                actionId: actionId,
+                payload: payload,
+              );
+
+          const payload = '{"offerId":"o1"}';
+
+          test('reads Lo tomo and Esta vez no', () {
+            final take = PushClient.benchOfferActionFrom(
+              tap(PushClient.benchTakeAction, payload),
+            )!;
+            final pass = PushClient.benchOfferActionFrom(
+              tap(PushClient.benchPassAction, payload),
+            )!;
+
+            expect((take.offerId, take.take), equals(('o1', true)));
+            expect(pass.take, isFalse);
+          });
+
+          test('reads nothing from another tap or payload', () {
+            expect(PushClient.benchOfferActionFrom(tap(null, payload)), isNull);
+            expect(
+              PushClient.benchOfferActionFrom(
+                tap(PushClient.rsvpYesAction, payload),
+              ),
+              isNull,
+            );
+            expect(
+              PushClient.benchOfferActionFrom(
+                tap(PushClient.benchTakeAction, '{}'),
+              ),
+              isNull,
+            );
+            expect(
+              PushClient.benchOfferActionFrom(
+                tap(PushClient.benchTakeAction, 'x'),
               ),
               isNull,
             );

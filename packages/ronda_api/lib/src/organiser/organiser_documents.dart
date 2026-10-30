@@ -77,6 +77,10 @@ class const AgentStepDocument({
   /// What kind of step it is.
   required final String kind,
 
+  /// Who decided it: `code`, `model` or `person`; empty in runs older than
+  /// the label.
+  final String by = '',
+
   /// The tool called (`get_forecast`).
   final String tool = '',
 
@@ -153,6 +157,7 @@ class const AgentStepDocument({
         n: n,
         ts: ts.toDate(),
         kind: kind,
+        by: _text(json['by']),
         tool: _text(json['tool']),
         argsSummary: _text(json['argsSummary']),
         reason: _text(json['reason']),

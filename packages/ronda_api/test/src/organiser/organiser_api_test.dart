@@ -127,6 +127,7 @@ void main() {
           'n': 1,
           'ts': Timestamp.fromDate(_at),
           'kind': 'tool',
+          'by': 'model',
           'tool': 'get_forecast',
           'argsSummary': '{"date": "2026-11-05"}',
           'reason': 'ver si llueve',
@@ -145,6 +146,8 @@ void main() {
         expect(tool.n, 1);
         expect(tool.ts.toUtc(), _at);
         expect(tool.kind, 'tool');
+        expect(tool.by, 'model');
+        expect(message.by, isEmpty);
         expect(tool.tool, 'get_forecast');
         expect(tool.argsSummary, '{"date": "2026-11-05"}');
         expect(tool.reason, 'ver si llueve');

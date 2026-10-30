@@ -115,6 +115,10 @@ void main() {
           .thenAnswer((_) => Stream.value(null));
       when(() => rondaRepository.watchSeguimos(any()))
           .thenAnswer((_) => Stream.value(null));
+      when(() => rondaRepository.watchBenchOffers(any()))
+          .thenAnswer((_) => Stream.value(const []));
+      when(() => rondaRepository.watchWaiting(any()))
+          .thenAnswer((_) => Stream.value(null));
       when(rondaRepository.watchSeguimosCounts)
           .thenAnswer((_) => Stream.value(const []));
       when(rondaRepository.pilotNumbers)

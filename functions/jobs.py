@@ -12,10 +12,12 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import attendance
+import bench
 import fcm
 import rain
 import rsvp
 import seguimos
+import waitlists
 
 log = logging.getLogger(__name__)
 
@@ -52,6 +54,10 @@ JOBS: dict[str, Callable[[object, datetime, Context], dict]] = {
     "attendance_ask": lambda db, now, context: attendance.run_attendance_ask(
         db, now, send=context.send, app_url=context.app_url, force=context.force
     ),
+    "bench": lambda db, now, context: bench.run_bench(
+        db, now, send=context.send, app_url=context.app_url, force=context.force
+    ),
+    "waitlists": lambda db, now, context: waitlists.run_waitlists(db, now),
 }
 
 

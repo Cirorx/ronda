@@ -2496,5 +2496,163 @@
     "setupSameHost": "Opening and closing have to be two different people.",
     "@setupSameHost": {
         "description": "Setup sheet: the same person in both roles"
+    },
+    "dayWithDate": "{day, select, mon{Monday} tue{Tuesday} wed{Wednesday} thu{Thursday} fri{Friday} sat{Saturday} sun{Sunday} other{}} {date}",
+    "@dayWithDate": {
+        "description": "A weekday and a short date in a sentence: 'domingo 1/11'",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            },
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "benchOfferTitle": "A place opened up",
+    "@benchOfferTitle": {
+        "description": "Bench offer card: its title"
+    },
+    "benchOfferAsk": "You were on the waiting list. Will you take it?",
+    "@benchOfferAsk": {
+        "description": "Bench offer card: the question"
+    },
+    "benchOfferDeadline": "You have until {date} at {time}.",
+    "@benchOfferDeadline": {
+        "description": "Bench offer card: until when the person may answer",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            },
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "benchOfferTake": "I'll take it",
+    "@benchOfferTake": {
+        "description": "Bench offer: the take button (card and notification)"
+    },
+    "benchOfferPass": "Not this time",
+    "@benchOfferPass": {
+        "description": "Bench offer: the decline button (card and notification)"
+    },
+    "benchOfferNoFines": "If you can't, nothing happens: you stay on the waiting list.",
+    "@benchOfferNoFines": {
+        "description": "Bench offer card: no fines, ever"
+    },
+    "benchOfferTakenTitle": "You're going this time",
+    "@benchOfferTakenTitle": {
+        "description": "Bench offer card after taking the place"
+    },
+    "benchOfferTakenBody": "You take the place someone freed, for this meeting only.",
+    "@benchOfferTakenBody": {
+        "description": "Bench offer card after taking: what it means"
+    },
+    "benchOfferOver": "This offer is over. You stay on the waiting list.",
+    "@benchOfferOver": {
+        "description": "Bench offer card: the server said the offer ended"
+    },
+    "benchNoticeTakeTitle": "Done, the place is yours.",
+    "@benchNoticeTakeTitle": {
+        "description": "Notification after tapping Lo tomo"
+    },
+    "benchNoticeTakeBody": "You'll see it in My ronda.",
+    "@benchNoticeTakeBody": {
+        "description": "Notification after tapping Lo tomo: body"
+    },
+    "benchNoticePassTitle": "Done, not this time.",
+    "@benchNoticePassTitle": {
+        "description": "Notification after tapping Esta vez no"
+    },
+    "benchNoticePassBody": "You stay on the waiting list.",
+    "@benchNoticePassBody": {
+        "description": "Notification after tapping Esta vez no: body"
+    },
+    "waitingTitle": "Your waiting list",
+    "@waitingTitle": {
+        "description": "Waiting card: its title"
+    },
+    "waitingWithYou": "{count, plural, =1{For now you're the first one signed up. It takes {threshold}.} other{With you there are {count} of {threshold}.}}",
+    "@waitingWithYou": {
+        "description": "Waiting card: how many wait, the person included, of how many it takes",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            },
+            "threshold": {
+                "type": "int"
+            }
+        }
+    },
+    "waitingMissing": "{missing, plural, =1{One more is needed.} other{{missing} more are needed.}}",
+    "@waitingMissing": {
+        "description": "Waiting card: how many more",
+        "placeholders": {
+            "missing": {
+                "type": "int"
+            }
+        }
+    },
+    "waitingIfJoin": "{missing, plural, =1{If one more joins before {deadline}, it starts on {start}.} other{If {missing} more join before {deadline}, it starts on {start}.}}",
+    "@waitingIfJoin": {
+        "description": "Waiting card: the threshold with its deadline",
+        "placeholders": {
+            "missing": {
+                "type": "int"
+            },
+            "deadline": {
+                "type": "String"
+            },
+            "start": {
+                "type": "String"
+            }
+        }
+    },
+    "waitingIfNot": "If we don't get there, you choose: join another group or wait two more weeks.",
+    "@waitingIfNot": {
+        "description": "Waiting card: what happens if it doesn't fill"
+    },
+    "waitingFull": "There are {threshold} of you: that's enough to start. We put the group together and let you know before {start}.",
+    "@waitingFull": {
+        "description": "Waiting card: the list reached its threshold",
+        "placeholders": {
+            "threshold": {
+                "type": "int"
+            },
+            "start": {
+                "type": "String"
+            }
+        }
+    },
+    "waitingDidntFillTitle": "This time we didn't get to {threshold}.",
+    "@waitingDidntFillTitle": {
+        "description": "Waiting card: the round ended short",
+        "placeholders": {
+            "threshold": {
+                "type": "int"
+            }
+        }
+    },
+    "traceByCode": "Code",
+    "@traceByCode": {
+        "description": "Trace: a step a rule in code decided"
+    },
+    "traceByModel": "Model",
+    "@traceByModel": {
+        "description": "Trace: a step the model decided"
+    },
+    "traceByPerson": "Person",
+    "@traceByPerson": {
+        "description": "Trace: a step a person decided"
+    },
+    "traceBy": "Decided by: {who}",
+    "@traceBy": {
+        "description": "Trace: screen-reader label for who decided a step",
+        "placeholders": {
+            "who": {
+                "type": "String"
+            }
+        }
     }
 }

@@ -5,7 +5,7 @@ sets ``max_instances`` so a loop or a flood can't run up the bill.
 """
 
 import firebase_admin
-from firebase_functions import https_fn, options, params, scheduler_fn
+from firebase_functions import firestore_fn, https_fn, options, params, scheduler_fn
 
 REGION = "southamerica-east1"
 
@@ -515,4 +515,94 @@ def record_attendance(req: https_fn.CallableRequest) -> dict:
     try:
         return attendance.record(_firestore(), req.auth.uid, admin, req.data, _now())
     except attendance.AttendanceError as e:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e
+
+
+# --- The bench (#48, #50's offer_bench_seat): bench.py --------------------------------------
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def answer_bench_offer(req: https_fn.CallableRequest) -> dict:
+    """[Lo tomo] or [Esta vez no] on the caller's own offer of a freed seat:
+    `{offerId, take: true | false}` (bench.py)."""
+    import bench
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "sign in first")
+    data = req.data if isinstance(req.data, dict) else {}
+    try:
+        return bench.answer(
+            _firestore(), req.auth.uid, data.get("offerId"), data.get("take"), _now()
+        )
+    except bench.BenchError as e:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e
+
+
+def _fields(snapshot) -> dict:
+    return (snapshot.to_dict() or {}) if snapshot is not None and snapshot.exists else {}
+
+
+def _run_bench(ronda_id: str) -> None:
+    import bench
+    import jobs
+
+    context = jobs.context()
+    bench.run_bench(
+        _firestore(), _now(), send=context.send, app_url=context.app_url, ronda_id=ronda_id
+    )
+
+
+# The bench moves as soon as a member's answer changes or a person answers an offer, instead of
+# waiting for the hourly dispatcher (which still runs it, for deadlines and anything missed).
+@firestore_fn.on_document_written(
+    document="rondas/{rondaId}/answers/{uid}",
+    region=REGION,
+    max_instances=1,
+    timeout_sec=300,
+    memory=options.MemoryOption.MB_512,
+    secrets=[MODEL_API_KEY, BASETEN_API_KEY],
+)
+def bench_on_answer(event: firestore_fn.Event) -> None:
+    """Runs ronda `rondaId`'s bench when a member's RSVP changes: an "esta no" frees a seat, a
+    "voy" after one may take it back."""
+    before, after = _fields(event.data.before), _fields(event.data.after)
+    if (before.get("week"), before.get("answer")) != (after.get("week"), after.get("answer")):
+        _run_bench(event.params["rondaId"])
+
+
+@firestore_fn.on_document_updated(
+    document="users/{uid}/offers/{offerId}",
+    region=REGION,
+    max_instances=1,
+    timeout_sec=300,
+    memory=options.MemoryOption.MB_512,
+    secrets=[MODEL_API_KEY, BASETEN_API_KEY],
+)
+def bench_on_offer(event: firestore_fn.Event) -> None:
+    """Runs the offer's ronda's bench when its person answers it: after "Esta vez no" the next
+    person is offered the seat; after "Lo tomo" the trace and the host's summary catch up."""
+    before, after = _fields(event.data.before), _fields(event.data.after)
+    if before.get("status") == "pending" and after.get("status") in ("taken", "declined"):
+        _run_bench(after["rondaId"])
+
+
+# --- The waiting list's threshold and didn't-fill (#48): waitlists.py ------------------------
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def answer_waitlist(req: https_fn.CallableRequest) -> dict:
+    """The caller's pick after their waiting list didn't fill: `{choice: join | wait}`
+    (waitlists.py)."""
+    import waitlists
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "sign in first")
+    data = req.data if isinstance(req.data, dict) else {}
+    try:
+        return waitlists.answer(_firestore(), req.auth.uid, data.get("choice"), _now())
+    except waitlists.WaitlistError as e:
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e

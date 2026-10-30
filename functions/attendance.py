@@ -92,14 +92,17 @@ def ask_at(meeting: date, ronda: dict) -> datetime:
 # --- Who ----------------------------------------------------------------------------------
 
 
-def people(db, ronda_id: str, meeting: date) -> list[dict]:
+def people(db, ronda_id: str, meeting: date, guests: dict[str, dict] | None = None) -> list[dict]:
     """The members in for `meeting`, by first name: everyone but those who left or are paused
-    over it. Who said "esta no" stays on the list, so its order gives nobody away."""
+    over it, and whoever took a freed seat from the bench (`guests`, rsvp.guests). Who said
+    "esta no" stays on the list, so its order gives nobody away."""
     members = rsvp.counted(rsvp._members(db, ronda_id))
     uids = [uid for uid, member in members.items() if not rsvp._paused_on(member, meeting)]
     names = rsvp._first_names(db, uids)
+    for uid, guest in (guests or {}).items():
+        names.setdefault(uid, guest.get("firstName", ""))
     return [
-        {"uid": uid, "firstName": names[uid]} for uid in sorted(uids, key=lambda u: (names[u], u))
+        {"uid": uid, "firstName": names[uid]} for uid in sorted(names, key=lambda u: (names[u], u))
     ]
 
 
@@ -190,8 +193,8 @@ def run_attendance_ask(
         if not rsvp.inside_gate(now):
             counts["held"] += 1
             continue
-        in_list = people(db, ronda_id, meeting)
         week_snapshot = db.document(f"rondas/{ronda_id}/weeks/{week}").get()
+        in_list = people(db, ronda_id, meeting, rsvp.guests(week_snapshot))
         uid, role = asked(ronda, {p["uid"] for p in in_list}, rsvp._rsvp(week_snapshot))
         line = rsvp.ronda_line(ronda)
         roll = {

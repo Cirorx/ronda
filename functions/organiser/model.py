@@ -155,18 +155,18 @@ class FallbackModel:
         return self._fallback.complete(messages, tools)
 
 
-def from_environment() -> ModelClient:
+def from_environment(*, timeout: float = 60, max_retries: int = 1) -> ModelClient:
     """Spark Open on Baseten, falling back to Spark 1.3, with the keys the function's secrets
-    put in the environment (`BASETEN_API_KEY`, `MODEL_API_KEY`). Raises `ModelUnavailable`
-    when either is missing."""
+    put in the environment (`BASETEN_API_KEY`, `MODEL_API_KEY`); each request gives up after
+    `timeout` seconds and `max_retries` retries. Raises `ModelUnavailable` when either key is
+    missing."""
     from openai import OpenAI
 
     baseten, meta = os.environ.get("BASETEN_API_KEY"), os.environ.get("MODEL_API_KEY")
     if not baseten or not meta:
         raise ModelUnavailable("model keys missing")
+    limits = {"timeout": timeout, "max_retries": max_retries}
     return FallbackModel(
-        ChatModel(
-            OpenAI(base_url=BASETEN_BASE, api_key=baseten, timeout=60, max_retries=1), SPARK_OPEN
-        ),
-        ChatModel(OpenAI(base_url=META_BASE, api_key=meta, timeout=60, max_retries=1), SPARK),
+        ChatModel(OpenAI(base_url=BASETEN_BASE, api_key=baseten, **limits), SPARK_OPEN),
+        ChatModel(OpenAI(base_url=META_BASE, api_key=meta, **limits), SPARK),
     )

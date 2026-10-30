@@ -5,18 +5,23 @@ import 'package:push_repository/push_repository.dart';
 import 'package:ronda/acta/acta.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/my_ronda/cubit/bench_offer_cubit.dart';
 import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
 import 'package:ronda/my_ronda/cubit/this_week_cubit.dart';
+import 'package:ronda/my_ronda/cubit/waiting_cubit.dart';
+import 'package:ronda/my_ronda/widgets/bench_offer_card.dart';
 import 'package:ronda/my_ronda/widgets/esta_no_sheet.dart';
 import 'package:ronda/my_ronda/widgets/seguimos_card.dart';
 import 'package:ronda/my_ronda/widgets/this_week_card.dart';
+import 'package:ronda/my_ronda/widgets/waiting_card.dart';
 import 'package:ronda/push/push.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// The Mi ronda tab: the notifications ask on top while it's pending, then
-/// the ¿seguimos? card while there is one, then this week's card, or
-/// "Todavía no tenés grupo" and what happens next before a group exists. A
+/// an offer of a freed seat from a bench while one matters, the ¿seguimos?
+/// card while there is one, then this week's card, or "Todavía no tenés
+/// grupo" with the waiting list's card before a group exists. A
 /// member who left at the ¿seguimos? close sees only that card ("Gracias por
 /// venir.").
 ///
@@ -53,6 +58,18 @@ class const MyRondaPage({super.key}) extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => SeguimosCubit(
+            uid: uid,
+            rondaRepository: context.read<RondaRepository>(),
+          )..subscribe(),
+        ),
+        BlocProvider(
+          create: (context) => BenchOfferCubit(
+            uid: uid,
+            rondaRepository: context.read<RondaRepository>(),
+          )..subscribe(),
+        ),
+        BlocProvider(
+          create: (context) => WaitingCubit(
             uid: uid,
             rondaRepository: context.read<RondaRepository>(),
           )..subscribe(),
@@ -98,6 +115,7 @@ class const MyRondaView({required final String uid, super.key})
             children: [
               const PushPrompt(),
               SizedBox(height: spacing.lg),
+              const BenchOfferCard(),
               const SeguimosCard(),
               switch (state.status) {
                 ThisWeekStatus.loading => const Center(
@@ -115,6 +133,7 @@ class const MyRondaView({required final String uid, super.key})
                       ),
                     ),
                     line(l10n.myRondaNoGroupBody),
+                    const WaitingCard(),
                   ],
                 ),
                 ThisWeekStatus.failure => Column(

@@ -104,6 +104,10 @@ PushClient _pushClient(AppLocalizations strings) => PushClient(
     yes: strings.seguimosYes,
     no: strings.seguimosNo,
   ),
+  benchOfferLabels: BenchOfferActionLabels(
+    take: strings.benchOfferTake,
+    pass: strings.benchOfferPass,
+  ),
 );
 
 /// Shows a data-only push that arrived while the app was in the background
@@ -115,13 +119,14 @@ Future<void> showPushInBackground(RemoteMessage message) async {
   await _pushClient(_phoneStrings()).showMessage(message);
 }
 
-/// Answers the weekly push's "Voy" or "Esta no", or the ¿seguimos? push's
-/// "Sí" or "No", without opening the app (Android).
+/// Answers the weekly push's "Voy" or "Esta no", the ¿seguimos? push's
+/// "Sí" or "No", or the offer of a freed seat's "Lo tomo" or "Esta vez no",
+/// without opening the app (Android).
 /// flutter_local_notifications runs it in a background isolate, even with
 /// the app closed, so it starts Firebase with the flavor's [firebaseOptions]
 /// and [emulators], waits for the signed-in member, calls `answer_rsvp` or
-/// `answer_seguimos` through the same repository as the cards, and puts a
-/// notice in the push's place saying what happened.
+/// `answer_seguimos` or `answer_bench_offer` through the same repository as
+/// the cards, and puts a notice in the push's place saying what happened.
 ///
 /// Each flavor's entrypoint wraps it in a top-level
 /// `@pragma('vm:entry-point')` function and hands that to [bootstrap].
@@ -132,7 +137,8 @@ Future<void> answerRsvpInBackground(
 }) async {
   final action = PushClient.rsvpActionFrom(response);
   final seguimos = PushClient.seguimosActionFrom(response);
-  if (action == null && seguimos == null) return;
+  final offer = PushClient.benchOfferActionFrom(response);
+  if (action == null && seguimos == null && offer == null) return;
   await Firebase.initializeApp(options: firebaseOptions);
   final auth = FirebaseAuth.instance;
   final functions = FirebaseFunctions.instanceFor(region: functionsRegion);
@@ -166,6 +172,20 @@ Future<void> answerRsvpInBackground(
         id: response.id ?? 0,
         title: action.going ? strings.rsvpNoticeYes : strings.rsvpNoticeNo,
         body: strings.rsvpNoticeBody,
+      );
+    } else if (offer != null) {
+      await repository.answerBenchOffer(
+        offerId: offer.offerId,
+        take: offer.take,
+      );
+      await pushClient.showNotice(
+        id: response.id ?? 0,
+        title: offer.take
+            ? strings.benchNoticeTakeTitle
+            : strings.benchNoticePassTitle,
+        body: offer.take
+            ? strings.benchNoticeTakeBody
+            : strings.benchNoticePassBody,
       );
     } else if (seguimos != null) {
       await repository.answerSeguimos(

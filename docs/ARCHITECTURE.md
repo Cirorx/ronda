@@ -32,7 +32,11 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   │               in code), answer_move (the host's pick after the rain check),
   │               ronda_candidates, add_to_ronda, pilot_numbers (admin, the pilot's /admin),
   │               ronda_setups and set_ronda_setup (admin: place, hour and hosts),
-  │               record_attendance (a host's or the admin's "Vino" / "No vino")
+  │               record_attendance (a host's or the admin's "Vino" / "No vino"),
+  │               answer_bench_offer ([Lo tomo] / [Esta vez no]), answer_waitlist (the
+  │               pick after a waiting list didn't fill)
+  │    triggers   bench_on_answer (an RSVP answer changed) and bench_on_offer (an offer
+  │               was answered) run that ronda's bench at once
   │    scheduled  one dispatcher on the hour in Montevideo (`dispatch`) → run_<job>(db, now)
   │               for every job in `jobs.JOBS`; hourly audio sweeper (`sweep_audio`
   │               deletes `audio/` objects older than 1 h); hourly Cerca counts (`refresh_cerca`,
@@ -222,9 +226,50 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
     "Gracias por venir." with up to two open rondas within the solver's ten blocks that have
     places, same pretext first. Below the floor: no season, `status` unchanged, and everyone
     still in gets the didn't-fill words instead of the RSVP; their pick is recorded for the
-    admin (the bench and threshold flows are #48).
-- `waitlists/{barrio_pretext_slot}`: entries[{uid, at}], threshold: 6, deadline.
-- `bench/{rondaId}`: ordered uids.
+    admin. The waiting list's own didn't-fill (#48) is below.
+- The bench (built in #48 with #50's `offer_bench_seat`, `functions/bench.py`): a seat an "esta
+  no" freed (a "no", or a pause over the meeting without an answer) is offered to one person at
+  a time.
+  - Who is on it and in what order is code's (`bench_order`): sign-ups with a profile who count
+    (`demo_users.counts`), seated in no ronda that still meets, who picked the ronda's pretext
+    and slot, live within the solver's ten blocks, have the ronda's seat id among their
+    `private/eligible` ids (the needs filter), and hold no other pending offer nor a seat taken
+    elsewhere that day; by profile `createdAt`, then blocks, then uid.
+  - `rondas/{id}/bench/{isoWeek}` (server only): offers [{offerId, uid, firstName, status}] in
+    the order they went out, skipped, summary {at, by, sentAt, done}, notes, lockedUntil
+    (a five-minute lease: one run per ronda at a time), updatedAt. Only a run holding the lease
+    writes it.
+  - `users/{uid}/offers/{offerId}` (`{rondaId}_{isoWeek}_{nn}`): rondaId, week, date, pretext,
+    slot {day, time}, hour, placeName, placeLandmark, deadline, status (pending | taken |
+    declined | expired | withdrawn), createdAt, answeredAt | closedAt. Read (get and list) by
+    that person only (rules test: `rules/bench.test.js`). Its status lives here alone and
+    changes in transactions, so an answer and a run never overwrite each other.
+  - `answer_bench_offer {offerId, take}` (`bench.answer`): the person's own pending offer before
+    its deadline; taking writes `weeks/{w}.guests.{uid} = {firstName, brings, offerId, at}` and
+    rewrites `views/week` in the same transaction. It writes no trace: the next run reads the
+    answer and records it as a person's step.
+  - A guest is not a member: `rsvp.week_view` lists guests in `going` with `guest: true`, and
+    `attendance.people` puts them on the roll, while `counted()` callers (¿seguimos?, sizes,
+    Cerca) never see them and `pilot_numbers` counts attendance of members only.
+  - When: the `bench` job runs hourly in `dispatch` and by `run_job`; the two Firestore
+    triggers run one ronda's bench right after an RSVP answer changes or an offer is answered.
+    Deadlines fall on the hour, so the hourly run moves on when one passes. Nothing is offered
+    or told 21:00–09:00 (the run waits for the 09:00 one), nor less than two hours before the
+    meeting.
+- The waiting list (built in #48, `functions/waitlists.py`; the `waitlists` job, hourly):
+  - `waitlists/{seatId}` (server only): barrio, pretext, slot, threshold (`SizeRule.cap`),
+    entries [{uid, at}] (sign-ups seated nowhere with that seat id among their eligible ids,
+    longest waiting first), round {deadline, start} (to a Sunday; the slot's day the week
+    after), last {deadline, start, outcome full | didntFill, closedAt}, choices {uid: join |
+    wait}, updatedAt. Past its deadline a round at the threshold rolls one week (the admin's
+    solver and approval make the ronda); one short of it closes as didn't-fill and the next
+    round is two weeks on, with the choices reset.
+  - `waiting/{uid}`: the person's card, read by that person only: the list with the most
+    entries (then the earliest deadline): seatId, barrio, pretext, slot, count, threshold,
+    deadline, start, status (open | full | didntFill | joined), alternatives (one nearby ronda
+    with places, `seguimos.alternatives`), choice?, updatedAt. Deleted when they wait nowhere.
+  - `answer_waitlist {choice: join | wait}` while the card says didntFill; `join` needs the
+    nearby ronda, which the admin then adds them to ("Sumar a esta ronda").
 - `avoid/{pairId}`: uidA, uidB (report-apart; read by the solver only).
 - `reports/{id}`: reporter, reported, rondaId, tag, text (minimal), status.
 - `acta/{rondaId}/entries/{runId}-{k}` (built in #49, `functions/organiser/trace.py`): week, ts,
@@ -239,11 +284,13 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   stepCount, actaCount. The rain check's run is `{rondaId}_{week}_rain` (claimed in a transaction,
   so once a week; a failed run is claimed again on the next hour); a forced run adds
   the time it ran for (`_20261104T2200`).
-- `agent_runs/{runId}/steps/{n}` (`001`, `002`…): n, ts, kind and what it carries: `model`
+- `agent_runs/{runId}/steps/{n}` (`001`, `002`…): n, ts, kind, by (who decided it: `code`,
+  `model` or `person`; `organiser.trace.AUTHORS`) and what it carries: `model`
   (model, latencyMs, toolCalls, content), `tool` (tool, argsSummary, reason, resultSummary,
   status ok | refused | invalid, latencyMs, model), `message` (toRole, toName, title, text, gate
   allowed | blocked, gateName, gateReason, releaseAt, outcome sent | held | unreachable |
-  skipped), `host` (the pick, or the deadline passing), `note`, `stop` (why). Admin-only (the
+  skipped), `host` (the pick, or the deadline passing), `answer` (a person's answer to an
+  offer), `note`, `stop` (why). Admin-only (the
   rules match `agent_runs/{document=**}`); rendered live at `/admin/programa`.
 - `rondas/{id}/moves/{isoWeek}` (#49, `functions/organiser/moves.py`): the rain proposal to the
   host: week, date, hour ("16:00" or null), hostUid, hostName, hostFallback, title, body, runId, forecast
@@ -434,7 +481,7 @@ weights and limits are in `solver/README.md`; every rule name and number is in
   message that mentions money is held.)
 
 Built in #49 (`functions/organiser/`, `functions/rain.py`; `assign_hosts`, `prompt_buddy`,
-`offer_bench_seat` and "Ronda se calla" are #50):
+and "Ronda se calla" are #50; `offer_bench_seat` is built in #48, below):
 - **Model:** `organiser.model.ChatModel` speaks OpenAI-compatible Chat Completions, streamed,
   with `reasoning_effort: low`, to Muse Spark Open on Baseten (`meta-models/muse-spark-open-1026`);
   `FallbackModel` moves to `muse-spark-1.3` on the Meta Model API for the rest of a run when Spark
@@ -478,6 +525,23 @@ Built in #49 (`functions/organiser/`, `functions/rain.py`; `assign_hosts`, `prom
 - **Screens:** `/admin/programa` (the live trace, "Correr el chequeo de lluvia" and "Probar a las
   22:00", which runs it at 22:00 today so the gates hold what it would send); `/acta/{rondaId}`
   (members, linked from Mi ronda); `/lluvia/{rondaId}/{week}` (the host).
+
+- **The bench's split** (#48, `functions/bench.py`): each step of
+  `agent_runs/{rondaId}_{isoWeek}_bench` (one run per meeting, its steps added as the bench
+  moves) says who decided it.
+  - Code: who is on the bench and in what order, the needs filter, the gates, one offer per
+    freed seat, expiry and "Esta vez no" (the next person), withdrawing an offer when a member
+    says "voy" again, and the `demo-` exclusion on the real project. Code also writes every word
+    the person and the host read.
+  - The model (the same `run_agent` loop and `FallbackModel`, built with a 20 s timeout, at most
+    8 turns): it reads `get_forecast`, `get_sunset`, `get_last_bus` and `count_rsvps`, then
+    `offer_bench_seat(deadline)` or `skip_offer`, and `tell_host(at)` for when the host's
+    summary goes. It is told counts and times, never a name. A deadline outside the hours code
+    allows is refused with the allowed range, for a retry.
+  - Without a decision (no model, an error, a timeout, the turn cap, or no call) code offers
+    with `default_deadline` and a `note` step says why; without a chosen time, code sends the
+    host's summary once the bench settles. The summary goes to the anfitrión, else the cola,
+    never a stand-in.
 
 ## Data sources and licences
 

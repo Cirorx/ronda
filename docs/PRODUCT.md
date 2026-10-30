@@ -119,9 +119,24 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 - **Threshold with deadline:** "Hay 4 anotados y hacen falta 6. Si se suman 2 antes del domingo
   1/11, empieza el sábado 7/11." After joining: "Con vos son 5 de 6. Falta uno.", what happens
   if it doesn't fill, [Invitar por WhatsApp], "Salir de la lista".
+  - Built (#48) on Mi ronda before a group exists, under "Todavía no tenés grupo": "Tu lista de
+    espera", the list's line ("Sábado a la tarde · Mate en la rambla"), "Con vos son 5 de 6.
+    Falta uno." ("Por ahora sos la primera persona anotada. Hacen falta 6." alone), "Si se suma
+    uno más antes del domingo 1/11, empieza el sábado 7/11." and "Si no llegamos, te damos a
+    elegir: sumarte a otro grupo o esperar dos semanas más." A full list reads "Ya son 6:
+    alcanza para arrancar. Armamos el grupo y te avisamos antes del sábado 7/11." Counts and
+    dates only. Six is the pretext's largest ronda (fútbol 10); a round runs to a Sunday and
+    the ronda would start on its day the week after. The payoff, signed out, still shows demand
+    only. [Invitar por WhatsApp] and "Salir de la lista" are not built.
 - **Didn't fill:** "Esta vez no llegamos a 6" with two choices: "Sumarte a otro ya" (a named
   nearby group with places) or "Esperar dos semanas más" (fixed end date and start date). Each
   answer ends with the next date. Never limbo.
+  - Built (#48) for the waiting list on the same card: "Esta vez no llegamos a 6.", "¿Cómo
+    seguís?", [Sumarte a otro ya] with "Jueves a la noche · Truco, el jueves 5/11" (shown only
+    when a nearby ronda has places) and [Esperar dos semanas más] with "Esperamos hasta el
+    domingo 15/11. Si se suman, arranca el sábado 21/11." Joining reads "Listo, lo anotamos. Te
+    confirmamos el lugar antes del jueves 5/11." and the admin seats them with "Sumar a esta
+    ronda"; waiting shows the next round. A round that ends short again asks again.
 - **Changing group:** "¿A qué grupo te querés pasar?" — nearby groups with places, "No hace
   falta explicar por qué." The old seat opens; the old group is told nothing else.
 - **Solver + approval:** Ciro sees each proposal, the members (first name, age band, distance),
@@ -174,6 +189,26 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 - **Bench:** every "esta no" pings the next person on the bench with a deadline: "Se liberó un
   lugar para hoy. Truco en el Club Lagomar, martes 19:30. Estabas en la lista de espera. ¿Lo
   tomás? Tenés hasta las 17:00." [Lo tomo] [Esta vez no]. No fines, ever.
+  - Built (#48, with #50's `offer_bench_seat`). The push: "Se liberó un lugar para hoy" (or
+    "para mañana", "para el jueves 5/11") / "Martes 19:30 · truco · Club Lagomar. Estabas en la
+    lista de espera. ¿Lo tomás? Tenés hasta las 17:00." with [Lo tomo] [Esta vez no] on
+    Android, answered without opening the app ("Listo, el lugar es tuyo." / "Listo, esta vez
+    no. Seguís en la lista de espera."). On Mi ronda the same offer shows on top, "Si no podés,
+    no pasa nada: seguís en la lista de espera.", and once taken "Vas esta vez" with where,
+    "Tomás el lugar que alguien liberó, solo para esta reunión."
+  - Who is on the bench, in order, is code's: sign-ups in no ronda who picked that activity,
+    day and time, within ten blocks, for whom the seat passes what makes it hard to go (on the
+    phone), longest waiting first. One offer per freed seat at a time; "Esta vez no" or a
+    passed deadline moves to the next person; a member who says "voy" again takes the free
+    seat back from a pending offer. Nothing is held against anyone.
+  - The organiser decides whether an offer is worth sending (hours left, rain, the last bus),
+    its deadline among the hours code allows (on the hour, 09:00 to 20:00, at least an hour
+    away and an hour before the meeting), and when the host hears how the bench went:
+    "Lugares libres del jueves" / "Para mañana se liberó un lugar. Eva viene de la lista de
+    espera." (never who said no). Without its decision Ronda offers with a deadline about
+    three hours away and tells the host once the bench is done.
+  - Who takes a seat is a guest of that meeting: they show in "who's coming" and on the
+    host's "¿Quién vino hoy?", not as a member, in ¿seguimos? or in the pilot's numbers.
 - **Después:** an optional 20-minute after-spot, set each week by the host: "¿Hay después esta
   semana?" [Esta semana no] [a public place nearby] [En lo de alguien del grupo] ("si esa
   persona quiere"). A home is allowed only for the después, never for the ronda itself. It
