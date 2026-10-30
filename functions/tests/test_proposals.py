@@ -233,6 +233,34 @@ class TestProposalDocument:
         assert "plusOneInGroup" not in members["eva"]
         assert document["unseated"] == ["dani"]
 
+    def test_names_who_is_left_out_by_first_name_barrio_and_slots(self):
+        users = self.users() | {
+            "dani": {
+                "firstName": "Dani",
+                "ageBand": "30-39",
+                "barrio": "solymar-sur",
+                "slots": ["sat-afternoon", "tue-evening"],
+                "pretexts": ["mate"],
+                "brings": ["pan"],
+                "terms": {},
+            }
+        }
+
+        document = proposals.proposal_document(
+            self.result(["ana", "beto"], unseated=["dani", "eva"]), users, ADMIN, NOW
+        )
+
+        assert document["unseatedPeople"] == [
+            {
+                "uid": "dani",
+                "firstName": "Dani",
+                "barrio": "solymar-sur",
+                "slots": ["sat-afternoon", "tue-evening"],
+                "pretexts": ["mate"],
+            },
+            {"uid": "eva", "firstName": "Eva", "barrio": "", "slots": [], "pretexts": []},
+        ]
+
 
 class TestApprove:
     def proposed(self) -> tuple[FakeFirestore, str]:

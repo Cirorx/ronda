@@ -62,8 +62,9 @@ changes inside `notes/` (`git -C notes commit`); there is nothing to push.
   the welcome screen, which links them) and is deleted once read; faces are
   pixelated on the phone before upload (detection only).
 - The organiser agent says it is a program and does logistics. Every outgoing message passes
-  the **gates** in code: 09:00–21:00 only, no emoji, voseo, one routine push a week. "Ronda nunca
-  pide plata" lives in the terms and on the flyers only, not in messages or app screens.
+  the **gates** in code: 09:00–21:00 only, no emoji, voseo, no money, one routine push a week.
+  "Ronda nunca pide plata" lives in the terms and on the flyers only; a message that mentions
+  money is held.
 - Copy is rioplatense voseo ("¿Venís?"). Every string ships in en and es-419.
 
 ## Docs: read when

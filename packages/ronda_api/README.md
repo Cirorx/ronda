@@ -65,3 +65,15 @@ Extension methods can't be stubbed with mocktail: a repository test over them pa
 | `Future<Map<String, int>> runRainCheck({DateTime? at})` | `run_job` for `rain_check`, forced, at `at` in UTC when given (admin only) |
 
 The wire shapes are in `docs/ARCHITECTURE.md` § Data model.
+
+## The pilot's admin (#55)
+
+| Member | Does |
+|---|---|
+| `ProposalsApi.rondaCandidates(String rondaId)` | The `ronda_candidates` callable, read as a `RondaCandidatesDocument` (admin only) |
+| `ProposalsApi.addToRonda({rondaId, uid, move})` | The `add_to_ronda` callable ("Sumar a esta ronda"), read as an `AddToRondaDocument` (admin only) |
+| `RondasApi.pilotNumbers()` | The `pilot_numbers` callable, read as a `PilotNumbersDocument` (admin only) |
+
+`ProposalDocument` also reads `unseatedPeople` (`UnseatedPersonDocument`) and `rondaIds`, both
+empty when a proposal doesn't carry them. Each answer's shape is in `functions/ronda_members.py`
+and `functions/pilot_numbers.py`; another shape throws `FormatException`.

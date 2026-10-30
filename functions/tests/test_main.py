@@ -544,3 +544,77 @@ class TestOrganiser:
         with pytest.raises(https_fn.HttpsError) as excinfo:
             call(main.answer_move, member, self.MOVE)
         assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED
+
+
+class TestPilotAdmin:
+    """`ronda_candidates`, `add_to_ronda` and `pilot_numbers` (#55): the admin only."""
+
+    @pytest.fixture
+    def ronda(self, monkeypatch) -> FakeFirestore:
+        from tests.test_ronda_members import world
+
+        db = FakeFirestore(world())
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setattr(main, "_now", lambda: datetime(2026, 10, 30, 15, tzinfo=UTC))
+        return db
+
+    FUNCTIONS: ClassVar = [main.ronda_candidates, main.add_to_ronda, main.pilot_numbers]
+
+    @pytest.mark.parametrize("function", FUNCTIONS)
+    @pytest.mark.parametrize(
+        ("auth", "code"),
+        [
+            (None, https_fn.FunctionsErrorCode.UNAUTHENTICATED),
+            (MEMBER, https_fn.FunctionsErrorCode.PERMISSION_DENIED),
+        ],
+    )
+    def test_is_for_the_admin_only(self, ronda, function, auth, code):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(function, auth, {"rondaId": "r1", "uid": "eva"})
+        assert error_code(excinfo) == code
+        assert "rondas/r1/members/eva" not in ronda.documents
+
+    def test_lists_the_candidates(self, ronda):
+        listed = call(main.ronda_candidates, ADMIN, {"rondaId": "r1"})
+
+        assert listed["taken"] == 3
+
+    def test_adds_and_moves_only_when_asked(self, ronda):
+        call(main.add_to_ronda, ADMIN, {"rondaId": "r1", "uid": "eva"})
+        assert ronda.documents["rondas/r1/members/eva"]["state"] == "active"
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.add_to_ronda, ADMIN, {"rondaId": "r1", "uid": "gabi", "move": "yes"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.FAILED_PRECONDITION
+
+        moved = call(main.add_to_ronda, ADMIN, {"rondaId": "r1", "uid": "gabi", "move": True})
+        assert moved["movedFrom"] == "r2"
+
+    @pytest.mark.parametrize(
+        ("function", "data"),
+        [
+            (main.ronda_candidates, None),
+            (main.ronda_candidates, {"rondaId": "a/b"}),
+            (main.add_to_ronda, {"uid": "eva"}),
+            (main.add_to_ronda, {"rondaId": "r1"}),
+            (main.add_to_ronda, {"rondaId": "r1", "uid": "a/b"}),
+        ],
+    )
+    def test_refuses_bad_arguments(self, ronda, function, data):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(function, ADMIN, data)
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.INVALID_ARGUMENT
+
+    def test_maps_a_refusal_to_its_code(self, ronda):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.ronda_candidates, ADMIN, {"rondaId": "nope"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.NOT_FOUND
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.add_to_ronda, ADMIN, {"rondaId": "r1", "uid": "ana"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.ALREADY_EXISTS
+
+    def test_reads_the_pilots_numbers(self, ronda):
+        numbers = call(main.pilot_numbers, ADMIN)
+
+        assert numbers["seated"]["members"] == 4

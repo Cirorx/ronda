@@ -704,14 +704,6 @@
     "@adminCheckFarther": {
         "description": "Failed check on a proposed ronda"
     },
-    "adminCheckSixtyPlus": "At least two are 60 or over",
-    "@adminCheckSixtyPlus": {
-        "description": "Check on a proposed ronda with people 60 or over"
-    },
-    "adminCheckSixtyPlusAlone": "Only one person is 60 or over",
-    "@adminCheckSixtyPlusAlone": {
-        "description": "Failed check on a proposed ronda"
-    },
     "adminCheckPlusOneTogether": "{name} and their guest go together",
     "@adminCheckPlusOneTogether": {
         "description": "Check on a proposed ronda holding a +1 pair",
@@ -1978,6 +1970,303 @@
         "placeholders": {
             "account": {
                 "type": "String"
+            }
+        }
+    },
+    "adminAgeGroupUnder30": "Under 30",
+    "@adminAgeGroupUnder30": {
+        "description": "Admin: the solver's youngest age group"
+    },
+    "adminAgeGroupFrom30To59": "30 to 59",
+    "@adminAgeGroupFrom30To59": {
+        "description": "Admin: the solver's middle age group"
+    },
+    "adminAgeGroupSixtyPlus": "60 and over",
+    "@adminAgeGroupSixtyPlus": {
+        "description": "Admin: the solver's oldest age group"
+    },
+    "adminCheckAgeKept": "{group} ({count}): nobody is the only one their age",
+    "@adminCheckAgeKept": {
+        "description": "Admin proposal check, kept: an age group with none or two or more members",
+        "placeholders": {
+            "group": {
+                "type": "String"
+            },
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "adminCheckAgeAlone": "{group} (1): {name} is the only one their age",
+    "@adminCheckAgeAlone": {
+        "description": "Admin proposal check, broken: one member alone in an age group",
+        "placeholders": {
+            "group": {
+                "type": "String"
+            },
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "adminUnseatedDetail": "{barrio} · {slots}",
+    "@adminUnseatedDetail": {
+        "description": "Admin: a person left out, their barrio and the slots they picked",
+        "placeholders": {
+            "barrio": {
+                "type": "String"
+            },
+            "slots": {
+                "type": "String"
+            }
+        }
+    },
+    "adminAddToRonda": "Add to this ronda",
+    "@adminAddToRonda": {
+        "description": "Admin: button on an approved ronda that adds a signed-up member"
+    },
+    "addToRondaTitle": "Add to {line}",
+    "@addToRondaTitle": {
+        "description": "Add-to-ronda sheet title; line is the server's es-419 ronda line",
+        "placeholders": {
+            "line": {
+                "type": "String"
+            }
+        }
+    },
+    "addToRondaTaken": "{taken} of {cap} places taken",
+    "@addToRondaTaken": {
+        "description": "Add-to-ronda sheet: seats taken of the cap",
+        "placeholders": {
+            "taken": {
+                "type": "int"
+            },
+            "cap": {
+                "type": "int"
+            }
+        }
+    },
+    "addToRondaFull": "No place left: it's the most for this activity.",
+    "@addToRondaFull": {
+        "description": "Add-to-ronda sheet: the ronda is at its cap"
+    },
+    "addToRondaEmpty": "Nobody else signed up to add.",
+    "@addToRondaEmpty": {
+        "description": "Add-to-ronda sheet: no candidates"
+    },
+    "addToRondaLoadError": "We couldn't read who signed up. Try again.",
+    "@addToRondaLoadError": {
+        "description": "Add-to-ronda sheet: reading failed"
+    },
+    "addToRondaInOther": "Already in {line}",
+    "@addToRondaInOther": {
+        "description": "Add-to-ronda sheet: the person sits in another ronda",
+        "placeholders": {
+            "line": {
+                "type": "String"
+            }
+        }
+    },
+    "addToRondaWarnSlot": "Didn't pick this day and time",
+    "@addToRondaWarnSlot": {
+        "description": "Add-to-ronda warning"
+    },
+    "addToRondaWarnPretext": "Didn't pick this activity",
+    "@addToRondaWarnPretext": {
+        "description": "Add-to-ronda warning"
+    },
+    "addToRondaWarnBarrio": "Lives more than 10 blocks away",
+    "@addToRondaWarnBarrio": {
+        "description": "Add-to-ronda warning"
+    },
+    "addToRondaWarnSeat": "Their phone didn't mark this place as one that works for them",
+    "@addToRondaWarnSeat": {
+        "description": "Add-to-ronda warning: the seat failed their needs filter (which need is never known)"
+    },
+    "addToRondaAdd": "Add",
+    "@addToRondaAdd": {
+        "description": "Add-to-ronda sheet: adds a person"
+    },
+    "addToRondaMove": "Move to this ronda",
+    "@addToRondaMove": {
+        "description": "Add-to-ronda sheet: moves a person from another ronda"
+    },
+    "addToRondaAdding": "Adding…",
+    "@addToRondaAdding": {
+        "description": "Add-to-ronda sheet: while adding"
+    },
+    "addToRondaMoveTitle": "Move {name}?",
+    "@addToRondaMoveTitle": {
+        "description": "Add-to-ronda: confirm a move",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "addToRondaMoveBody": "They leave {line}. Nobody gets a message.",
+    "@addToRondaMoveBody": {
+        "description": "Add-to-ronda: confirm a move, body",
+        "placeholders": {
+            "line": {
+                "type": "String"
+            }
+        }
+    },
+    "addToRondaMoveConfirm": "Move",
+    "@addToRondaMoveConfirm": {
+        "description": "Add-to-ronda: confirm a move"
+    },
+    "addToRondaCancel": "Cancel",
+    "@addToRondaCancel": {
+        "description": "Add-to-ronda: cancel a move"
+    },
+    "addToRondaDone": "Done: {name} is in. They see it in My ronda; no message goes out.",
+    "@addToRondaDone": {
+        "description": "Add-to-ronda: added",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "addToRondaErrorFull": "It wasn't added: the ronda is full.",
+    "@addToRondaErrorFull": {
+        "description": "Add-to-ronda: refused, full"
+    },
+    "addToRondaErrorAlready": "{name} is already in this ronda.",
+    "@addToRondaErrorAlready": {
+        "description": "Add-to-ronda: refused, already in",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "pilotTitle": "The pilot's numbers",
+    "@pilotTitle": {
+        "description": "Admin: numbers panel title"
+    },
+    "pilotBody": "Demo sign-ups left out. Counted when you open this screen.",
+    "@pilotBody": {
+        "description": "Admin: numbers panel explanation"
+    },
+    "pilotRefresh": "Count again",
+    "@pilotRefresh": {
+        "description": "Admin: numbers panel refresh button"
+    },
+    "pilotLoadError": "We couldn't count. Try again.",
+    "@pilotLoadError": {
+        "description": "Admin: numbers panel failed"
+    },
+    "pilotProfiles": "Finished their profile: {count} of {of} signed up",
+    "@pilotProfiles": {
+        "description": "Admin numbers: profiles of sign-ups",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            },
+            "of": {
+                "type": "int"
+            }
+        }
+    },
+    "pilotSeated": "In a ronda: {count} of {of}",
+    "@pilotSeated": {
+        "description": "Admin numbers: seated of profiles",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            },
+            "of": {
+                "type": "int"
+            }
+        }
+    },
+    "pilotCameBack": "Came back to the second meeting: {count} of {of}",
+    "@pilotCameBack": {
+        "description": "Admin numbers: attended meeting 2 of those at meeting 1",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            },
+            "of": {
+                "type": "int"
+            }
+        }
+    },
+    "pilotCameBackNone": "Came back: no two meetings marked yet",
+    "@pilotCameBackNone": {
+        "description": "Admin numbers: not two attendance records yet"
+    },
+    "pilotEmpty": "No rondas yet.",
+    "@pilotEmpty": {
+        "description": "Admin numbers: no rondas"
+    },
+    "pilotMembers": "Members: {count} of {of}",
+    "@pilotMembers": {
+        "description": "Admin numbers: members of the cap",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            },
+            "of": {
+                "type": "int"
+            }
+        }
+    },
+    "pilotWeekRsvp": "{when}: going {count} of {of} · can't {no} · no answer {unanswered}",
+    "@pilotWeekRsvp": {
+        "description": "Admin numbers: one week's RSVP",
+        "placeholders": {
+            "when": {
+                "type": "String"
+            },
+            "count": {
+                "type": "int"
+            },
+            "of": {
+                "type": "int"
+            },
+            "no": {
+                "type": "int"
+            },
+            "unanswered": {
+                "type": "int"
+            }
+        }
+    },
+    "pilotWeekCame": "Came: {count} of {of} marked",
+    "@pilotWeekCame": {
+        "description": "Admin numbers: one week's attendance",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            },
+            "of": {
+                "type": "int"
+            }
+        }
+    },
+    "pilotWeekUnmarked": "Attendance: not marked",
+    "@pilotWeekUnmarked": {
+        "description": "Admin numbers: no attendance yet"
+    },
+    "pilotSeguimos": "¿Seguimos?: yes {count} of {of} · no {no} · no answer {unanswered}",
+    "@pilotSeguimos": {
+        "description": "Admin numbers: a ronda's ¿seguimos? counts",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            },
+            "of": {
+                "type": "int"
+            },
+            "no": {
+                "type": "int"
+            },
+            "unanswered": {
+                "type": "int"
             }
         }
     }

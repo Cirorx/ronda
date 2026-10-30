@@ -29,7 +29,8 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   │    callables  extract (Transcribe → Spark), propose_groups (CP-SAT, admin), answer_rsvp,
   │               answer_seguimos, run_job(name, now?, force?) (admin, for tests and the
   │               demo), make_mate_flyer (SAM → cutouts, Muse Image background → text + QR
-  │               in code), answer_move (the host's pick after the rain check)
+  │               in code), answer_move (the host's pick after the rain check),
+  │               ronda_candidates, add_to_ronda, pilot_numbers (admin, the pilot's /admin)
   │    scheduled  one dispatcher on the hour in Montevideo (`dispatch`) → run_<job>(db, now)
   │               for every job in `jobs.JOBS`; hourly audio sweeper (`sweep_audio`
   │               deletes `audio/` objects older than 1 h); hourly Cerca counts (`refresh_cerca`,
@@ -223,6 +224,8 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   ageBand, distanceBlocks, plusOneInGroup?}]}], unseated[uids], rejectedAlternative {brokenRule,
   reason (es-419), reasons} or null, createdAt, createdBy; once approved also rondaIds,
   approvedAt, approvedBy. `plusOneInGroup` is set only when the member's +1 also signed up.
+  `unseatedPeople [{uid, firstName, barrio, slots, pretexts}]` names the unseated for /admin
+  (#55; older proposals lack it); `unseated` stays the uids `scripts/reset.py` reads.
   Read by the admin claim only (`request.auth.token.admin == true`), written only by the
   callables, so nothing reaches members before approval (rules test: `rules/`).
   - `propose_groups` (admin only, 2 GiB, 4 vCPU, max 1 instance, no min instances) reads
@@ -236,6 +239,37 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
     back to pending ([Deshacer]; nothing has been sent yet: the Tuesday push is the agent's).
     One batch holds 500 writes, enough for about 240 members.
   - The admin claim is set by `scripts/set_admin.py <email>` after the owner signs in once.
+- "Sumar a esta ronda" (#55, `functions/ronda_members.py`), both admin only:
+  - `ronda_candidates {rondaId}`: the ronda's line, its members' first names, seats taken
+    (active and paused) and its cap (`size_rule(pretext).cap`), and every sign-up who counts
+    (`demo_users.counts`) with a profile in a known barrio and not sitting in it: first name,
+    age band, barrio, slots, pretexts, blocks, the ronda they sit in (`rondaId`, `rondaLine`)
+    and `warnings`: `slot` / `pretext` they didn't pick, `barrio` beyond the solver's ten
+    blocks, `seat` (the seat id isn't in their `private/eligible`; which need, nobody knows).
+  - `add_to_ronda {rondaId, uid, move?}` refuses an invented `demo-` uid where it doesn't count
+    (`failed-precondition`), a ronda that doesn't meet (`failed-precondition`), a sign-up
+    without such a profile (`not-found`), a member already in it (`already-exists`), a full
+    ronda (`resource-exhausted`), and someone sitting in another ronda that still meets unless
+    `move: true` (`failed-precondition`). In one transaction it writes
+    `rondas/{id}/members/{uid}` `{brings, state: active, joinedAt}` (re-adding a `left`
+    member drops `leftAt`) and `users/{uid}/rondas/{id}`, sets the ronda's `size` to its
+    seated count, rewrites `views/week` with `rsvp.week_view` (the new member is sin contestar:
+    nothing goes into `weeks/{w}.rsvp`), and rewrites the approved proposal that made the ronda
+    (its group gains them, `unseated` / `unseatedPeople` lose them, every `plusOneInGroup`
+    again). A move marks the old membership `left` with `leftAt`, deletes that
+    `users/{uid}/rondas` link (the phone follows the lowest id), and rewrites the old ronda's
+    `size`, view and proposal group; a link to a ronda they left or that ended is deleted.
+    Nothing is sent: a member added after the week's RSVP push answers from the card, and an
+    open ¿seguimos? didn't ask them.
+- `pilot_numbers` (#55, `functions/pilot_numbers.py`): the /admin numbers panel, counted on
+  call and never stored, demo uids left out where they don't count and a ronda with no member
+  who counts left out whole. Sign-ups with a profile of `users` documents; of those, seated in
+  a ronda that still meets; per ronda its members of the cap and per `weeks/{isoWeek}` the RSVP
+  as `rsvp.week_view` counts it (among members joined by the meeting's date and not left
+  before it; a pause reads from the member's current `pausedUntil`), `attendance {uid: bool}`
+  as came of marked (`null` while unmarked), came back (of who came to the first marked
+  meeting, who came to the next marked one), and `seguimos_counts/{id}`. JSON only: counts,
+  ids and ISO dates.
 - `cerca/{barrio}` (built in #43, `functions/cerca_tuyo.py`): what Cerca tuyo shows, one
   document per barrio, counts only. `rondas[{pretext, slot, ageFrom, ageTo (null for 80+),
   members, cap, waiting}]` for each forming or active ronda (`members` counts active and paused
@@ -353,10 +387,10 @@ weights and limits are in `solver/README.md`; every rule name and number is in
   logged to the acta.
 - Two humans in the loop: Ciro approves groups; the host decides moves; the buddy writes the
   check-in in their own words.
-- Gates in code (not prompt): quiet hours 21:00–09:00, bot disclosure, no emoji, voseo, one
-  routine push a week, public places only for the ronda itself (the host may set a home
-  for the después). ("Ronda nunca pide plata" is in the terms and on the
-  flyers, not in messages.)
+- Gates in code (not prompt): quiet hours 21:00–09:00, bot disclosure, no emoji, voseo, no
+  money, one routine push a week, public places only for the ronda itself (the host may set a
+  home for the después). ("Ronda nunca pide plata" is in the terms and on the flyers; a
+  message that mentions money is held.)
 
 Built in #49 (`functions/organiser/`, `functions/rain.py`; `assign_hosts`, `prompt_buddy`,
 `offer_bench_seat` and "Ronda se calla" are #50):
@@ -375,7 +409,9 @@ Built in #49 (`functions/organiser/`, `functions/rain.py`; `assign_hosts`, `prom
 - **Gates** (`organiser.gates`, `organiser.text`), in order, on every message: quiet hours (held
   with `releaseAt`, the next 09:00), disclosure (the outbox adds "Hola, X. Soy un programa…" to a
   person's first organiser message and the gate checks it), no emoji, voseo (tú-only words; the
-  checker's limits are in `text.py`), one routine message a week (the RSVP push is that ronda's
+  checker's limits are in `text.py`), no money (plata, pesos, "$", pagar, cuota, transferencia,
+  Mercado Pago, colecta…; "Río de la Plata" passes; held as "menciona plata («…»)"), one
+  routine message a week (the RSVP push is that ronda's
   routine message; a host's proposal and a host-decided change are not routine), public places
   (a place a message sends people to must be `public`, and no "en lo de" or address in the
   words). `log_acta` text passes the word gates. A held message is a `message` step with

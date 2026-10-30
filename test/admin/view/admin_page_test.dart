@@ -19,6 +19,8 @@ void main() {
           .thenAnswer((_) => Stream.value(AdminFixtures.proposal()));
       when(rondaRepository.watchSeguimosCounts)
           .thenAnswer((_) => Stream.value(const []));
+      when(rondaRepository.pilotNumbers)
+          .thenAnswer((_) async => PilotFixtures.numbers);
     });
 
     testWidgets('follows the newest proposal in $AdminView', (tester) async {
@@ -47,6 +49,11 @@ void main() {
       );
       verify(rondaRepository.watchLatestProposal).called(1);
       verify(rondaRepository.watchSeguimosCounts).called(1);
+      final numbers = tester
+          .element(find.byType(AdminView))
+          .read<PilotNumbersCubit>();
+      await tester.pump();
+      expect(numbers.state.numbers, PilotFixtures.numbers);
     });
   });
 }

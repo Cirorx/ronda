@@ -18,17 +18,23 @@ class _MockRsvpPushCubit extends MockCubit<RsvpPushState>
 class _MockSeguimosCountsCubit extends MockCubit<SeguimosCountsState>
     implements SeguimosCountsCubit;
 
+class _MockPilotNumbersCubit extends MockCubit<PilotNumbersState>
+    implements PilotNumbersCubit;
+
 void main() {
   group(AdminView, () {
     late ProposalsCubit cubit;
     late RsvpPushCubit rsvpPushCubit;
     late SeguimosCountsCubit seguimosCountsCubit;
+    late PilotNumbersCubit pilotNumbersCubit;
 
     setUp(() {
       seguimosCountsCubit = _MockSeguimosCountsCubit();
       when(() => seguimosCountsCubit.state).thenReturn(
         const SeguimosCountsState(status: SeguimosCountsStatus.ready),
       );
+      pilotNumbersCubit = _MockPilotNumbersCubit();
+      when(() => pilotNumbersCubit.state).thenReturn(const PilotNumbersState());
       cubit = _MockProposalsCubit();
       rsvpPushCubit = _MockRsvpPushCubit();
       when(() => rsvpPushCubit.state).thenReturn(const RsvpPushState());
@@ -45,6 +51,7 @@ void main() {
             BlocProvider.value(value: cubit),
             BlocProvider.value(value: rsvpPushCubit),
             BlocProvider.value(value: seguimosCountsCubit),
+            BlocProvider.value(value: pilotNumbersCubit),
           ],
           child: const AdminView(),
         ),
@@ -117,6 +124,47 @@ void main() {
         );
         expect(button('Aprobar y avisarles'), findsOneWidget);
         expect(button('Deshacer'), findsNothing);
+      });
+
+      testWidgets('who is left out by name, barrio and slots', (tester) async {
+        await pump(
+          tester,
+          ready(
+            AdminFixtures.proposal(
+              unseated: const [
+                UnseatedPerson(
+                  uid: 'eva',
+                  firstName: 'Eva',
+                  barrioId: 'el-pinar-norte',
+                  slotIds: ['sat-afternoon', 'tue-evening'],
+                  pretextIds: ['mate'],
+                ),
+                UnseatedPerson(
+                  uid: 'x',
+                  firstName: 'Xime',
+                  barrioId: 'pocitos',
+                  slotIds: ['someday'],
+                  pretextIds: [],
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.scrollUntilVisible(find.text('Eva'), 200);
+
+        expect(
+          find.text('El Pinar Norte · Sábado a la tarde, Martes a la noche'),
+          findsOneWidget,
+        );
+        expect(find.text('pocitos · someday'), findsOneWidget);
+      });
+
+      testWidgets("the pilot's numbers at the bottom", (tester) async {
+        await pump(tester, ready(AdminFixtures.proposal()));
+
+        await tester.scrollUntilVisible(find.byType(PilotNumbersSection), 200);
+
+        expect(find.byType(PilotNumbersSection), findsOneWidget);
       });
 
       testWidgets('no Aprobar and no reason when nobody could be seated', (

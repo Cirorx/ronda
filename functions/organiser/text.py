@@ -1,4 +1,4 @@
-"""What the gates read in a message's words: Markdown, emoji, tú forms and private places.
+"""What the gates read in a message's words: Markdown, emoji, tú forms, private places and money.
 
 Every checker here is deliberately simple, and its limits are known:
 
@@ -18,6 +18,13 @@ Every checker here is deliberately simple, and its limits are known:
 - `private_place` finds a home: "en lo de", "en casa de", "mi casa", and a street word or a
   capitalised name followed by a number ("Av. Central 1234"). A capitalised word before a
   three- to five-digit number that is not an address ("Octubre 2026") reads as one too.
+- `money` finds a word that asks for or mentions money: plata, dinero, pesos, a "$", dólares,
+  the verbs pagar, cobrar, transferir and donar in their usual forms, cuota, Mercado Pago,
+  Abitab, RedPagos, "en efectivo", vaquita, colecta, propina, billete, precio, gratis, and a
+  number before "lucas". "Plata" as a name passes: "Río de la Plata", "La Plata", "Mar del
+  Plata" (capitalised after "la" or "del"); "la plata" in lower case is money. "Pesos" counts
+  only in the plural ("el peso de las sillas" passes) and "efectivo" only after "en". Renting a
+  cancha ("alquilar") and a price in words with no number ("dos lucas") pass.
 """
 
 import re
@@ -139,3 +146,24 @@ def private_place(text: str) -> str:
         if match := pattern.search(text):
             return match.group()
     return ""
+
+
+_PLATA_AS_A_NAME = re.compile(r"\b(?:(?i:r[ií]o\s+de\s+la\s+plata)|(?i:la|del)\s+Plata)\b")
+"""The river and the cities: "Plata" capitalised after "la" or "del", and "río de la plata"."""
+_MONEY = re.compile(
+    r"\$|\b\d+\s*lucas\b|\b(?:"
+    r"plata|dinero|pesos|pesitos|d[oó]lares|usd|uyu|billetes?|en\s+efectivo|"
+    r"pag(?:ar|á|ás|a|an|amos|o|os|ó|ue|uen|uemos|ando|ado|ada|aste|aron)|"
+    r"cobr(?:ar|á|ás|a|an|amos|o|ó|e|en|ando|ado)|"
+    r"transfer(?:encia|encias|ir|í|ís|imos|ime|ile|ilo)|"
+    r"don(?:ar|á|ás|amos|ación|aciones|ativo)|"
+    r"cuotas?|mercado\s*pago|abitab|red\s*pagos|vaquita|colecta|propinas?|precios?|gratis"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def money(text: str) -> str:
+    """The first word in `text` that asks for or mentions money, or an empty string."""
+    match = _MONEY.search(_PLATA_AS_A_NAME.sub(" ", text))
+    return match.group() if match else ""

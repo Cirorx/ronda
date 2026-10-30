@@ -23,6 +23,14 @@ class const ProposalDocument({
   /// The es-419 sentence on why the next-best grouping lost, or `null` when
   /// nobody could be seated.
   final String? rejectedReason,
+
+  /// The people in [unseated] by first name, barrio and slots; empty on a
+  /// proposal written before the field existed.
+  final List<UnseatedPersonDocument> unseatedPeople = const [],
+
+  /// Once approved, the ronda each group became, in group order; empty
+  /// while pending.
+  final List<String> rondaIds = const [],
 }) {
   /// {@macro proposal_document}
   this;
@@ -54,6 +62,14 @@ class const ProposalDocument({
           {'reason': final String reason} => reason,
           _ => throw _shape(id),
         },
+        unseatedPeople: [
+          for (final person in _list(id, json['unseatedPeople']))
+            UnseatedPersonDocument.fromJson(id, person),
+        ],
+        rondaIds: [
+          for (final rondaId in _list(id, json['rondaIds']))
+            if (rondaId is String) rondaId else throw _shape(id),
+        ],
       );
     }
     throw _shape(id);
@@ -152,6 +168,62 @@ class const ProposedMemberDocument({
     throw _shape(proposalId);
   }
 }
+
+/// {@template unseated_person_document}
+/// One entry of a proposal's `unseatedPeople`: someone it leaves without a
+/// ronda, as the admin needs to place them by hand.
+/// {@endtemplate}
+class const UnseatedPersonDocument({
+  /// Their uid.
+  required final String uid,
+
+  /// Their first name.
+  required final String firstName,
+
+  /// Their barrio id.
+  required final String barrio,
+
+  /// The slot ids they picked (`sat-afternoon`).
+  required final List<String> slots,
+
+  /// The pretext ids they picked.
+  required final List<String> pretexts,
+}) {
+  /// {@macro unseated_person_document}
+  this;
+
+  /// Reads one entry of `unseatedPeople` of proposal [proposalId].
+  factory fromJson(String proposalId, Object? json) {
+    if (json case {
+      'uid': final String uid,
+      'firstName': final String firstName,
+      'barrio': final String barrio,
+      'slots': final List<Object?> slots,
+      'pretexts': final List<Object?> pretexts,
+    }) {
+      return UnseatedPersonDocument(
+        uid: uid,
+        firstName: firstName,
+        barrio: barrio,
+        slots: _strings(proposalId, slots),
+        pretexts: _strings(proposalId, pretexts),
+      );
+    }
+    throw _shape(proposalId);
+  }
+}
+
+/// An optional list field: empty when missing.
+List<Object?> _list(String id, Object? value) => switch (value) {
+  null => const [],
+  final List<Object?> list => list,
+  _ => throw _shape(id),
+};
+
+List<String> _strings(String id, List<Object?> values) => [
+  for (final value in values)
+    if (value is String) value else throw _shape(id),
+];
 
 FormatException _shape(String id) =>
     FormatException('proposals/$id does not have the proposal shape');

@@ -124,10 +124,22 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 - **Changing group:** "¿A qué grupo te querés pasar?" — nearby groups with places, "No hace
   falta explicar por qué." The old seat opens; the old group is told nothing else.
 - **Solver + approval:** Ciro sees each proposal, the members (first name, age band, distance),
-  checks ("Todos viven a menos de 10 cuadras del punto", "Hay al menos dos de 60 o más", "Ana y
-  su invitado van juntos") and "Por qué no otra opción" with its reason. "Nadie recibe nada
-  hasta que lo aprobás." [Aprobar y avisarles] → "Aprobado. Les llega el martes a las 19."
-  with [Deshacer].
+  checks ("Todos viven a menos de 10 cuadras del punto", one line per age group, always shown:
+  "60 o más (2): nadie es el único de su edad" or "Menos de 30 (1): Facu es la única persona de
+  su edad", "Ana y su invitado van juntos") and "Por qué no otra opción" with its reason.
+  "Nadie recibe nada hasta que lo aprobás." [Aprobar y avisarles] → "Aprobado. Les llega el
+  martes a las 19." with [Deshacer]. Under the groups, who is left out: "2 personas quedan sin
+  lugar por ahora." and each by first name, barrio and the slots they picked.
+- **Sumar a esta ronda** (admin, on an approved ronda): "3 de 6 lugares ocupados", then every
+  sign-up not in it, with what doesn't match ("No eligió este día y horario", "Vive a más de 10
+  cuadras", "Su teléfono no marcó este lugar como posible") and "Ya está en …" for someone in
+  another ronda. [Sumar], or [Pasar a esta ronda] → "¿Pasar a Jorge?" "Deja … No le llega ningún
+  aviso a nadie." [Pasar]. "Listo: Eva está en la ronda. Lo ve en Mi ronda; no le mandamos
+  ningún aviso." A full ronda: "No queda lugar: es el máximo para esta actividad."
+- **Los números del piloto** (admin): "Completaron el perfil: 9 de 10 anotados", "En una ronda:
+  6 de 9", "Volvieron a la segunda reunión: 1 de 3", and per ronda "Miembros: 5 de 6", each
+  week "31/10: van 3 de 5 · no pueden 1 · sin contestar 1" and "Vinieron: 3 de 4 marcados",
+  and "¿Seguimos?: sí 3 de 4 · no 1 · sin contestar 0". Demo sign-ups never count.
 - Rules: +1 pair together, at most one pair per ronda, report-apart pairs never together, open
   a nearby ronda before seating far, cross-age truco partners when both exist.
 

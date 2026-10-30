@@ -32,6 +32,10 @@ class const Proposal({
   /// Why the next-best grouping lost, as the solver's es-419 sentence
   /// ("Alternativa B rechazada: …"); `null` when nobody could be seated.
   final String? rejectedReason,
+
+  /// Who it leaves without a seat, by name; empty on a proposal written
+  /// before names were kept (then only [unseatedCount] says how many).
+  final List<UnseatedPerson> unseated = const [],
 }) extends Equatable {
   /// {@macro proposal}
   this;
@@ -44,7 +48,35 @@ class const Proposal({
     unseatedCount,
     createdAt,
     rejectedReason,
+    unseated,
   ];
+}
+
+/// {@template unseated_person}
+/// Someone a [Proposal] leaves without a ronda: what the admin needs to
+/// place them by hand.
+/// {@endtemplate}
+class const UnseatedPerson({
+  /// Their uid.
+  required final String uid,
+
+  /// Their first name.
+  required final String firstName,
+
+  /// Their barrio id.
+  required final String barrioId,
+
+  /// The slot ids they picked.
+  required final List<String> slotIds,
+
+  /// The pretext ids they picked.
+  required final List<String> pretextIds,
+}) extends Equatable {
+  /// {@macro unseated_person}
+  this;
+
+  @override
+  List<Object?> get props => [uid, firstName, barrioId, slotIds, pretextIds];
 }
 
 /// {@template proposed_ronda}
@@ -68,6 +100,9 @@ class const ProposedRonda({
 
   /// Its members.
   required final List<ProposedMember> members,
+
+  /// The ronda it became once approved; `null` while pending.
+  final String? rondaId,
 }) extends Equatable {
   /// {@macro proposed_ronda}
   this;
@@ -79,11 +114,79 @@ class const ProposedRonda({
   bool get allWithinTenBlocks =>
       members.every((member) => member.distanceBlocks <= maxBlocks);
 
-  /// How many members are 60 or older.
-  int get sixtyPlusCount => members.where((m) => m.isSixtyPlus).length;
+  /// "Nadie es el único de su edad", for every [AgeGroup] the solver
+  /// compares, in order, whether or not anyone of it is in the ronda.
+  List<AgeGroupCheck> get ageChecks => [
+    for (final group in AgeGroup.values)
+      AgeGroupCheck(
+        group: group,
+        firstNames: [
+          for (final member in members)
+            if (AgeGroup.ofBand(member.ageBandId) == group) member.firstName,
+        ],
+      ),
+  ];
 
   @override
-  List<Object?> get props => [seatId, barrioId, pretextId, slotId, members];
+  List<Object?> get props => [
+    seatId,
+    barrioId,
+    pretextId,
+    slotId,
+    members,
+    rondaId,
+  ];
+}
+
+/// The age groups the solver keeps from being alone in a ronda
+/// (`solver/ronda_solver/rules.py` `AGE_GROUPS`): people pick a decade, the
+/// solver compares three groups.
+enum AgeGroup {
+  /// 18-29.
+  under30,
+
+  /// 30-39 to 50-59.
+  from30To59,
+
+  /// 60-69 and up.
+  sixtyPlus;
+
+  static const Map<String, AgeGroup> _bands = {
+    '18-29': under30,
+    '30-39': from30To59,
+    '40-49': from30To59,
+    '50-59': from30To59,
+    '60-69': sixtyPlus,
+    '70-79': sixtyPlus,
+    '80+': sixtyPlus,
+  };
+
+  /// The group of age band [ageBandId]; `null` for a band outside them.
+  static AgeGroup? ofBand(String ageBandId) => _bands[ageBandId];
+}
+
+/// {@template age_group_check}
+/// One age group of a ronda: who is in it, and whether nobody is the only
+/// one of their age.
+/// {@endtemplate}
+class const AgeGroupCheck({
+  /// The group.
+  required final AgeGroup group,
+
+  /// The first names of the members in it.
+  required final List<String> firstNames,
+}) extends Equatable {
+  /// {@macro age_group_check}
+  this;
+
+  /// How many members are in it.
+  int get count => firstNames.length;
+
+  /// Whether nobody is the only one of their age: none, or two or more.
+  bool get kept => count != 1;
+
+  @override
+  List<Object?> get props => [group, firstNames];
 }
 
 /// {@template proposed_member}
@@ -108,11 +211,6 @@ class const ProposedMember({
 }) extends Equatable {
   /// {@macro proposed_member}
   this;
-
-  static const _sixtyPlusBands = {'60-69', '70-79', '80+'};
-
-  /// Whether they are 60 or older ("Hay al menos dos de 60 o más").
-  bool get isSixtyPlus => _sixtyPlusBands.contains(ageBandId);
 
   @override
   List<Object?> get props => [

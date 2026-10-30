@@ -99,6 +99,60 @@ class TestPrivatePlace:
         )
 
 
+class TestMoney:
+    @pytest.mark.parametrize(
+        ("written", "found"),
+        [
+            ("Traigan plata para la cancha", "plata"),
+            ("La plata la junta Mirta", "plata"),
+            ("Son 200 pesos cada uno", "pesos"),
+            ("Cuesta $200", "$"),
+            ("Son U$S 10", "$"),
+            ("Hay que pagar la cancha", "pagar"),
+            ("Pagá antes del jueves", "Pagá"),
+            ("Cada uno paga lo suyo", "paga"),
+            ("Mandá la transferencia a Jorge", "transferencia"),
+            ("Transferí a este número", "Transferí"),
+            ("La cuota del mes", "cuota"),
+            ("Por Mercado Pago o Abitab", "Mercado Pago"),
+            ("Por RedPagos", "RedPagos"),
+            ("Llevá dinero", "dinero"),
+            ("Mejor en efectivo", "en efectivo"),
+            ("Hacemos una vaquita para el termo", "vaquita"),
+            ("Hay una colecta", "colecta"),
+            ("Les cobran la entrada", "cobran"),
+            ("Doná lo que quieras", "Doná"),
+            ("Son 2 lucas", "2 lucas"),
+            ("¿Cuál es el precio?", "precio"),
+            ("Es gratis", "gratis"),
+            ("Diez dólares", "dólares"),
+        ],
+    )
+    def test_finds_money(self, written, found):
+        assert text.money(written) == found
+
+    @pytest.mark.parametrize(
+        "written",
+        [
+            "Jueves 16:00 · mate en la rambla del Río de la Plata",
+            "Mirta viene de La Plata y Jorge de Mar del Plata",
+            "Llevá las sillas, que el peso lo repartimos",
+            "Es efectivo: llegás diez minutos antes",
+            "Don Jorge abre a las 15:50",
+            "Lucas lleva el termo",
+            "Pasarla al viernes",
+            "Mirá la página de Ronda",
+            "Llevá la yerba y el mate plateado",
+            "Fútbol 5 en la cancha del club, si se puede alquilar",
+            "Por la lluvia, el jueves nos vemos en el Salón Comunal de El Pinar a las 16:00.",
+            "Hola, Graciela. Soy un programa. Ronda me usa para avisar horarios, lugares y lluvia. "
+            "Las decisiones las toman ustedes. Nunca escribo de noche.",
+        ],
+    )
+    def test_lets_places_names_and_logistics_pass(self, written):
+        assert text.money(written) == ""
+
+
 class TestGates:
     def message(self, **fields) -> gates.Outgoing:
         values = {
@@ -150,6 +204,11 @@ class TestGates:
                 "parece una casa o una dirección: «En lo de»",
             ),
             (
+                {"text": "Traigan 100 pesos para la cancha"},
+                "money",
+                "menciona plata («pesos»)",
+            ),
+            (
                 {"place": gates.Place("lo de Mirta", "home")},
                 "public_place",
                 "lo de Mirta no es un lugar público",
@@ -173,6 +232,17 @@ class TestGates:
 
     def test_a_public_place_passes(self):
         assert gates.check(self.message(place=gates.Place("la plaza")), WED_18).allowed
+
+    def test_the_rambla_on_the_river_passes_the_money_gate(self):
+        message = self.message(text="Mate en la rambla del Río de la Plata a las 16:00.")
+
+        assert gates.check(message, WED_18).allowed
+
+    def test_the_acta_words_hold_money_too(self):
+        verdict = gates.check_words("Juntamos la plata para la cancha")
+
+        assert (verdict.allowed, verdict.gate) == (False, "money")
+        assert verdict.reason == "menciona plata («plata»)"
 
 
 class TestWeather:

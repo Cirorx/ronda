@@ -94,6 +94,48 @@ void main() {
         );
       });
 
+      test('names who is left out and the ronda each group became', () {
+        final approved = document(status: 'approved');
+        when(proposalsApi.watchLatestProposal).thenAnswer(
+          (_) => Stream.value(
+            ProposalDocument(
+              id: approved.id,
+              status: approved.status,
+              groups: approved.groups,
+              unseated: approved.unseated,
+              createdAt: createdAt,
+              rondaIds: const ['r1'],
+              unseatedPeople: const [
+                UnseatedPersonDocument(
+                  uid: 'demo-009',
+                  firstName: 'Eva',
+                  barrio: 'el-pinar-norte',
+                  slots: ['sat-afternoon'],
+                  pretexts: ['mate'],
+                ),
+              ],
+            ),
+          ),
+        );
+
+        expect(
+          subject.watchLatestProposal(),
+          emits(
+            isA<Proposal>()
+                .having((p) => p.rondas.single.rondaId, 'rondaId', 'r1')
+                .having((p) => p.unseated, 'unseated', const [
+                  UnseatedPerson(
+                    uid: 'demo-009',
+                    firstName: 'Eva',
+                    barrioId: 'el-pinar-norte',
+                    slotIds: ['sat-afternoon'],
+                    pretextIds: ['mate'],
+                  ),
+                ]),
+          ),
+        );
+      });
+
       test('reads an approved proposal as approved', () {
         when(proposalsApi.watchLatestProposal)
             .thenAnswer((_) => Stream.value(document(status: 'approved')));

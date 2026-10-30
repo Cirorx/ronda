@@ -318,5 +318,23 @@ void main() {
         ).called(1);
       });
     });
+
+    group('pilotNumbers', () {
+      test('calls pilot_numbers and reads its answer', () async {
+        final result = _MockHttpsCallableResult<Object?>();
+        when(() => result.data).thenReturn({
+          'signUps': {'profiles': 1, 'of': 2},
+          'seated': {'members': 0, 'of': 1},
+          'rondas': <Object?>[],
+          'cameBack': null,
+        });
+        when(callable.call<Object?>).thenAnswer((_) async => result);
+
+        final document = await subject.pilotNumbers();
+
+        expect(document.signUps, 2);
+        verify(() => functions.httpsCallable('pilot_numbers')).called(1);
+      });
+    });
   });
 }

@@ -67,9 +67,23 @@ def solver_input(users: dict[str, dict], eligible: dict[str, list[str]], avoid: 
     }
 
 
+def unseated_person(uid: str, user: dict) -> dict:
+    """One entry of `unseatedPeople`: what the admin needs to place someone by hand, and no more:
+    first name, barrio, the slots and pretexts they picked."""
+    return {
+        "uid": uid,
+        "firstName": user.get("firstName", ""),
+        "barrio": user.get("barrio", ""),
+        "slots": list(user.get("slots", [])),
+        "pretexts": list(user.get("pretexts", [])),
+    }
+
+
 def proposal_document(result: dict, users: dict[str, dict], admin_uid: str, now: datetime) -> dict:
     """`proposals/{id}` for a solver result: each group with its members' first names, age bands
-    and walk, the rejected alternative's reason, and who is still without a seat.
+    and walk, the rejected alternative's reason, and who is still without a seat: `unseated`
+    (uids, which scripts/reset.py reads) and `unseatedPeople`, the same people by first name,
+    barrio and slots, so /admin can name them.
 
     `plusOneInGroup` is true or false only for a member whose +1 also signed up, so the screen can
     say "Ana y su invitado van juntos" without knowing the other groups.
@@ -107,6 +121,7 @@ def proposal_document(result: dict, users: dict[str, dict], admin_uid: str, now:
         "solverStatus": result["status"],
         "groups": groups,
         "unseated": result["unseated"],
+        "unseatedPeople": [unseated_person(uid, users[uid]) for uid in result["unseated"]],
         "rejectedAlternative": None
         if alternative is None
         else {

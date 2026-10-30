@@ -1,13 +1,19 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:profile_repository/profile_repository.dart';
+import 'package:ronda/admin/widgets/add_to_ronda_sheet.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/onboarding/widgets/onboarding_labels.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// One proposed ronda for the admin: what, where and when, its members
-/// (first name, age band, walk) and the checks it passes or breaks.
+/// (first name, age band, walk) and the checks it passes or breaks. Once
+/// approved, "Sumar a esta ronda" opens the [AddToRondaSheet].
 class const AdminProposalCard({required final ProposedRonda ronda, super.key})
     extends StatelessWidget {
+  /// Maestro's handle on "Sumar a esta ronda".
+  static const addIdentifier = 'admin_add_to_ronda';
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -47,11 +53,34 @@ class const AdminProposalCard({required final ProposedRonda ronda, super.key})
             SizedBox(height: spacing.sm),
             for (final (kept, label) in _checks(l10n))
               _Check(kept: kept, label: label),
+            if (ronda.rondaId case final rondaId?) ...[
+              SizedBox(height: spacing.xs),
+              MergeSemantics(
+                child: Semantics(
+                  identifier: addIdentifier,
+                  child: OutlinedButton(
+                    onPressed: () => AddToRondaSheet.show(
+                      context,
+                      rondaId: rondaId,
+                      rondaRepository: context.read<RondaRepository>(),
+                    ),
+                    child: Text(l10n.adminAddToRonda),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
+
+  static String _ageGroup(AppLocalizations l10n, AgeGroup group) =>
+      switch (group) {
+        AgeGroup.under30 => l10n.adminAgeGroupUnder30,
+        AgeGroup.from30To59 => l10n.adminAgeGroupFrom30To59,
+        AgeGroup.sixtyPlus => l10n.adminAgeGroupSixtyPlus,
+      };
 
   static String _memberDetail(AppLocalizations l10n, ProposedMember member) {
     final band = AgeBand.fromId(member.ageBandId);
@@ -61,18 +90,29 @@ class const AdminProposalCard({required final ProposedRonda ronda, super.key})
     );
   }
 
-  /// The checks the approval copy names, each with whether it holds. The
-  /// 60+ check shows only when the ronda has someone 60 or over, and one
-  /// +1 line per member whose +1 signed up.
+  /// The checks the approval copy names, each with whether it holds: the
+  /// walk, "nadie es el único de su edad" for every age group the solver
+  /// compares (always, with how many are in it), and one +1 line per member
+  /// whose +1 signed up.
   List<(bool, String)> _checks(AppLocalizations l10n) => [
     if (ronda.allWithinTenBlocks)
       (true, l10n.adminCheckWithinTen)
     else
       (false, l10n.adminCheckFarther),
-    if (ronda.sixtyPlusCount >= 2)
-      (true, l10n.adminCheckSixtyPlus)
-    else if (ronda.sixtyPlusCount == 1)
-      (false, l10n.adminCheckSixtyPlusAlone),
+    for (final check in ronda.ageChecks)
+      if (check.kept)
+        (
+          true,
+          l10n.adminCheckAgeKept(_ageGroup(l10n, check.group), check.count),
+        )
+      else
+        (
+          false,
+          l10n.adminCheckAgeAlone(
+            _ageGroup(l10n, check.group),
+            check.firstNames.single,
+          ),
+        ),
     for (final member in ronda.members)
       if (member.plusOneInGroup == true)
         (true, l10n.adminCheckPlusOneTogether(member.firstName))

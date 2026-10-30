@@ -28,6 +28,7 @@ class const AdminPage({super.key}) extends StatelessWidget {
             rondaRepository: context.read<RondaRepository>(),
           )..subscribe(),
         ),
+        pilotNumbersProvider(),
       ],
       child: const AdminView(),
     );

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:ronda_api/src/rondas/cerca_document.dart';
+import 'package:ronda_api/src/rondas/pilot_numbers_document.dart';
 import 'package:ronda_api/src/rondas/ronda_documents.dart';
 import 'package:ronda_api/src/rondas/seguimos_documents.dart';
 
@@ -30,6 +31,9 @@ class const RondasApi({
 
   /// The admin's callable that runs one scheduled job now.
   static const runJobCallable = 'run_job';
+
+  /// The admin's callable that counts the pilot's numbers.
+  static const pilotNumbersCallable = 'pilot_numbers';
 
   /// The callable that records a ¿seguimos? answer or, below the floor, the
   /// member's choice.
@@ -151,5 +155,16 @@ class const RondasApi({
       for (final MapEntry(:key, :value) in result.data.entries)
         if ((key, value) case (final String key, final int value)) key: value,
     };
+  }
+
+  /// The pilot's numbers, counted now. Admin only.
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails, and a
+  /// [FormatException] for an answer of another shape.
+  Future<PilotNumbersDocument> pilotNumbers() async {
+    final result = await functions
+        .httpsCallable(pilotNumbersCallable)
+        .call<Object?>();
+    return PilotNumbersDocument.fromJson(result.data);
   }
 }

@@ -64,6 +64,108 @@ class RondaRepository {
   Future<void> undoApproval(String id) =>
       _guard(() => _proposalsApi.undoApproval(id));
 
+  /// Who could be added to ronda [rondaId], and who is in it now. Admin
+  /// only.
+  ///
+  /// Throws a [ProposalsFailure].
+  Future<RondaCandidates> rondaCandidates(String rondaId) => _guard(() async {
+    final document = await _proposalsApi.rondaCandidates(rondaId);
+    return RondaCandidates(
+      rondaId: document.rondaId,
+      line: document.line,
+      members: document.members,
+      taken: document.taken,
+      cap: document.cap,
+      people: [
+        for (final person in document.people)
+          Candidate(
+            uid: person.uid,
+            firstName: person.firstName,
+            ageBandId: person.ageBand,
+            barrioId: person.barrio,
+            slotIds: person.slots,
+            warnings: _warnings(person.warnings),
+            blocks: person.blocks,
+            currentRondaId: person.rondaId,
+            currentRondaLine: person.rondaLine,
+          ),
+      ],
+    );
+  });
+
+  /// "Sumar a esta ronda": adds sign-up [uid] to ronda [rondaId] as an
+  /// active member who hasn't answered this week; [move] takes them out of
+  /// the ronda they are in. Admin only.
+  ///
+  /// Throws a [ProposalsFailure]: [ProposalsFailureReason.full] when no
+  /// seat is left, [ProposalsFailureReason.alreadyIn] when they are in it.
+  Future<AddedToRonda> addToRonda({
+    required String rondaId,
+    required String uid,
+    bool move = false,
+  }) => _guard(() async {
+    final document = await _proposalsApi.addToRonda(
+      rondaId: rondaId,
+      uid: uid,
+      move: move,
+    );
+    return AddedToRonda(
+      rondaId: document.rondaId,
+      uid: document.uid,
+      warnings: _warnings(document.warnings),
+      movedFrom: document.movedFrom,
+    );
+  });
+
+  static List<CandidateWarning> _warnings(List<String> names) => [
+    for (final name in names) ?CandidateWarning.values.asNameMap()[name],
+  ];
+
+  /// The pilot's numbers, counted now. Admin only.
+  ///
+  /// Throws a [ProposalsFailure].
+  Future<PilotNumbers> pilotNumbers() => _guard(() async {
+    final document = await _rondasApi.pilotNumbers();
+    CountOf? countOf(CountOfDocument? value) =>
+        value == null ? null : CountOf(value.count, value.of);
+    return PilotNumbers(
+      profiles: CountOf(document.profiles, document.signUps),
+      seated: CountOf(document.seated, document.profiles),
+      cameBack: countOf(document.cameBack),
+      rondas: [
+        for (final ronda in document.rondas)
+          PilotRonda(
+            rondaId: ronda.rondaId,
+            line: ronda.line,
+            members: CountOf(ronda.members, ronda.cap),
+            cameBack: countOf(ronda.cameBack),
+            seguimos: switch (ronda.seguimos) {
+              null => null,
+              final counts => PilotSeguimos(
+                yes: CountOf(counts.yes, counts.asked),
+                no: counts.no,
+                unanswered: counts.unanswered,
+              ),
+            },
+            weeks: [
+              for (final week in ronda.weeks)
+                PilotWeek(
+                  week: week.week,
+                  date: DateTime.tryParse(week.date ?? ''),
+                  yes: CountOf(week.yes, week.members),
+                  no: week.no,
+                  unanswered: week.unanswered,
+                  came: switch ((week.came, week.marked)) {
+                    (final int came, final int marked) => CountOf(came, marked),
+                    _ => null,
+                  },
+                ),
+            ],
+          ),
+      ],
+    );
+  });
+
   /// Cerca tuyo's demand in [barrioId]; empty while the barrio has no counts
   /// yet.
   ///
@@ -316,11 +418,16 @@ class RondaRepository {
     }
   }
 
-  static ProposalsFailure _failure(Object error) => ProposalsFailure(
-    error is FirebaseException && _forbiddenCodes.contains(error.code)
-        ? ProposalsFailureReason.forbidden
-        : ProposalsFailureReason.other,
-  );
+  static ProposalsFailure _failure(Object error) =>
+      ProposalsFailure(switch (error) {
+        FirebaseException(:final code) when _forbiddenCodes.contains(code) =>
+          ProposalsFailureReason.forbidden,
+        FirebaseException(code: 'resource-exhausted') =>
+          ProposalsFailureReason.full,
+        FirebaseException(code: 'already-exists') =>
+          ProposalsFailureReason.alreadyIn,
+        _ => ProposalsFailureReason.other,
+      });
 }
 
 extension on ProposalDocument {
@@ -330,12 +437,13 @@ extension on ProposalDocument {
         ? ProposalStatus.approved
         : ProposalStatus.pending,
     rondas: [
-      for (final group in groups)
+      for (final (index, group) in groups.indexed)
         ProposedRonda(
           seatId: group.seatId,
           barrioId: group.barrio,
           pretextId: group.pretext,
           slotId: group.slot,
+          rondaId: index < rondaIds.length ? rondaIds[index] : null,
           members: [
             for (final member in group.members)
               ProposedMember(
@@ -349,6 +457,16 @@ extension on ProposalDocument {
         ),
     ],
     unseatedCount: unseated.length,
+    unseated: [
+      for (final person in unseatedPeople)
+        UnseatedPerson(
+          uid: person.uid,
+          firstName: person.firstName,
+          barrioId: person.barrio,
+          slotIds: person.slots,
+          pretextIds: person.pretexts,
+        ),
+    ],
     createdAt: createdAt,
     rejectedReason: rejectedReason,
   );

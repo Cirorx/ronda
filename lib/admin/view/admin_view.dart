@@ -135,10 +135,7 @@ class const _Proposal(final ProposalsState state) extends StatelessWidget {
             AdminProposalCard(ronda: ronda),
             SizedBox(height: spacing.sm),
           ],
-          Text(
-            l10n.adminUnseated(proposal.unseatedCount),
-            style: theme.textTheme.bodyMedium,
-          ),
+          UnseatedList(proposal: proposal),
           if (proposal.rejectedReason case final reason?) ...[
             SizedBox(height: spacing.lg),
             Text(l10n.adminWhyNotOther, style: theme.textTheme.titleMedium),
@@ -162,6 +159,8 @@ class const _Proposal(final ProposalsState state) extends StatelessWidget {
         const RsvpPushSection(),
         Divider(height: spacing.xlg),
         const SeguimosCountsSection(),
+        Divider(height: spacing.xlg),
+        const PilotNumbersSection(),
       ],
     );
   }

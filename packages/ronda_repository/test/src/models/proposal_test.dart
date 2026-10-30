@@ -31,14 +31,30 @@ void main() {
       });
     });
 
-    group('sixtyPlusCount', () {
-      test('counts the 60-69, 70-79 and 80+ bands', () {
+    group('ageChecks', () {
+      test('checks every age group the solver compares, in order', () {
         final members = [
-          for (final band in ['18-29', '50-59', '60-69', '70-79', '80+'])
+          for (final band in ['18-29', '50-59', '60-69', '70-79', '80+', '?'])
             member(band, 1),
         ];
 
-        expect(ronda(members).sixtyPlusCount, 3);
+        final checks = ronda(members).ageChecks;
+
+        expect([for (final c in checks) c.group], AgeGroup.values);
+        expect([for (final c in checks) c.count], [1, 1, 3]);
+        expect([for (final c in checks) c.kept], [false, false, true]);
+      });
+
+      test('keeps a group nobody is in', () {
+        final checks = ronda([member('30-39', 1), member('40-49', 1)])
+            .ageChecks;
+
+        expect(
+          checks.first,
+          const AgeGroupCheck(group: AgeGroup.under30, firstNames: []),
+        );
+        expect(checks.first.kept, isTrue);
+        expect(checks[1].firstNames, ['Vecina', 'Vecina']);
       });
     });
   });

@@ -115,6 +115,8 @@ void main() {
           .thenAnswer((_) => Stream.value(null));
       when(rondaRepository.watchSeguimosCounts)
           .thenAnswer((_) => Stream.value(const []));
+      when(rondaRepository.pilotNumbers)
+          .thenThrow(const ProposalsFailure(ProposalsFailureReason.forbidden));
       users = StreamController<User>.broadcast();
       profiles = StreamController<Profile?>.broadcast();
       addTearDown(users.close);

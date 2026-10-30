@@ -411,3 +411,62 @@ def answer_move(req: https_fn.CallableRequest) -> dict:
         )
     except rain.MoveError as e:
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e
+
+
+# --- The pilot's admin (#55): who to add to a ronda, adding them, and the pilot's numbers -----
+
+
+def _ronda_id(req: https_fn.CallableRequest) -> str:
+    ronda_id = (req.data if isinstance(req.data, dict) else {}).get("rondaId")
+    if not isinstance(ronda_id, str) or not ronda_id or "/" in ronda_id:
+        raise https_fn.HttpsError(
+            https_fn.FunctionsErrorCode.INVALID_ARGUMENT, "rondaId is required"
+        )
+    return ronda_id
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=1, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def ronda_candidates(req: https_fn.CallableRequest) -> dict:
+    """Who the admin could add to ronda `rondaId`, with what doesn't match it. Admin only."""
+    _require_admin(req)
+    ronda_id = _ronda_id(req)
+    import ronda_members
+
+    try:
+        return ronda_members.candidates(_firestore(), ronda_id)
+    except ronda_members.MemberError as e:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=1, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def add_to_ronda(req: https_fn.CallableRequest) -> dict:
+    """ "Sumar a esta ronda": adds sign-up `uid` to ronda `rondaId`; `move: true` takes them out
+    of the ronda they are in. Admin only (ronda_members.py)."""
+    _require_admin(req)
+    ronda_id = _ronda_id(req)
+    uid = req.data.get("uid")
+    if not isinstance(uid, str) or not uid or "/" in uid:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.INVALID_ARGUMENT, "uid is required")
+    import ronda_members
+
+    try:
+        return ronda_members.add(
+            _firestore(), ronda_id, uid, _now(), move=req.data.get("move") is True
+        )
+    except ronda_members.MemberError as e:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=1, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def pilot_numbers(req: https_fn.CallableRequest) -> dict:
+    """The pilot's numbers for /admin, demo sign-ups left out (pilot_numbers.py). Admin only."""
+    _require_admin(req)
+    import pilot_numbers as numbers
+
+    return numbers.numbers(_firestore(), _now())

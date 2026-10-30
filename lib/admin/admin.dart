@@ -1,8 +1,14 @@
+export 'cubit/add_to_ronda_cubit.dart';
+export 'cubit/pilot_numbers_cubit.dart';
 export 'cubit/proposals_cubit.dart';
 export 'cubit/rsvp_push_cubit.dart';
 export 'cubit/seguimos_counts_cubit.dart';
 export 'view/admin_page.dart';
 export 'view/admin_view.dart';
+export 'widgets/add_to_ronda_sheet.dart';
+export 'widgets/admin_labels.dart';
 export 'widgets/admin_proposal_card.dart';
+export 'widgets/pilot_numbers_section.dart';
 export 'widgets/rsvp_push_section.dart';
 export 'widgets/seguimos_counts_section.dart';
+export 'widgets/unseated_list.dart';

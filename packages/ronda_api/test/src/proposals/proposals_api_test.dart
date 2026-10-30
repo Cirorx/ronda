@@ -127,5 +127,53 @@ void main() {
             .called(1);
       });
     });
+
+    group('rondaCandidates', () {
+      test('calls ronda_candidates and reads its answer', () async {
+        final result = _MockHttpsCallableResult<Object?>();
+        when(() => result.data).thenReturn({
+          'rondaId': 'r1',
+          'line': 'x',
+          'members': <Object?>[],
+          'taken': 0,
+          'cap': 6,
+          'people': <Object?>[],
+        });
+        when(() => callable.call<Object?>(any<Object?>()))
+            .thenAnswer((_) async => result);
+
+        final document = await subject.rondaCandidates('r1');
+
+        expect(document.cap, 6);
+        verify(() => functions.httpsCallable('ronda_candidates')).called(1);
+        verify(() => callable.call<Object?>({'rondaId': 'r1'})).called(1);
+      });
+    });
+
+    group('addToRonda', () {
+      test('calls add_to_ronda, not moving by default', () async {
+        final result = _MockHttpsCallableResult<Object?>();
+        when(() => result.data).thenReturn({
+          'rondaId': 'r1',
+          'uid': 'eva',
+          'warnings': <Object?>[],
+          'movedFrom': null,
+        });
+        when(() => callable.call<Object?>(any<Object?>()))
+            .thenAnswer((_) async => result);
+
+        final document = await subject.addToRonda(rondaId: 'r1', uid: 'eva');
+
+        expect(document.uid, 'eva');
+        verify(() => functions.httpsCallable('add_to_ronda')).called(1);
+        verify(
+          () => callable.call<Object?>({
+            'rondaId': 'r1',
+            'uid': 'eva',
+            'move': false,
+          }),
+        ).called(1);
+      });
+    });
   });
 }

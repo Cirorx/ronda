@@ -9,14 +9,16 @@ In order:
    ("Soy un programa"); the outbox adds the introduction, and this gate checks it is there.
 3. `emoji`: none, in the title or the text.
 4. `voseo`: no tú form (`text.tu_forms`, with its limits).
-5. `routine`: one routine message a week per member. The week's RSVP push ("¿Venís?") is that
+5. `money`: nothing that asks for or mentions money (`text.money`): Ronda never asks for it,
+   and says so only in the terms and on the flyers. Held as "menciona plata".
+6. `routine`: one routine message a week per member. The week's RSVP push ("¿Venís?") is that
    ronda's routine message, so a routine message from the organiser in the same week is held.
    A change the host decided (a rain move) and a proposal to the host are not routine.
-6. `public_place`: the ronda itself only meets in public places. A message that sends people
+7. `public_place`: the ronda itself only meets in public places. A message that sends people
    somewhere must name a public place, and its words must not look like a home or an address
    (`text.private_place`). A home is only for the después, which the organiser never sends.
 
-`check_words` runs only the gates about words (3, 4 and the address check of 6), for what
+`check_words` runs only the gates about words (3, 4, 5 and the address check of 7), for what
 members read that isn't a message: the acta.
 """
 
@@ -92,11 +94,13 @@ def release_time(now: datetime) -> datetime:
 
 
 def check_words(words: str) -> Verdict:
-    """The gates about words alone: no emoji, voseo, no home or address."""
+    """The gates about words alone: no emoji, voseo, no money, no home or address."""
     if found := text.emoji(words):
         return Verdict(False, "emoji", f"tiene un emoji ({found})")
     if found := text.tu_forms(words):
         return Verdict(False, "voseo", f"no está en voseo: «{found}»")
+    if found := text.money(words):
+        return Verdict(False, "money", f"menciona plata («{found}»)")
     if found := text.private_place(words):
         return Verdict(False, "public_place", f"parece una casa o una dirección: «{found}»")
     return ALLOWED
