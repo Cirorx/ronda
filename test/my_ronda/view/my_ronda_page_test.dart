@@ -7,9 +7,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:push_repository/push_repository.dart';
 import 'package:ronda/app/app.dart';
+import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
 import 'package:ronda/my_ronda/cubit/this_week_cubit.dart';
 import 'package:ronda/my_ronda/my_ronda.dart';
 import 'package:ronda/my_ronda/widgets/esta_no_sheet.dart';
+import 'package:ronda/my_ronda/widgets/seguimos_card.dart';
 import 'package:ronda/my_ronda/widgets/this_week_card.dart';
 import 'package:ronda/push/push.dart';
 import 'package:ronda_repository/ronda_repository.dart';
@@ -28,6 +30,9 @@ class _MockPushCubit extends MockCubit<PushState> implements PushCubit;
 
 class _MockThisWeekCubit extends MockCubit<ThisWeekState>
     implements ThisWeekCubit;
+
+class _MockSeguimosCubit extends MockCubit<SeguimosState>
+    implements SeguimosCubit;
 
 void main() {
   group(MyRondaPage, () {
@@ -49,6 +54,8 @@ void main() {
           .thenAnswer((_) async => PushPermission.notAsked);
       when(pushRepository.promptSnoozed).thenAnswer((_) async => false);
       when(() => rondaRepository.watchThisWeek(MyRondaFixtures.uid))
+          .thenAnswer((_) => Stream.value(null));
+      when(() => rondaRepository.watchSeguimos(MyRondaFixtures.uid))
           .thenAnswer((_) => Stream.value(null));
     });
 
@@ -74,6 +81,10 @@ void main() {
         context.read<ThisWeekCubit>().state,
         equals(const ThisWeekState(status: ThisWeekStatus.noGroup)),
       );
+      expect(
+        context.read<SeguimosCubit>().state,
+        equals(const SeguimosState(status: SeguimosCardStatus.none)),
+      );
       expect(find.text('¿Te avisamos los martes?'), findsOneWidget);
       expect(find.text('Estamos armando tu grupo'), findsOneWidget);
       verify(pushRepository.permission).called(1);
@@ -83,10 +94,14 @@ void main() {
   group(MyRondaView, () {
     late PushCubit pushCubit;
     late ThisWeekCubit thisWeekCubit;
+    late SeguimosCubit seguimosCubit;
 
     setUp(() {
       pushCubit = _MockPushCubit();
       thisWeekCubit = _MockThisWeekCubit();
+      seguimosCubit = _MockSeguimosCubit();
+      when(() => seguimosCubit.state)
+          .thenReturn(const SeguimosState(status: SeguimosCardStatus.none));
       when(() => pushCubit.state)
           .thenReturn(const PushState(status: PushStatus.dismissed));
       when(() => thisWeekCubit.state)
@@ -100,6 +115,7 @@ void main() {
         providers: [
           BlocProvider.value(value: pushCubit),
           BlocProvider.value(value: thisWeekCubit),
+          BlocProvider.value(value: seguimosCubit),
         ],
         child: const MyRondaView(uid: MyRondaFixtures.uid),
       ),
@@ -143,6 +159,59 @@ void main() {
         await pump(tester);
 
         expect(find.byType(ThisWeekCard), findsOneWidget);
+      });
+
+      testWidgets('the ¿seguimos? card above the week while there is one', (
+        tester,
+      ) async {
+        when(() => thisWeekCubit.state).thenReturn(
+          ThisWeekState(
+            status: ThisWeekStatus.ready,
+            week: MyRondaFixtures.week(),
+          ),
+        );
+        when(() => seguimosCubit.state).thenReturn(
+          SeguimosState(
+            status: SeguimosCardStatus.ready,
+            seguimos: MyRondaFixtures.seguimos(),
+          ),
+        );
+        await pump(tester);
+
+        expect(
+          tester.getTopLeft(find.byType(SeguimosCard)).dy,
+          lessThan(tester.getTopLeft(find.byType(ThisWeekCard)).dy),
+        );
+      });
+
+      testWidgets('no week once the member left at the close', (tester) async {
+        when(() => thisWeekCubit.state).thenReturn(
+          const ThisWeekState(
+            status: ThisWeekStatus.ready,
+            week: ThisWeek(
+              rondaId: 'r1',
+              pretextId: 'mate',
+              barrioId: 'el-pinar-sur',
+              slotDayId: 'tue',
+              slotBandId: 'afternoon',
+              myBrings: [],
+              hasLeft: true,
+            ),
+          ),
+        );
+        when(() => seguimosCubit.state).thenReturn(
+          SeguimosState(
+            status: SeguimosCardStatus.ready,
+            seguimos: MyRondaFixtures.seguimos(
+              open: false,
+              outcome: SeguimosOutcome.gracias,
+            ),
+          ),
+        );
+        await pump(tester);
+
+        expect(find.byType(ThisWeekCard), findsNothing);
+        expect(find.text('Gracias por venir.'), findsOneWidget);
       });
 
       testWidgets('a retry when the ronda cannot be read', (tester) async {

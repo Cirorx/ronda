@@ -17,6 +17,8 @@ void main() {
       rondaRepository = _MockRondaRepository();
       when(rondaRepository.watchLatestProposal)
           .thenAnswer((_) => Stream.value(AdminFixtures.proposal()));
+      when(rondaRepository.watchSeguimosCounts)
+          .thenAnswer((_) => Stream.value(const []));
     });
 
     testWidgets('follows the newest proposal in $AdminView', (tester) async {
@@ -34,7 +36,17 @@ void main() {
         const RsvpPushState(),
       );
       expect(find.byType(AdminProposalCard), findsOneWidget);
+      // Created when its section is first built, below the fold.
+      final seguimos = tester
+          .element(find.byType(AdminView))
+          .read<SeguimosCountsCubit>();
+      await tester.pump();
+      expect(
+        seguimos.state,
+        const SeguimosCountsState(status: SeguimosCountsStatus.ready),
+      );
       verify(rondaRepository.watchLatestProposal).called(1);
+      verify(rondaRepository.watchSeguimosCounts).called(1);
     });
   });
 }

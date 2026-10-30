@@ -84,6 +84,10 @@ PushClient _pushClient(AppLocalizations strings) => PushClient(
     yes: strings.thisWeekYes,
     no: strings.thisWeekNo,
   ),
+  seguimosLabels: SeguimosActionLabels(
+    yes: strings.seguimosYes,
+    no: strings.seguimosNo,
+  ),
 );
 
 /// Shows a data-only push that arrived while the app was in the background
@@ -95,12 +99,13 @@ Future<void> showPushInBackground(RemoteMessage message) async {
   await _pushClient(_phoneStrings()).showMessage(message);
 }
 
-/// Answers the weekly push's "Voy" or "Esta no" without opening the app
-/// (Android). flutter_local_notifications runs it in a background isolate,
-/// even with the app closed, so it starts Firebase with the flavor's
-/// [firebaseOptions] and [emulators], waits for the signed-in member, calls
-/// `answer_rsvp` through the same repository as the card, and puts a notice
-/// in the push's place saying what happened.
+/// Answers the weekly push's "Voy" or "Esta no", or the ¿seguimos? push's
+/// "Sí" or "No", without opening the app (Android).
+/// flutter_local_notifications runs it in a background isolate, even with
+/// the app closed, so it starts Firebase with the flavor's [firebaseOptions]
+/// and [emulators], waits for the signed-in member, calls `answer_rsvp` or
+/// `answer_seguimos` through the same repository as the cards, and puts a
+/// notice in the push's place saying what happened.
 ///
 /// Each flavor's entrypoint wraps it in a top-level
 /// `@pragma('vm:entry-point')` function and hands that to [bootstrap].
@@ -110,7 +115,8 @@ Future<void> answerRsvpInBackground(
   FirebaseEmulators? emulators,
 }) async {
   final action = PushClient.rsvpActionFrom(response);
-  if (action == null) return;
+  final seguimos = PushClient.seguimosActionFrom(response);
+  if (action == null && seguimos == null) return;
   await Firebase.initializeApp(options: firebaseOptions);
   final auth = FirebaseAuth.instance;
   final functions = FirebaseFunctions.instanceFor(region: functionsRegion);
@@ -134,18 +140,31 @@ Future<void> answerRsvpInBackground(
     if (await auth.authStateChanges().first == null) {
       throw const RsvpFailure(RsvpFailureReason.forbidden);
     }
-    await repository.answerRsvp(
-      rondaId: action.rondaId,
-      week: action.week,
-      answer: action.going ? RsvpAnswer.yes : RsvpAnswer.no,
-    );
-    await pushClient.showNotice(
-      id: response.id ?? 0,
-      title: action.going ? strings.rsvpNoticeYes : strings.rsvpNoticeNo,
-      body: strings.rsvpNoticeBody,
-    );
+    if (action != null) {
+      await repository.answerRsvp(
+        rondaId: action.rondaId,
+        week: action.week,
+        answer: action.going ? RsvpAnswer.yes : RsvpAnswer.no,
+      );
+      await pushClient.showNotice(
+        id: response.id ?? 0,
+        title: action.going ? strings.rsvpNoticeYes : strings.rsvpNoticeNo,
+        body: strings.rsvpNoticeBody,
+      );
+    } else if (seguimos != null) {
+      await repository.answerSeguimos(
+        rondaId: seguimos.rondaId,
+        answer: seguimos.yes ? SeguimosAnswer.yes : SeguimosAnswer.no,
+      );
+      // The lock screen shows it: the notice never says which answer.
+      await pushClient.showNotice(
+        id: response.id ?? 0,
+        title: strings.seguimosNoticeTitle,
+        body: strings.seguimosNoticeBody,
+      );
+    }
   } on RsvpFailure catch (failure) {
-    log('rsvp answer from the notification failed: ${failure.reason.name}');
+    log('answer from the notification failed: ${failure.reason.name}');
     await pushClient.showNotice(
       id: response.id ?? 0,
       title: strings.rsvpNoticeFailedTitle,

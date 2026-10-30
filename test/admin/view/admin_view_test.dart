@@ -15,12 +15,20 @@ class _MockProposalsCubit extends MockCubit<ProposalsState>
 class _MockRsvpPushCubit extends MockCubit<RsvpPushState>
     implements RsvpPushCubit;
 
+class _MockSeguimosCountsCubit extends MockCubit<SeguimosCountsState>
+    implements SeguimosCountsCubit;
+
 void main() {
   group(AdminView, () {
     late ProposalsCubit cubit;
     late RsvpPushCubit rsvpPushCubit;
+    late SeguimosCountsCubit seguimosCountsCubit;
 
     setUp(() {
+      seguimosCountsCubit = _MockSeguimosCountsCubit();
+      when(() => seguimosCountsCubit.state).thenReturn(
+        const SeguimosCountsState(status: SeguimosCountsStatus.ready),
+      );
       cubit = _MockProposalsCubit();
       rsvpPushCubit = _MockRsvpPushCubit();
       when(() => rsvpPushCubit.state).thenReturn(const RsvpPushState());
@@ -36,6 +44,7 @@ void main() {
           providers: [
             BlocProvider.value(value: cubit),
             BlocProvider.value(value: rsvpPushCubit),
+            BlocProvider.value(value: seguimosCountsCubit),
           ],
           child: const AdminView(),
         ),
@@ -217,6 +226,7 @@ void main() {
           providers: [
             BlocProvider.value(value: cubit),
             BlocProvider.value(value: rsvpPushCubit),
+            BlocProvider.value(value: seguimosCountsCubit),
           ],
           child: const AdminView(),
         ),
@@ -230,10 +240,18 @@ void main() {
       expect(find.text('Marta and their guest go together'), findsOneWidget);
     });
 
-    testWidgets('ends with the weekly RSVP section', (tester) async {
+    testWidgets('ends with the weekly RSVP and the ¿seguimos? counts', (
+      tester,
+    ) async {
       await pump(tester, ready(null));
 
       expect(find.byType(RsvpPushSection), findsOneWidget);
+      await tester.dragUntilVisible(
+        find.byType(SeguimosCountsSection),
+        find.byType(ListView),
+        const Offset(0, -200),
+      );
+      expect(find.byType(SeguimosCountsSection), findsOneWidget);
     });
   });
 }

@@ -56,10 +56,7 @@ class RondaRepository {
   /// [uid]'s ronda and its upcoming meeting, now and on every change;
   /// `null` while they are in no ronda. The stream errors with an
   /// [RsvpFailure].
-  Stream<ThisWeek?> watchThisWeek(String uid) => _rondasApi
-      .watchRondaIds(uid)
-      .map((ids) => ids.isEmpty ? null : (ids.toList()..sort()).first)
-      .distinct()
+  Stream<ThisWeek?> watchThisWeek(String uid) => _myRondaId(uid)
       .switchMap(
         (rondaId) => rondaId == null
             ? Stream<ThisWeek?>.value(null)
@@ -75,6 +72,12 @@ class RondaRepository {
         (Object error) => throw const RsvpFailure(RsvpFailureReason.other),
         test: (error) => error is Exception,
       );
+
+  /// The id of the ronda [uid]'s phone follows: the first by id.
+  Stream<String?> _myRondaId(String uid) => _rondasApi
+      .watchRondaIds(uid)
+      .map((ids) => ids.isEmpty ? null : (ids.toList()..sort()).first)
+      .distinct();
 
   static ThisWeek? _thisWeek(
     RondaDocument? ronda,
@@ -113,8 +116,109 @@ class RondaRepository {
       ],
       noCount: view?.noCount,
       unansweredCount: view?.unansweredCount,
+      hasLeft: member.state == 'left',
     );
   }
+
+  /// [uid]'s own ¿seguimos? in their ronda, now and on every change; `null`
+  /// until they are asked. The stream errors with an [RsvpFailure].
+  Stream<Seguimos?> watchSeguimos(String uid) => _myRondaId(uid)
+      .switchMap(
+        (rondaId) => rondaId == null
+            ? Stream<Seguimos?>.value(null)
+            : Rx.combineLatest2(
+                _rondasApi.watchRonda(rondaId),
+                _rondasApi.watchSeguimos(rondaId, uid),
+                _seguimos,
+              ),
+      )
+      .handleError(
+        (Object error) => throw const RsvpFailure(RsvpFailureReason.other),
+        test: (error) => error is Exception,
+      );
+
+  static Seguimos? _seguimos(RondaDocument? ronda, SeguimosDocument? own) {
+    if (ronda == null || own == null) return null;
+    return Seguimos(
+      rondaId: ronda.id,
+      slotDayId: ronda.slotDay,
+      open: own.status == 'open',
+      myAnswer: SeguimosAnswer.values.asNameMap()[own.answer],
+      outcome: SeguimosOutcome.values.asNameMap()[own.outcome],
+      seasonEnd: DateTime.tryParse(ronda.seasonEnd ?? ''),
+      alternatives: [
+        for (final row in own.alternatives)
+          if (DateTime.tryParse(row.next) case final next?)
+            NearbyRonda(
+              rondaId: row.rondaId,
+              pretextId: row.pretext,
+              barrioId: row.barrio,
+              slotDayId: row.slotDay,
+              slotBandId: row.slotBand,
+              placesLeft: row.placesLeft,
+              next: next,
+            ),
+      ],
+      floor: own.floor,
+      waitUntil: DateTime.tryParse(own.waitUntil ?? ''),
+      waitStart: DateTime.tryParse(own.waitStart ?? ''),
+      choice: SeguimosChoice.values.asNameMap()[own.choice],
+    );
+  }
+
+  /// Records [answer] to ronda [rondaId]'s ¿seguimos? while it is open; it
+  /// can change until the close.
+  ///
+  /// Throws an [RsvpFailure]: [RsvpFailureReason.passed] once it closed.
+  Future<void> answerSeguimos({
+    required String rondaId,
+    required SeguimosAnswer answer,
+  }) => _rsvpGuard(
+    () => _rondasApi.answerSeguimos(rondaId: rondaId, answer: answer.name),
+  );
+
+  /// Records the member's [choice] after ronda [rondaId]'s ¿seguimos?
+  /// closed below the floor.
+  ///
+  /// Throws an [RsvpFailure].
+  Future<void> chooseAfterSeguimos({
+    required String rondaId,
+    required SeguimosChoice choice,
+  }) => _rsvpGuard(
+    () => _rondasApi.answerSeguimos(rondaId: rondaId, choice: choice.name),
+  );
+
+  /// Every ronda's ¿seguimos? counts, now and on every change. Admin only:
+  /// the stream errors with an [RsvpFailure], [RsvpFailureReason.forbidden]
+  /// for anyone else.
+  Stream<List<SeguimosCounts>> watchSeguimosCounts() => _rondasApi
+      .watchSeguimosCounts()
+      .map(
+        (rows) => [
+          for (final row in rows)
+            SeguimosCounts(
+              rondaId: row.rondaId,
+              line: row.line,
+              status:
+                  SeguimosStatus.values.asNameMap()[row.status] ??
+                  SeguimosStatus.open,
+              yes: row.yes,
+              no: row.no,
+              unanswered: row.unanswered,
+              join: row.join,
+              wait: row.wait,
+              seasonEnd: DateTime.tryParse(row.seasonEnd ?? ''),
+            ),
+        ],
+      )
+      .handleError(
+        (Object error) => throw RsvpFailure(
+          error is FirebaseException && _forbiddenCodes.contains(error.code)
+              ? RsvpFailureReason.forbidden
+              : RsvpFailureReason.other,
+        ),
+        test: (error) => error is Exception,
+      );
 
   /// Records [answer] for ronda [rondaId]'s upcoming meeting. [week], when
   /// given, must still be that meeting's; [pause] (with

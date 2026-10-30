@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:ronda_api/src/rondas/ronda_documents.dart';
+import 'package:ronda_api/src/rondas/seguimos_documents.dart';
 
 /// {@template rondas_api}
 /// A member's side of their ronda: which ronda they are in, the ronda, their
@@ -28,6 +29,10 @@ class const RondasApi({
   /// The admin's callable that runs one scheduled job now.
   static const runJobCallable = 'run_job';
 
+  /// The callable that records a ¿seguimos? answer or, below the floor, the
+  /// member's choice.
+  static const answerSeguimosCallable = 'answer_seguimos';
+
   /// The ids of the rondas [uid] is in (`users/{uid}/rondas`), now and on
   /// every change.
   Stream<List<String>> watchRondaIds(String uid) => firestore
@@ -52,6 +57,23 @@ class const RondasApi({
   /// `rondas/{rondaId}/answers/{uid}`; `null` until the member answers.
   Stream<AnswerDocument?> watchAnswer(String rondaId, String uid) =>
       _watch('rondas/$rondaId/answers/$uid', AnswerDocument.fromJson);
+
+  /// `rondas/{rondaId}/seguimos/{uid}`: the member's own ¿seguimos?;
+  /// `null` until they are asked.
+  Stream<SeguimosDocument?> watchSeguimos(String rondaId, String uid) =>
+      _watch('rondas/$rondaId/seguimos/$uid', SeguimosDocument.fromJson);
+
+  /// Every ronda's ¿seguimos? counts (`seguimos_counts`), now and on every
+  /// change, by ronda id. Admin only.
+  Stream<List<SeguimosCountsDocument>> watchSeguimosCounts() => firestore
+      .collection('seguimos_counts')
+      .snapshots()
+      .map(
+        (snapshot) => [
+          for (final doc in snapshot.docs)
+            SeguimosCountsDocument.fromJson(doc.id, doc.data()),
+        ],
+      );
 
   Stream<T?> _watch<T>(String path, T Function(Map<String, Object?>) read) =>
       firestore
@@ -88,6 +110,23 @@ class const RondasApi({
       {'week': final String week} => week,
       _ => throw const FormatException('answer_rsvp returned no week'),
     };
+  }
+
+  /// Records the caller's ¿seguimos? [answer] (`yes` or `no`) for ronda
+  /// [rondaId] while the question is open, or, below the floor, their
+  /// [choice] (`join` or `wait`). Pass exactly one.
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails.
+  Future<void> answerSeguimos({
+    required String rondaId,
+    String? answer,
+    String? choice,
+  }) async {
+    await functions.httpsCallable(answerSeguimosCallable).call<Object?>({
+      'rondaId': rondaId,
+      'answer': ?answer,
+      'choice': ?choice,
+    });
   }
 
   /// Runs scheduled job [name] now; with [force] it skips the job's own

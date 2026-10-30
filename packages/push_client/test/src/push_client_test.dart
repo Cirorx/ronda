@@ -39,6 +39,18 @@ const _rsvp = RemoteMessage(
 
 const _labels = RsvpActionLabels(yes: 'Voy', no: 'Esta no');
 
+const _seguimos = RemoteMessage(
+  messageId: 'message-4',
+  data: {
+    'type': 'seguimos',
+    'rondaId': 'r1',
+    'title': 'Sábado a la tarde · mate en la rambla',
+    'body': '¿Seguimos los sábados?',
+  },
+);
+
+const _seguimosLabels = SeguimosActionLabels(yes: 'Sí', no: 'No');
+
 @pragma('vm:entry-point')
 void _onRsvpAction(NotificationResponse response) {}
 
@@ -93,11 +105,13 @@ void main() {
       TargetPlatform targetPlatform = TargetPlatform.android,
       String? vapidKey,
       RsvpActionLabels? rsvpLabels,
+      SeguimosActionLabels? seguimosLabels,
     }) => PushClient(
       messaging: messaging,
       notifications: notifications,
       vapidKey: vapidKey,
       rsvpLabels: rsvpLabels,
+      seguimosLabels: seguimosLabels,
       foregroundMessages: foreground.stream,
       isWeb: isWeb,
       targetPlatform: targetPlatform,
@@ -500,6 +514,95 @@ void main() {
             );
             expect(
               PushClient.rsvpActionFrom(tap(PushClient.rsvpYesAction, null)),
+              isNull,
+            );
+          });
+        });
+      });
+
+      group('the ¿seguimos? push', () {
+        NotificationDetails shown({String? payload}) =>
+            verify(
+                  () => notifications.show(
+                    id: 'message-4'.hashCode,
+                    title: 'Sábado a la tarde · mate en la rambla',
+                    body: '¿Seguimos los sábados?',
+                    payload: payload,
+                    notificationDetails: captureAny(
+                      named: 'notificationDetails',
+                    ),
+                  ),
+                ).captured.single
+                as NotificationDetails;
+
+        test('gets Sí and No, carrying its ronda', () async {
+          await buildSubject(
+            rsvpLabels: _labels,
+            seguimosLabels: _seguimosLabels,
+          ).showMessage(_seguimos);
+
+          final details = shown(payload: '{"rondaId":"r1"}');
+          final actions = details.android!.actions!;
+          expect(
+            actions.map((a) => (a.id, a.title)),
+            equals([
+              (PushClient.seguimosYesAction, 'Sí'),
+              (PushClient.seguimosNoAction, 'No'),
+            ]),
+          );
+          for (final action in actions) {
+            expect(action.showsUserInterface, isFalse);
+          }
+        });
+
+        test('shows without buttons when no labels were given', () async {
+          await buildSubject(rsvpLabels: _labels).showMessage(_seguimos);
+
+          expect(shown().android!.actions, isEmpty);
+        });
+
+        group('seguimosActionFrom', () {
+          NotificationResponse tap(String? actionId, String? payload) =>
+              NotificationResponse(
+                notificationResponseType:
+                    NotificationResponseType.selectedNotificationAction,
+                id: 8,
+                actionId: actionId,
+                payload: payload,
+              );
+
+          const payload = '{"rondaId":"r1"}';
+
+          test('reads Sí and No', () {
+            final yes = PushClient.seguimosActionFrom(
+              tap(PushClient.seguimosYesAction, payload),
+            )!;
+            final no = PushClient.seguimosActionFrom(
+              tap(PushClient.seguimosNoAction, payload),
+            )!;
+
+            expect((yes.rondaId, yes.yes), equals(('r1', true)));
+            expect(no.yes, isFalse);
+          });
+
+          test('reads nothing from another tap or payload', () {
+            expect(PushClient.seguimosActionFrom(tap(null, payload)), isNull);
+            expect(
+              PushClient.seguimosActionFrom(
+                tap(PushClient.rsvpYesAction, payload),
+              ),
+              isNull,
+            );
+            expect(
+              PushClient.seguimosActionFrom(
+                tap(PushClient.seguimosYesAction, '{}'),
+              ),
+              isNull,
+            );
+            expect(
+              PushClient.seguimosActionFrom(
+                tap(PushClient.seguimosYesAction, 'x'),
+              ),
               isNull,
             );
           });

@@ -154,6 +154,8 @@ class const _Proposal(final ProposalsState state) extends StatelessWidget {
         ],
         Divider(height: spacing.xlg),
         const RsvpPushSection(),
+        Divider(height: spacing.xlg),
+        const SeguimosCountsSection(),
       ],
     );
   }

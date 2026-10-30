@@ -21,6 +21,12 @@ class const RondaDocument({
 
   /// The public place's name, once its host set one.
   final String? placeName,
+
+  /// The season's first meeting (`2026-11-03`), once ¿seguimos? started one.
+  final String? seasonStart,
+
+  /// The season's last meeting (`2026-11-24`).
+  final String? seasonEnd,
 }) {
   /// {@macro ronda_document}
   this;
@@ -42,6 +48,14 @@ class const RondaDocument({
         slotBand: band,
         placeName: switch (json['place']) {
           {'name': final String name} => name,
+          _ => null,
+        },
+        seasonStart: switch (json['season']) {
+          {'start': final String start} => start,
+          _ => null,
+        },
+        seasonEnd: switch (json['season']) {
+          {'end': final String end} => end,
           _ => null,
         },
       );

@@ -82,6 +82,10 @@ void main() {
           .thenAnswer((_) => Stream.value(null));
       when(() => rondaRepository.watchThisWeek(any()))
           .thenAnswer((_) => Stream.value(null));
+      when(() => rondaRepository.watchSeguimos(any()))
+          .thenAnswer((_) => Stream.value(null));
+      when(rondaRepository.watchSeguimosCounts)
+          .thenAnswer((_) => Stream.value(const []));
       users = StreamController<User>.broadcast();
       profiles = StreamController<Profile?>.broadcast();
       addTearDown(users.close);

@@ -1205,5 +1205,234 @@
     "adminRsvpHeld": "Held: outside hours. It goes out between 9:00 and 21:00.",
     "@adminRsvpHeld": {
         "description": "Admin: the quiet-hours gate stopped it"
+    },
+    "seguimosDays": "{day, select, mon{Mondays} tue{Tuesdays} wed{Wednesdays} thu{Thursdays} fri{Fridays} sat{Saturdays} sun{Sundays} other{usual day}}",
+    "@seguimosDays": {
+        "description": "A ronda's weekday, as in 'every Tuesday', from its id",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "seguimosQuestion": "Shall we keep meeting on {days}?",
+    "@seguimosQuestion": {
+        "description": "¿Seguimos?: the private question after the first meeting",
+        "placeholders": {
+            "days": {
+                "type": "String"
+            }
+        }
+    },
+    "seguimosPrivate": "Only Ronda sees your answer. Nobody in the group learns what you said.",
+    "@seguimosPrivate": {
+        "description": "¿Seguimos?: who sees the answer"
+    },
+    "seguimosYes": "Yes",
+    "@seguimosYes": {
+        "description": "¿Seguimos?: yes, on the card and the push's button"
+    },
+    "seguimosNo": "No",
+    "@seguimosNo": {
+        "description": "¿Seguimos?: no, on the card and the push's button"
+    },
+    "seguimosSilence": "If you don't answer, you stay in the ronda, but it doesn't count as a yes.",
+    "@seguimosSilence": {
+        "description": "¿Seguimos?: what not answering means"
+    },
+    "seguimosAnsweredYes": "You said yes.",
+    "@seguimosAnsweredYes": {
+        "description": "¿Seguimos?: the member's own yes"
+    },
+    "seguimosAnsweredNo": "You said no.",
+    "@seguimosAnsweredNo": {
+        "description": "¿Seguimos?: the member's own no"
+    },
+    "seguimosChangeUntil": "You can change it until the next RSVP arrives.",
+    "@seguimosChangeUntil": {
+        "description": "¿Seguimos?: until when the answer can change"
+    },
+    "seguimosChange": "Change",
+    "@seguimosChange": {
+        "description": "¿Seguimos?: change the answer"
+    },
+    "seguimosClosed": "The question has closed.",
+    "@seguimosClosed": {
+        "description": "¿Seguimos?: an answer that came after the close"
+    },
+    "seguimosSeasonTitle": "We keep meeting on {days}",
+    "@seguimosSeasonTitle": {
+        "description": "¿Seguimos?: the outcome when the season starts",
+        "placeholders": {
+            "days": {
+                "type": "String"
+            }
+        }
+    },
+    "seguimosSeasonUntil": "Until {date}.",
+    "@seguimosSeasonUntil": {
+        "description": "¿Seguimos?: the season's last meeting",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "seguimosNobodyKnows": "Nobody knows what anyone answered.",
+    "@seguimosNobodyKnows": {
+        "description": "¿Seguimos?: under the outcome"
+    },
+    "seguimosGraciasTitle": "Thanks for coming.",
+    "@seguimosGraciasTitle": {
+        "description": "¿Seguimos?: to a member who said no, at the close"
+    },
+    "seguimosGraciasNearby": "These groups nearby have places:",
+    "@seguimosGraciasNearby": {
+        "description": "¿Seguimos?: before the nearby rondas"
+    },
+    "seguimosGraciasNone": "There's no other group with places nearby for now. We'll tell you if one opens.",
+    "@seguimosGraciasNone": {
+        "description": "¿Seguimos?: no nearby ronda has places"
+    },
+    "seguimosNearbyDetail": "{places, plural, =1{1 place left} other{{places} places left}} · next one on {date}",
+    "@seguimosNearbyDetail": {
+        "description": "¿Seguimos?: a nearby ronda's places and next meeting",
+        "placeholders": {
+            "places": {
+                "type": "int"
+            },
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "seguimosDidntFillTitle": "This time we didn't reach {floor} to keep meeting on {days}.",
+    "@seguimosDidntFillTitle": {
+        "description": "¿Seguimos?: below the floor",
+        "placeholders": {
+            "floor": {
+                "type": "int"
+            },
+            "days": {
+                "type": "String"
+            }
+        }
+    },
+    "seguimosDidntFillAsk": "What would you like to do?",
+    "@seguimosDidntFillAsk": {
+        "description": "¿Seguimos?: before the two choices"
+    },
+    "seguimosJoin": "Join another one now",
+    "@seguimosJoin": {
+        "description": "¿Seguimos?: join a nearby ronda now"
+    },
+    "seguimosJoinDetail": "{ronda}, on {date}",
+    "@seguimosJoinDetail": {
+        "description": "¿Seguimos?: the nearby ronda offered and its next meeting",
+        "placeholders": {
+            "ronda": {
+                "type": "String"
+            },
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "seguimosWait": "Wait two more weeks",
+    "@seguimosWait": {
+        "description": "¿Seguimos?: wait for more people"
+    },
+    "seguimosWaitDetail": "We wait until {until}. If people join, it starts on {start}.",
+    "@seguimosWaitDetail": {
+        "description": "¿Seguimos?: the wait's dates",
+        "placeholders": {
+            "until": {
+                "type": "String"
+            },
+            "start": {
+                "type": "String"
+            }
+        }
+    },
+    "seguimosJoinDone": "Done, it's noted. We'll confirm your place before {date}.",
+    "@seguimosJoinDone": {
+        "description": "¿Seguimos?: after choosing another ronda",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "seguimosWaitDone": "Done, we wait until {until}. If people join, it starts on {start}.",
+    "@seguimosWaitDone": {
+        "description": "¿Seguimos?: after choosing to wait",
+        "placeholders": {
+            "until": {
+                "type": "String"
+            },
+            "start": {
+                "type": "String"
+            }
+        }
+    },
+    "seguimosNoticeTitle": "Your answer is saved.",
+    "@seguimosNoticeTitle": {
+        "description": "Notice in place of the ¿seguimos? push after a tap"
+    },
+    "seguimosNoticeBody": "Only Ronda sees it. You can change it in My ronda.",
+    "@seguimosNoticeBody": {
+        "description": "Under the ¿seguimos? notice"
+    },
+    "adminSeguimosTitle": "Keep going?",
+    "@adminSeguimosTitle": {
+        "description": "Admin: the ¿seguimos? section"
+    },
+    "adminSeguimosBody": "Counts only: nobody sees what anyone answered. It closes with each ronda's next RSVP.",
+    "@adminSeguimosBody": {
+        "description": "Admin: what the section shows"
+    },
+    "adminSeguimosEmpty": "No ronda has been asked yet.",
+    "@adminSeguimosEmpty": {
+        "description": "Admin: no ronda asked yet"
+    },
+    "adminSeguimosCounts": "Yes {yes} · No {no} · No answer {unanswered}",
+    "@adminSeguimosCounts": {
+        "description": "Admin: one ronda's counts",
+        "placeholders": {
+            "yes": {
+                "type": "int"
+            },
+            "no": {
+                "type": "int"
+            },
+            "unanswered": {
+                "type": "int"
+            }
+        }
+    },
+    "adminSeguimosOpen": "Open: closes with the next RSVP.",
+    "@adminSeguimosOpen": {
+        "description": "Admin: the question is open"
+    },
+    "adminSeguimosSeason": "They go on, until {date}.",
+    "@adminSeguimosSeason": {
+        "description": "Admin: the season started",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "adminSeguimosDidntFill": "Didn't fill. Want another group: {join}. Waiting: {wait}.",
+    "@adminSeguimosDidntFill": {
+        "description": "Admin: below the floor, with the choices",
+        "placeholders": {
+            "join": {
+                "type": "int"
+            },
+            "wait": {
+                "type": "int"
+            }
+        }
     }
 }

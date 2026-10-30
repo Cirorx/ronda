@@ -60,6 +60,10 @@ class const ThisWeek({
 
   /// How many haven't answered; `null` with [week].
   final int? unansweredCount,
+
+  /// Whether this member left the ronda (a "no" to ¿seguimos? leaves at its
+  /// close): there is no week for them to answer.
+  final bool hasLeft = false,
 }) extends Equatable {
   /// {@macro this_week}
   this;
@@ -80,6 +84,7 @@ class const ThisWeek({
     going,
     noCount,
     unansweredCount,
+    hasLeft,
   ];
 }
 

@@ -32,4 +32,37 @@ abstract final class MyRondaFixtures {
     noCount: withView ? noCount : null,
     unansweredCount: withView ? unansweredCount : null,
   );
+
+  static Seguimos seguimos({
+    bool open = true,
+    SeguimosAnswer? myAnswer,
+    SeguimosOutcome? outcome,
+    List<NearbyRonda> alternatives = const [],
+    SeguimosChoice? choice,
+    bool withWait = true,
+  }) => Seguimos(
+    rondaId: 'r1',
+    slotDayId: 'tue',
+    open: open,
+    myAnswer: myAnswer,
+    outcome: outcome,
+    seasonEnd: outcome == SeguimosOutcome.season
+        ? DateTime(2026, 11, 24)
+        : null,
+    alternatives: alternatives,
+    floor: outcome == SeguimosOutcome.didntFill ? 4 : null,
+    waitUntil: withWait ? DateTime(2026, 11, 16) : null,
+    waitStart: withWait ? DateTime(2026, 11, 17) : null,
+    choice: choice,
+  );
+
+  static final nearby = NearbyRonda(
+    rondaId: 'r2',
+    pretextId: 'truco',
+    barrioId: 'el-pinar-norte',
+    slotDayId: 'thu',
+    slotBandId: 'afternoon',
+    placesLeft: 2,
+    next: DateTime(2026, 11, 5),
+  );
 }

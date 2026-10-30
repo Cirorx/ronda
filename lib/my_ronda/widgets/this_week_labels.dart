@@ -11,17 +11,33 @@ extension ThisWeekLabels on AppLocalizations {
 
   /// "Sábado 31/10 a la tarde · Mate en la rambla", and the place's name
   /// once a host set one. Without a date yet: "Sábado a la tarde · …".
-  String rondaLine(ThisWeek week) {
-    final slot = Slot.fromId('${week.slotDayId}-${week.slotBandId}');
-    final pretextId = Pretext.fromId(week.pretextId);
-    final pretextLabel = pretextId == null
-        ? week.pretextId
-        : pretext(pretextId);
+  String rondaLine(ThisWeek week) => rondaLineOf(
+    slotDayId: week.slotDayId,
+    slotBandId: week.slotBandId,
+    pretextId: week.pretextId,
+    date: week.date,
+    placeName: week.placeName,
+  );
+
+  /// A ronda's line from its ids: "Jueves a la tarde · Truco", with [date]
+  /// after the day and [placeName] at the end when given.
+  String rondaLineOf({
+    required String slotDayId,
+    required String slotBandId,
+    required String pretextId,
+    DateTime? date,
+    String? placeName,
+  }) {
+    final slot = Slot.fromId('$slotDayId-$slotBandId');
+    final pretextValue = Pretext.fromId(pretextId);
+    final pretextLabel = pretextValue == null
+        ? pretextId
+        : pretext(pretextValue);
     final String when;
     if (slot == null) {
-      when = week.date == null ? '' : shortDate(week.date!);
+      when = date == null ? '' : shortDate(date);
     } else {
-      final day = switch (week.date) {
+      final day = switch (date) {
         final date? => '${slotDay(slot.day)} ${shortDate(date)}',
         null => slotDay(slot.day),
       };
@@ -32,7 +48,7 @@ extension ThisWeekLabels on AppLocalizations {
       };
     }
     final line = when.isEmpty ? pretextLabel : thisWeekLine(when, pretextLabel);
-    return switch (week.placeName) {
+    return switch (placeName) {
       final place? => thisWeekLine(line, place),
       null => line,
     };

@@ -73,6 +73,37 @@ class const RsvpAction({
   this;
 }
 
+/// {@template seguimos_action_labels}
+/// What the "Sí" and "No" buttons on the ¿seguimos? push say, in the
+/// phone's language.
+/// {@endtemplate}
+class const SeguimosActionLabels({
+  /// "Sí".
+  required final String yes,
+
+  /// "No".
+  required final String no,
+}) {
+  /// {@macro seguimos_action_labels}
+  this;
+}
+
+/// {@template seguimos_action}
+/// One tap on "Sí" or "No" in the ¿seguimos? push: which ronda, and the
+/// answer. It carries no date: the server refuses it once the question has
+/// closed.
+/// {@endtemplate}
+class const SeguimosAction({
+  /// The ronda's id.
+  required final String rondaId,
+
+  /// Whether the tap was "Sí".
+  required final bool yes,
+}) {
+  /// {@macro seguimos_action}
+  this;
+}
+
 /// {@template push_client}
 /// Firebase Cloud Messaging and the phone's notifications for Ronda.
 ///
@@ -84,8 +115,10 @@ class const RsvpAction({
 /// open. The weekly RSVP push (`data.type == "rsvp"`) gets "Voy" and
 /// "Esta no" buttons that answer without opening the app: a tap reaches the
 /// handler given to [initialize] in a background isolate, and
-/// [rsvpActionFrom] reads it. On web, notifications are the service
-/// worker's and the browser's.
+/// [rsvpActionFrom] reads it. The ¿seguimos? push (`data.type ==
+/// "seguimos"`) gets "Sí" and "No" the same way, read by
+/// [seguimosActionFrom]. On web, notifications are the service worker's and
+/// the browser's.
 ///
 /// It logs nothing, and the token it returns must never reach a log either.
 /// {@endtemplate}
@@ -96,6 +129,7 @@ class PushClient {
     required this._notifications,
     this._vapidKey,
     this._rsvpLabels,
+    this._seguimosLabels,
     this._foregroundMessages,
     this._isWeb = kIsWeb,
     TargetPlatform? targetPlatform,
@@ -112,6 +146,10 @@ class PushClient {
   /// The RSVP buttons' labels; without them the weekly push shows no
   /// buttons (a tap on it still opens the card).
   final RsvpActionLabels? _rsvpLabels;
+
+  /// The ¿seguimos? buttons' labels; without them that push shows no
+  /// buttons (a tap on it still opens the card).
+  final SeguimosActionLabels? _seguimosLabels;
 
   /// `FirebaseMessaging.onMessage` unless a test passes its own.
   final Stream<RemoteMessage>? _foregroundMessages;
@@ -139,6 +177,15 @@ class PushClient {
 
   /// The "Esta no" button's action id.
   static const rsvpNoAction = 'rsvp.no';
+
+  /// `data.type` of the ¿seguimos? push (`functions/seguimos.py`).
+  static const seguimosType = 'seguimos';
+
+  /// The "Sí" button's action id on the ¿seguimos? push.
+  static const seguimosYesAction = 'seguimos.yes';
+
+  /// The "No" button's action id on the ¿seguimos? push.
+  static const seguimosNoAction = 'seguimos.no';
 
   /// The service worker on web, `web/firebase-messaging-sw.js`. Given as a
   /// relative path it resolves against the page's base href, so it works
@@ -253,44 +300,59 @@ class PushClient {
   /// Draws [message] on the [rsvpChannelId] channel: `title` and `body` from
   /// its data (Ronda's own payload), else from its notification. A message
   /// with neither is not shown. The weekly RSVP push gets "Voy" and
-  /// "Esta no", carrying its ronda and week to [rsvpActionFrom].
+  /// "Esta no", carrying its ronda and week to [rsvpActionFrom]; the
+  /// ¿seguimos? push gets "Sí" and "No", carrying its ronda to
+  /// [seguimosActionFrom].
   Future<void> _show(RemoteMessage message) async {
     final data = message.data;
     final title = data['title'] ?? message.notification?.title;
     final body = data['body'] ?? message.notification?.body;
     if (title is! String || body is! String) return;
-    final rsvp = switch ((data, _rsvpLabels)) {
-      (
-        {
-          'type': rsvpType,
-          'rondaId': final String rondaId,
-          'week': final String week,
-        },
-        final RsvpActionLabels labels,
-      ) =>
-        (
-          payload: jsonEncode({'rondaId': rondaId, 'week': week}),
-          labels: labels,
-        ),
-      _ => null,
-    };
+    final buttons = _buttons(data);
     await _notifications.show(
       id: message.messageId.hashCode,
       title: title,
       body: body,
-      payload: rsvp?.payload,
+      payload: buttons?.payload,
       notificationDetails: NotificationDetails(
-        android: _details(
-          actions: [
-            if (rsvp != null) ...[
-              AndroidNotificationAction(rsvpYesAction, rsvp.labels.yes),
-              AndroidNotificationAction(rsvpNoAction, rsvp.labels.no),
-            ],
-          ],
-        ),
+        android: _details(actions: buttons?.actions ?? const []),
       ),
     );
   }
+
+  ({String payload, List<AndroidNotificationAction> actions})? _buttons(
+    Map<String, dynamic> data,
+  ) => switch ((data, _rsvpLabels, _seguimosLabels)) {
+    (
+      {
+        'type': rsvpType,
+        'rondaId': final String rondaId,
+        'week': final String week,
+      },
+      final RsvpActionLabels labels,
+      _,
+    ) =>
+      (
+        payload: jsonEncode({'rondaId': rondaId, 'week': week}),
+        actions: [
+          AndroidNotificationAction(rsvpYesAction, labels.yes),
+          AndroidNotificationAction(rsvpNoAction, labels.no),
+        ],
+      ),
+    (
+      {'type': seguimosType, 'rondaId': final String rondaId},
+      _,
+      final SeguimosActionLabels labels,
+    ) =>
+      (
+        payload: jsonEncode({'rondaId': rondaId}),
+        actions: [
+          AndroidNotificationAction(seguimosYesAction, labels.yes),
+          AndroidNotificationAction(seguimosNoAction, labels.no),
+        ],
+      ),
+    _ => null,
+  };
 
   /// Shows a plain notification [id] on the [rsvpChannelId] channel, in
   /// place of any showing with that id: what became of a tap on "Voy" or
@@ -337,6 +399,27 @@ class PushClient {
         'week': final String week,
       }) {
         return RsvpAction(rondaId: rondaId, week: week, going: going);
+      }
+    } on FormatException {
+      return null;
+    }
+    return null;
+  }
+
+  /// The answer in a tap on "Sí" or "No" in the ¿seguimos? push, or `null`
+  /// for any other tap.
+  static SeguimosAction? seguimosActionFrom(NotificationResponse response) {
+    final yes = switch (response.actionId) {
+      seguimosYesAction => true,
+      seguimosNoAction => false,
+      _ => null,
+    };
+    if (yes == null) return null;
+    try {
+      if (jsonDecode(response.payload ?? '') case {
+        'rondaId': final String rondaId,
+      }) {
+        return SeguimosAction(rondaId: rondaId, yes: yes);
       }
     } on FormatException {
       return null;
