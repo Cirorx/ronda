@@ -458,6 +458,11 @@ on both Android apps, and release builds are signed with that key until a releas
   deploy archive follows it. Functions tests: add `-r functions/requirements-dev.txt`, then
   `cd functions && venv/bin/pytest --cov` (100%, over in-memory Firestore and Storage stand-ins,
   `functions/tests/fake_firestore.py` and `fake_storage.py`) and `venv/bin/ruff check . && venv/bin/ruff format --check .`.
+  A whole voice sign-up on the Firestore and Storage emulators (the phone's writes under the
+  rules, the real `extract` with Meta faked, then no need and no `audio/` path anywhere) runs
+  from `functions/` with `firebase emulators:exec --only firestore,storage --project
+  demo-ronda-voice "venv/bin/pytest tests/test_voice_signup_emulators.py"`; plain `pytest`
+  skips it.
 - **Rules tests** (`rules/`, `@firebase/rules-unit-testing` 6.0.0 on node's test runner):
   `cd rules && npm ci && npm run test:emulator` starts a Firestore emulator for them; with one
   already running on 8088, `npm test` uses it under the tests' own project ids

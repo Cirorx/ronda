@@ -104,6 +104,18 @@ jobs:
       - run: venv/bin/ruff check .
       - run: venv/bin/ruff format --check .
       - run: venv/bin/pytest --cov
+      # A whole voice sign-up on the Firestore and Storage emulators (needs Java), the models
+      # still fake; it fails rather than skips if the emulators' hosts never arrive.
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npx --yes firebase-tools@15.34.1 emulators:exec --only firestore,storage --project demo-ronda-voice "venv/bin/pytest tests/test_voice_signup_emulators.py"
+        env:
+          RONDA_EMULATORS_REQUIRED: "1"
 
   # firestore.rules and storage.rules on the Firestore and Storage emulators (needs Java).
   rules:

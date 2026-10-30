@@ -7,6 +7,7 @@
 // terms when a welcome door is tapped, then on "Está bien, guardalo" the eligible seat ids and
 // the profile read back from the note. The extract callable writes nothing and deletes the note
 // (functions/tests/test_main.py), so these writes are everything the sign-up leaves.
+// functions/tests/test_voice_signup_emulators.py runs the whole flow, extract included.
 //
 // Its own project id: node's runner runs test files in parallel and each clears its project.
 import { after, before, beforeEach, describe, test } from 'node:test';
