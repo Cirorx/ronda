@@ -36,7 +36,8 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   - Still to come: "Tomarme unas semanas", "Cambiarme de grupo", "Dejar Ronda", "Lo que te
     complica ir" (on the phone only), "Tu persona de confianza".
 - **Admin** (Ciro only): this week's numbers, grupos propuestos, reportes, "Lo que mandó el
-  programa", flyer scans per spot.
+  programa", flyer scans per spot, and "Lugar, hora y anfitriones" (each ronda's public place,
+  hour and hosts, and its latest "¿Quién vino?").
 - (The Bitácora tab from the planilla is not in the build.)
 
 ## Onboarding
@@ -161,6 +162,15 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   If the host can't, the cola is asked: "Mirta no puede hoy. ¿Abrís vos?" — "Abrir es llegar
   diez minutos antes, a las 15:50, y saludar a los que van llegando. Nada más." [Sí, abro yo]
   [Hoy no puedo]; a no passes the question on.
+  - Built so far (#47): the admin chooses the anfitrión and the cola, sets the public place
+    ("frente al quiosco", with how to find it: "al lado de la parada") and the hour inside the
+    band, on "Lugar, hora y anfitriones". Approval leaves all three empty and nothing invents
+    them: until set the card says "Lugar y hora a confirmar" (or "Lugar a confirmar", "Hora a
+    confirmar"), the push says the same, and there is no host. The card reads "Abre Mirta.
+    Cierra Jorge."; the anfitrión reads "Abrís vos: llegás diez minutos antes y saludás a los que
+    van llegando." and the cola "Cerrás vos: te quedás hasta el final." A place that looks like a
+    home or an address is refused ("La ronda se junta solo en lugares públicos"). The monthly
+    turns and "¿Abrís vos?" come later.
 - **Bench:** every "esta no" pings the next person on the bench with a deadline: "Se liberó un
   lugar para hoy. Truco en el Club Lagomar, martes 19:30. Estabas en la lista de espera. ¿Lo
   tomás? Tenés hasta las 17:00." [Lo tomo] [Esta vez no]. No fines, ever.
@@ -173,7 +183,13 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   Members read on the card "Después, si querés: bizcochos en lo de Mirta, Av. Central 1234 (20
   min)"; the push names the home but never carries the address, since it shows on lock screens.
 - **Attendance:** "¿Quién vino hoy?" — the host taps [Vino] / [No vino] per person; "Nadie más
-  ve esta lista." No check-in codes.
+  ve esta lista." No check-in codes. It is asked an hour into the meeting (20:00 at the latest,
+  before the quiet hours) of the anfitrión, or the cola when the anfitrión said "esta no" or
+  is paused; the push opens Mi ronda, whose card shows the anfitrión and the cola "¿Quién vino
+  hoy?" with how many are marked. Taps can be corrected for six days. The list has everyone in
+  the ronda for that meeting in first-name order, "esta no" included, so it gives nobody's
+  answer away. With no host the admin records it from "Lugar, hora y anfitriones". Members
+  never see who came; the admin sees the record.
 - **Buddy:** chosen after the first ronda: "Si un día faltás sin avisar, ¿a quién le avisamos?
   Elegí a alguien que ya tenga tu WhatsApp." (a +1 is the natural pick) — "Nadie más se entera,
   y no avisamos a tu familia." After one miss without "esta no", only that person gets "Graciela

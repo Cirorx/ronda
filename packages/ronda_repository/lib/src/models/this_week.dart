@@ -36,8 +36,20 @@ class const ThisWeek({
   /// What this member brings, as ids.
   required final List<String> myBrings,
 
-  /// The public place's name, once the host set one.
+  /// The public place's name, once the admin set one.
   final String? placeName,
+
+  /// How to find the place ("al lado de la parada"), when there is one.
+  final String? placeLandmark,
+
+  /// The hour the ronda meets (`16:00`), once the admin set one.
+  final String? hour,
+
+  /// Who opens ("llega primero"), once the admin chose someone.
+  final Host? anfitrion,
+
+  /// Who closes ("se queda al final"), once the admin chose someone.
+  final Host? cola,
 
   /// The upcoming meeting's ISO week (`2026-W44`); `null` until the server
   /// first writes the week's view.
@@ -77,6 +89,10 @@ class const ThisWeek({
     slotBandId,
     myBrings,
     placeName,
+    placeLandmark,
+    hour,
+    anfitrion,
+    cola,
     week,
     date,
     myAnswer,
@@ -86,6 +102,23 @@ class const ThisWeek({
     unansweredCount,
     hasLeft,
   ];
+}
+
+/// {@template host}
+/// The ronda's anfitrión or cola: who they are, by first name.
+/// {@endtemplate}
+class const Host({
+  /// Their uid, so the card can say "Vos" and mark their row.
+  required final String uid,
+
+  /// Their first name.
+  required final String firstName,
+}) extends Equatable {
+  /// {@macro host}
+  this;
+
+  @override
+  List<Object?> get props => [uid, firstName];
 }
 
 /// {@template going_neighbour}

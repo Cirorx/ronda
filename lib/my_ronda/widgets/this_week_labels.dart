@@ -9,23 +9,66 @@ extension ThisWeekLabels on AppLocalizations {
   String shortDate(DateTime date) =>
       thisWeekDate(date.day.toString(), date.month.toString());
 
-  /// "Sábado 31/10 a la tarde · Mate en la rambla", and the place's name
-  /// once a host set one. Without a date yet: "Sábado a la tarde · …".
+  /// "Sábado 31/10 a las 16:00 · Mate en la rambla" once the admin set the
+  /// hour, "Sábado 31/10 a la tarde · …" until then; without a date yet:
+  /// "Sábado a la tarde · …". The place has a line of its own
+  /// ([placeLine]).
   String rondaLine(ThisWeek week) => rondaLineOf(
     slotDayId: week.slotDayId,
     slotBandId: week.slotBandId,
     pretextId: week.pretextId,
     date: week.date,
-    placeName: week.placeName,
+    hour: week.hour,
   );
 
+  /// Where the ronda meets, "Frente al quiosco · al lado de la parada", or
+  /// what is still to confirm ("Lugar y hora a confirmar"): never invented.
+  String placeLine(ThisWeek week) => switch ((week.placeName, week.hour)) {
+    (null, null) => thisWeekToConfirmBoth,
+    (null, _) => thisWeekToConfirmPlace,
+    (final place?, final hour) => [
+      switch (week.placeLandmark) {
+        final landmark? => thisWeekPlaceLandmark(place, landmark),
+        null => place,
+      },
+      if (hour == null) thisWeekToConfirmHour,
+    ].join(' · '),
+  };
+
+  /// "Abre Mirta. Cierra Jorge.", or "Abrís vos: …" for the host reading
+  /// it; `null` while the ronda has no host.
+  String? hostsLine(ThisWeek week, {required String uid}) {
+    final parts = [
+      if (week.anfitrion case final host? when host.uid == uid)
+        thisWeekYouOpen
+      else if (week.anfitrion case final host?)
+        thisWeekHostOpens(host.firstName),
+      if (week.cola case final host? when host.uid == uid)
+        thisWeekYouClose
+      else if (week.cola case final host?)
+        thisWeekHostCloses(host.firstName),
+    ];
+    return parts.isEmpty ? null : parts.join(' ');
+  }
+
+  /// "Llega primero · Pan": a neighbour's role, when they have one, and
+  /// what they bring.
+  String roleAndBrings(ThisWeek week, GoingNeighbour person) => [
+    if (week.anfitrion?.uid == person.uid) thisWeekRoleOpens,
+    if (week.cola?.uid == person.uid) thisWeekRoleCloses,
+    if (bringsDetail(person.brings) case final brings when brings.isNotEmpty)
+      brings,
+  ].join(' · ');
+
   /// A ronda's line from its ids: "Jueves a la tarde · Truco", with [date]
-  /// after the day and [placeName] at the end when given.
+  /// after the day, [hour] ("a las 16:00") in place of the band, and
+  /// [placeName] at the end when given.
   String rondaLineOf({
     required String slotDayId,
     required String slotBandId,
     required String pretextId,
     DateTime? date,
+    String? hour,
     String? placeName,
   }) {
     final slot = Slot.fromId('$slotDayId-$slotBandId');
@@ -41,10 +84,11 @@ extension ThisWeekLabels on AppLocalizations {
         final date? => '${slotDay(slot.day)} ${shortDate(date)}',
         null => slotDay(slot.day),
       };
-      when = switch (slot.band) {
-        SlotBand.morning => slotMorning(day),
-        SlotBand.afternoon => slotAfternoon(day),
-        SlotBand.evening => slotEvening(day),
+      when = switch ((slot.band, hour)) {
+        (_, final hour?) => slotAt(day, hour),
+        (SlotBand.morning, _) => slotMorning(day),
+        (SlotBand.afternoon, _) => slotAfternoon(day),
+        (SlotBand.evening, _) => slotEvening(day),
       };
     }
     final line = when.isEmpty ? pretextLabel : thisWeekLine(when, pretextLabel);

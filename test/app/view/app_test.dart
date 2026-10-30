@@ -16,6 +16,7 @@ import 'package:ronda/acta/acta.dart';
 import 'package:ronda/admin/admin.dart';
 import 'package:ronda/agent_trace/agent_trace.dart';
 import 'package:ronda/app/app.dart';
+import 'package:ronda/attendance/attendance.dart';
 import 'package:ronda/cerca/cerca.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda/mate_flyer/mate_flyer.dart';
@@ -24,6 +25,7 @@ import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/onboarding/view/steps/steps.dart';
 import 'package:ronda/payoff/payoff.dart';
 import 'package:ronda/rain_move/rain_move.dart';
+import 'package:ronda/ronda_setup/ronda_setup.dart';
 import 'package:ronda/settings/settings.dart';
 import 'package:ronda/welcome/welcome.dart';
 import 'package:ronda_repository/ronda_repository.dart';
@@ -753,6 +755,46 @@ void main() {
         expect((page.rondaId, page.week), ('ronda-1', '2026-W45'));
         verify(() => organiserRepository.watchMove('ronda-1', '2026-W45'))
             .called(1);
+      });
+
+      testWidgets("by opening the host's $AttendancePage from its link", (
+        tester,
+      ) async {
+        when(() => rondaRepository.watchRoll(any(), any()))
+            .thenAnswer((_) => Stream.value(null));
+        await pumpSignedIn(tester);
+
+        GoRouter.of(tester.element(find.byType(MyRondaPage)))
+            .go(AttendancePage.location('ronda-1', '2026-W45'));
+        await tester.pumpAndSettle();
+
+        final page = tester.widget<AttendancePage>(find.byType(AttendancePage));
+        expect((page.rondaId, page.week), ('ronda-1', '2026-W45'));
+        verify(() => rondaRepository.watchRoll('ronda-1', '2026-W45'))
+            .called(1);
+      });
+
+      testWidgets('by opening the setup and the roll under $AdminPage '
+          'without a profile', (tester) async {
+        when(rondaRepository.rondaSetups).thenAnswer((_) async => const []);
+        when(() => rondaRepository.watchRoll(any(), any()))
+            .thenAnswer((_) => Stream.value(null));
+        await tester.pumpWidget(buildSubject());
+        users.add(_user);
+        await tester.pump();
+        profiles.add(null);
+        await tester.pumpAndSettle();
+        GoRouter.of(tester.element(find.byType(OnboardingPage)))
+            .go(RondaSetupPage.path);
+        await tester.pumpAndSettle();
+        expect(find.byType(RondaSetupPage), findsOneWidget);
+        verify(rondaRepository.rondaSetups).called(1);
+
+        GoRouter.of(tester.element(find.byType(RondaSetupPage)))
+            .go(AttendancePage.location('ronda-1', '2026-W45', admin: true));
+        await tester.pumpAndSettle();
+        final page = tester.widget<AttendancePage>(find.byType(AttendancePage));
+        expect((page.rondaId, page.week), ('ronda-1', '2026-W45'));
       });
 
       testWidgets('by keeping signed-out people off $AdminPage', (

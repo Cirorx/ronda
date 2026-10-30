@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ronda/admin/admin.dart';
 import 'package:ronda/agent_trace/agent_trace.dart';
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/ronda_setup/ronda_setup.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -24,6 +25,7 @@ class const AdminView({super.key}) extends StatelessWidget {
         title: Text(l10n.adminTitle),
         actions: [
           if (state.status != ProposalsStatus.forbidden) const AgentTraceLink(),
+          if (state.status != ProposalsStatus.forbidden) const RondaSetupLink(),
         ],
       ),
       body: SafeArea(

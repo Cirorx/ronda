@@ -1,6 +1,7 @@
 /// {@template ronda_document}
 /// One `rondas/{id}` document, in its wire shape, as `approve_proposal`
-/// writes it (`functions/proposals.py`): only the fields a member's card
+/// writes it (`functions/proposals.py`) and the admin's `set_ronda_setup`
+/// completes it (`functions/hosts.py`): only the fields a member's card
 /// reads.
 /// {@endtemplate}
 class const RondaDocument({
@@ -19,8 +20,27 @@ class const RondaDocument({
   /// The time band id of its slot (`afternoon`).
   required final String slotBand,
 
-  /// The public place's name, once its host set one.
+  /// The public place's name, once the admin set one.
   final String? placeName,
+
+  /// How to find the place ("al lado de la parada"), when the admin gave
+  /// one.
+  final String? placeLandmark,
+
+  /// The hour the ronda meets (`16:00`), once the admin set one.
+  final String? slotHour,
+
+  /// The anfitrión's uid ("llega primero"), once the admin chose one.
+  final String? anfitrionUid,
+
+  /// The anfitrión's first name.
+  final String? anfitrionName,
+
+  /// The cola's uid ("se queda al final"), once the admin chose one.
+  final String? colaUid,
+
+  /// The cola's first name.
+  final String? colaName,
 
   /// The season's first meeting (`2026-11-03`), once ¿seguimos? started one.
   final String? seasonStart,
@@ -47,9 +67,22 @@ class const RondaDocument({
         slotDay: day,
         slotBand: band,
         placeName: switch (json['place']) {
-          {'name': final String name} => name,
+          {'name': final String name} when name.isNotEmpty => name,
           _ => null,
         },
+        placeLandmark: switch (json['place']) {
+          {'landmark': final String landmark} when landmark.isNotEmpty =>
+            landmark,
+          _ => null,
+        },
+        slotHour: switch (json['slot']) {
+          {'hour': final String hour} => hour,
+          _ => null,
+        },
+        anfitrionUid: _host(json, 'anfitrion'),
+        anfitrionName: _host(json, 'anfitrionName'),
+        colaUid: _host(json, 'cola'),
+        colaName: _host(json, 'colaName'),
         seasonStart: switch (json['season']) {
           {'start': final String start} => start,
           _ => null,
@@ -208,6 +241,14 @@ class const AnswerDocument({
     throw const FormatException('an answer document has another shape');
   }
 }
+
+String? _host(Map<String, Object?> json, String key) => switch (json['hosts']) {
+  final Map<Object?, Object?> hosts => switch (hosts[key]) {
+    final String value when value.isNotEmpty => value,
+    _ => null,
+  },
+  _ => null,
+};
 
 List<String> _ids(List<Object?> values) {
   if (values.any((value) => value is! String)) {

@@ -6,6 +6,7 @@ import 'package:ronda/admin/admin.dart';
 import 'package:ronda/agent_trace/agent_trace.dart';
 import 'package:ronda/app/bloc/app_bloc.dart';
 import 'package:ronda/app/view/app_shell.dart';
+import 'package:ronda/attendance/attendance.dart';
 import 'package:ronda/cerca/cerca.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda/mate_flyer/mate_flyer.dart';
@@ -13,6 +14,7 @@ import 'package:ronda/my_ronda/my_ronda.dart';
 import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/payoff/payoff.dart';
 import 'package:ronda/rain_move/rain_move.dart';
+import 'package:ronda/ronda_setup/ronda_setup.dart';
 import 'package:ronda/settings/settings.dart';
 import 'package:ronda/welcome/welcome.dart';
 
@@ -44,9 +46,11 @@ const returnToParameter = 'from';
 ///   decides who may make it.
 /// - Ajustes' screens (`/ajustes/avisos`, `/ajustes/contar`,
 ///   `/ajustes/datos`): like the tabs, inside the Ajustes tab.
-/// - a ronda's acta (`/acta/{rondaId}`) and the host's rain proposal
-///   (`/lluvia/{rondaId}/{week}`, opened from the push): like the tabs; the
-///   rules decide who reads them.
+/// - a ronda's acta (`/acta/{rondaId}`), the host's rain proposal
+///   (`/lluvia/{rondaId}/{week}`, opened from the push) and the host's
+///   "¿Quién vino hoy?" (`/asistencia/{rondaId}/{week}`): like the tabs;
+///   the rules decide who reads them. The admin's own copies of the last
+///   one and "Lugar, hora y anfitriones" sit under `/admin`.
 ///
 /// `/` and any unknown location land on Mi ronda, which the rules above
 /// then redirect as needed.
@@ -136,6 +140,17 @@ GoRouter createAppRouter({
             path: AgentTracePage.segment,
             builder: (_, _) => const AgentTracePage(),
           ),
+          GoRoute(
+            path: RondaSetupPage.segment,
+            builder: (_, _) => const RondaSetupPage(),
+          ),
+          GoRoute(
+            path: AttendancePage.adminSegment,
+            builder: (_, state) => AttendancePage(
+              rondaId: state.pathParameters['rondaId']!,
+              week: state.pathParameters['week']!,
+            ),
+          ),
         ],
       ),
       GoRoute(
@@ -146,6 +161,13 @@ GoRouter createAppRouter({
       GoRoute(
         path: RainMovePage.path,
         builder: (_, state) => RainMovePage(
+          rondaId: state.pathParameters['rondaId']!,
+          week: state.pathParameters['week']!,
+        ),
+      ),
+      GoRoute(
+        path: AttendancePage.path,
+        builder: (_, state) => AttendancePage(
           rondaId: state.pathParameters['rondaId']!,
           week: state.pathParameters['week']!,
         ),

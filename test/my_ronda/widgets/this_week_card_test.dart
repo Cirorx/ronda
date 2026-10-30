@@ -13,12 +13,18 @@ import '../fixtures.dart';
 class _MockThisWeekCubit extends MockCubit<ThisWeekState>
     implements ThisWeekCubit;
 
+class _MockRondaRepository extends Mock implements RondaRepository;
+
 void main() {
   group(ThisWeekCard, () {
     late ThisWeekCubit cubit;
+    late RondaRepository repository;
 
     setUp(() {
       cubit = _MockThisWeekCubit();
+      repository = _MockRondaRepository();
+      when(() => repository.watchRoll(any(), any()))
+          .thenAnswer((_) => Stream.value(null));
       when(cubit.yesTapped).thenAnswer((_) async {});
       when(cubit.noTapped).thenAnswer((_) async {});
     });
@@ -30,11 +36,14 @@ void main() {
     }) {
       when(() => cubit.state).thenReturn(state);
       return tester.pumpApp(
-        BlocProvider.value(
-          value: cubit,
-          child: Scaffold(
-            body: SingleChildScrollView(
-              child: ThisWeekCard(state: state, uid: MyRondaFixtures.uid),
+        RepositoryProvider.value(
+          value: repository,
+          child: BlocProvider.value(
+            value: cubit,
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: ThisWeekCard(state: state, uid: MyRondaFixtures.uid),
+              ),
             ),
           ),
         ),
@@ -151,11 +160,105 @@ void main() {
       );
 
       expect(
-        find.text('Sábado a la tarde · Mate en la rambla · El quiosco'),
+        find.text('Sábado a la tarde · Mate en la rambla'),
         findsOneWidget,
       );
+      expect(find.text('El quiosco · Hora a confirmar'), findsOneWidget);
       expect(find.text('¿Venís?'), findsOneWidget);
       expect(find.text('Quiénes van'), findsNothing);
+    });
+
+    testWidgets('says what is still to confirm instead of inventing it', (
+      tester,
+    ) async {
+      await pump(tester, ready(MyRondaFixtures.week()));
+
+      expect(find.text('Lugar y hora a confirmar'), findsOneWidget);
+      expect(find.textContaining('Abre'), findsNothing);
+    });
+
+    testWidgets('shows the hour, the place and who opens and closes', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        ready(
+          MyRondaFixtures.week(
+            hour: '16:00',
+            placeName: 'Frente al quiosco',
+            placeLandmark: 'al lado de la parada',
+            anfitrion: const Host(uid: 'demo-002', firstName: 'Raúl'),
+            cola: const Host(uid: 'demo-003', firstName: 'Ana'),
+          ),
+        ),
+      );
+
+      expect(
+        find.text('Sábado 31/10 a las 16:00 · Mate en la rambla'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Frente al quiosco · al lado de la parada'),
+        findsOneWidget,
+      );
+      expect(find.text('Abre Raúl. Cierra Ana.'), findsOneWidget);
+      expect(find.text('Llega primero · Termo'), findsOneWidget);
+    });
+
+    testWidgets('tells the host they open, and the cola they close', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        ready(
+          MyRondaFixtures.week(
+            hour: '16:00',
+            anfitrion: const Host(uid: MyRondaFixtures.uid, firstName: 'Marta'),
+            cola: const Host(uid: 'demo-002', firstName: 'Raúl'),
+          ),
+        ),
+      );
+
+      expect(find.text('Lugar a confirmar'), findsOneWidget);
+      expect(
+        find.text(
+          'Abrís vos: llegás diez minutos antes y saludás a los que van '
+          'llegando. Cierra Raúl.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Se queda al final · Termo'), findsOneWidget);
+      verify(() => repository.watchRoll('r1', '2026-W44')).called(1);
+      expect(find.text('¿Quién vino hoy?'), findsNothing);
+    });
+
+    testWidgets('shows the host "¿Quién vino hoy?" once the roll exists', (
+      tester,
+    ) async {
+      when(() => repository.watchRoll('r1', '2026-W44')).thenAnswer(
+        (_) => Stream.value(
+          AttendanceRoll(
+            week: '2026-W44',
+            date: DateTime(2026, 10, 31),
+            line: 'Sábado 16:00 · mate en la rambla',
+            people: const [SetupMember(uid: 'demo-002', firstName: 'Raúl')],
+            marks: const {},
+          ),
+        ),
+      );
+
+      await pump(
+        tester,
+        ready(
+          MyRondaFixtures.week(
+            cola: const Host(uid: MyRondaFixtures.uid, firstName: 'Marta'),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('¿Quién vino hoy?'), findsOneWidget);
+      expect(find.text('Todavía no anotaste a nadie, de 1.'), findsOneWidget);
     });
 
     testWidgets('shows progress and a failed answer', (tester) async {

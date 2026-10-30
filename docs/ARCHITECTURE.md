@@ -30,7 +30,9 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   │               answer_seguimos, run_job(name, now?, force?) (admin, for tests and the
   │               demo), make_mate_flyer (SAM → cutouts, Muse Image background → text + QR
   │               in code), answer_move (the host's pick after the rain check),
-  │               ronda_candidates, add_to_ronda, pilot_numbers (admin, the pilot's /admin)
+  │               ronda_candidates, add_to_ronda, pilot_numbers (admin, the pilot's /admin),
+  │               ronda_setups and set_ronda_setup (admin: place, hour and hosts),
+  │               record_attendance (a host's or the admin's "Vino" / "No vino")
   │    scheduled  one dispatcher on the hour in Montevideo (`dispatch`) → run_<job>(db, now)
   │               for every job in `jobs.JOBS`; hourly audio sweeper (`sweep_audio`
   │               deletes `audio/` objects older than 1 h); hourly Cerca counts (`refresh_cerca`,
@@ -109,15 +111,33 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   `needs_repository` as always. Right after sign-in the app writes the held terms, then saves
   the held answers as on "Está bien, guardalo" (needs filter, eligible ids, profile), and clears
   both once a profile exists, including one saved before on another phone.
-- `rondas/{id}`: pretext, barrio, slot {day, time}, place {name, landmark, lat, lng} (public
-  places only), size, status (forming | active | paused | ended), hosts {anfitrion, cola,
-  rotatesOn}, despues {kind: none | place | home, label, address?, hostOk}
+- `rondas/{id}`: pretext, barrio, slot {day, time, hour?}, place {name, landmark?, lat?, lng?}
+  (public places only), size, status (forming | active | paused | ended), hosts {anfitrion,
+  cola, anfitrionName, colaName, rotatesOn?}, setupAt, despues {kind: none | place | home, label, address?, hostOk}
   (members-only read; the address is deleted at the end of the day and never sent in a push),
   season {start, end} (the ISO dates of its first and last meeting, set by the ¿seguimos? close,
   which also makes the ronda `active`), openSeatFromWeek: 4,
   rsvpLead {daysBefore 1–6, hour 9–20}? (when the RSVP push goes out, Montevideo time; missing
   or out of range reads as two days before at 19:00, so a Saturday ronda takes Friday with
   `{daysBefore: 1, hour: 19}`).
+- Place, hour and hosts (built in #47, `functions/hosts.py`): `approve_proposal` writes none of
+  them, and nothing invents them. The admin sets all three at once on `/admin/rondas`
+  (`set_ronda_setup {rondaId, place: {name, landmark?} | null, hour: "16:00" | null, anfitrion,
+  cola}`, admin only; an empty value removes it; `ronda_setups` lists every ronda that still
+  meets with its members' first names and latest roll, since the admin reads no ronda,
+  member or profile from a client).
+  - `slot.hour` starts inside the band with an hour of it left (09:00–11:00, 14:00–17:00,
+    19:00–20:00; `rsvp.hour_in_band`); one outside reads as none.
+  - The place's words pass the organiser's word gates (no emoji, voseo, nothing that looks
+    like a home or an address: `failed-precondition`), since every message naming it passes
+    them later. The sheet sets no `lat`/`lng` (no map pins): the rain check reads the barrio's
+    centroid.
+  - Hosts are members of the ronda and two different people; their first names ride along so
+    members' cards say "Abre Mirta. Cierra Jorge." without reading a profile. The monthly
+    rotation (`rotatesOn`) is not built.
+  - Until they are set: the card says "Lugar y hora a confirmar" (or just the missing one), the
+    RSVP push's body opens with the same words and its title names the band ("Jueves a la
+    tarde"), the rain check reads the whole band, and there is no host.
 - `rondas/{id}/members/{uid}`: brings, state (active | paused | left), joinedAt, pausedUntil?
   (the first meeting date they are back for, `YYYY-MM-DD`; "Pausar 2 semanas"), leftAt? (a
   "no" to ¿seguimos? leaves at its close; the document and `users/{uid}/rondas/{id}` stay, so
@@ -127,11 +147,32 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 - `users/{uid}/rondas/{rondaId}`: joinedAt. How a member's phone finds their ronda (a query on
   `rondas` can't pass the members-only rule); written and deleted with the ronda by
   `approve_proposal`, read by that member only.
-- `rondas/{id}/weeks/{isoWeek}`: date, placeOverride?, rsvp {uid: yes | no}, rsvpSentAt,
-  attendance {uid: bool}, plan {uid: item}. The id is the meeting's ISO week (`2026-W44`), even
-  when the push goes out the week before. Read by no client: members never read the raw `rsvp`
-  map (rules test: `rules/rsvp.test.js`). `rsvpSentAt` is set in a transaction before the push
-  goes out, which makes it once per ronda and week.
+- `rondas/{id}/weeks/{isoWeek}`: date, placeOverride?, dateOverride?, rsvp {uid: yes | no},
+  rsvpSentAt, attendance {uid: bool}, plan {uid: item}. The id is the meeting's ISO week
+  (`2026-W44`), even when the push goes out the week before. No member reads it, not even a
+  host: the raw `rsvp` map and who came stay off members' phones (rules tests:
+  `rules/rsvp.test.js`, `rules/hosts.test.js`). The admin reads it (since #47), for the
+  attendance numbers, so the admin also sees the raw `rsvp`. `rsvpSentAt` is set in a
+  transaction before the push goes out, which makes it once per ronda and week.
+- Attendance (built in #47, `functions/attendance.py`): "¿Quién vino hoy?".
+  - The `attendance_ask` job (`run_attendance_ask(db, now)`): on meeting day (the rain move's
+    `dateOverride` when there is one), an hour into the meeting and 20:00 at the latest (an
+    hour before the band ends while there is no hour), it writes the roll and pushes the ask
+    to the anfitrión, else the cola (each only while in for the meeting and not having said
+    "esta no"), once per ronda and week; held 21:00–09:00 like every push. Push: `data.type:
+    attendance` with rondaId and week, drawn plain (a tap opens Mi ronda on Android, where the
+    host's card links the roll); web opens `/asistencia/{rondaId}/{week}`. With no host to ask,
+    the roll is written with nobody asked: the server holds no admin uid (the claim lives on
+    the Auth token), so the admin finds it on `/admin/rondas`.
+  - `rondas/{id}/rolls/{isoWeek}`: the host's roll: week, date, line, hour, people [{uid,
+    firstName}] (the members in for that meeting, by first name; who said "esta no" stays on,
+    so the order gives nobody away), marks {uid: bool} (the host's copy of the record),
+    askedUid, askedRole (anfitrion | cola | ""), askedAt, updatedAt. `get` by the ronda's
+    anfitrión and cola and the admin, never listed (rules test: `rules/hosts.test.js`).
+  - `record_attendance {rondaId, week, uid, came}`: the ronda's anfitrión or cola (still in the
+    ronda), the host the roll was sent to, or the admin; for someone on the roll; until six
+    days after the meeting. Writes `weeks/{w}.attendance.{uid}` and the roll's mark in one
+    transaction. Members read neither.
 - `rondas/{id}/views/week` (built in #45, `functions/rsvp.py`): "who's coming" to the upcoming
   meeting, read by the ronda's members: week, date, going [{uid, firstName, brings}] (the
   yeses, by first name), noCount, unansweredCount (only counts for the rest; a member paused over
@@ -205,7 +246,7 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   skipped), `host` (the pick, or the deadline passing), `note`, `stop` (why). Admin-only (the
   rules match `agent_runs/{document=**}`); rendered live at `/admin/programa`.
 - `rondas/{id}/moves/{isoWeek}` (#49, `functions/organiser/moves.py`): the rain proposal to the
-  host: week, date, hour, hostUid, hostName, hostFallback, title, body, runId, forecast
+  host: week, date, hour ("16:00" or null), hostUid, hostName, hostFallback, title, body, runId, forecast
   {rainProbability, rainMm, gustsKmh}, options [{id covered | postpone | asIs, label, message,
   placeId?, placeName?, date?}], recipients, deadline (21:00 the evening before), status
   (pending | decided | expired), createdAt; once decided choice, decidedAt, sent, held. `get`
@@ -418,13 +459,16 @@ Built in #49 (`functions/organiser/`, `functions/rain.py`; `assign_hosts`, `prom
   outcome `held` ("Frenado") and the reason; a sent one `sent` ("Salió").
 - **The rain decision** (`rain.run_rain_check`, job `rain_check`): the evening before each
   meeting, 18:00 to 21:00 in Montevideo, once per ronda and week. The agent reads the forecast
-  for the meeting's two hours (a slot's band starts at 10, 16 or 19 until a host sets an hour),
+  for the meeting's two hours from `slot.hour` (three when it starts at the half hour; the
+  whole band while there is no hour, and then the messages say "a la tarde", never a guessed
+  hour),
   and when the worst hour reaches 60% it checks the sunset, the last bus (a tear-off flyer's
   stored `lastBus` for the barrio, so `scripts/last_bus.py` runs once per flyer, not per week)
   and the counts, then `propose_move`s: a covered place of the barrio, another day up to three
   days later, and always "Vamos igual", each with the exact member message written in code. The
   gates run before anything is written; a held proposal leaves no move. The host is
-  `hosts.anfitrion` while active, else the first active member, flagged `hostFallback`.
+  `hosts.anfitrion` while active, else `hosts.cola`, else the first active member, flagged
+  `hostFallback`.
 - **The host's pick** (`answer_move {rondaId, week, choice}`): the move's host only, before 21:00;
   claimed in a transaction, so one push per member and a second call sends nothing; the members
   get the option's message through the gates (kind `change`). Without a pick, the next hourly run

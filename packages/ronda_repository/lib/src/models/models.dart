@@ -1,4 +1,5 @@
 export 'cerca.dart';
+export 'hosts.dart';
 export 'pilot_numbers.dart';
 export 'proposal.dart';
 export 'ronda_candidates.dart';

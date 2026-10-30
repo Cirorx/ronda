@@ -236,6 +236,10 @@ class RondaRepository {
       slotDayId: ronda.slotDay,
       slotBandId: ronda.slotBand,
       placeName: ronda.placeName,
+      placeLandmark: ronda.placeLandmark,
+      hour: ronda.slotHour,
+      anfitrion: _hostOf(ronda.anfitrionUid, ronda.anfitrionName),
+      cola: _hostOf(ronda.colaUid, ronda.colaName),
       myBrings: member.brings,
       pausedUntil: member.state == 'paused'
           ? DateTime.tryParse(member.pausedUntil ?? '')
@@ -262,6 +266,9 @@ class RondaRepository {
       hasLeft: member.state == 'left',
     );
   }
+
+  static Host? _hostOf(String? uid, String? firstName) =>
+      uid == null ? null : Host(uid: uid, firstName: firstName ?? '');
 
   /// [uid]'s own ¿seguimos? in their ronda, now and on every change; `null`
   /// until they are asked. The stream errors with an [RsvpFailure].
@@ -362,6 +369,135 @@ class RondaRepository {
         ),
         test: (error) => error is Exception,
       );
+
+  /// Every ronda that still meets, with its place, hour, hosts and members.
+  /// Admin only.
+  ///
+  /// Throws a [HostsFailure].
+  Future<List<RondaSetup>> rondaSetups() => _hostsGuard(() async {
+    final rows = await _rondasApi.rondaSetups();
+    return [
+      for (final row in rows)
+        RondaSetup(
+          rondaId: row.rondaId,
+          pretextId: row.pretext,
+          barrioId: row.barrio,
+          slotDayId: row.slotDay,
+          slotBandId: row.slotBand,
+          members: [
+            for (final member in row.members)
+              SetupMember(uid: member.uid, firstName: member.firstName),
+          ],
+          hour: row.hour,
+          placeName: row.placeName,
+          placeLandmark: row.placeLandmark,
+          anfitrionUid: row.anfitrionUid,
+          colaUid: row.colaUid,
+          roll: switch (row.roll) {
+            final roll? when DateTime.tryParse(roll.date) != null =>
+              RollSummary(
+                week: roll.week,
+                date: DateTime.parse(roll.date),
+                people: roll.people,
+                marked: roll.marked,
+              ),
+            _ => null,
+          },
+        ),
+    ];
+  });
+
+  /// Sets ronda [rondaId]'s public place, hour and hosts at once; a `null`
+  /// takes each one away. Admin only.
+  ///
+  /// Throws a [HostsFailure]: [HostsFailureReason.notPublic] when the
+  /// place's words look like a home or an address.
+  Future<void> setRondaSetup({
+    required String rondaId,
+    String? placeName,
+    String? placeLandmark,
+    String? hour,
+    String? anfitrionUid,
+    String? colaUid,
+  }) => _hostsGuard(
+    () => _rondasApi.setRondaSetup(
+      rondaId: rondaId,
+      placeName: placeName,
+      placeLandmark: placeLandmark,
+      hour: hour,
+      anfitrionUid: anfitrionUid,
+      colaUid: colaUid,
+    ),
+    refused: HostsFailureReason.notPublic,
+  );
+
+  /// Ronda [rondaId]'s "¿Quién vino hoy?" for [week], now and on every
+  /// change; `null` until the attendance job writes it. Its hosts and the
+  /// admin only: the stream errors with a [HostsFailure] for anyone else.
+  Stream<AttendanceRoll?> watchRoll(String rondaId, String week) => _rondasApi
+      .watchRoll(rondaId, week)
+      .map(
+        (roll) => roll == null
+            ? null
+            : AttendanceRoll(
+                week: roll.week,
+                date: DateTime.tryParse(roll.date) ?? DateTime(0),
+                line: roll.line,
+                people: [
+                  for (final person in roll.people)
+                    SetupMember(uid: person.uid, firstName: person.firstName),
+                ],
+                marks: roll.marks,
+              ),
+      )
+      .handleError(
+        (Object error) => throw _hostsFailure(error),
+        test: (error) => error is Exception,
+      );
+
+  /// Records whether [uid] [came] to ronda [rondaId]'s meeting of [week].
+  /// The ronda's hosts or the admin.
+  ///
+  /// Throws a [HostsFailure]: [HostsFailureReason.passed] once the meeting
+  /// is too long ago.
+  Future<void> recordAttendance({
+    required String rondaId,
+    required String week,
+    required String uid,
+    required bool came,
+  }) => _hostsGuard(
+    () => _rondasApi.recordAttendance(
+      rondaId: rondaId,
+      week: week,
+      uid: uid,
+      came: came,
+    ),
+    refused: HostsFailureReason.passed,
+  );
+
+  Future<T> _hostsGuard<T>(
+    Future<T> Function() call, {
+    HostsFailureReason refused = HostsFailureReason.other,
+  }) async {
+    try {
+      return await call();
+    } on Exception catch (error) {
+      throw _hostsFailure(error, refused: refused);
+    }
+  }
+
+  /// [refused] is what a `failed-precondition` means for the call: a place
+  /// that isn't public when setting a ronda up, a meeting too long ago when
+  /// recording.
+  static HostsFailure _hostsFailure(
+    Object error, {
+    HostsFailureReason refused = HostsFailureReason.other,
+  }) => HostsFailure(switch (error) {
+    FirebaseException(code: 'permission-denied' || 'unauthenticated') =>
+      HostsFailureReason.forbidden,
+    FirebaseException(code: 'failed-precondition') => refused,
+    _ => HostsFailureReason.other,
+  });
 
   /// Records [answer] for ronda [rondaId]'s upcoming meeting. [week], when
   /// given, must still be that meeting's; [pause] (with

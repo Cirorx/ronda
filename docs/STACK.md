@@ -62,7 +62,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | Package | Layer | Wraps / owns | First issue |
 |---|---|---|---|
 | `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
-| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`) | #13 |
+| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`) | #13 |
 | `device_store` | Data | flutter_secure_storage (needs, and the terms and answers held until sign-in); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
@@ -75,7 +75,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | `profile_repository` | Repository | Profile, eligible seat ids (over `ronda_api`); the terms and answers held on the phone until sign-in (over `device_store`) | #18 |
 | `needs_repository` | Repository | Needs and the seat filter, over `device_store` only: this repository has no network path | #18 |
 | `onboarding_repository` | Repository | Voice note → upload → `extract` → fields (over `voice_recorder` + `ronda_api`) | #19 |
-| `ronda_repository` | Repository | Rondas, weeks, RSVPs, proposals (proposals built in #25), Cerca tuyo's demand by barrio (#52) | #25 |
+| `ronda_repository` | Repository | Rondas, weeks, RSVPs, proposals (proposals built in #25), Cerca tuyo's demand by barrio (#52), place, hour, hosts and attendance (#47) | #25 |
 | `organiser_repository` | Repository | The organiser agent: the admin's trace (`agent_runs`), a ronda's acta and [Algo estuvo mal], the host's rain proposal and pick, the rain check by hand (over `ronda_api`'s `OrganiserApi`) | #49 |
 | `contact_repository` | Repository | The contact address (`RONDA_CONTACT_EMAIL`) and the helplines: a mail to Ronda or a call, opened in the person's own app (over `link_opener`) | #54 |
 

@@ -8,7 +8,7 @@ issues, docs, code, commit messages.
 |---|---|---|
 | `Ronda` | ronda | A standing group of 5–6 neighbours (10 for fútbol 5) with one pretext, one slot and one place, for a season |
 | `Pretext` | actividad | What the ronda does: mate on the rambla, truco, fútbol 5, caminata |
-| `Slot` | día y horario | Weekday plus a time band (mañana / tarde / noche) |
+| `Slot` | día y horario | Weekday plus a time band (mañana / tarde / noche), and once the admin sets it the hour it starts (`slot.hour`, "16:00") |
 | `Barrio` | barrio | The neighbourhood; distance is measured between barrio centroids |
 | `AgeBand` | edad ("sesenta y pico") | The only age data Ronda keeps; never a birth date. Values: `18-29`, `30-39`, `40-49`, `50-59`, `60-69`, `70-79`, `80+` |
 | `Brings` | lo que traés | What a member brings or teaches (pan, termo, enseño truco, tengo ganas); how people are known |
@@ -24,8 +24,9 @@ issues, docs, code, commit messages.
 | `Season` | temporada | The run of weeks a ronda commits to after ¿seguimos? |
 | `Seguimos` | ¿seguimos? | The private vote after the first meeting; the season starts when the yeses reach the pretext's floor (4; fútbol 8) |
 | `Rsvp` | voy / esta no | The weekly answer. Default is in; "esta no" never asks why |
-| `Anfitrion` | abre ("llega primero") | The host who opens the meeting this month |
+| `Anfitrion` | abre ("llega primero") | The host who opens the meeting this month; set by the admin with the place and the hour (`RondaSetup`) |
 | `Cola` | cierra ("se queda al final") | The co-host who closes; asked first when the anfitrión can't |
+| `Attendance` | ¿Quién vino hoy? | Who came to a meeting, by [Vino] / [No vino]: tapped by the anfitrión or the cola on the meeting's roll (`AttendanceRoll`), read by the admin only |
 | `Bench` | banco | Ordered neighbours who take a seat freed by an "esta no" that week |
 | `Despues` | después | The optional 20-minute after-spot the host sets each week; may be a member's home, shown only to that ronda; its address is deleted when the day ends |
 | `Buddy` | tu persona de confianza | The member someone chose to write to them after one missed week |

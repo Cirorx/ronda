@@ -1,13 +1,17 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ronda/attendance/widgets/roll_link.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/this_week_cubit.dart';
 import 'package:ronda/my_ronda/widgets/this_week_labels.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
-/// This week's card: the ronda's line, "¿Venís?" with "Voy" and "Esta no"
-/// (or the answer and "Cambiar mi respuesta"), and who's coming: the yeses
-/// by first name and what they bring, only counts for the rest.
+/// This week's card: the ronda's line with its hour, where it meets (or
+/// "Lugar y hora a confirmar"), who opens and closes, "¿Venís?" with "Voy"
+/// and "Esta no" (or the answer and "Cambiar mi respuesta"), and who's
+/// coming: the yeses by first name, their role and what they bring, only
+/// counts for the rest. The anfitrión and the cola also get "¿Quién vino
+/// hoy?" once the meeting's roll exists.
 class const ThisWeekCard({
   required final ThisWeekState state,
   required final String uid,
@@ -84,7 +88,16 @@ class const ThisWeekCard({
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: spacing.md,
             children: [
-              Text(l10n.rondaLine(week), style: textTheme.titleMedium),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: spacing.xxs,
+                children: [
+                  Text(l10n.rondaLine(week), style: textTheme.titleMedium),
+                  Text(l10n.placeLine(week), style: textTheme.bodyLarge),
+                  if (l10n.hostsLine(week, uid: uid) case final hosts?)
+                    Text(hosts, style: textTheme.bodyMedium),
+                ],
+              ),
               if (state.answering) const LinearProgressIndicator(),
               if (state.answerFailed)
                 NoteBanner(
@@ -93,6 +106,9 @@ class const ThisWeekCard({
                 ),
               answer,
               if (week.week != null) ..._coming(context, week),
+              if (week.week case final meeting?
+                  when uid == week.anfitrion?.uid || uid == week.cola?.uid)
+                RollLink(rondaId: week.rondaId, week: meeting),
             ],
           ),
         ),
@@ -117,7 +133,7 @@ class const ThisWeekCard({
                     ? '?'
                     : person.firstName.characters.first.toUpperCase(),
                 name: person.uid == uid ? l10n.thisWeekYou : person.firstName,
-                detail: l10n.bringsDetail(person.brings),
+                detail: l10n.roleAndBrings(week, person),
                 isYou: person.uid == uid,
                 showDivider: index < week.going.length - 1,
               ),

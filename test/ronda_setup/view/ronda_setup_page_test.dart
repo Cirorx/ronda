@@ -1,0 +1,431 @@
+import 'dart:async';
+
+import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:ronda/attendance/attendance.dart';
+import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/ronda_setup/ronda_setup.dart';
+import 'package:ronda_repository/ronda_repository.dart';
+import 'package:ronda_ui/ronda_ui.dart';
+
+import '../../helpers/helpers.dart';
+import '../fixtures.dart';
+
+class _MockRondaRepository extends Mock implements RondaRepository;
+
+class _MockRondaSetupCubit extends MockCubit<RondaSetupState>
+    implements RondaSetupCubit;
+
+const _ready = RondaSetupState(
+  status: RondaSetupStatus.ready,
+  rondas: [SetupFixtures.bare],
+);
+
+void main() {
+  group(RondaSetupPage, () {
+    testWidgets('reads every ronda', (tester) async {
+      final repository = _MockRondaRepository();
+      when(repository.rondaSetups)
+          .thenAnswer((_) async => const [SetupFixtures.bare]);
+
+      await tester.pumpApp(
+        RepositoryProvider<RondaRepository>.value(
+          value: repository,
+          child: const RondaSetupPage(),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Lugar, hora y anfitriones'), findsOneWidget);
+      expect(
+        find.text('Jueves a la tarde · Mate en la rambla'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group(RondaSetupView, () {
+    late RondaSetupCubit cubit;
+
+    setUp(() {
+      cubit = _MockRondaSetupCubit();
+      when(cubit.load).thenAnswer((_) async {});
+      when(
+        () => cubit.save(
+          rondaId: any(named: 'rondaId'),
+          placeName: any(named: 'placeName'),
+          placeLandmark: any(named: 'placeLandmark'),
+          hour: any(named: 'hour'),
+          anfitrionUid: any(named: 'anfitrionUid'),
+          colaUid: any(named: 'colaUid'),
+        ),
+      ).thenAnswer((_) async {});
+    });
+
+    Future<void> pump(WidgetTester tester, RondaSetupState state) async {
+      when(() => cubit.state).thenReturn(state);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpApp(
+        BlocProvider.value(value: cubit, child: const RondaSetupView()),
+      );
+      tester.view.physicalSize = const Size(360, 2400);
+      await tester.pump();
+    }
+
+    testWidgets('a ronda approval left bare says what is still to set', (
+      tester,
+    ) async {
+      await pump(tester, _ready);
+
+      expect(find.text('El Pinar Sur'), findsOneWidget);
+      expect(find.text('Lugar y hora a confirmar'), findsOneWidget);
+      expect(find.text('Abre: nadie · Cierra: nadie'), findsOneWidget);
+      expect(find.textContaining('Quién vino'), findsNothing);
+    });
+
+    testWidgets('a ronda set up shows all three and its latest roll', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        RondaSetupState(
+          status: RondaSetupStatus.ready,
+          rondas: [
+            SetupFixtures.set,
+            const RondaSetup(
+              rondaId: 'r2',
+              pretextId: 'truco',
+              barrioId: 'nowhere',
+              slotDayId: 'tue',
+              slotBandId: 'evening',
+              members: [],
+              hour: '19:30',
+            ),
+            const RondaSetup(
+              rondaId: 'r3',
+              pretextId: 'truco',
+              barrioId: 'nowhere',
+              slotDayId: 'tue',
+              slotBandId: 'evening',
+              members: [],
+              placeName: 'Club Lagomar',
+            ),
+          ],
+        ),
+      );
+
+      expect(
+        find.text('Jueves a las 16:00 · Mate en la rambla'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Frente al quiosco · al lado de la parada'),
+        findsOneWidget,
+      );
+      expect(find.text('Abre: Mirta · Cierra: Jorge'), findsOneWidget);
+      expect(
+        find.text('Quién vino el 5/11 · Anotaste a 1 de 3.'),
+        findsOneWidget,
+      );
+      expect(find.text('nowhere'), findsNWidgets(2));
+      expect(find.text('Lugar a confirmar'), findsOneWidget);
+      expect(find.text('Club Lagomar'), findsOneWidget);
+    });
+
+    testWidgets('opens the latest roll under /admin', (tester) async {
+      when(() => cubit.state).thenReturn(
+        RondaSetupState(
+          status: RondaSetupStatus.ready,
+          rondas: [SetupFixtures.set],
+        ),
+      );
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) =>
+                BlocProvider.value(value: cubit, child: const RondaSetupView()),
+          ),
+          GoRoute(
+            path: '/admin/${AttendancePage.adminSegment}',
+            builder: (_, state) => Text('roll ${state.pathParameters['week']}'),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.light,
+          locale: rioplatense,
+          localizationsDelegates: appLocalizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      );
+
+      await tester.tap(find.textContaining('Quién vino el'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('roll 2026-W45'), findsOneWidget);
+    });
+
+    testWidgets('waits, is forbidden, says when there are none, retries', (
+      tester,
+    ) async {
+      await pump(tester, const RondaSetupState());
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      await pump(
+        tester,
+        const RondaSetupState(status: RondaSetupStatus.forbidden),
+      );
+      expect(find.text('Lugar, hora y anfitriones'), findsOneWidget);
+
+      await pump(tester, const RondaSetupState(status: RondaSetupStatus.ready));
+      expect(find.text('Todavía no hay rondas.'), findsOneWidget);
+
+      await pump(
+        tester,
+        const RondaSetupState(status: RondaSetupStatus.failure),
+      );
+      await tester.tap(find.text('Probar de nuevo'));
+      verify(cubit.load).called(1);
+    });
+
+    group(RondaSetupSheet, () {
+      Future<void> open(WidgetTester tester, RondaSetupState state) async {
+        await pump(tester, state);
+        await tester.tap(find.text('Cambiar'));
+        await tester.pumpAndSettle();
+      }
+
+      Future<void> pick(WidgetTester tester, String field, String item) async {
+        await tester.tap(find.widgetWithText(InputDecorator, field));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(item).last);
+        await tester.pumpAndSettle();
+      }
+
+      testWidgets('saves the place, the hour and the hosts, then closes', (
+        tester,
+      ) async {
+        final states = StreamController<RondaSetupState>();
+        addTearDown(states.close);
+        whenListen(cubit, states.stream, initialState: _ready);
+        when(
+          () => cubit.save(
+            rondaId: any(named: 'rondaId'),
+            placeName: any(named: 'placeName'),
+            placeLandmark: any(named: 'placeLandmark'),
+            hour: any(named: 'hour'),
+            anfitrionUid: any(named: 'anfitrionUid'),
+            colaUid: any(named: 'colaUid'),
+          ),
+        ).thenAnswer((_) async {
+          states
+            ..add(
+              const RondaSetupState(
+                status: RondaSetupStatus.ready,
+                rondas: [SetupFixtures.bare],
+                saving: true,
+              ),
+            )
+            ..add(_ready);
+        });
+        await tester.pumpWidget(const SizedBox());
+        await tester.pumpApp(
+          BlocProvider.value(value: cubit, child: const RondaSetupView()),
+        );
+        tester.view.physicalSize = const Size(360, 2400);
+        await tester.pump();
+        await tester.tap(find.text('Cambiar'));
+        await tester.pumpAndSettle();
+
+        await tester.enterText(
+          find.widgetWithText(TextField, 'Lugar público'),
+          '  Frente al quiosco ',
+        );
+        await tester.enterText(
+          find.widgetWithText(TextField, 'Cómo encontrarlo (si hace falta)'),
+          ' ',
+        );
+        await pick(tester, 'Hora', '16:30');
+        await pick(tester, 'Abre (llega primero)', 'Mirta');
+        await pick(tester, 'Cierra (se queda al final)', 'Jorge');
+        await tester.ensureVisible(find.text('Guardar'));
+        await tester.tap(find.text('Guardar'));
+        await tester.pumpAndSettle();
+
+        verify(
+          () => cubit.save(
+            rondaId: 'r1',
+            placeName: 'Frente al quiosco',
+            hour: '16:30',
+            anfitrionUid: 'demo-101',
+            colaUid: 'demo-102',
+          ),
+        ).called(1);
+        expect(find.byType(RondaSetupSheet), findsNothing);
+        verify(cubit.sheetClosed).called(1);
+      });
+
+      testWidgets('starts from what is set and can take it all away', (
+        tester,
+      ) async {
+        await open(
+          tester,
+          RondaSetupState(
+            status: RondaSetupStatus.ready,
+            rondas: [SetupFixtures.set],
+          ),
+        );
+
+        expect(find.text('Frente al quiosco'), findsWidgets);
+        await tester.enterText(
+          find.widgetWithText(TextField, 'Lugar público'),
+          '',
+        );
+        await tester.enterText(
+          find.widgetWithText(TextField, 'Cómo encontrarlo (si hace falta)'),
+          '',
+        );
+        await pick(tester, 'Hora', 'Sin hora');
+        await pick(tester, 'Abre (llega primero)', 'nadie');
+        await pick(tester, 'Cierra (se queda al final)', 'nadie');
+        await tester.ensureVisible(find.text('Guardar'));
+        await tester.tap(find.text('Guardar'));
+        await tester.pumpAndSettle();
+
+        verify(() => cubit.save(rondaId: 'r1')).called(1);
+      });
+
+      testWidgets('one person can not open and close', (tester) async {
+        await open(tester, _ready);
+
+        await pick(tester, 'Abre (llega primero)', 'Ana');
+        await pick(tester, 'Cierra (se queda al final)', 'Ana');
+
+        expect(
+          find.text('Abre y cierra tienen que ser dos personas distintas.'),
+          findsOneWidget,
+        );
+        final save = tester.widget<FilledButton>(
+          find.widgetWithText(FilledButton, 'Guardar'),
+        );
+        expect(save.onPressed, isNull);
+      });
+
+      testWidgets('stays open and says why when it was not saved', (
+        tester,
+      ) async {
+        when(
+          () => cubit.save(
+            rondaId: any(named: 'rondaId'),
+            placeName: any(named: 'placeName'),
+            placeLandmark: any(named: 'placeLandmark'),
+            hour: any(named: 'hour'),
+            anfitrionUid: any(named: 'anfitrionUid'),
+            colaUid: any(named: 'colaUid'),
+          ),
+        ).thenAnswer((_) async {});
+        await open(
+          tester,
+          const RondaSetupState(
+            status: RondaSetupStatus.ready,
+            rondas: [SetupFixtures.bare],
+            saveFailure: HostsFailureReason.notPublic,
+          ),
+        );
+
+        expect(
+          find.textContaining('Eso parece una casa o una dirección.'),
+          findsOneWidget,
+        );
+        await tester.ensureVisible(find.text('Guardar'));
+        await tester.tap(find.text('Guardar'));
+        await tester.pumpAndSettle();
+        expect(find.byType(RondaSetupSheet), findsOneWidget);
+      });
+
+      testWidgets('says a save failed for anything else, and while saving', (
+        tester,
+      ) async {
+        await open(
+          tester,
+          const RondaSetupState(
+            status: RondaSetupStatus.ready,
+            rondas: [SetupFixtures.bare],
+            saveFailure: HostsFailureReason.other,
+            saving: true,
+          ),
+        );
+
+        expect(find.text('No se guardó. Probá de nuevo.'), findsOneWidget);
+        expect(find.text('Guardando…'), findsOneWidget);
+      });
+
+      testWidgets('drops a host who is no longer a member', (tester) async {
+        await open(
+          tester,
+          const RondaSetupState(
+            status: RondaSetupStatus.ready,
+            rondas: [
+              RondaSetup(
+                rondaId: 'r1',
+                pretextId: 'mate',
+                barrioId: 'el-pinar-sur',
+                slotDayId: 'thu',
+                slotBandId: 'afternoon',
+                members: SetupFixtures.members,
+                hour: '13:00',
+                anfitrionUid: 'demo-999',
+              ),
+            ],
+          ),
+        );
+
+        await tester.ensureVisible(find.text('Guardar'));
+        await tester.tap(find.text('Guardar'));
+        await tester.pumpAndSettle();
+
+        verify(() => cubit.save(rondaId: 'r1', hour: '13:00')).called(1);
+      });
+    });
+  });
+
+  group(RondaSetupLink, () {
+    testWidgets('opens the setup screen', (tester) async {
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) =>
+                Scaffold(appBar: AppBar(actions: const [RondaSetupLink()])),
+          ),
+          GoRoute(
+            path: RondaSetupPage.path,
+            builder: (_, _) => const Text('setup'),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.light,
+          locale: rioplatense,
+          localizationsDelegates: appLocalizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      );
+
+      await tester.tap(find.byTooltip('Lugar, hora y anfitriones'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('setup'), findsOneWidget);
+    });
+  });
+}

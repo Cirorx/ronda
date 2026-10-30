@@ -49,6 +49,61 @@ void main() {
       );
     });
 
+    test('says the hour in place of the band once set', () {
+      expect(
+        es.rondaLineOf(
+          slotDayId: 'thu',
+          slotBandId: 'evening',
+          pretextId: 'truco',
+          hour: '19:30',
+          placeName: 'Club Lagomar',
+        ),
+        'Jueves a las 19:30 · Truco · Club Lagomar',
+      );
+    });
+
+    test('a place without a landmark, and with no hour yet', () {
+      expect(
+        es.placeLine(
+          MyRondaFixtures.week(placeName: 'La plaza', hour: '16:00'),
+        ),
+        'La plaza',
+      );
+      expect(
+        es.placeLine(MyRondaFixtures.week(placeName: 'La plaza')),
+        'La plaza · Hora a confirmar',
+      );
+    });
+
+    test('names who opens and closes, and only their roles', () {
+      final both = MyRondaFixtures.week(
+        anfitrion: const Host(uid: 'demo-002', firstName: 'Raúl'),
+        cola: const Host(uid: MyRondaFixtures.uid, firstName: 'Marta'),
+      );
+      expect(
+        es.hostsLine(both, uid: MyRondaFixtures.uid),
+        'Abre Raúl. Cerrás vos: te quedás hasta el final.',
+      );
+      expect(
+        es.hostsLine(MyRondaFixtures.week(), uid: MyRondaFixtures.uid),
+        isNull,
+      );
+      expect(
+        es.roleAndBrings(
+          both,
+          const GoingNeighbour(uid: 'demo-002', firstName: 'Raúl', brings: []),
+        ),
+        'Llega primero',
+      );
+      expect(
+        es.roleAndBrings(
+          both,
+          const GoingNeighbour(uid: 'demo-009', firstName: 'Ana', brings: []),
+        ),
+        '',
+      );
+    });
+
     test('names the first thing that can be carried', () {
       expect(
         es.bringItem(['tengo-ganas', 'enseno-truco', 'sillas']),

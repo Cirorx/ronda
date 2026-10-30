@@ -1927,7 +1927,7 @@
     "@dataKeepSearch": {
         "description": "Your data screen: kept item"
     },
-    "dataKeepRonda": "Your ronda and your answers: whether you're going each week and whether you carry on.",
+    "dataKeepRonda": "Your ronda and your answers: whether you're going each week, whether you carry on and whether you came (whoever opens notes it down).",
     "@dataKeepRonda": {
         "description": "Your data screen: kept item"
     },
@@ -2269,5 +2269,232 @@
                 "type": "int"
             }
         }
+    },
+    "slotAt": "{day} at {hour}",
+    "@slotAt": {
+        "description": "A ronda's day and its set hour: Jueves 5/11 a las 16:00",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            },
+            "hour": {
+                "type": "String"
+            }
+        }
+    },
+    "thisWeekPlaceLandmark": "{place} · {landmark}",
+    "@thisWeekPlaceLandmark": {
+        "description": "The card's place and how to find it",
+        "placeholders": {
+            "place": {
+                "type": "String"
+            },
+            "landmark": {
+                "type": "String"
+            }
+        }
+    },
+    "thisWeekToConfirmBoth": "Place and time to be confirmed",
+    "@thisWeekToConfirmBoth": {
+        "description": "The card before the admin sets a place and an hour"
+    },
+    "thisWeekToConfirmPlace": "Place to be confirmed",
+    "@thisWeekToConfirmPlace": {
+        "description": "The card before the admin sets a place"
+    },
+    "thisWeekToConfirmHour": "Time to be confirmed",
+    "@thisWeekToConfirmHour": {
+        "description": "The card before the admin sets an hour"
+    },
+    "thisWeekHostOpens": "{name} opens.",
+    "@thisWeekHostOpens": {
+        "description": "Who opens the ronda (the anfitrión)",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "thisWeekHostCloses": "{name} closes.",
+    "@thisWeekHostCloses": {
+        "description": "Who closes the ronda (the cola)",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "thisWeekYouOpen": "You open: arrive ten minutes early and greet people as they come.",
+    "@thisWeekYouOpen": {
+        "description": "The card when the member is the anfitrión"
+    },
+    "thisWeekYouClose": "You close: you stay to the end.",
+    "@thisWeekYouClose": {
+        "description": "The card when the member is the cola"
+    },
+    "thisWeekRoleOpens": "Arrives first",
+    "@thisWeekRoleOpens": {
+        "description": "Who's coming: the anfitrión's role"
+    },
+    "thisWeekRoleCloses": "Stays to the end",
+    "@thisWeekRoleCloses": {
+        "description": "Who's coming: the cola's role"
+    },
+    "rollTitle": "Who came today?",
+    "@rollTitle": {
+        "description": "The host's attendance list"
+    },
+    "rollPrivate": "Nobody else sees this list.",
+    "@rollPrivate": {
+        "description": "Under the attendance list"
+    },
+    "rollCame": "Came",
+    "@rollCame": {
+        "description": "Attendance: came"
+    },
+    "rollDidntCome": "Didn't come",
+    "@rollDidntCome": {
+        "description": "Attendance: didn't come"
+    },
+    "rollMarked": "{marked, plural, =0{Nobody marked yet, of {people}.} =1{1 of {people} marked.} other{{marked} of {people} marked.}}",
+    "@rollMarked": {
+        "description": "How many on the attendance list are marked",
+        "placeholders": {
+            "marked": {
+                "type": "int"
+            },
+            "people": {
+                "type": "int"
+            }
+        }
+    },
+    "rollNone": "There's no list for that meeting yet.",
+    "@rollNone": {
+        "description": "The attendance screen without a list"
+    },
+    "rollLoadError": "We couldn't read the list. Try again.",
+    "@rollLoadError": {
+        "description": "The attendance screen when it can't be read"
+    },
+    "rollSaveError": "It wasn't saved. Try again.",
+    "@rollSaveError": {
+        "description": "A tap that didn't reach the server"
+    },
+    "rollPassed": "That meeting was more than a week ago: it can't be changed now.",
+    "@rollPassed": {
+        "description": "A tap too long after the meeting"
+    },
+    "rollPerson": "{name}: {mark}",
+    "@rollPerson": {
+        "description": "Screen reader: a person and their mark",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "mark": {
+                "type": "String"
+            }
+        }
+    },
+    "rollUnmarked": "not marked",
+    "@rollUnmarked": {
+        "description": "Screen reader: a person not marked yet"
+    },
+    "setupTitle": "Place, time and hosts",
+    "@setupTitle": {
+        "description": "The admin's ronda setup screen"
+    },
+    "setupBody": "Until you set them, the ronda says \"Place and time to be confirmed\" and has no host. Public places only: never a home.",
+    "@setupBody": {
+        "description": "The admin's ronda setup screen"
+    },
+    "setupEmpty": "There are no rondas yet.",
+    "@setupEmpty": {
+        "description": "The setup screen with no rondas"
+    },
+    "setupLoadError": "We couldn't read the rondas. Try again.",
+    "@setupLoadError": {
+        "description": "The setup screen when it can't load"
+    },
+    "setupHosts": "Opens: {anfitrion} · Closes: {cola}",
+    "@setupHosts": {
+        "description": "A ronda's hosts on the setup screen",
+        "placeholders": {
+            "anfitrion": {
+                "type": "String"
+            },
+            "cola": {
+                "type": "String"
+            }
+        }
+    },
+    "setupNobody": "nobody",
+    "@setupNobody": {
+        "description": "No host chosen"
+    },
+    "setupChange": "Change",
+    "@setupChange": {
+        "description": "Opens a ronda's setup sheet"
+    },
+    "setupRoll": "Who came on {date}",
+    "@setupRoll": {
+        "description": "Opens a ronda's latest attendance list",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "setupPlaceName": "Public place",
+    "@setupPlaceName": {
+        "description": "Setup sheet: the place's name"
+    },
+    "setupPlaceHint": "in front of the kiosk on the rambla",
+    "@setupPlaceHint": {
+        "description": "Setup sheet: example place"
+    },
+    "setupLandmark": "How to find it (if needed)",
+    "@setupLandmark": {
+        "description": "Setup sheet: the place's landmark"
+    },
+    "setupLandmarkHint": "next to the bus stop",
+    "@setupLandmarkHint": {
+        "description": "Setup sheet: example landmark"
+    },
+    "setupHour": "Time",
+    "@setupHour": {
+        "description": "Setup sheet: the hour"
+    },
+    "setupNoHour": "No time",
+    "@setupNoHour": {
+        "description": "Setup sheet: no hour chosen"
+    },
+    "setupAnfitrion": "Opens (arrives first)",
+    "@setupAnfitrion": {
+        "description": "Setup sheet: the anfitrión"
+    },
+    "setupCola": "Closes (stays to the end)",
+    "@setupCola": {
+        "description": "Setup sheet: the cola"
+    },
+    "setupSave": "Save",
+    "@setupSave": {
+        "description": "Setup sheet: save"
+    },
+    "setupSaving": "Saving…",
+    "@setupSaving": {
+        "description": "Setup sheet: saving"
+    },
+    "setupSaveError": "It wasn't saved. Try again.",
+    "@setupSaveError": {
+        "description": "Setup sheet: save failed"
+    },
+    "setupNotPublic": "That looks like a home or an address. The ronda only meets in public places: name the place, with no door number.",
+    "@setupNotPublic": {
+        "description": "Setup sheet: the place isn't public"
+    },
+    "setupSameHost": "Opening and closing have to be two different people.",
+    "@setupSameHost": {
+        "description": "Setup sheet: the same person in both roles"
     }
 }

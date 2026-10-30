@@ -94,11 +94,14 @@ void main() {
         ),
         findsOneWidget,
       );
+      const rondaKept =
+          'Tu ronda y tus respuestas: si vas cada semana, si seguís y si '
+          'fuiste (lo anota quien abre).';
       for (final text in [
         'Lo que Ronda guarda de vos',
         'Tu nombre de pila, tu edad más o menos y tu barrio.',
         'Tus días y horarios, las actividades que elegiste y lo que traés.',
-        'Tu ronda y tus respuestas: si vas cada semana y si seguís.',
+        rondaKept,
         account,
         'Cuándo aceptaste las condiciones.',
         'Lo que no guardamos',

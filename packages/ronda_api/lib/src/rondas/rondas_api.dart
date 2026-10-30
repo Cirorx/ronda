@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:ronda_api/src/rondas/cerca_document.dart';
+import 'package:ronda_api/src/rondas/hosts_documents.dart';
 import 'package:ronda_api/src/rondas/pilot_numbers_document.dart';
 import 'package:ronda_api/src/rondas/ronda_documents.dart';
 import 'package:ronda_api/src/rondas/seguimos_documents.dart';
@@ -38,6 +39,15 @@ class const RondasApi({
   /// The callable that records a ¿seguimos? answer or, below the floor, the
   /// member's choice.
   static const answerSeguimosCallable = 'answer_seguimos';
+
+  /// The callable that records one "Vino" or "No vino".
+  static const recordAttendanceCallable = 'record_attendance';
+
+  /// The admin's callable that lists every ronda's place, hour and hosts.
+  static const rondaSetupsCallable = 'ronda_setups';
+
+  /// The admin's callable that sets a ronda's place, hour and hosts.
+  static const setRondaSetupCallable = 'set_ronda_setup';
 
   /// The ids of the rondas [uid] is in (`users/{uid}/rondas`), now and on
   /// every change.
@@ -88,6 +98,72 @@ class const RondasApi({
         final data? => CercaDocument.fromJson(barrio, data),
         null => null,
       };
+
+  /// Ronda [rondaId]'s attendance roll for [week]
+  /// (`rondas/{rondaId}/rolls/{week}`); `null` while there is none. Its
+  /// hosts and the admin only.
+  Stream<RollDocument?> watchRoll(String rondaId, String week) =>
+      _watch('rondas/$rondaId/rolls/$week', RollDocument.fromJson);
+
+  /// Records whether [uid] [came] to ronda [rondaId]'s meeting of [week]
+  /// (`record_attendance`). The ronda's hosts or the admin.
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails.
+  Future<void> recordAttendance({
+    required String rondaId,
+    required String week,
+    required String uid,
+    required bool came,
+  }) async {
+    await functions.httpsCallable(recordAttendanceCallable).call<Object?>({
+      'rondaId': rondaId,
+      'week': week,
+      'uid': uid,
+      'came': came,
+    });
+  }
+
+  /// Every ronda that still meets, with its place, hour, hosts and members
+  /// (`ronda_setups`). Admin only.
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails, and a
+  /// [FormatException] for another shape.
+  Future<List<RondaSetupDocument>> rondaSetups() async {
+    final result = await functions
+        .httpsCallable(rondaSetupsCallable)
+        .call<Map<Object?, Object?>>();
+    return switch (result.data) {
+      {'rondas': final List<Object?> rows} => [
+        for (final row in rows) RondaSetupDocument.fromJson(row),
+      ],
+      _ => throw const FormatException('ronda_setups returned another shape'),
+    };
+  }
+
+  /// Sets ronda [rondaId]'s public place ([placeName] and [placeLandmark]),
+  /// [hour] and hosts at once (`set_ronda_setup`); a `null` takes each one
+  /// away. Admin only.
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails:
+  /// `failed-precondition` when the place looks like a home or an address.
+  Future<void> setRondaSetup({
+    required String rondaId,
+    String? placeName,
+    String? placeLandmark,
+    String? hour,
+    String? anfitrionUid,
+    String? colaUid,
+  }) async {
+    await functions.httpsCallable(setRondaSetupCallable).call<Object?>({
+      'rondaId': rondaId,
+      'place': placeName == null
+          ? null
+          : {'name': placeName, 'landmark': placeLandmark ?? ''},
+      'hour': hour,
+      'anfitrion': anfitrionUid ?? '',
+      'cola': colaUid ?? '',
+    });
+  }
 
   Stream<T?> _watch<T>(String path, T Function(Map<String, Object?>) read) =>
       firestore
