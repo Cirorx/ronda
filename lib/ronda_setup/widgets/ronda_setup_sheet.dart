@@ -27,10 +27,8 @@ class RondaSetupSheet extends StatefulWidget {
   /// Opens the sheet for [ronda] over [context]'s [RondaSetupCubit].
   static Future<void> show(BuildContext context, RondaSetup ronda) async {
     final cubit = context.read<RondaSetupCubit>();
-    await showModalBottomSheet<void>(
+    await showRondaSheet<void>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
       builder: (_) => BlocProvider.value(
         value: cubit,
         child: RondaSetupSheet(ronda: ronda),

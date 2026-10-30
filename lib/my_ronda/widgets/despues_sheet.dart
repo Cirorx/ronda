@@ -32,10 +32,8 @@ class DespuesSheet extends StatefulWidget {
     required ThisWeek week,
   }) {
     final repository = context.read<RondaRepository>();
-    return showModalBottomSheet<void>(
+    return showRondaSheet<void>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
       builder: (_) => BlocProvider(
         create: (_) => DespuesCubit(
           rondaId: week.rondaId,

@@ -11,7 +11,8 @@ typedef SlotGridCell = ({int day, int band});
 /// From [chipsTextScale] up it turns into one row of chips per day, which
 /// holds at 200% text. It holds no state: [selected] comes in, [onChanged]
 /// reports the next set. Each cell's semantics identifier is
-/// `<identifier>.<day>.<band>` in both layouts.
+/// `<identifier>.<day>.<band>` in both layouts. Cells shrink on touch-down
+/// ([PressScale]) and the check settles in with [RondaSwap].
 /// {@endtemplate}
 class const SlotGrid({
   /// Prefix of every cell's semantics identifier ("horarios").
@@ -82,10 +83,12 @@ class const SlotGrid({
                   padding: gap,
                   child: _cell(
                     (day: day, band: band),
-                    (cell, {required isSelected}) => InkWell(
-                      onTap: () => _toggle(cell),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      child: _SlotCellBox(isSelected: isSelected),
+                    (cell, {required isSelected}) => PressScale(
+                      child: InkWell(
+                        onTap: () => _toggle(cell),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        child: _SlotCellBox(isSelected: isSelected),
+                      ),
                     ),
                   ),
                 ),
@@ -119,10 +122,12 @@ class const SlotGrid({
                     for (final (band, bandLabel) in bandLabels.indexed)
                       _cell(
                         (day: day, band: band),
-                        (cell, {required isSelected}) => FilterChip(
-                          label: Text(bandLabel),
-                          selected: isSelected,
-                          onSelected: (_) => _toggle(cell),
+                        (cell, {required isSelected}) => PressScale(
+                          child: FilterChip(
+                            label: Text(bandLabel),
+                            selected: isSelected,
+                            onSelected: (_) => _toggle(cell),
+                          ),
                         ),
                       ),
                   ],
@@ -179,7 +184,17 @@ class const _SlotCellBox({required final bool isSelected})
                 width: AppTheme.borderWidth,
               ),
       ),
-      child: isSelected ? Icon(Icons.check, color: scheme.onPrimary) : null,
+      child: Center(
+        child: RondaSwap(
+          child: isSelected
+              ? Icon(
+                  Icons.check,
+                  key: const ValueKey(true),
+                  color: scheme.onPrimary,
+                )
+              : const SizedBox.shrink(key: ValueKey(false)),
+        ),
+      ),
     );
   }
 }

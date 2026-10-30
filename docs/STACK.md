@@ -96,6 +96,11 @@ Rules the agents apply (from `layered-architecture` and `bloc`):
 - Names in `ronda_ui`: `AppColors` (token constants), `RondaPalette` (the ThemeExtension, read with
   `context.rondaPalette`), `AppTextStyle`, `AppSpacing`, `AppRadius` (8/10/12/16/22), `AppTheme`.
   `material_ui` 1.8.0's `inputDecorationTheme` takes `InputDecorationThemeData`.
+- Motion and feel (`docs/DESIGN.md` § Motion and feel): `AppMotion` (springs and tokens),
+  `RondaMotion` (reduced motion), `PressedShape` (the button themes' press) and `PressScale` (any
+  other tappable), `showRondaSheet` / `RondaSheetRoute` (every modal sheet, `StepSheet` included),
+  `RondaPageTransitionsBuilder`, `RondaSwap`, `SpringBuilder`, `RondaHaptics`. `ronda_ui` depends
+  on `cupertino_ui` for the page slide and its edge swipe back.
 - `ronda_ui` maps the DESIGN.md tokens onto two `ColorScheme`s (light and dark: paper → surface,
   ink → onSurface, birome → primary, yerba → tertiary, ámbar → secondary) inside `AppTheme.light`
   / `AppTheme.dark`, passed to `MaterialApp` as `theme` / `darkTheme`. Yerba, ámbar and margen also

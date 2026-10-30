@@ -6,7 +6,8 @@ import 'package:ronda_ui/ronda_ui.dart';
 ///
 /// It draws no card of its own, so it sits inside the ronda card. The
 /// buttons sit side by side and stack with large text. Their semantics
-/// identifiers are `<identifier>.yes` and `<identifier>.no`.
+/// identifiers are `<identifier>.yes` and `<identifier>.no`. Either answer
+/// is a commit, felt as [RondaHaptics.commit] on the tap.
 /// {@endtemplate}
 class const RsvpBar({
   /// Prefix of the buttons' semantics identifiers ("rsvp").
@@ -42,7 +43,7 @@ class const RsvpBar({
       child: Semantics(
         identifier: '$identifier.yes',
         child: FilledButton(
-          onPressed: onYes,
+          onPressed: RondaHaptics.onCommit(onYes),
           child: Text(yesLabel, textAlign: TextAlign.center),
         ),
       ),
@@ -51,7 +52,7 @@ class const RsvpBar({
       child: Semantics(
         identifier: '$identifier.no',
         child: OutlinedButton(
-          onPressed: onNo,
+          onPressed: RondaHaptics.onCommit(onNo),
           child: Text(noLabel, textAlign: TextAlign.center),
         ),
       ),

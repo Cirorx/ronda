@@ -16,10 +16,8 @@ class const AddToRondaSheet({super.key}) extends StatelessWidget {
     BuildContext context, {
     required String rondaId,
     required RondaRepository rondaRepository,
-  }) => showModalBottomSheet<void>(
+  }) => showRondaSheet<void>(
     context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
     builder: (_) => BlocProvider(
       create: (_) {
         final cubit = AddToRondaCubit(

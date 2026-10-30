@@ -114,5 +114,34 @@ void main() {
         expect(answers, ['esta no']);
       });
     });
+
+    group('commits', () {
+      for (final (identifier, answer) in [
+        ('rsvp.yes', 'voy'),
+        ('rsvp.no', 'esta no'),
+      ]) {
+        testWidgets('$answer with a light haptic before the callback', (
+          tester,
+        ) async {
+          final haptics = recordHaptics(tester);
+          final order = <String>[];
+          await tester.pumpApp(
+            RsvpBar(
+              identifier: 'rsvp',
+              question: '¿Venís?',
+              yesLabel: 'Voy',
+              noLabel: 'Esta no',
+              onYes: () => order.add('voy after ${haptics.length}'),
+              onNo: () => order.add('esta no after ${haptics.length}'),
+            ),
+          );
+
+          await tester.tap(find.bySemanticsIdentifier(identifier));
+
+          expect(haptics, ['HapticFeedbackType.lightImpact']);
+          expect(order, ['$answer after 1']);
+        });
+      }
+    });
   });
 }

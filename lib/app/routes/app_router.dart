@@ -54,6 +54,12 @@ const returnToParameter = 'from';
 ///
 /// `/` and any unknown location land on Mi ronda, which the rules above
 /// then redirect as needed.
+///
+/// Every route is a plain [GoRoute], so its page is a [MaterialPage] and
+/// the theme's `RondaPageTransitionsBuilder` moves between screens: a push
+/// comes in from the right and goes back out to the right, with the edge
+/// swipe back, or cross-fades with reduced motion. The tabs are an indexed
+/// stack, so switching tabs doesn't slide.
 GoRouter createAppRouter({
   required AppBloc appBloc,
   required Listenable refreshListenable,

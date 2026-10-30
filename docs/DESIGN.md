@@ -27,6 +27,8 @@ birome `#93A6FF`, yerba `#5CC48E`, ámbar `#E2A53D`, margen `#E07A72`, line `#2E
 `#A3ADBF`, birome tint `#1C2440`. Define every colour as a token in both. The component sheet on
 the screen canvas shows each token and component.
 
+Added by the motion pass (2026-10-30): shadow and scrim are ink by day and `#05070C` at night.
+
 Added by the `ronda_ui` build (2026-10-27): birome pressed `#1A3196`, neutral fill `#EEF0F4`,
 control off (switch track) `#8792A6`; dark values derived by mixing over dark paper: danger
 `#F07C72`, ámbar tint `#2A2416`, yerba tint `#15291F`, neutral tint `#1A2234`, birome pressed
@@ -51,7 +53,62 @@ radius 12; buttons radius 12, height ≥ 48 dp.
    plata" is said where it earns its place: the terms ("Ronda es gratis") and the printed
    flyers. App screens and messages, routine pushes included, don't repeat it.
 6. **Calm motion.** Only state changes animate (a seat filling, a confirmation); respect reduced
-   motion.
+   motion. The values and the rules are in § Motion and feel.
+
+## Motion and feel
+
+Decided with the owner on 2026-10-30: keep the paper look and take the interaction side of
+Apple's *Designing Fluid Interfaces*. No glass: no translucent or blurred bars or sheets, and no
+`BackdropFilter`. Everything below lives in `packages/ronda_ui`, so screens get it by using the
+theme and the shared components.
+
+**Springs** are written as Apple writes them, a damping ratio (1 is no bounce) and a response in
+seconds, and converted to Flutter's `SpringDescription` with a mass of 1: stiffness
+(2π / response)², damping 4π · ratio / response (`AppMotion.spring`).
+
+| Token | Value | Use |
+|---|---|---|
+| `AppMotion.standard` | damping 1, response 0.35 s | every state change; a sheet rising, closing or springing back after a slow release |
+| `AppMotion.sheet` | damping 0.8, response 0.3 s | a sheet settling after a flick (faster than 300 dp/s); only momentum earns the bounce |
+| `AppMotion.standardCurve` / `standardDuration` | the standard spring over 350 ms | widgets that take a curve (`RondaSwap`) |
+| `AppMotion.press` / `pressedScale` | 100 ms, 0.97 | press feedback |
+| `AppMotion.crossFade` | 150 ms, `Easing.standard` | what replaces a slide or a spring under reduced motion |
+| `AppMotion.project` | Apple's `project()`, deceleration 0.998 | where a throw would land |
+| `AppMotion.rubberBand` | constant 0.55 | resistance past an edge |
+
+**Reduced motion.** `RondaMotion.of(context)` reads `MediaQuery.disableAnimationsOf` and is the
+one place a widget asks how to move: springs become jumps, slides become a cross-fade, presses
+change size at once. Feedback stays; only the travel goes.
+
+**The rules.**
+- *Press on touch-down.* The theme's buttons (`FilledButton`, `OutlinedButton`, `TextButton`,
+  `IconButton`) shrink to 0.97, fill, border, ink and label together (`PressedShape` plus the
+  style's `foregroundBuilder`), and come back on release or when the finger drags away. Any other
+  tappable (a card, a chip, a grid cell, a list row) is wrapped in `PressScale`, which listens to
+  the raw pointer and so responds before a tap is recognised. A call site that sets its own
+  `shape:` loses the shrink of its outline.
+- *Sheets are things in the hand.* `showRondaSheet` (and `StepSheet.show`) rise from the bottom
+  over an ink scrim at 40%, follow a drag 1:1 from where it was grabbed, rubber-band past the top,
+  carry the finger's speed on release, close when the projected landing point is past half
+  their height and the finger wasn't moving up, and can be grabbed again mid-flight. They leave
+  the way they came. Content that scrolls hands a pull from its top over to the sheet. With
+  reduced motion they cross-fade.
+- *Same path in and out.* A pushed screen comes in from the right and goes back out to the right,
+  with the platform's edge swipe back (`RondaPageTransitionsBuilder`, set for every platform in
+  `AppTheme`). Tabs swap in place. Reduced motion cross-fades.
+- *Depth stays paper.* The top bar is flat paper until content scrolls under it, then lifts with
+  a soft ink shadow (elevation 3, ink at 35%; night uses `#05070C`). No divider under it. Modal
+  sheets dim what is behind with the scrim.
+- *Only state changes move.* `RondaSwap` swaps one state for the next (fade plus a settle from
+  0.96) and reads out only the new one; `SpringBuilder` follows a value on a spring and retargets
+  mid-flight with its speed. A seat filling and a slot being marked use them.
+- *Haptics only on commits.* `RondaHaptics.onCommit` fires a light impact in the same handler
+  that changes the screen: Voy / Esta no (in `RsvpBar`), Lo tomo, Vino / No vino, Elegir,
+  Aprobar. Never on toggles, scrolling or navigation.
+- *Type by size.* Tracking comes from `AppTextStyle.trackingFor`: −0.025 em at 48 sp, −0.018 at
+  30, −0.01 at 22, 0 at 17–18 sp body, +0.008 at 15 and +0.015 at 13. Leading is tight on titles
+  (1.05–1.2) and comfortable on body (1.45). Every style sets its tracking explicitly, so
+  Material's default body tracking (+0.25 px) no longer leaks in. Tabular figures stay.
 
 ## In Flutter
 - Packages, versions, l10n setup and the native checklist: `docs/STACK.md`. State is Bloc

@@ -22,7 +22,8 @@ class const SeatCount({
 /// where and when, an optional note and optional seat dots.
 ///
 /// The whole card is one button, read as one item; its semantics identifier
-/// is [identifier].
+/// is [identifier]. It shrinks on touch-down ([PressScale]), and a seat that
+/// fills pops in on a spring ([SpringBuilder]).
 /// {@endtemplate}
 class const SeatRow({
   /// Semantics identifier of the card ("cerca.mate-solymar").
@@ -62,44 +63,46 @@ class const SeatRow({
       child: Semantics(
         identifier: identifier,
         button: true,
-        child: Card(
-          child: InkWell(
-            onTap: onTap,
-            child: Padding(
-              padding: EdgeInsets.all(spacing.md),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: spacing.xxs,
-                children: [
-                  Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.end,
-                    spacing: spacing.xs,
-                    children: [
-                      Text(title, style: textTheme.titleMedium),
+        child: PressScale(
+          child: Card(
+            child: InkWell(
+              onTap: onTap,
+              child: Padding(
+                padding: EdgeInsets.all(spacing.md),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: spacing.xxs,
+                  children: [
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.end,
+                      spacing: spacing.xs,
+                      children: [
+                        Text(title, style: textTheme.titleMedium),
+                        Text(
+                          availability,
+                          style: textTheme.labelMedium?.copyWith(
+                            color: context.rondaPalette.yerba,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(detail, style: textTheme.bodyMedium),
+                    if (note case final note?)
                       Text(
-                        availability,
-                        style: textTheme.labelMedium?.copyWith(
-                          color: context.rondaPalette.yerba,
+                        note,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                    ],
-                  ),
-                  Text(detail, style: textTheme.bodyMedium),
-                  if (note case final note?)
-                    Text(
-                      note,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                    if (seats case final seats?)
+                      Padding(
+                        padding: EdgeInsets.only(top: spacing.xxs),
+                        child: _SeatDots(seats: seats),
                       ),
-                    ),
-                  if (seats case final seats?)
-                    Padding(
-                      padding: EdgeInsets.only(top: spacing.xxs),
-                      child: _SeatDots(seats: seats),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -123,18 +126,35 @@ class const _SeatDots({required final SeatCount seats})
           runSpacing: context.appSpacing.xs,
           children: [
             for (var seat = 0; seat < seats.total; seat++)
-              Container(
-                width: SeatRow.dotSize,
-                height: SeatRow.dotSize,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: seat < seats.filled ? scheme.primary : null,
-                  border: seat < seats.filled
-                      ? null
-                      : Border.all(
+              SizedBox.square(
+                dimension: SeatRow.dotSize,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
                           color: controlOff,
                           width: AppTheme.borderWidth,
                         ),
+                      ),
+                    ),
+                    // The fill grows over the ring when the seat is taken.
+                    SpringBuilder(
+                      value: seat < seats.filled ? 1 : 0,
+                      builder: (context, value, child) => Transform.scale(
+                        scale: value.clamp(0.0, double.infinity),
+                        child: child,
+                      ),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: scheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
           ],

@@ -114,4 +114,9 @@ abstract final class AppColors {
 
   /// [controlOff] at night. Not in DESIGN.md yet.
   static const controlOffDark = Color(0xFF6B7489);
+
+  /// Shadow and scrim at night: darker than [paperDark], so the top bar's
+  /// edge and a sheet's scrim still read on dark paper. By day both are
+  /// [ink].
+  static const shadowDark = Color(0xFF05070C);
 }

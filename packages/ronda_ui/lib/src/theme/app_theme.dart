@@ -45,6 +45,8 @@ abstract final class AppTheme {
     onInverseSurface: AppColors.paper,
     inversePrimary: AppColors.biromeDark,
     surfaceTint: Colors.transparent,
+    shadow: AppColors.ink,
+    scrim: AppColors.ink,
   );
 
   static const _darkScheme = ColorScheme(
@@ -77,6 +79,8 @@ abstract final class AppTheme {
     onInverseSurface: AppColors.paperDark,
     inversePrimary: AppColors.birome,
     surfaceTint: Colors.transparent,
+    shadow: AppColors.shadowDark,
+    scrim: AppColors.shadowDark,
   );
 
   /// Height of every button: above the 48 dp target, as on the sheet.
@@ -91,6 +95,32 @@ abstract final class AppTheme {
   /// The text scale from which layouts take their large-text form (see
   /// `MainGrande` and `HorariosGrande` on the screen canvas).
   static const double largeTextScale = 1.5;
+
+  /// How strongly the scrim behind a modal sheet dims what is under it.
+  static const double scrimOpacity = 0.4;
+
+  /// The top bar's lift once content scrolls under it: a soft paper shadow,
+  /// never a divider. At rest it is flat.
+  static const double scrolledUnderElevation = 3;
+
+  /// How strong that shadow's colour is.
+  static const double scrolledUnderShadowOpacity = 0.35;
+
+  /// Every theme button's style with press feedback: its shape (fill,
+  /// border and ink) and its label shrink to [AppMotion.pressedScale] while
+  /// pressed, from touch-down, and come back on release or drag-away.
+  static ButtonStyle _pressable(ButtonStyle style, OutlinedBorder shape) {
+    return style.copyWith(
+      shape: WidgetStateProperty.resolveWith(
+        (states) => PressedShape.forStates(shape, states),
+      ),
+      animationDuration: AppMotion.press,
+      foregroundBuilder: (context, states, child) => _PressedLabel(
+        pressed: states.contains(WidgetState.pressed),
+        child: child,
+      ),
+    );
+  }
 
   static ThemeData _theme(ColorScheme scheme, RondaPalette palette) {
     const spacing = AppSpacing();
@@ -112,42 +142,56 @@ abstract final class AppTheme {
       materialTapTargetSize: MaterialTapTargetSize.padded,
       visualDensity: VisualDensity.standard,
       extensions: <ThemeExtension<dynamic>>[palette, spacing],
+      pageTransitionsTheme: PageTransitionsTheme(
+        builders: {
+          for (final platform in TargetPlatform.values)
+            platform: const RondaPageTransitionsBuilder(),
+        },
+      ),
       filledButtonTheme: FilledButtonThemeData(
-        style:
-            FilledButton.styleFrom(
-              minimumSize: buttonSize,
-              padding: buttonPadding,
-              shape: roundedLg,
-              textStyle: textTheme.labelLarge,
-            ).copyWith(
-              backgroundColor: WidgetStateProperty.resolveWith(
-                (states) => states.contains(WidgetState.pressed)
-                    ? palette.biromePressed
-                    : null,
-              ),
+        style: _pressable(
+          FilledButton.styleFrom(
+            minimumSize: buttonSize,
+            padding: buttonPadding,
+            textStyle: textTheme.labelLarge,
+          ).copyWith(
+            backgroundColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.pressed)
+                  ? palette.biromePressed
+                  : null,
             ),
+          ),
+          roundedLg,
+        ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          minimumSize: buttonSize,
-          padding: buttonPadding,
-          shape: roundedLg,
-          textStyle: textTheme.labelLarge,
-          side: BorderSide(color: scheme.primary, width: borderWidth),
+        style: _pressable(
+          OutlinedButton.styleFrom(
+            minimumSize: buttonSize,
+            padding: buttonPadding,
+            textStyle: textTheme.labelLarge,
+            side: BorderSide(color: scheme.primary, width: borderWidth),
+          ),
+          roundedLg,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          minimumSize: const Size(minTarget, minTarget),
-          padding: EdgeInsets.symmetric(horizontal: spacing.xs),
-          shape: roundedLg,
-          textStyle: textTheme.labelLarge,
+        style: _pressable(
+          TextButton.styleFrom(
+            minimumSize: const Size(minTarget, minTarget),
+            padding: EdgeInsets.symmetric(horizontal: spacing.xs),
+            textStyle: textTheme.labelLarge,
+          ),
+          roundedLg,
         ),
       ),
       iconButtonTheme: IconButtonThemeData(
-        style: IconButton.styleFrom(
-          minimumSize: const Size(minTarget, minTarget),
-          foregroundColor: scheme.onSurface,
+        style: _pressable(
+          IconButton.styleFrom(
+            minimumSize: const Size(minTarget, minTarget),
+            foregroundColor: scheme.onSurface,
+          ),
+          const StadiumBorder(),
         ),
       ),
       cardTheme: CardThemeData(
@@ -208,6 +252,7 @@ abstract final class AppTheme {
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: scheme.surface,
         modalBackgroundColor: scheme.surface,
+        modalBarrierColor: scheme.scrim.withValues(alpha: scrimOpacity),
         surfaceTintColor: Colors.transparent,
         showDragHandle: true,
         dragHandleColor: scheme.outline,
@@ -263,7 +308,10 @@ abstract final class AppTheme {
         foregroundColor: scheme.onSurface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        scrolledUnderElevation: 0,
+        scrolledUnderElevation: scrolledUnderElevation,
+        shadowColor: scheme.shadow.withValues(
+          alpha: scrolledUnderShadowOpacity,
+        ),
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge?.copyWith(color: scheme.onSurface),
       ),
@@ -274,6 +322,20 @@ abstract final class AppTheme {
     return OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppRadius.lg),
       borderSide: BorderSide(color: color, width: width),
+    );
+  }
+}
+
+/// A button's label, shrunk with its shape while pressed.
+class const _PressedLabel({required final bool pressed, final Widget? child})
+    extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      scale: pressed ? AppMotion.pressedScale : 1,
+      duration: RondaMotion.of(context).durationOr(AppMotion.press),
+      curve: AppMotion.pressCurve,
+      child: child,
     );
   }
 }

@@ -37,15 +37,11 @@ class const StepSheet({
   /// {@macro step_sheet}
   this;
 
-  /// Shows this sheet as a modal bottom sheet, sized to its content up to
-  /// the full screen.
+  /// Shows this sheet as Ronda's modal sheet ([showRondaSheet]), sized to
+  /// its content up to the full screen: it can be dragged and thrown down,
+  /// and a tap on the scrim closes it.
   Future<T?> show<T>(BuildContext context) {
-    return showModalBottomSheet<T>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (_) => this,
-    );
+    return showRondaSheet<T>(context: context, builder: (_) => this);
   }
 
   @override

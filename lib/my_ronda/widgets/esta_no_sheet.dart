@@ -16,12 +16,8 @@ class const EstaNoSheet({
   static const mistakeIdentifier = 'estaNo.mistake';
 
   /// Shows the sheet; it resolves when the sheet closes.
-  Future<void> show(BuildContext context) => showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    builder: (_) => this,
-  );
+  Future<void> show(BuildContext context) =>
+      showRondaSheet<void>(context: context, builder: (_) => this);
 
   @override
   Widget build(BuildContext context) {

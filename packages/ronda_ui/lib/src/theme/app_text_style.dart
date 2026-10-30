@@ -22,11 +22,41 @@ abstract final class AppTextStyle {
   /// Tabular figures, for times such as "16:00".
   static const tabularFigures = <FontFeature>[FontFeature.tabularFigures()];
 
-  /// Titles track tighter: −0.02 em.
-  static const _titleTracking = -0.02;
+  /// Tracking by size, in em, as (size, tracking) pairs: large titles
+  /// tighter, 17–18 sp body at 0, small text a little looser. Sizes in
+  /// between are interpolated; see [trackingFor].
+  static const trackingTable = <(double, double)>[
+    (13, 0.015),
+    (15, 0.008),
+    (17, 0),
+    (18, 0),
+    (22, -0.01),
+    (30, -0.018),
+    (48, -0.025),
+  ];
 
-  /// Labels track looser: +0.01 em.
-  static const _labelTracking = 0.01;
+  /// The tracking for text set at [size], in em ([trackingTable]).
+  static double trackingFor(double size) {
+    final (firstSize, firstTracking) = trackingTable.first;
+    if (size <= firstSize) return firstTracking;
+    for (var i = 1; i < trackingTable.length; i++) {
+      final (upper, upperTracking) = trackingTable[i];
+      if (size <= upper) {
+        final (lower, lowerTracking) = trackingTable[i - 1];
+        final t = (size - lower) / (upper - lower);
+        return lowerTracking + (upperTracking - lowerTracking) * t;
+      }
+    }
+    return trackingTable.last.$2;
+  }
+
+  /// [style] at [size] with its line [height] and its size's tracking.
+  static TextStyle _sized(TextStyle style, double size, double height) =>
+      style.copyWith(
+        fontSize: size,
+        height: height,
+        letterSpacing: size * trackingFor(size),
+      );
 
   static const _title = TextStyle(
     fontFamily: titleFamily,
@@ -42,11 +72,14 @@ abstract final class AppTextStyle {
     fontFeatures: tabularFigures,
   );
 
-  static TextStyle _titleOf(double size, double height) => _title.copyWith(
-    fontSize: size,
-    height: height,
-    letterSpacing: size * _titleTracking,
-  );
+  static TextStyle _titleOf(double size, double height) =>
+      _sized(_title, size, height);
+
+  static TextStyle _textOf(
+    double size,
+    double height, {
+    FontWeight fontWeight = FontWeight.w400,
+  }) => _sized(_text.copyWith(fontWeight: fontWeight), size, height);
 
   /// Young Serif 48: the largest heading.
   static final TextStyle displayLarge = _titleOf(48, 1.05);
@@ -58,9 +91,9 @@ abstract final class AppTextStyle {
   static final TextStyle displaySmall = _titleOf(30, 1.15);
 
   /// Atkinson Hyperlegible 28 bold: big times ("16:00 · 21:10").
-  static final TextStyle headlineLarge = _text.copyWith(
-    fontSize: 28,
-    height: 1.2,
+  static final TextStyle headlineLarge = _textOf(
+    28,
+    1.2,
     fontWeight: FontWeight.w700,
   );
 
@@ -74,56 +107,47 @@ abstract final class AppTextStyle {
   static final TextStyle titleLarge = _titleOf(22, 1.2);
 
   /// Atkinson Hyperlegible 18 bold: values and row titles.
-  static final TextStyle titleMedium = _text.copyWith(
-    fontSize: 18,
-    height: 1.3,
+  static final TextStyle titleMedium = _textOf(
+    18,
+    1.3,
     fontWeight: FontWeight.w700,
   );
 
   /// Atkinson Hyperlegible 17 bold: names and day labels.
-  static final TextStyle titleSmall = _text.copyWith(
-    fontSize: 17,
-    height: 1.3,
+  static final TextStyle titleSmall = _textOf(
+    17,
+    1.3,
     fontWeight: FontWeight.w700,
   );
 
   /// Atkinson Hyperlegible 18: text fields and lead paragraphs.
-  static final TextStyle bodyLarge = _text.copyWith(fontSize: 18, height: 1.45);
+  static final TextStyle bodyLarge = _textOf(18, 1.45);
 
   /// Atkinson Hyperlegible 17, line height 1.45: body text.
-  static final TextStyle bodyMedium = _text.copyWith(
-    fontSize: 17,
-    height: 1.45,
-  );
+  static final TextStyle bodyMedium = _textOf(17, 1.45);
 
   /// Atkinson Hyperlegible 14: footnotes and field labels.
-  static final TextStyle bodySmall = _text.copyWith(
-    fontSize: 14,
-    height: 1.4,
-    letterSpacing: 14 * _labelTracking,
-  );
+  static final TextStyle bodySmall = _textOf(14, 1.4);
 
   /// Atkinson Hyperlegible 18 bold: buttons.
-  static final TextStyle labelLarge = _text.copyWith(
-    fontSize: 18,
-    height: 1.2,
+  static final TextStyle labelLarge = _textOf(
+    18,
+    1.2,
     fontWeight: FontWeight.w700,
   );
 
-  /// Atkinson Hyperlegible 15 bold, +0.01 em: labels and chips.
-  static final TextStyle labelMedium = _text.copyWith(
-    fontSize: 15,
-    height: 1.3,
+  /// Atkinson Hyperlegible 15 bold: labels and chips.
+  static final TextStyle labelMedium = _textOf(
+    15,
+    1.3,
     fontWeight: FontWeight.w700,
-    letterSpacing: 15 * _labelTracking,
   );
 
   /// Atkinson Hyperlegible 13 bold: section heads and tab labels.
-  static final TextStyle labelSmall = _text.copyWith(
-    fontSize: 13,
-    height: 1.3,
+  static final TextStyle labelSmall = _textOf(
+    13,
+    1.3,
     fontWeight: FontWeight.w700,
-    letterSpacing: 13 * _labelTracking,
   );
 
   /// Every style above, in Material's slots.

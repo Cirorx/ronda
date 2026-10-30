@@ -134,6 +134,8 @@ void main() {
       await pump(tester);
       final button = find.bySemanticsIdentifier(YourDataView.emailIdentifier);
       await tester.scrollUntilVisible(button, 100, scrollable: _list);
+      await tester.ensureVisible(button);
+      await tester.pumpAndSettle();
 
       await tester.tap(button);
 

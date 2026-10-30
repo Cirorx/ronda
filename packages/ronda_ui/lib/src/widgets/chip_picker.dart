@@ -26,7 +26,8 @@ class const ChipPickerOption({
 /// of them.
 ///
 /// It holds no state: [selected] comes in, [onChanged] reports the next set.
-/// Each chip's semantics identifier is `<identifier>.<value>`.
+/// Each chip's semantics identifier is `<identifier>.<value>`. Chips shrink
+/// on touch-down ([PressScale]).
 /// {@endtemplate}
 class const ChipPicker({
   /// Prefix of every chip's semantics identifier ("traes").
@@ -81,7 +82,10 @@ class const ChipPicker({
     // Merged so the identifier sits on the chip's own node, with its tap
     // action, where Maestro looks for it.
     return MergeSemantics(
-      child: Semantics(identifier: '$identifier.${option.value}', child: chip),
+      child: Semantics(
+        identifier: '$identifier.${option.value}',
+        child: PressScale(enabled: option.enabled, child: chip),
+      ),
     );
   }
 

@@ -1,5 +1,8 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ronda_ui/ronda_ui.dart';
+
+import '../../helpers/helpers.dart';
 
 void main() {
   group(AppTheme, () {
@@ -43,6 +46,50 @@ void main() {
           AppColors.biromePressed,
         );
         expect(background.resolve({}), isNull);
+      });
+
+      test('shrinks every button shape while pressed', () {
+        for (final style in [
+          theme.filledButtonTheme.style!,
+          theme.outlinedButtonTheme.style!,
+          theme.textButtonTheme.style!,
+          theme.iconButtonTheme.style!,
+        ]) {
+          final pressed = style.shape!.resolve({WidgetState.pressed});
+          final rest = style.shape!.resolve({});
+          expect(pressed, isA<PressedShape>());
+          expect((pressed! as PressedShape).factor, AppMotion.pressedScale);
+          expect((rest! as PressedShape).factor, 1);
+          expect(style.animationDuration, AppMotion.press);
+          expect(style.foregroundBuilder, isNotNull);
+        }
+      });
+
+      test('lifts the top bar only once content scrolls under it', () {
+        final appBar = theme.appBarTheme;
+        expect(appBar.elevation, 0);
+        expect(appBar.scrolledUnderElevation, AppTheme.scrolledUnderElevation);
+        expect(appBar.backgroundColor, AppColors.paper);
+        expect(
+          appBar.shadowColor,
+          AppColors.ink.withValues(alpha: AppTheme.scrolledUnderShadowOpacity),
+        );
+      });
+
+      test('dims behind a sheet with an ink scrim', () {
+        expect(
+          theme.bottomSheetTheme.modalBarrierColor,
+          AppColors.ink.withValues(alpha: AppTheme.scrimOpacity),
+        );
+      });
+
+      test('moves between screens with one rule on every platform', () {
+        for (final platform in TargetPlatform.values) {
+          expect(
+            theme.pageTransitionsTheme.builders[platform],
+            isA<RondaPageTransitionsBuilder>(),
+          );
+        }
       });
 
       test('gives every button a 48 dp minimum', () {
@@ -119,6 +166,142 @@ void main() {
 
       test('registers the night $RondaPalette', () {
         expect(theme.extension<RondaPalette>(), RondaPalette.dark);
+      });
+
+      test('shades and dims with the night shadow colour', () {
+        expect(theme.colorScheme.shadow, AppColors.shadowDark);
+        expect(
+          theme.bottomSheetTheme.modalBarrierColor,
+          AppColors.shadowDark.withValues(alpha: AppTheme.scrimOpacity),
+        );
+      });
+    });
+
+    group('buttons in use', () {
+      late int taps;
+
+      setUp(() => taps = 0);
+
+      Widget buildSubject({bool reduced = false}) => MediaQuery(
+        data: MediaQueryData(size: phoneSize, disableAnimations: reduced),
+        child: Center(
+          child: FilledButton(
+            onPressed: () => taps++,
+            child: const Text('Voy'),
+          ),
+        ),
+      );
+
+      PressedShape shapeOf(WidgetTester tester) =>
+          tester
+                  .widget<Material>(
+                    find.descendant(
+                      of: find.byType(FilledButton),
+                      matching: find.byType(Material),
+                    ),
+                  )
+                  .shape!
+              as PressedShape;
+
+      double labelScale(WidgetTester tester) => tester
+          .widget<AnimatedScale>(
+            find.ancestor(
+              of: find.text('Voy'),
+              matching: find.byType(AnimatedScale),
+            ),
+          )
+          .scale;
+
+      testWidgets('shrink on touch-down, before the tap', (tester) async {
+        await tester.pumpApp(buildSubject());
+
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.text('Voy')),
+        );
+        await tester.pump();
+
+        expect(shapeOf(tester).factor, AppMotion.pressedScale);
+        expect(labelScale(tester), AppMotion.pressedScale);
+        expect(taps, 0);
+        await gesture.up();
+        await tester.pump();
+        expect(shapeOf(tester).factor, 1);
+        expect(taps, 1);
+      });
+
+      testWidgets('come back when the finger drags away', (tester) async {
+        await tester.pumpApp(
+          ListView(children: [const SizedBox(height: 300), buildSubject()]),
+        );
+
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.text('Voy')),
+        );
+        await tester.pump(kPressTimeout);
+        expect(shapeOf(tester).factor, AppMotion.pressedScale);
+        await gesture.moveBy(const Offset(0, -(kTouchSlop + 20)));
+        await tester.pump();
+
+        expect(shapeOf(tester).factor, 1);
+        expect(labelScale(tester), 1);
+        await gesture.up();
+        expect(taps, 0);
+      });
+
+      testWidgets('step at once with reduced motion', (tester) async {
+        await tester.pumpApp(buildSubject(reduced: true));
+
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.text('Voy')),
+        );
+        await tester.pump();
+
+        expect(
+          tester
+              .widget<AnimatedScale>(
+                find.ancestor(
+                  of: find.text('Voy'),
+                  matching: find.byType(AnimatedScale),
+                ),
+              )
+              .duration,
+          Duration.zero,
+        );
+        await gesture.up();
+      });
+    });
+
+    group('top bar in use', () {
+      Material barOf(WidgetTester tester) => tester.widget<Material>(
+        find
+            .descendant(
+              of: find.byType(AppBar),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+
+      testWidgets('lifts with a soft shadow once content scrolls under', (
+        tester,
+      ) async {
+        await tester.pumpApp(
+          Scaffold(
+            appBar: AppBar(title: const Text('Ajustes')),
+            body: ListView(
+              children: [
+                for (var i = 0; i < 40; i++)
+                  SizedBox(height: 60, child: Text('$i')),
+              ],
+            ),
+          ),
+        );
+
+        expect(barOf(tester).elevation, 0);
+        await tester.drag(find.byType(ListView), const Offset(0, -300));
+        await tester.pumpAndSettle();
+
+        expect(barOf(tester).elevation, AppTheme.scrolledUnderElevation);
+        expect(barOf(tester).color, AppColors.paper);
       });
     });
   });

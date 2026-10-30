@@ -98,7 +98,7 @@ void main() {
     });
 
     group('show', () {
-      testWidgets('opens the sheet as a modal bottom sheet', (tester) async {
+      testWidgets('opens the sheet as a $RondaSheetRoute', (tester) async {
         final sheet = buildSubject();
         await tester.pumpApp(
           Builder(
@@ -112,7 +112,10 @@ void main() {
         await tester.tap(find.text('Abrir'));
         await tester.pumpAndSettle();
 
-        expect(find.byType(BottomSheet), findsOneWidget);
+        expect(
+          ModalRoute.of(tester.element(find.byType(StepSheet))),
+          isA<RondaSheetRoute<void>>(),
+        );
         expect(find.text('No podemos usar el micrófono'), findsOneWidget);
       });
 
