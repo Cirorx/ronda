@@ -185,5 +185,18 @@ service cloud.firestore {
     match /users/{uid}/rondas/{rondaId} {
       allow read: if isOwner(uid);
     }
+
+    // ¿Seguimos? (#46). Who said what lives in rondas/{id}/private/seguimos, which no client
+    // reads, not even the admin (nothing matches it). Each member reads only their own
+    // question and what came of it, the admin only the counts per ronda; members see the
+    // outcome as the ronda's `season`. The answer_seguimos callable, the ¿seguimos? job and
+    // the RSVP job write all three with the admin SDK; no client writes any of them.
+    match /rondas/{rondaId}/seguimos/{uid} {
+      allow read: if isOwner(uid) && isMemberOf(rondaId);
+    }
+
+    match /seguimos_counts/{rondaId} {
+      allow read: if isAdmin();
+    }
   }
 }

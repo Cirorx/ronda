@@ -415,8 +415,8 @@ def run_rsvp_push(
             counts["already"] += 1
             continue
         try:
-            delivered = _send_ronda(
-                db, ronda, ronda_id, week_ref, meeting, members, names, send, app_url
+            delivered = _send_week(
+                db, ronda, ronda_id, week_ref, meeting, members, names, now, send, app_url
             )
         except Exception:
             week_ref.update({"rsvpSentAt": DELETE_FIELD})
@@ -451,20 +451,45 @@ def _claim(week_ref, meeting: date, now: datetime) -> Callable:
     return claim
 
 
-def _send_ronda(db, ronda, ronda_id, week_ref, meeting, members, names, send, app_url) -> int:
-    """Sends the push to every member in for `meeting` who hasn't answered yet; returns how
-    many messages were delivered."""
+def _send_week(db, ronda, ronda_id, week_ref, meeting, members, names, now, send, app_url) -> int:
+    """The week's push: closes an open ¿seguimos? first (seguimos.close), whose outcome this
+    push carries, then sends the RSVP and what the close adds. Returns how many messages
+    were delivered."""
+    import seguimos  # here, not at the top: seguimos imports this module
+
+    closing = seguimos.close(db, ronda_id, ronda, members, meeting, now)
+    if closing is None:
+        return _send_ronda(db, ronda, ronda_id, week_ref, meeting, members, names, send, app_url)[0]
+    db.document(f"rondas/{ronda_id}/views/{VIEW}").set(
+        week_view(meeting, closing.members, names, _rsvp(week_ref.get()), now)
+    )
+    delivered, pushed = 0, set()
+    if closing.rsvp_goes_out:
+        delivered, pushed = _send_ronda(
+            db, ronda, ronda_id, week_ref, meeting, closing.members, names, send, app_url,
+            lead_in=closing.words,
+        )  # fmt: skip
+    return delivered + seguimos.send_results(db, closing, ronda, ronda_id, pushed, send, app_url)
+
+
+def _send_ronda(
+    db, ronda, ronda_id, week_ref, meeting, members, names, send, app_url, *, lead_in: str = ""
+) -> tuple[int, set[str]]:
+    """Sends the push to every member in for `meeting` who hasn't answered yet, with
+    `lead_in` before the body; returns how many messages were delivered and who it addressed."""
     rsvp = _rsvp(week_ref.get())
     going = [names[uid] for uid in yes_uids(rsvp, members, names) if names[uid]]
     title = ronda_line(ronda)
-    messages, owners = [], []
+    messages, owners, addressed = [], [], set()
     for uid, member in counted(members).items():
         if uid in rsvp or _paused_on(member, meeting):
             continue
+        addressed.add(uid)
+        body = push_body(going, member.get("brings", []))
         for message in rsvp_messages(
             tokens=_tokens(db, uid),
             title=title,
-            body=push_body(going, member.get("brings", [])),
+            body=f"{lead_in} {body}" if lead_in else body,
             ronda_id=ronda_id,
             week=iso_week(meeting),
             app_url=app_url,
@@ -472,9 +497,9 @@ def _send_ronda(db, ronda, ronda_id, week_ref, meeting, members, names, send, ap
             messages.append(message)
             owners.append(uid)
     if not messages:
-        return 0
+        return 0, addressed
     outcomes = send(messages)
     for message, uid, outcome in zip(messages, owners, outcomes, strict=True):
         if outcome == "unregistered":
             db.document(f"users/{uid}/tokens/{message['token']}").delete()
-    return sum(1 for outcome in outcomes if outcome == "ok")
+    return sum(1 for outcome in outcomes if outcome == "ok"), addressed

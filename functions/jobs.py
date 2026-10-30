@@ -13,6 +13,7 @@ from datetime import datetime
 
 import fcm
 import rsvp
+import seguimos
 
 log = logging.getLogger(__name__)
 
@@ -38,6 +39,9 @@ def context(*, force: bool = False) -> Context:
 
 JOBS: dict[str, Callable[[object, datetime, Context], dict]] = {
     "rsvp_push": lambda db, now, context: rsvp.run_rsvp_push(
+        db, now, send=context.send, app_url=context.app_url, force=context.force
+    ),
+    "seguimos_ask": lambda db, now, context: seguimos.run_seguimos_ask(
         db, now, send=context.send, app_url=context.app_url, force=context.force
     ),
 }

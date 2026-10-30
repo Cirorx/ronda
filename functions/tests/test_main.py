@@ -429,3 +429,51 @@ class TestAnswerRsvp:
         with pytest.raises(https_fn.HttpsError) as excinfo:
             call(main.answer_rsvp, stranger, {"rondaId": "ronda-1", "answer": "yes"})
         assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED
+
+
+class TestAnswerSeguimos:
+    @pytest.fixture
+    def ronda(self, monkeypatch):
+        from tests.test_seguimos import ASK, ask, documents
+
+        db = FakeFirestore(documents())
+        ask(db)
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setattr(main, "_now", lambda: ASK + timedelta(hours=1))
+        return db
+
+    def test_refuses_a_signed_out_caller(self, ronda):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.answer_seguimos, None, {"rondaId": "ronda-1", "answer": "yes"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+
+    def test_records_the_callers_answer_privately(self, ronda):
+        result = call(main.answer_seguimos, MEMBER, {"rondaId": "ronda-1", "answer": "yes"})
+
+        assert result == {"answer": "yes"}
+        assert ronda.documents["rondas/ronda-1/private/seguimos"]["answers"] == {"demo-001": "yes"}
+
+    @pytest.mark.parametrize(
+        ("data", "code"),
+        [
+            (None, https_fn.FunctionsErrorCode.INVALID_ARGUMENT),
+            ({"answer": "yes"}, https_fn.FunctionsErrorCode.INVALID_ARGUMENT),
+            ({"rondaId": "a/b", "answer": "yes"}, https_fn.FunctionsErrorCode.INVALID_ARGUMENT),
+            ({"rondaId": "ronda-1", "answer": "maybe"},
+             https_fn.FunctionsErrorCode.INVALID_ARGUMENT),
+            ({"rondaId": "nope", "answer": "yes"}, https_fn.FunctionsErrorCode.NOT_FOUND),
+            ({"rondaId": "ronda-1", "choice": "wait"},
+             https_fn.FunctionsErrorCode.FAILED_PRECONDITION),
+        ],
+    )  # fmt: skip
+    def test_maps_each_refusal_to_its_code(self, ronda, data, code):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.answer_seguimos, MEMBER, data)
+        assert error_code(excinfo) == code
+
+    def test_refuses_someone_outside_the_ronda(self, ronda):
+        stranger = SimpleNamespace(uid="demo-999", token={})
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.answer_seguimos, stranger, {"rondaId": "ronda-1", "answer": "yes"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED

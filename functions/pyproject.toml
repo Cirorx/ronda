@@ -17,7 +17,7 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
-source = ["proposals", "main", "voice_signup", "audio_sweeper", "cerca_tuyo", "mate_flyer", "rsvp", "jobs", "fcm"]
+source = ["proposals", "main", "voice_signup", "audio_sweeper", "cerca_tuyo", "mate_flyer", "rsvp", "jobs", "fcm", "seguimos"]
 branch = true
 
 [tool.coverage.report]

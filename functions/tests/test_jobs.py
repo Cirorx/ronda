@@ -61,3 +61,16 @@ def test_the_dispatcher_runs_every_job_and_survives_one_failing(monkeypatch, cap
     assert calls == [THU_19]
     assert "ZeroDivisionError" in caplog.text
     assert f"rondas/{RONDA}/weeks/{rsvp.iso_week(datetime(2026, 10, 31).date())}" in db.documents
+
+
+def test_runs_the_seguimos_ask_by_name():
+    from tests.test_seguimos import ASK
+    from tests.test_seguimos import documents as seguimos_documents
+
+    db = FakeFirestore(seguimos_documents())
+    sender = Sender()
+
+    counts = jobs.run("seguimos_ask", db, ASK, jobs.Context(send=sender))
+
+    assert counts["asked"] == 1
+    assert len(sender.messages) == 7

@@ -332,3 +332,39 @@ def answer_rsvp(req: https_fn.CallableRequest) -> dict:
         )
     except rsvp.RsvpError as e:
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e
+
+
+# --- ¿Seguimos? (#46): the private question after a ronda's first meeting ------------------
+
+
+@https_fn.on_call(
+    region=REGION,
+    max_instances=5,
+    memory=options.MemoryOption.MB_512,
+    invoker="public",
+)
+def answer_seguimos(req: https_fn.CallableRequest) -> dict:
+    """Records the caller's "sí" or "no" while their ronda's ¿seguimos? is open,
+    `{rondaId, answer: yes | no}`, or after a close below the floor their pick,
+    `{rondaId, choice: join | wait}`. Members of that ronda only."""
+    import seguimos
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "sign in first")
+    data = req.data if isinstance(req.data, dict) else {}
+    ronda_id = data.get("rondaId")
+    if not isinstance(ronda_id, str) or not ronda_id or "/" in ronda_id:
+        raise https_fn.HttpsError(
+            https_fn.FunctionsErrorCode.INVALID_ARGUMENT, "rondaId is required"
+        )
+    try:
+        return seguimos.answer(
+            _firestore(),
+            req.auth.uid,
+            ronda_id,
+            _now(),
+            value=data.get("answer"),
+            choice=data.get("choice"),
+        )
+    except seguimos.SeguimosError as e:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e
