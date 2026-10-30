@@ -40,6 +40,7 @@ jobs:
           - packages/flyer_repository
           - packages/needs_repository
           - packages/onboarding_repository
+          - packages/organiser_repository
           - packages/profile_repository
           - packages/push_client
           - packages/push_repository
