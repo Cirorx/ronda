@@ -24,8 +24,9 @@ On the real project, with Application Default Credentials and no emulator hosts:
 
     uv run --python 3.13 scripts/reset.py --project ronda-uy
 
-deletes only the invented demo documents (see `clear_demo`) and writes the set again. Real
-members' documents and every Auth account stay as they are; the seed never creates Auth accounts.
+deletes only the invented demo documents (see `clear_demo`), with the proposals and rondas built
+from demo uids alone, and writes the set again. Real members' documents, any proposal or ronda that
+names one, and every Auth account stay as they are; the seed never creates Auth accounts.
 It stops before deleting anything when a seat fact at a demo path is not the invented one. With
 the emulator hosts set, `--project` does the same in the emulators, which is how it is tested.
 """
@@ -62,12 +63,35 @@ def _delete(url: str) -> None:
         pass
 
 
+def is_demo_uid(uid: object) -> bool:
+    return str(uid).startswith(DEMO_UID_PREFIX)
+
+
+def proposal_uids(proposal: dict) -> list[str]:
+    """Every uid a `proposals/{id}` names: its groups' members and the unseated."""
+    return [
+        member.get("uid")
+        for group in proposal.get("groups") or []
+        for member in group.get("members") or []
+    ] + list(proposal.get("unseated") or [])
+
+
+def built_from_demo(uids: list) -> bool:
+    """Whether a proposal or ronda naming `uids` was built from demo people alone: at least one
+    uid, and every one a demo uid. One real member keeps it."""
+    return bool(uids) and all(is_demo_uid(uid) for uid in uids)
+
+
 def clear_demo(client: firestore.Client) -> int:
     """Deletes the invented demo documents of `client`'s project and nothing else.
 
     Demo documents are `users/demo-*` with everything under them, `avoid` pairs naming a demo
-    uid, and the seat facts either demo set writes. A seat fact at one of those paths that isn't
-    the invented one raises NotDemoData before anything is deleted. Returns the documents deleted.
+    uid, the seat facts either demo set writes, and what the solver and approval built from demo
+    people alone: each `proposals/{id}` whose groups and unseated name only demo uids, and each
+    `rondas/{id}` whose members are all demo uids, with everything under it (members, weeks,
+    views, answers, private). A proposal or ronda that names any other uid, or a ronda with no
+    members, is kept and listed. A seat fact at a demo path that isn't the invented one raises
+    NotDemoData before anything is deleted. Returns the documents deleted.
     """
     invented = demo_data.documents(30) | demo_data.documents(200)
     seat_paths = [path for path in invented if path.startswith("seat_facts/")]
@@ -77,13 +101,35 @@ def clear_demo(client: firestore.Client) -> int:
     ]:
         raise NotDemoData(f"not the invented seat facts: {', '.join(sorted(changed))}")
 
+    proposals = [
+        (snapshot, built_from_demo(proposal_uids(snapshot.to_dict())))
+        for snapshot in client.collection("proposals").stream()
+    ]
+    rondas = [
+        (
+            ronda,
+            built_from_demo([member.id for member in ronda.collection("members").list_documents()]),
+        )
+        for ronda in client.collection("rondas").list_documents()
+    ]
+    if kept := [ref.path for ref, demo in rondas if not demo] + [
+        snapshot.reference.path for snapshot, demo in proposals if not demo
+    ]:
+        print(f"Kept, not built from demo uids alone: {', '.join(sorted(kept))}.")
+
     deleted = 0
+    for ronda, demo in rondas:
+        if demo:
+            deleted += client.recursive_delete(ronda)
+    for snapshot, demo in proposals:
+        if demo:
+            deleted += client.recursive_delete(snapshot.reference)
     for user in client.collection("users").list_documents():
         if user.id.startswith(DEMO_UID_PREFIX):
             deleted += client.recursive_delete(user)
     for pair in client.collection("avoid").stream():
         fields = pair.to_dict()
-        if any(str(fields.get(key, "")).startswith(DEMO_UID_PREFIX) for key in ("uidA", "uidB")):
+        if any(is_demo_uid(fields.get(key, "")) for key in ("uidA", "uidB")):
             pair.reference.delete()
             deleted += 1
     for snapshot in seats:

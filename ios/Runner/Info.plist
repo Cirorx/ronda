@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Ronda usa el micrófono solo mientras grabás tu presentación. El audio se borra apenas lo leemos.</string>
+	<string>Ronda uses the microphone only while you record your introduction. The recording is deleted as soon as we read it.</string>
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>en</string>

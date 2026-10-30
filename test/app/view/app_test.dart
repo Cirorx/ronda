@@ -477,6 +477,93 @@ void main() {
         expect(find.byType(WelcomePage), findsOneWidget);
       });
 
+      group('from $AdminPage', () {
+        /// Signs in from [location] through the buttons door, with [profile]
+        /// read once signed in.
+        Future<void> signInFrom(
+          WidgetTester tester,
+          String location, {
+          Profile? profile,
+        }) async {
+          await pumpSignedOut(tester);
+          GoRouter.of(tester.element(find.byType(WelcomePage))).go(location);
+          await tester.pumpAndSettle();
+          await tester.tap(buttonsDoor());
+          await tester.pumpAndSettle();
+          expect(find.byType(LoginPage), findsOneWidget);
+
+          users.add(_user);
+          await tester.pumpAndSettle();
+          profiles.add(profile);
+          await tester.pumpAndSettle();
+        }
+
+        String currentLocation(WidgetTester tester) =>
+            GoRouter.of(tester.element(find.byType(Navigator).first)).state.uri
+                .toString();
+
+        testWidgets('by saying so on the way to $WelcomePage', (tester) async {
+          await pumpSignedOut(tester);
+
+          GoRouter.of(tester.element(find.byType(WelcomePage)))
+              .go(AdminPage.path);
+          await tester.pumpAndSettle();
+          await tester.tap(buttonsDoor());
+          await tester.pumpAndSettle();
+
+          expect(
+            currentLocation(tester),
+            equals('${LoginPage.path}?$returnToParameter=${AdminPage.path}'),
+          );
+        });
+
+        testWidgets('by returning there after sign-in, with a profile', (
+          tester,
+        ) async {
+          await signInFrom(tester, AdminPage.path, profile: _profile);
+
+          expect(find.byType(AdminPage), findsOneWidget);
+          expect(find.byType(MyRondaPage), findsNothing);
+          expect(currentLocation(tester), equals(AdminPage.path));
+        });
+
+        testWidgets('by returning there after sign-in, without a profile', (
+          tester,
+        ) async {
+          await signInFrom(tester, AdminPage.path);
+
+          expect(find.byType(AdminPage), findsOneWidget);
+          expect(find.byType(OnboardingPage), findsNothing);
+        });
+
+        testWidgets('by keeping the ask when sign-in is opened too early', (
+          tester,
+        ) async {
+          await pumpSignedOut(tester);
+
+          GoRouter.of(tester.element(find.byType(WelcomePage)))
+              .go('${LoginPage.path}?$returnToParameter=${AdminPage.path}');
+          await tester.pumpAndSettle();
+
+          expect(find.byType(WelcomePage), findsOneWidget);
+          expect(
+            currentLocation(tester),
+            equals('${WelcomePage.path}?$returnToParameter=${AdminPage.path}'),
+          );
+        });
+
+        testWidgets('but nowhere else a welcome link names', (tester) async {
+          await signInFrom(
+            tester,
+            '${WelcomePage.path}?$returnToParameter=${SettingsPage.path}',
+            profile: _profile,
+          );
+
+          expect(find.byType(MyRondaPage), findsOneWidget);
+          expect(find.byType(SettingsPage), findsNothing);
+        });
+      });
+
       testWidgets('by returning to $WelcomePage when the person signs out', (
         tester,
       ) async {

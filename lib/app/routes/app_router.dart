@@ -11,6 +11,11 @@ import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/settings/settings.dart';
 import 'package:ronda/welcome/welcome.dart';
 
+/// The welcome screen's query parameter that says where sign-in started,
+/// so the router returns there once it is done. Only [AdminPage.path] is
+/// honoured.
+const returnToParameter = 'from';
+
 /// Builds the app's router: the welcome screen with sign-in and the terms
 /// under it, onboarding, and one shell with a branch per tab.
 ///
@@ -23,6 +28,9 @@ import 'package:ronda/welcome/welcome.dart';
 /// - signed in with a profile: the tabs, never welcome or onboarding;
 /// - the admin screen: anyone signed in, with or without a profile (the
 ///   owner need not onboard); the server decides who sees a proposal.
+///   Signed-out people sent from it to the welcome screen carry
+///   `?from=/admin`, and sign-in returns them there instead of
+///   to Mi ronda or onboarding.
 /// - a ronda's flyer (`/volante/{rondaId}`): like the tabs; the server
 ///   decides who may make it.
 ///
@@ -42,17 +50,25 @@ GoRouter createAppRouter({
           location.startsWith('${WelcomePage.path}/');
       final onOnboarding = location == OnboardingPage.path;
       final onAdmin = location == AdminPage.path;
+      final returnTo =
+          onWelcome &&
+              state.uri.queryParameters[returnToParameter] == AdminPage.path
+          ? AdminPage.path
+          : null;
+      final welcome = onAdmin || returnTo != null
+          ? '${WelcomePage.path}?$returnToParameter=${AdminPage.path}'
+          : WelcomePage.path;
       final app = appBloc.state;
       return switch (app.status) {
-        AppStatus.unauthenticated when !onWelcome => WelcomePage.path,
+        AppStatus.unauthenticated when !onWelcome => welcome,
         AppStatus.unauthenticated
             when location == LoginPage.path && app.pendingTerms == null =>
-          WelcomePage.path,
+          welcome,
         AppStatus.unauthenticated || AppStatus.loadingProfile => null,
         AppStatus.onboarding =>
-          onOnboarding || onAdmin ? null : OnboardingPage.path,
+          onOnboarding || onAdmin ? null : returnTo ?? OnboardingPage.path,
         AppStatus.authenticated =>
-          onWelcome || onOnboarding ? MyRondaPage.path : null,
+          onWelcome || onOnboarding ? returnTo ?? MyRondaPage.path : null,
       };
     },
     onException: (_, _, router) => router.go(MyRondaPage.path),

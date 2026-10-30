@@ -1,0 +1,2 @@
+/* What iOS shows when Ronda first asks for the microphone (Info.plist has the English). */
+"NSMicrophoneUsageDescription" = "Ronda usa el micrófono solo mientras grabás tu presentación. El audio se borra apenas lo leemos.";

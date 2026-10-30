@@ -227,8 +227,12 @@ project checklist. Everything seeded is invented:
   A new collection is one builder in `BUILDERS` (`scripts/demo_data.py`).
 - On the real project (`reset.py --project ronda-uy`) it deletes only what the `demo-` uids and
   the demo seat ids identify, then seeds again; real members and Auth are never touched, so a
-  signed-in phone keeps its account and profile. It stops before deleting anything if a demo seat
-  fact differs from the invented one.
+  signed-in phone keeps its account and profile. That includes what was built from demo people
+  alone: a `proposals/{id}` whose groups and unseated are all `demo-` uids, and a `rondas/{id}`
+  whose members all are, with everything under it (members, weeks, views, answers,
+  private). A proposal or ronda naming any other uid, or a ronda with no members, is kept and
+  printed for the owner to decide. It stops before deleting anything if a demo seat fact differs
+  from the invented one.
 
 ## Solver (Python, OR-Tools CP-SAT)
 

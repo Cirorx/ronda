@@ -13,7 +13,8 @@ const voiceDoorEnabled = true;
 /// conditions they accept by going through one.
 ///
 /// Tapping a door adds [AppTermsAccepted]; once [AppBloc] holds the
-/// acceptance, this page moves on to sign-in.
+/// acceptance, this page moves on to sign-in, keeping the query the router
+/// gave it (where sign-in started, `?from=/admin`).
 class const WelcomePage({
   /// Whether "Con un audio" is shown; [voiceDoorEnabled] in the app.
   final bool showVoiceDoor = voiceDoorEnabled,
@@ -44,7 +45,9 @@ class const WelcomePage({
       listenWhen: (previous, current) =>
           current.pendingTerms != null &&
           current.pendingTerms != previous.pendingTerms,
-      listener: (context, _) => context.go(LoginPage.path),
+      listener: (context, _) => context.go(
+        GoRouterState.of(context).uri.replace(path: LoginPage.path).toString(),
+      ),
       child: Scaffold(
         body: SafeArea(
           // The doors and the terms note sit at the bottom while they fit,

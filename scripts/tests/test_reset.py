@@ -176,3 +176,73 @@ def test_a_project_reset_stops_before_deleting_when_a_seat_fact_was_changed(caps
 
     assert dump() == before
     assert seat in capsys.readouterr().out
+
+
+def a_ronda(ronda_id: str, uids: list[str]) -> demo_data.Documents:
+    """What `approve_proposal` and the weekly RSVP leave for a group of `uids` (ARCHITECTURE.md §
+    Data model): the ronda, its members, each member's index, a week, the view and the answers."""
+    at = demo_data.DEMO_TIME
+    ronda = {
+        f"rondas/{ronda_id}": {
+            "seatId": "solymar-norte_mate_thu-afternoon",
+            "pretext": "mate",
+            "barrio": "solymar-norte",
+            "slot": {"day": "thu", "time": "afternoon"},
+            "size": len(uids),
+            "status": "forming",
+            "openSeatFromWeek": 4,
+            "createdAt": at,
+        },
+        f"rondas/{ronda_id}/weeks/2026-W45": {"date": "2026-11-05", "rsvp": {uids[0]: "yes"}},
+        f"rondas/{ronda_id}/views/week": {"week": "2026-W45", "noCount": 0, "updatedAt": at},
+    }
+    for uid in uids:
+        ronda[f"rondas/{ronda_id}/members/{uid}"] = {
+            "brings": [],
+            "state": "active",
+            "joinedAt": at,
+        }
+        ronda[f"rondas/{ronda_id}/answers/{uid}"] = {"week": "2026-W45", "answer": "yes", "at": at}
+        ronda[f"users/{uid}/rondas/{ronda_id}"] = {"joinedAt": at}
+    return ronda
+
+
+def a_proposal(uids: list[str], unseated: list[str], ronda_ids: list[str]) -> dict:
+    """An approved `proposals/{id}` with one group of `uids`."""
+    members = [
+        {"uid": uid, "firstName": "Ana", "ageBand": "60-69", "distanceBlocks": 3} for uid in uids
+    ]
+    return {
+        "status": "approved",
+        "groups": [{"id": "solymar-norte_mate_thu-afternoon", "members": members}],
+        "unseated": unseated,
+        "rondaIds": ronda_ids,
+        "createdAt": demo_data.DEMO_TIME,
+    }
+
+
+def test_a_project_reset_deletes_the_proposals_and_rondas_built_from_demo_uids_alone(capsys):
+    assert reset.main(["--project", PROJECT]) == 0
+    member = a_real_member()
+    built_from_demo = a_ronda("demo-built", ["demo-001", "demo-002"]) | {
+        "proposals/demo-built": a_proposal(["demo-001", "demo-002"], ["demo-003"], ["demo-built"]),
+    }
+    real = a_ronda("real", ["member-1"]) | {
+        "proposals/real": a_proposal(["member-1"], [], ["real"]),
+    }
+    mixed = a_ronda("mixed", ["demo-004", "member-1"]) | {
+        "proposals/mixed": a_proposal(["demo-004"], ["member-1"], ["mixed"]),
+        "rondas/no-members": {"pretext": "truco", "status": "forming"},
+    }
+    seed.write(seed.firestore_client(PROJECT), built_from_demo | real | mixed)
+    capsys.readouterr()
+
+    assert reset.main(["--project", PROJECT]) == 0
+
+    # The demo users go with their whole subtree, so a mixed ronda's demo index goes too.
+    kept = {path: fields for path, fields in mixed.items() if not path.startswith("users/demo-")}
+    assert dump() == demo_data.documents(30) | member | real | kept
+    out = capsys.readouterr().out
+    for path in ("proposals/mixed", "proposals/real", "rondas/mixed", "rondas/no-members"):
+        assert path in out
+    assert "demo-built" not in out
