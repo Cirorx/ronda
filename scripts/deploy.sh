@@ -24,12 +24,13 @@ if [[ "${1:-}" == "--status" ]]; then
 fi
 project="${1:-ronda-uy}"
 
-# area|deploy target|paths that change what that target ships
+# area|deploy target|paths that change what that target ships (functions/tests is in firebase.json's
+# functions ignore list, so it never ships)
 areas=(
   "rules|firestore:rules|firestore.rules"
   "indexes|firestore:indexes|firestore.indexes.json"
   "storage|storage|storage.rules"
-  "functions|functions|functions solver/ronda_solver packages/ronda_ui/assets/fonts"
+  "functions|functions|functions :(exclude)functions/tests solver/ronda_solver packages/ronda_ui/assets/fonts"
   "hosting|hosting|hosting lib web packages pubspec.yaml pubspec.lock firebase.json scripts/build_web.sh"
 )
 
