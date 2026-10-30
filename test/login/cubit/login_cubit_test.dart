@@ -105,5 +105,33 @@ void main() {
         },
       );
     });
+
+    group('createAccountTapped', () {
+      blocTest<LoginCubit, LoginState>(
+        "opens Google's page to make an account, and emits nothing",
+        setUp: () {
+          when(() => authRepository.openCreateAccount())
+              .thenAnswer((_) async {});
+        },
+        build: () => LoginCubit(authRepository: authRepository),
+        act: (cubit) => cubit.createAccountTapped(),
+        expect: () => const <LoginState>[],
+        verify: (_) {
+          verify(() => authRepository.openCreateAccount()).called(1);
+        },
+      );
+
+      blocTest<LoginCubit, LoginState>(
+        'reports the failure and emits nothing when no browser opens it',
+        setUp: () {
+          when(() => authRepository.openCreateAccount())
+              .thenThrow(const OpenCreateAccountFailure());
+        },
+        build: () => LoginCubit(authRepository: authRepository),
+        act: (cubit) => cubit.createAccountTapped(),
+        expect: () => const <LoginState>[],
+        errors: () => [isA<OpenCreateAccountFailure>()],
+      );
+    });
   });
 }

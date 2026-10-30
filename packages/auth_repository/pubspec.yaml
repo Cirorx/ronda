@@ -12,6 +12,8 @@ dependencies:
   firebase_auth: ^7.0.1
   flutter:
     sdk: flutter
+  link_opener:
+    path: ../link_opener
 
 dev_dependencies:
   firebase_auth_mocks: ^0.16.0

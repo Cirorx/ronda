@@ -69,9 +69,9 @@ Target package map (create each when its first feature needs it, with the Very G
 | `push_repository` | Repository | The notification permission, the "Ahora no" snooze, and the FCM token under `users/{uid}/tokens` (over `push_client` + `ronda_api` + `device_store`); the token never leaves it | #27 |
 | `face_blur` | Data | `image_picker`, ML Kit face detection + `image` pixelation (native only); only it makes a `BlurredPhoto` | #44 |
 | `share_sheet` | Data | share_plus: one file to the phone's share sheet | #44 |
-| `link_opener` | Data | url_launcher: a `mailto:` or `tel:` link to the phone's mail app or dialer | #54 |
+| `link_opener` | Data | url_launcher: a `mailto:`, `tel:` or `https:` link to the phone's mail app, dialer or browser; the app opens links only through it | #54 |
 | `flyer_repository` | Repository | The "Un mate de más" flyer: blurred photo → `make_mate_flyer` → share (over `face_blur`, `ronda_api`, `share_sheet`); its upload takes only a `BlurredPhoto` | #44 |
-| `auth_repository` | Repository | `FirebaseAuth` passed in from bootstrap | #13 |
+| `auth_repository` | Repository | `FirebaseAuth` passed in from bootstrap; Google's page to make an account, over `link_opener` | #13 |
 | `profile_repository` | Repository | Profile, eligible seat ids (over `ronda_api`); the terms and answers held on the phone until sign-in (over `device_store`) | #18 |
 | `needs_repository` | Repository | Needs and the seat filter, over `device_store` only: this repository has no network path | #18 |
 | `onboarding_repository` | Repository | Voice note → upload → `extract` → fields (over `voice_recorder` + `ronda_api`) | #19 |

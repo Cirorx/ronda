@@ -4,6 +4,7 @@ import 'package:auth_repository/auth_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:link_opener/link_opener.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockFirebaseAuth extends Mock implements firebase_auth.FirebaseAuth;
@@ -14,19 +15,24 @@ class _FakeAuthCredential extends Fake implements firebase_auth.AuthCredential;
 
 class _MockUserCredential extends Mock implements firebase_auth.UserCredential;
 
+class _MockLinkOpener extends Mock implements LinkOpener;
+
 const _uid = 'demo-uid';
 
 void main() {
   group(AuthRepository, () {
     late MockUser mockUser;
+    late LinkOpener linkOpener;
 
     setUpAll(() {
       registerFallbackValue(_FakeAuthProvider());
       registerFallbackValue(_FakeAuthCredential());
+      registerFallbackValue(Uri());
     });
 
     setUp(() {
       mockUser = MockUser(uid: _uid);
+      linkOpener = _MockLinkOpener();
     });
 
     group('user', () {
@@ -34,6 +40,7 @@ void main() {
         final subject = AuthRepository(
           firebaseAuth: MockFirebaseAuth(mockUser: mockUser),
           googleSignInFlow: GoogleSignInFlow.popup,
+          linkOpener: linkOpener,
         );
 
         expect(subject.user, emits(User.empty));
@@ -43,6 +50,7 @@ void main() {
         final subject = AuthRepository(
           firebaseAuth: MockFirebaseAuth(signedIn: true, mockUser: mockUser),
           googleSignInFlow: GoogleSignInFlow.popup,
+          linkOpener: linkOpener,
         );
 
         expect(subject.user, emits(const User(id: _uid)));
@@ -53,6 +61,7 @@ void main() {
         final subject = AuthRepository(
           firebaseAuth: MockFirebaseAuth(mockUser: mockUser),
           googleSignInFlow: GoogleSignInFlow.popup,
+          linkOpener: linkOpener,
         );
 
         final expectation = expectLater(
@@ -70,6 +79,7 @@ void main() {
         final subject = AuthRepository(
           firebaseAuth: MockFirebaseAuth(mockUser: mockUser),
           googleSignInFlow: GoogleSignInFlow.popup,
+          linkOpener: linkOpener,
         );
 
         expect(subject.currentUser, equals(User.empty));
@@ -79,6 +89,7 @@ void main() {
         final subject = AuthRepository(
           firebaseAuth: MockFirebaseAuth(signedIn: true, mockUser: mockUser),
           googleSignInFlow: GoogleSignInFlow.popup,
+          linkOpener: linkOpener,
         );
 
         expect(subject.currentUser, equals(const User(id: _uid)));
@@ -92,8 +103,11 @@ void main() {
         firebaseAuth = _MockFirebaseAuth();
       });
 
-      AuthRepository subjectWith(GoogleSignInFlow flow) =>
-          AuthRepository(firebaseAuth: firebaseAuth, googleSignInFlow: flow);
+      AuthRepository subjectWith(GoogleSignInFlow flow) => AuthRepository(
+        firebaseAuth: firebaseAuth,
+        googleSignInFlow: flow,
+        linkOpener: linkOpener,
+      );
 
       test('calls signInWithPopup with a '
           '${firebase_auth.GoogleAuthProvider} on '
@@ -186,11 +200,53 @@ void main() {
       });
     });
 
+    group('openCreateAccount', () {
+      AuthRepository build() => AuthRepository(
+        firebaseAuth: MockFirebaseAuth(mockUser: mockUser),
+        googleSignInFlow: GoogleSignInFlow.popup,
+        linkOpener: linkOpener,
+      );
+
+      test("opens Google's page to make an account", () async {
+        when(() => linkOpener.open(any())).thenAnswer((_) async => true);
+
+        await build().openCreateAccount();
+
+        verify(
+          () =>
+              linkOpener.open(Uri.parse('https://accounts.google.com/signup')),
+        ).called(1);
+        expect(
+          AuthRepository.createAccountUrl,
+          equals(Uri.parse('https://accounts.google.com/signup')),
+        );
+      });
+
+      test('throws $OpenCreateAccountFailure when nothing opens it', () {
+        when(() => linkOpener.open(any())).thenAnswer((_) async => false);
+
+        expect(
+          build().openCreateAccount,
+          throwsA(isA<OpenCreateAccountFailure>()),
+        );
+      });
+
+      test('throws $OpenCreateAccountFailure when opening fails', () {
+        when(() => linkOpener.open(any())).thenThrow(Exception('boom'));
+
+        expect(
+          build().openCreateAccount,
+          throwsA(isA<OpenCreateAccountFailure>()),
+        );
+      });
+    });
+
     group('signOut', () {
       test('signs out of Firebase Auth', () async {
         final subject = AuthRepository(
           firebaseAuth: MockFirebaseAuth(signedIn: true, mockUser: mockUser),
           googleSignInFlow: GoogleSignInFlow.popup,
+          linkOpener: linkOpener,
         );
 
         await subject.signOut();
@@ -204,6 +260,7 @@ void main() {
         final subject = AuthRepository(
           firebaseAuth: firebaseAuth,
           googleSignInFlow: GoogleSignInFlow.popup,
+          linkOpener: linkOpener,
         );
 
         expect(subject.signOut, throwsA(isA<SignOutFailure>()));

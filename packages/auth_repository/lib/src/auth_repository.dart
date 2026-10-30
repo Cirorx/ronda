@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:auth_repository/auth_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:link_opener/link_opener.dart';
 
 /// {@template auth_repository}
 /// Signs people in with Google over Firebase Auth and reports who is signed
@@ -9,15 +10,25 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 ///
 /// Google is the only way in: there is no phone, email or anonymous sign-in.
 /// `firebaseAuth` is built in bootstrap (pointed at the Auth emulator in the
-/// development flavor) and `googleSignInFlow` says how this platform reaches
-/// Google.
+/// development flavor), `googleSignInFlow` says how this platform reaches
+/// Google, and `linkOpener` opens Google's page to make an account.
 /// {@endtemplate}
 class AuthRepository {
   /// {@macro auth_repository}
-  const new({required this._firebaseAuth, required this._googleSignInFlow});
+  const new({
+    required this._firebaseAuth,
+    required this._googleSignInFlow,
+    required this._linkOpener,
+  });
 
   final firebase_auth.FirebaseAuth _firebaseAuth;
   final GoogleSignInFlow _googleSignInFlow;
+  final LinkOpener _linkOpener;
+
+  /// Google's page to make an account, for someone who has none.
+  static final Uri createAccountUrl = Uri.parse(
+    'https://accounts.google.com/signup',
+  );
 
   /// The demo account [GoogleSignInFlow.emulatorCredential] signs in as.
   ///
@@ -64,6 +75,19 @@ class AuthRepository {
     } on Exception {
       throw const SignInWithGoogleFailure();
     }
+  }
+
+  /// Opens [createAccountUrl] in the phone's browser.
+  ///
+  /// Throws an [OpenCreateAccountFailure] when no browser opens it.
+  Future<void> openCreateAccount() async {
+    final bool opened;
+    try {
+      opened = await _linkOpener.open(createAccountUrl);
+    } on Exception {
+      throw const OpenCreateAccountFailure();
+    }
+    if (!opened) throw const OpenCreateAccountFailure();
   }
 
   /// Signs out.

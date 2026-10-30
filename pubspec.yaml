@@ -61,7 +61,6 @@ dependencies:
     path: packages/ronda_ui
   share_sheet:
     path: packages/share_sheet
-  url_launcher: ^6.3.3
   voice_recorder:
     path: packages/voice_recorder
 

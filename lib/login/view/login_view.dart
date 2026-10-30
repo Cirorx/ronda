@@ -1,15 +1,8 @@
+import 'package:auth_repository/auth_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda_ui/ronda_ui.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-/// Opens [uri] outside the app; `false` when nothing could open it.
-typedef LinkOpener = Future<bool> Function(Uri uri);
-
-/// Opens [uri] in the phone's browser.
-Future<bool> openInBrowser(Uri uri) =>
-    launchUrl(uri, mode: LaunchMode.externalApplication);
 
 /// Why sign-in comes now ("Guardá tu lugar", or why the voice door needs
 /// it), what Ronda never does with the account, the one "Seguir con Google"
@@ -17,9 +10,6 @@ Future<bool> openInBrowser(Uri uri) =>
 class const LoginView({
   /// Why the screen opened.
   final LoginReason reason = LoginReason.signIn,
-
-  /// Opens Google's page to make an account; [openInBrowser] in the app.
-  final LinkOpener openLink = openInBrowser,
   super.key,
 }) extends StatelessWidget {
   /// Maestro's handle on the Google button.
@@ -27,11 +17,6 @@ class const LoginView({
 
   /// Maestro's handle on the link to make a Google account.
   static const createAccountIdentifier = 'login_create_account';
-
-  /// Google's page to make an account.
-  static final Uri createAccountUrl = Uri.parse(
-    'https://accounts.google.com/signup',
-  );
 
   @override
   Widget build(BuildContext context) {
@@ -106,12 +91,13 @@ class const LoginView({
               container: true,
               identifier: createAccountIdentifier,
               link: true,
-              linkUrl: createAccountUrl,
+              linkUrl: AuthRepository.createAccountUrl,
               label: l10n.loginNoGoogleAccount,
-              onTap: () => openLink(createAccountUrl),
+              onTap: () => context.read<LoginCubit>().createAccountTapped(),
               excludeSemantics: true,
               child: TextButton(
-                onPressed: () => openLink(createAccountUrl),
+                onPressed: () =>
+                    context.read<LoginCubit>().createAccountTapped(),
                 child: Text(
                   l10n.loginNoGoogleAccount,
                   textAlign: TextAlign.center,

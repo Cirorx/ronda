@@ -20,26 +20,18 @@ void main() {
       cubit = _MockLoginCubit();
       when(() => cubit.state).thenReturn(const LoginState());
       when(() => cubit.signInWithGoogle()).thenAnswer((_) async {});
+      when(() => cubit.createAccountTapped()).thenAnswer((_) async {});
     });
-
-    final opened = <Uri>[];
 
     Future<void> pumpSubject(
       WidgetTester tester, {
       LoginReason reason = LoginReason.signIn,
       Locale locale = rioplatense,
     }) {
-      opened.clear();
       return tester.pumpApp(
         BlocProvider.value(
           value: cubit,
-          child: LoginView(
-            reason: reason,
-            openLink: (uri) async {
-              opened.add(uri);
-              return true;
-            },
-          ),
+          child: LoginView(reason: reason),
         ),
         locale: locale,
       );
@@ -99,10 +91,8 @@ void main() {
           ),
         );
 
-        expect(
-          opened,
-          equals([Uri.parse('https://accounts.google.com/signup')]),
-        );
+        verify(() => cubit.createAccountTapped()).called(1);
+        verifyNever(() => cubit.signInWithGoogle());
       });
 
       testWidgets('read as a link, with a 48 dp target', (tester) async {
@@ -122,18 +112,18 @@ void main() {
             hasTapAction: true,
           ),
         );
+        expect(
+          tester.getSemantics(link).getSemanticsData().linkUrl,
+          equals(Uri.parse('https://accounts.google.com/signup')),
+        );
         expect(tester.getSize(link).height, greaterThanOrEqualTo(48));
         await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
 
         tester.semantics.tap(
           find.semantics.byLabel(RegExp('^¿No tenés cuenta de Google')),
         );
-        expect(opened, equals([LoginView.createAccountUrl]));
+        verify(() => cubit.createAccountTapped()).called(1);
         handle.dispose();
-      });
-
-      test('in the browser by default', () {
-        expect(const LoginView().openLink, equals(openInBrowser));
       });
     });
 

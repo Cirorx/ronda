@@ -54,3 +54,12 @@ class const SignOutFailure() implements Exception {
   /// {@macro sign_out_failure}
   this;
 }
+
+/// {@template open_create_account_failure}
+/// Thrown by `AuthRepository.openCreateAccount` when no browser opens
+/// Google's page to make an account.
+/// {@endtemplate}
+class const OpenCreateAccountFailure() implements Exception {
+  /// {@macro open_create_account_failure}
+  this;
+}

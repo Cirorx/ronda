@@ -270,6 +270,7 @@ Future<void> bootstrap(
   final authRepository = AuthRepository(
     firebaseAuth: firebaseAuth,
     googleSignInFlow: googleSignInFlow,
+    linkOpener: linkOpener,
   );
   const needsRepository = NeedsRepository(deviceStore: deviceStore);
   final profileRepository = ProfileRepository(
