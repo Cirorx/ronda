@@ -9,13 +9,19 @@
       content="Grupos de 5 o 6 vecinos que se juntan una vez por semana, siempre en lugares públicos."
     />
     <meta name="color-scheme" content="light dark" />
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
     <link rel="stylesheet" href="/assets/ronda.css" />
+    <link rel="modulepreload" href="/assets/ronda.js" />
     <script type="module" src="/assets/cerca.js"></script>
   </head>
   <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="/" aria-current="page">Ronda</a>
+      </div>
+    </header>
     <main class="page">
       <header class="masthead">
-        <p class="brand">Ronda</p>
         <h1 data-t="cercaTitle">Cerca tuyo</h1>
         <p class="lead" data-t="cercaLead">
           Grupos de 5 o 6 vecinos que se juntan una vez por semana, siempre en lugares públicos.

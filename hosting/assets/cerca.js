@@ -4,9 +4,11 @@
 import {
   BARRIOS,
   element,
+  errorStatus,
+  loadingStatus,
   rondaItem,
+  setUpPage,
   t,
-  translatePage,
   updatedText,
   waitingItem,
 } from './ronda.js';
@@ -17,7 +19,7 @@ const EMULATOR_FIRESTORE_PORT = 8088;
 const LOCAL_HOSTS = ['127.0.0.1', 'localhost'];
 const STORED_BARRIO = 'ronda-cerca-barrio';
 
-translatePage();
+setUpPage();
 
 const picker = document.getElementById('barrio');
 const results = document.getElementById('results');
@@ -48,13 +50,13 @@ async function show(barrio) {
     results.replaceChildren();
     return;
   }
-  results.replaceChildren(element('p', 'status', t('loading')));
+  results.replaceChildren(loadingStatus());
   try {
     const counts = await readCounts(barrio);
     if (picker.value === barrio) render(barrio, counts);
   } catch (error) {
     console.error(error);
-    if (picker.value === barrio) results.replaceChildren(element('p', 'status', t('error')));
+    if (picker.value === barrio) results.replaceChildren(errorStatus(() => show(barrio)));
   }
 }
 

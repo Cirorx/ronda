@@ -1,5 +1,7 @@
 /* The public pages, in the app's tokens (docs/DESIGN.md): the barrio's own
-   paper. Light and dark follow the system. */
+   paper. Light and dark follow the system. Opaque paper throughout: no glass,
+   no blur. Only state changes move (a press, a list arriving), and nothing
+   slides, so every way out is the way in. */
 
 @font-face {
   font-family: 'Young Serif';
@@ -38,6 +40,21 @@
   --ambar-tint: #fbf3e6;
   --margen: #c8433c;
   --neutral-tint: #f3f5fa;
+  /* The soft edge under the top bar while the page scrolls under it. */
+  --edge: rgb(24 32 47 / 0.09);
+
+  /* Spacing 4/8/12/16/24/32 in rem, so it grows with the reader's text size. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --target: 3rem; /* 48 px at the default text size */
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --press: 100ms;
+  --fade: 200ms;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -56,6 +73,22 @@
     --ambar-tint: #2a2416;
     --margen: #e07a72;
     --neutral-tint: #1a2234;
+    --edge: rgb(0 0 0 / 0.45);
+  }
+}
+
+/* More contrast: secondary text closer to ink, lines dark enough to see. */
+@media (prefers-contrast: more) {
+  :root {
+    --muted: #3b4456;
+    --line: #5a6477;
+  }
+}
+
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  :root {
+    --muted: #d0d6e2;
+    --line: #a3adbf;
   }
 }
 
@@ -74,47 +107,118 @@ body {
   color: var(--ink);
   font-family: 'Atkinson Hyperlegible', system-ui, sans-serif;
   font-size: 1.125rem;
-  line-height: 1.45;
+  line-height: 1.5;
+  letter-spacing: 0;
+  font-optical-sizing: auto;
+  overflow-wrap: break-word;
+}
+
+/* The top bar: Ronda's name, which is also the way back to every barrio.
+   Opaque paper; the edge under it shows only while the page scrolls under. */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--paper);
+}
+
+.topbar::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  height: var(--space-2);
+  background: linear-gradient(var(--edge), transparent);
+  opacity: 0;
+  transition: opacity var(--fade) ease-out;
+  pointer-events: none;
+}
+
+.topbar.is-scrolled::after {
+  opacity: 1;
+}
+
+.topbar-inner {
+  max-width: 36rem;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+/* Short viewports (a phone held sideways, or zoomed to 200%): the bar
+   scrolls away with the page rather than hold a strip of the screen. */
+@media (max-height: 30rem) {
+  .topbar {
+    position: static;
+  }
+
+  .topbar::after {
+    display: none;
+  }
+}
+
+/* ronda.js watches this one-pixel marker: off screen means scrolled. */
+.scroll-marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  min-width: var(--target);
+  min-height: var(--target);
+  color: var(--birome);
+  font-family: 'Young Serif', Georgia, serif;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  transform-origin: left center;
 }
 
 .page {
   max-width: 36rem;
   margin: 0 auto;
-  padding: 24px 16px 40px;
+  padding: var(--space-4) var(--space-4) 2.5rem;
 }
 
 .masthead {
   border-left: 2px solid var(--margen);
-  padding-left: 12px;
-  margin-bottom: 24px;
-}
-
-.brand {
-  margin: 0;
-  color: var(--birome);
-  font-family: 'Young Serif', Georgia, serif;
-  font-size: 1.125rem;
+  padding-left: var(--space-3);
+  margin-bottom: var(--space-6);
 }
 
 h1,
 h2 {
   font-family: 'Young Serif', Georgia, serif;
   font-weight: 400;
-  line-height: 1.15;
+  text-wrap: balance;
 }
 
+/* Tracking and leading by size: tighter as titles grow, 0 for body, a
+   touch open for small text. */
 h1 {
-  margin: 4px 0 12px;
+  margin: 0 0 var(--space-3);
   font-size: 2.25rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 h2 {
-  margin: 32px 0 12px;
+  margin: var(--space-8) 0 var(--space-3);
   font-size: 1.375rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 p {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
+  text-wrap: pretty;
 }
 
 .lead {
@@ -124,35 +228,61 @@ p {
 
 label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   font-weight: 700;
+}
+
+a,
+button,
+select {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 select {
   width: 100%;
-  min-height: 48px;
-  padding: 8px 12px;
+  min-height: var(--target);
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface);
   color: var(--ink);
   font: inherit;
+  transition: border-color var(--press) ease-out;
+}
+
+/* The picker opens the phone's own list, so it answers the press with its
+   border rather than a scale the system sheet would cut short. */
+select:active {
+  border-color: var(--birome);
 }
 
 select:focus-visible,
-a:focus-visible {
+a:focus-visible,
+button:focus-visible {
   outline: 3px solid var(--birome);
   outline-offset: 2px;
 }
 
 #results {
-  margin-top: 16px;
+  margin-top: var(--space-4);
 }
 
+/* What the page is doing: loading, nothing yet, or something went wrong. */
 .status {
-  padding: 16px;
+  padding: var(--space-4);
+  border: 1px solid transparent;
   border-radius: 12px;
   background: var(--neutral-tint);
+}
+
+.status p:last-child {
+  margin-bottom: 0;
+}
+
+.status.is-error {
+  border-left: 3px solid var(--ambar);
+  background: var(--ambar-tint);
 }
 
 ul {
@@ -164,16 +294,16 @@ ul {
 .seat {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px 16px;
-  margin-bottom: 12px;
-  padding: 16px;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-3);
+  padding: var(--space-4);
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
 }
 
 .seat-title {
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-1);
   font-weight: 700;
 }
 
@@ -215,8 +345,9 @@ ul {
 }
 
 .waiting {
-  margin-bottom: 12px;
-  padding: 12px 16px;
+  margin-bottom: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid transparent;
   border-radius: 12px;
   background: var(--birome-tint);
 }
@@ -224,45 +355,104 @@ ul {
 .note {
   color: var(--muted);
   font-size: 1rem;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
 }
 
 .privacy {
-  margin-top: 24px;
-}
-
-.button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-  margin: 24px 0 8px;
-  padding: 12px 16px;
-  border-radius: 12px;
-  background: var(--birome);
-  color: var(--on-birome);
-  font-weight: 700;
-  text-align: center;
-  text-decoration: none;
-}
-
-.button:hover,
-.button:active {
-  background: var(--birome-pressed);
+  margin-top: var(--space-6);
 }
 
 a {
   color: var(--birome);
 }
 
+/* Press feedback starts on the press, and the release runs the same path
+   back. */
+.button,
+.text-link,
+.brand {
+  transition:
+    transform var(--press) var(--ease-out),
+    background-color var(--press) ease-out,
+    color var(--press) ease-out;
+}
+
+.button:active,
+.text-link:active,
+.brand:active {
+  transform: scale(0.97);
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--target);
+  margin: var(--space-6) 0 var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--birome);
+  color: var(--on-birome);
+  font: inherit;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button:active {
+  background: var(--birome-pressed);
+}
+
+/* The quieter button, for trying again inside a status. */
+.button-quiet {
+  width: auto;
+  margin: 0;
+  border-color: var(--birome);
+  background: var(--surface);
+  color: var(--birome);
+}
+
+.button-quiet:active {
+  background: var(--birome-tint);
+}
+
 .text-link {
   display: inline-block;
-  min-height: 48px;
-  padding: 12px 0;
+  min-height: var(--target);
+  padding: var(--space-3) 0;
+  transform-origin: left center;
+}
+
+.text-link:active,
+.brand:active {
+  color: var(--birome-pressed);
+}
+
+/* Hover only where there is a pointer to hover with; on a phone it would
+   stick after the tap. */
+@media (hover: hover) {
+  .button:hover {
+    background: var(--birome-pressed);
+  }
+
+  .button-quiet:hover {
+    background: var(--birome-tint);
+  }
+
+  .text-link:hover,
+  .brand:hover {
+    color: var(--birome-pressed);
+  }
 }
 
 #bus {
-  margin-top: 8px;
-  padding: 16px;
+  margin-top: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid transparent;
   border-radius: 12px;
   background: var(--ambar-tint);
 }
@@ -272,11 +462,11 @@ a {
 }
 
 .bus-times {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
 }
 
 .bus-times dt {
-  margin-top: 12px;
+  margin-top: var(--space-3);
   font-weight: 700;
 }
 
@@ -292,10 +482,80 @@ a {
 .bus-detail {
   color: var(--muted);
   font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
+/* Once the page is up (html.is-ready, set by ronda.js after its first
+   paint), what a load brings in fades in: the list, a status, the last bus.
+   A section that hides fades out the same way. Opacity only, so there is no
+   direction to mirror. Browsers without @starting-style just show it. */
+.is-ready #results > *,
+.is-ready #bus {
+  transition: opacity var(--fade) ease-out;
+}
+
+.is-ready #bus {
+  transition:
+    opacity var(--fade) ease-out,
+    display var(--fade) allow-discrete;
+}
+
+#bus[hidden] {
+  opacity: 0;
+}
+
+@starting-style {
+  .is-ready #results > *,
+  .is-ready #bus {
+    opacity: 0;
+  }
 }
 
 @media (min-width: 40rem) {
   h1 {
     font-size: 2.75rem;
+    letter-spacing: -0.022em;
+  }
+}
+
+/* Reduced motion: presses change colour, not size. The fades stay: opacity
+   moves nothing. */
+@media (prefers-reduced-motion: reduce) {
+  .button:active,
+  .text-link:active,
+  .brand:active {
+    transform: none;
+  }
+}
+
+/* Reduced transparency: nothing here is translucent but the bar's soft
+   edge, which becomes a solid line. */
+@media (prefers-reduced-transparency: reduce) {
+  .topbar::after {
+    height: 1px;
+    background: var(--line);
+  }
+}
+
+/* More contrast: every tinted surface gets a defined border, and the bar's
+   edge is a line. */
+@media (prefers-contrast: more) {
+  .topbar::after {
+    height: 1px;
+    background: var(--line);
+  }
+
+  .status,
+  .waiting,
+  #bus {
+    border-color: var(--line);
+  }
+
+  .status.is-error {
+    border-color: var(--ambar);
+  }
+
+  .button-quiet {
+    border-width: 2px;
   }
 }

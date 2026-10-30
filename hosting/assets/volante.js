@@ -6,16 +6,18 @@
 // Link previews fetch the HTML and run no script, so they count nothing.
 import {
   element,
+  errorStatus,
+  loadingStatus,
   rondaItem,
+  setUpPage,
   t,
-  translatePage,
   updatedText,
   waitingItem,
 } from './ronda.js';
 
 const DAY_TYPES = ['weekday', 'saturday', 'sunday'];
 
-translatePage();
+setUpPage();
 
 const results = document.getElementById('results');
 const bus = document.getElementById('bus');
@@ -44,7 +46,7 @@ async function load() {
   } catch (error) {
     console.error(error);
     if (method === 'POST') setCounted(counted, false);
-    results.replaceChildren(element('p', 'status', t('error')));
+    results.replaceChildren(errorStatus(retry));
   }
 }
 
@@ -110,9 +112,16 @@ function renderBus(lastBus) {
   bus.hidden = false;
 }
 
+function retry() {
+  results.replaceChildren(loadingStatus());
+  load();
+}
+
+// Not a dead end: the lead says what to check, and "Ver todos los barrios"
+// below is the way on.
 function notFound() {
   document.querySelector('h1').textContent = t('notFound');
-  document.querySelector('.lead').hidden = true;
+  document.querySelector('.lead').textContent = t('notFoundHelp');
   results.replaceChildren();
 }
 

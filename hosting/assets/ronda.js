@@ -24,6 +24,7 @@ const STRINGS = {
     barrioPick: 'Elegí tu barrio',
     loading: 'Cargando…',
     error: 'No pudimos cargar los grupos. Probá de nuevo en un rato.',
+    retry: 'Probar de nuevo',
     rondasIn: 'Rondas en {barrio}',
     noRondasIn: 'Todavía no hay rondas en {barrio}.',
     waitingTitle: 'Esperando que arranque',
@@ -50,6 +51,7 @@ const STRINGS = {
       'Una ronda de este barrio guarda un lugar para alguien nuevo: 5 o 6 vecinos que se juntan una vez por semana, siempre en lugares públicos.',
     noRondasHere: 'Todavía no hay rondas a pocas cuadras de acá.',
     notFound: 'No encontramos este volante.',
+    notFoundHelp: 'Revisá que la dirección esté completa, o mirá todos los barrios.',
     allBarrios: 'Ver todos los barrios',
     lastBusFrom: 'Último ómnibus desde {stop}',
     lastBus: 'Último ómnibus',
@@ -83,6 +85,7 @@ const STRINGS = {
     barrioPick: 'Pick your barrio',
     loading: 'Loading…',
     error: "We couldn't load the groups. Try again in a while.",
+    retry: 'Try again',
     rondasIn: 'Rondas in {barrio}',
     noRondasIn: 'No rondas in {barrio} yet.',
     waitingTitle: 'Waiting to start',
@@ -109,6 +112,7 @@ const STRINGS = {
       'A ronda in this barrio keeps a place for someone new: 5 or 6 neighbours who meet once a week, always in public places.',
     noRondasHere: 'No rondas a few blocks from here yet.',
     notFound: "We couldn't find this flyer.",
+    notFoundHelp: 'Check that the address is complete, or see every barrio.',
     allBarrios: 'See every barrio',
     lastBusFrom: 'Last bus from {stop}',
     lastBus: 'Last bus',
@@ -153,11 +157,39 @@ export function t(key, values = {}) {
 }
 
 // Puts the page in the reader's language: every element with data-t="key".
-export function translatePage() {
+function translatePage() {
   document.documentElement.lang = LANG === 'es' ? 'es-419' : 'en';
   for (const element of document.querySelectorAll('[data-t]')) {
     element.textContent = t(element.dataset.t);
   }
+  // The tab says where you are in the same language as the page.
+  document.title = `${document.querySelector('h1').textContent} · Ronda`;
+}
+
+// What every page does first: its copy in the reader's language, the top
+// bar's edge, and press feedback on iPhones.
+export function setUpPage() {
+  translatePage();
+  edgeWhileScrolled();
+  // iOS Safari shows :active on a touch only while the page listens for touches.
+  document.addEventListener('touchstart', () => {}, { passive: true });
+  // After the first paint, so only what changes from then on fades in (ronda.css).
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => document.documentElement.classList.add('is-ready')),
+  );
+}
+
+// The top bar's soft edge shows only while the page is scrolled under it: a
+// one-pixel marker at the very top leaves the screen as soon as it is.
+function edgeWhileScrolled() {
+  const bar = document.querySelector('.topbar');
+  if (!bar || !('IntersectionObserver' in window)) return;
+  const marker = element('div', 'scroll-marker');
+  marker.setAttribute('aria-hidden', 'true');
+  document.body.prepend(marker);
+  new IntersectionObserver(([entry]) => {
+    bar.classList.toggle('is-scrolled', !entry.isIntersecting);
+  }).observe(marker);
 }
 
 export function element(tag, className, text) {
@@ -165,6 +197,20 @@ export function element(tag, className, text) {
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
   return node;
+}
+
+export function loadingStatus() {
+  return element('p', 'status', t('loading'));
+}
+
+// "No pudimos cargar los grupos", and a button that tries again.
+export function errorStatus(onRetry) {
+  const status = element('div', 'status is-error');
+  const retry = element('button', 'button button-quiet', t('retry'));
+  retry.type = 'button';
+  retry.addEventListener('click', onRetry);
+  status.append(element('p', null, t('error')), retry);
+  return status;
 }
 
 function pretextName(pretext) {
