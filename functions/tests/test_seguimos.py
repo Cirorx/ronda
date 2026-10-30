@@ -1,8 +1,8 @@
 """seguimos.py with a fixed clock, over the in-memory Firestore stand-in.
 
 The test ronda is a mate ronda in El Pinar sur, Saturday afternoons, six members; its first
-meeting is Saturday 2026-10-31 (ISO week 44). The pretext's floor is 4 yeses. As in the pilot,
-the admin may move it to Tuesday after that meeting, with the RSVP push the day before at 19:00.
+meeting is Saturday 2026-10-31 (ISO week 44). The pretext's floor is 4 yeses. After that
+meeting the admin may move it to Tuesday, with the RSVP push the day before at 19:00.
 """
 
 from datetime import UTC, date, datetime, timedelta
@@ -82,7 +82,7 @@ def counts(db) -> dict:
 
 
 def to_tuesday(db) -> None:
-    """The pilot's change after meeting 1: Tuesdays, RSVP on Monday at 19:00."""
+    """The admin's change after meeting 1: Tuesdays, RSVP on Monday at 19:00."""
     db.documents[f"rondas/{RONDA}"]["slot"] = {"day": "tue", "time": "afternoon"}
     db.documents[f"rondas/{RONDA}"]["rsvpLead"] = {"daysBefore": 1, "hour": 19}
 
@@ -536,7 +536,7 @@ class TestClose:
         assert push(db, MONDAY_19 + timedelta(hours=1))["pushed"] == 1
 
 
-def test_the_pilot_ronda_from_meeting_one_to_its_season():
+def test_a_ronda_from_meeting_one_to_its_season_after_a_day_change():
     """Saturday's meeting, the ask that evening, the admin's move to Tuesday, answers changed
     on Sunday, and Monday's push carries the outcome."""
     docs = documents()

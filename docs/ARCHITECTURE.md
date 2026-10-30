@@ -167,7 +167,7 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
     `seguimos.close`), with the ronda read at send time. Yeses from members still in ≥ the
     pretext's floor (`SizeRule.floor`: 4; fútbol 8): `season` is set for `SEASON_WEEKS` (4)
     meetings from the one the push is for, the ronda becomes `active`, and the RSVP body opens
-    with "Seguimos los martes, hasta el martes 24/11. Nadie sabe qué contestó cada uno."
+    with "Seguimos los jueves, hasta el jueves 26/11. Nadie sabe qué contestó cada uno."
     (members the RSVP skips get those words alone). Each "no" leaves (`state: left`) and gets
     "Gracias por venir." with up to two open rondas within the solver's ten blocks that have
     places, same pretext first. Below the floor: no season, `status` unchanged, and everyone

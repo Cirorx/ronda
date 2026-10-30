@@ -44,8 +44,8 @@ band (19 to 21) is asked the next day at the same hour."""
 
 SEASON_WEEKS = 4
 """How many weekly meetings a season holds, counting the first. Owner decision (#46): PRODUCT
-gives no length. Four is one host rotation (hosts change monthly), a small ask after a single
-meeting, and it ends the pilot's season on 11-24, before the pilot's data is deleted."""
+gives no length. Four is one host rotation (hosts change monthly) and a small ask after a
+single meeting."""
 
 WAIT_WEEKS = 2
 """"Esperar dos semanas más" (docs/PRODUCT.md § Seats, Didn't fill)."""
