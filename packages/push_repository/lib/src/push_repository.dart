@@ -148,6 +148,18 @@ class PushRepository {
     }
   }
 
+  /// Forgets that "Ahora no" was tapped, so the card that asks may show
+  /// again on the next launch (Ajustes → Avisos).
+  ///
+  /// Throws a [SnoozePromptFailure] when it can't be forgotten.
+  Future<void> clearPromptSnooze() async {
+    try {
+      await _deviceStore.delete(promptSnoozeKey);
+    } on Exception {
+      throw const SnoozePromptFailure();
+    }
+  }
+
   Future<void> _save(String uid, String token) async {
     try {
       await _rondaApi.saveDeviceToken(

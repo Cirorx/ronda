@@ -16,8 +16,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 
 /// The Mi ronda tab: the notifications ask on top while it's pending, then
 /// the ¿seguimos? card while there is one, then this week's card, or
-/// "Estamos armando tu grupo" before a group exists. A member who left at
-/// the ¿seguimos? close sees only that card ("Gracias por venir.").
+/// "Todavía no tenés grupo" and what happens next before a group exists. A
+/// member who left at the ¿seguimos? close sees only that card ("Gracias por
+/// venir.").
 ///
 /// It is where everyone with a profile lands, right after onboarding saves,
 /// so the [PushCubit] it provides also keeps this phone's token saved.
@@ -102,7 +103,20 @@ class const MyRondaView({required final String uid, super.key})
                 ThisWeekStatus.loading => const Center(
                   child: CircularProgressIndicator(),
                 ),
-                ThisWeekStatus.noGroup => line(l10n.myRondaPlaceholder),
+                ThisWeekStatus.noGroup => Column(
+                  spacing: spacing.xs,
+                  children: [
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        l10n.myRondaNoGroupTitle,
+                        textAlign: TextAlign.center,
+                        style: textTheme.titleMedium,
+                      ),
+                    ),
+                    line(l10n.myRondaNoGroupBody),
+                  ],
+                ),
                 ThisWeekStatus.failure => Column(
                   spacing: spacing.sm,
                   children: [

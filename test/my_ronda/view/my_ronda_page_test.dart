@@ -87,7 +87,7 @@ void main() {
         equals(const SeguimosState(status: SeguimosCardStatus.none)),
       );
       expect(find.text('¿Te avisamos los martes?'), findsOneWidget);
-      expect(find.text('Estamos armando tu grupo'), findsOneWidget);
+      expect(find.text('Todavía no tenés grupo'), findsOneWidget);
       verify(pushRepository.permission).called(1);
     });
   });
@@ -135,12 +135,19 @@ void main() {
         );
       });
 
-      testWidgets('"Estamos armando tu grupo" before a group exists', (
-        tester,
-      ) async {
+      testWidgets('"Todavía no tenés grupo" and what happens next before a '
+          'group exists', (tester) async {
         await pump(tester);
 
-        expect(find.text('Estamos armando tu grupo'), findsOneWidget);
+        expect(find.text('Todavía no tenés grupo'), findsOneWidget);
+        expect(
+          find.text(
+            'Armamos cada grupo con vecinos que viven cerca y buscan lo mismo '
+            'que vos. Puede tardar, según cuántos se anoten. Cuando haya uno '
+            'para vos, te avisamos y lo vas a ver acá.',
+          ),
+          findsOneWidget,
+        );
       });
 
       testWidgets('a spinner while it reads', (tester) async {
@@ -258,7 +265,7 @@ void main() {
         expect(find.byType(PushPrompt), findsOneWidget);
         expect(
           tester.getTopLeft(find.text('¿Te avisamos los martes?')).dy,
-          lessThan(tester.getTopLeft(find.text('Estamos armando tu grupo')).dy),
+          lessThan(tester.getTopLeft(find.text('Todavía no tenés grupo')).dy),
         );
       });
 
@@ -277,7 +284,7 @@ void main() {
         expect(
           find.descendant(
             of: find.bySemanticsIdentifier(MyRondaPage.identifier),
-            matching: find.text('Estamos armando tu grupo'),
+            matching: find.text('Todavía no tenés grupo'),
           ),
           findsOneWidget,
         );

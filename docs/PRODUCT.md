@@ -7,12 +7,34 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 
 ## Screens
 - **Mi ronda** (tab): this week's card (day and time, place and distance, después), "¿Venís?"
-  with [Voy] [Esta no], who's coming. Before a group exists: "Estamos armando tu grupo".
+  with [Voy] [Esta no], who's coming. Before a group exists: "Todavía no tenés grupo" and what
+  happens next, without promising a seat: "Armamos cada grupo con vecinos que viven cerca y buscan
+  lo mismo que vos. Puede tardar, según cuántos se anoten. Cuando haya uno para vos, te avisamos y
+  lo vas a ver acá."
 - **Cerca** (tab): groups with open places, groups about to start, waiting demand. Also a public
-  web page with no login.
-- **Ajustes** (tab): "Tomarme unas semanas", "Cambiarme de grupo", "Dejar Ronda", "Lo que te
-  complica ir" (on the phone only), "Tu persona de confianza", "Tus datos", "Contar algo que
-  pasó", and the helpline.
+  web page with no login. Until the in-app list exists the tab says so: "Pronto vas a ver acá los
+  grupos cerca tuyo que tienen lugar. Mientras tanto, si tenés grupo, lo ves en Mi ronda."
+- **Ajustes** (tab). Built (#54), four rows:
+  - **Avisos:** "Los avisos están prendidos." or "Los avisos están apagados." with what Ronda
+    sends, and [Prender los avisos], which forgets "Ahora no" and asks the phone again. A phone
+    that refused for good gets the push card's line: "Los avisos de Ronda están apagados en este
+    teléfono. Si los querés, prendelos en los ajustes del teléfono."
+  - **Contar algo que pasó:** "Contá qué pasó. Lo lee una persona, no un programa. La otra persona
+    no se entera de que contaste.", "Escribinos a <address>." and [Escribir un mail] (subject
+    "Ronda: algo que pasó"), then the helpline (§ Safety), each number a button that dials it.
+  - **Tus datos:** "Lo que Ronda guarda de vos" (name, age band and barrio; days, times,
+    activities and what you bring; your ronda and your answers; the Google account and this
+    phone's push code; when you accepted the terms), "Lo que no guardamos" (the audio; what makes
+    it hard to go, on the phone only), where it lives, and "Para cambiar o borrar tus datos,
+    escribinos a <address>." with [Escribir un mail] (subject "Ronda: mis datos", the account id
+    in the body).
+  - **Salir de esta cuenta:** "¿Salís de esta cuenta?" — your group and answers stay; this phone
+    stops getting notifications. [Salir] forgets this phone's push token, then signs out.
+  - The address is one build value, `RONDA_CONTACT_EMAIL` (`docs/STACK.md` § Pilot builds); a
+    person reads it. There is no in-app report form, no "Bajar una copia" and no "Borrar todo"
+    yet: changes and deletions are done by hand on request.
+  - Still to come: "Tomarme unas semanas", "Cambiarme de grupo", "Dejar Ronda", "Lo que te
+    complica ir" (on the phone only), "Tu persona de confianza".
 - **Admin** (Ciro only): this week's numbers, grupos propuestos, reportes, "Lo que mandó el
   programa", flyer scans per spot.
 - (The Bitácora tab from the planilla is not in the build.)
@@ -86,8 +108,8 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   "Falta alguien que lleve bizcochos, o que tenga ganas." Money is never a requirement.
 
 ## Joining and forming rondas
-- **No group yet** (Mi ronda): "Estamos armando tu grupo", what we're looking for, how many
-  neighbours already match ("Con uno más, arrancamos"), and a fixed date: "El lunes 2/11 a las
+- **No group yet** (Mi ronda): built as the two lines in § Screens. Still to come: what we're
+  looking for, how many neighbours already match ("Con uno más, arrancamos"), and a fixed date: "El lunes 2/11 a las
   19 te contamos cómo sigue, haya grupo o no." [Ver lugares libres] and "Cambiar lo que busco".
 - **An open place:** places left, who goes by age range and count, "Lo organiza Mirta" (the
   host's first name is the only name), what's missing, and "El lugar exacto te lo mostramos el

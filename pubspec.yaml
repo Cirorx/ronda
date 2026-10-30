@@ -14,6 +14,8 @@ dependencies:
   bloc_concurrency: ^0.3.0
   cloud_firestore: ^7.1.0
   cloud_functions: ^7.0.1
+  contact_repository:
+    path: packages/contact_repository
   device_store:
     path: packages/device_store
   equatable: ^2.0.7
@@ -36,6 +38,8 @@ dependencies:
   formz: ^0.8.1
   go_router: ^18.1.1
   intl: ^0.20.2
+  link_opener:
+    path: packages/link_opener
   material_ui: ^1.8.0
   needs_repository:
     path: packages/needs_repository

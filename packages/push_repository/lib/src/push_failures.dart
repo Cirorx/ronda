@@ -17,7 +17,7 @@ class UnregisterDeviceFailure implements Exception {
 }
 
 /// {@template snooze_prompt_failure}
-/// "Ahora no" could not be remembered on this phone.
+/// "Ahora no" could not be remembered, or forgotten, on this phone.
 /// {@endtemplate}
 class SnoozePromptFailure implements Exception {
   /// {@macro snooze_prompt_failure}

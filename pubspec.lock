@@ -208,6 +208,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.19.1"
+  contact_repository:
+    dependency: "direct main"
+    description:
+      path: "packages/contact_repository"
+      relative: true
+    source: path
+    version: "0.1.0+1"
   convert:
     dependency: transitive
     description:
@@ -873,6 +880,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  link_opener:
+    dependency: "direct main"
+    description:
+      path: "packages/link_opener"
+      relative: true
+    source: path
+    version: "0.1.0+1"
   logging:
     dependency: transitive
     description:

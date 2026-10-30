@@ -35,9 +35,11 @@ jobs:
       matrix:
         package:
           - packages/auth_repository
+          - packages/contact_repository
           - packages/device_store
           - packages/face_blur
           - packages/flyer_repository
+          - packages/link_opener
           - packages/needs_repository
           - packages/onboarding_repository
           - packages/organiser_repository

@@ -1,0 +1,20 @@
+name: contact_repository
+description: How a member reaches a person, by a mail to Ronda's contact address or a call to a helpline, over link_opener.
+version: 0.1.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ^3.47.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  link_opener:
+    path: ../link_opener
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+  very_good_analysis: ^11.0.0

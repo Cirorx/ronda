@@ -5,6 +5,7 @@ import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:contact_repository/contact_repository.dart';
 import 'package:device_store/device_store.dart';
 import 'package:face_blur/face_blur.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -15,6 +16,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:flyer_repository/flyer_repository.dart';
+import 'package:link_opener/link_opener.dart';
 import 'package:needs_repository/needs_repository.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:organiser_repository/organiser_repository.dart';
@@ -31,6 +33,7 @@ import 'package:voice_recorder/voice_recorder.dart';
 /// Builds the root widget from the repositories bootstrap constructs.
 typedef AppBuilder = FutureOr<Widget> Function({
   required AuthRepository authRepository,
+  required ContactRepository contactRepository,
   required FlyerRepository flyerRepository,
   required NeedsRepository needsRepository,
   required OnboardingRepository onboardingRepository,
@@ -71,6 +74,17 @@ class const FirebaseEmulators({
 /// design: browsers receive it to subscribe. Empty until the owner creates
 /// it in the console; without it web uses Firebase's default key, if any.
 const fcmVapidKey = String.fromEnvironment('FCM_VAPID_KEY');
+
+const _contactEmailDefine = String.fromEnvironment('RONDA_CONTACT_EMAIL');
+
+/// Where members write to Ronda from Ajustes ("Contar algo que pasó", "Tus
+/// datos"): `--dart-define=RONDA_CONTACT_EMAIL=…` (`docs/STACK.md` § Pilot
+/// builds), or the brand address when it is missing or empty. A person
+/// reads it, so the owner routes it to an inbox before a build reaches
+/// members.
+const String rondaContactEmail = _contactEmailDefine == ''
+    ? 'hola@ciroapps.com'
+    : _contactEmailDefine;
 
 /// The app's strings in the phone's language, for what shows outside a
 /// screen: the channel's name and the push's buttons.
@@ -228,6 +242,7 @@ Future<void> bootstrap(
   final faceBlur = FaceBlur();
   final flyersApi = FlyersApi(storage: storage, functions: functions);
   final shareSheet = ShareSheet();
+  final linkOpener = LinkOpener();
   // The channel's name shows in the phone's settings, and the push's
   // buttons, in the phone's language.
   final strings = _phoneStrings();
@@ -280,10 +295,15 @@ Future<void> bootstrap(
     rondaApi: rondaApi,
   );
   final organiserRepository = OrganiserRepository(organiserApi: organiserApi);
+  final contactRepository = ContactRepository(
+    linkOpener: linkOpener,
+    email: rondaContactEmail,
+  );
 
   runApp(
     await builder(
       authRepository: authRepository,
+      contactRepository: contactRepository,
       flyerRepository: flyerRepository,
       needsRepository: needsRepository,
       onboardingRepository: onboardingRepository,

@@ -27,7 +27,8 @@ options="lib/firebase_options_$flavor.dart"
 # The FCM service worker carries the web config inline, so it comes from the same options.
 dart tool/firebase_messaging_sw.dart "$options"
 flutter build web --release --base-href /app/ -t "lib/main_$flavor.dart" \
-  --dart-define=FCM_VAPID_KEY="${FCM_VAPID_KEY:-}"
+  --dart-define=FCM_VAPID_KEY="${FCM_VAPID_KEY:-}" \
+  --dart-define=RONDA_CONTACT_EMAIL="${RONDA_CONTACT_EMAIL:-}"
 grep -q '<base href="/app/">' build/web/index.html || fail "build/web/index.html has no /app/ base href."
 
 rm -rf hosting/app

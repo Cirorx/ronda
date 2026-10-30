@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:auth_repository/auth_repository.dart';
+import 'package:contact_repository/contact_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flyer_repository/flyer_repository.dart';
@@ -29,6 +30,8 @@ import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 class _MockAuthRepository extends Mock implements AuthRepository;
+
+class _MockContactRepository extends Mock implements ContactRepository;
 
 class _MockNeedsRepository extends Mock implements NeedsRepository;
 
@@ -61,6 +64,7 @@ Finder _tab(String label) =>
 void main() {
   group(App, () {
     late AuthRepository authRepository;
+    late ContactRepository contactRepository;
     late NeedsRepository needsRepository;
     late ProfileRepository profileRepository;
     late RondaRepository rondaRepository;
@@ -85,6 +89,8 @@ void main() {
 
     setUp(() {
       authRepository = _MockAuthRepository();
+      contactRepository = _MockContactRepository();
+      when(() => contactRepository.email).thenReturn('hola@example.com');
       needsRepository = _MockNeedsRepository();
       profileRepository = _MockProfileRepository();
       rondaRepository = _MockRondaRepository();
@@ -158,6 +164,7 @@ void main() {
 
     Widget buildSubject() => App(
       authRepository: authRepository,
+      contactRepository: contactRepository,
       flyerRepository: flyerRepository,
       needsRepository: needsRepository,
       onboardingRepository: onboardingRepository,
@@ -254,7 +261,7 @@ void main() {
         expect(_tab('Mi ronda'), findsOneWidget);
         expect(_tab('Cerca'), findsOneWidget);
         expect(_tab('Ajustes'), findsOneWidget);
-        expect(find.text('Estamos armando tu grupo'), findsOneWidget);
+        expect(find.text('Todavía no tenés grupo'), findsOneWidget);
       });
 
       testWidgets('the tabs in English on an en_US device', (tester) async {
@@ -270,7 +277,7 @@ void main() {
         expect(_tab('My ronda'), findsOneWidget);
         expect(_tab('Nearby'), findsOneWidget);
         expect(_tab('Settings'), findsOneWidget);
-        expect(find.text("We're putting your group together"), findsOneWidget);
+        expect(find.text("You don't have a group yet"), findsOneWidget);
       });
     });
 
@@ -305,6 +312,28 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(CercaPage), findsOneWidget);
+      });
+
+      testWidgets('to each Ajustes screen and back', (tester) async {
+        await pumpSignedIn(tester);
+        await tester.tap(_tab('Settings'));
+        await tester.pumpAndSettle();
+
+        for (final (row, page) in [
+          ('Notifications', NotificationsPage),
+          ('Tell us something that happened', ReportPage),
+          ('Your data', YourDataPage),
+        ]) {
+          await tester.tap(find.widgetWithText(ListTile, row));
+          await tester.pumpAndSettle();
+          expect(find.byType(page), findsOneWidget);
+          expect(find.byType(AppShell), findsOneWidget);
+
+          await tester.tap(find.byType(BackButton));
+          await tester.pumpAndSettle();
+          expect(find.byType(page), findsNothing);
+          expect(find.byType(SettingsPage), findsOneWidget);
+        }
       });
 
       testWidgets('from / to $MyRondaPage', (tester) async {
@@ -821,6 +850,28 @@ void main() {
           expect(find.byType(MyRondaPage), findsOneWidget);
           expect(find.byType(SettingsPage), findsNothing);
         });
+      });
+
+      testWidgets('by signing out from Ajustes after the confirmation', (
+        tester,
+      ) async {
+        when(() => pushRepository.unregisterDevice(any()))
+            .thenAnswer((_) async {});
+        when(authRepository.signOut).thenAnswer((_) async {
+          users.add(User.empty);
+        });
+        await pumpSignedIn(tester);
+        await tester.tap(_tab('Settings'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Sign out of this account'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(FilledButton, 'Sign out'));
+        await tester.pumpAndSettle();
+
+        verify(() => pushRepository.unregisterDevice(_user.id)).called(1);
+        verify(authRepository.signOut).called(1);
+        expect(find.byType(WelcomePage), findsOneWidget);
       });
 
       testWidgets('by returning to $WelcomePage when the person signs out', (

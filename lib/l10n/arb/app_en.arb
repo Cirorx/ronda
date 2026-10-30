@@ -16,17 +16,17 @@
     "@settingsTabLabel": {
         "description": "Label of the settings tab"
     },
-    "myRondaPlaceholder": "We're putting your group together",
-    "@myRondaPlaceholder": {
-        "description": "Shown on the My ronda tab before a group exists"
+    "myRondaNoGroupTitle": "You don't have a group yet",
+    "@myRondaNoGroupTitle": {
+        "description": "Mi ronda before the member is in a group: title"
     },
-    "cercaPlaceholder": "No groups here yet",
+    "myRondaNoGroupBody": "We put each group together from neighbours who live nearby and want the same as you. It can take a while, depending on how many sign up. When there's one for you, we'll let you know and you'll see it here.",
+    "@myRondaNoGroupBody": {
+        "description": "Mi ronda before the member is in a group: what happens next, without promising a seat"
+    },
+    "cercaPlaceholder": "Soon you'll see the groups near you with room here. Meanwhile, if you have a group, you'll find it in My ronda.",
     "@cercaPlaceholder": {
-        "description": "Shown on the Nearby tab while there are no groups nearby"
-    },
-    "settingsPlaceholder": "Here you'll be able to take a few weeks off, switch groups or leave Ronda.",
-    "@settingsPlaceholder": {
-        "description": "Placeholder on the Settings tab until the options are built"
+        "description": "Shown on the Nearby tab until the list of groups with room exists"
     },
     "loginTitle": "First, sign in with your account",
     "@loginTitle": {
@@ -1810,5 +1810,175 @@
     "rainMoveError": "It wasn't sent. Try again.",
     "@rainMoveError": {
         "description": "Host: sending failed"
+    },
+    "settingsNotificationsRow": "Notifications",
+    "@settingsNotificationsRow": {
+        "description": "Settings row and screen title: whether notifications are on"
+    },
+    "settingsReportRow": "Tell us something that happened",
+    "@settingsReportRow": {
+        "description": "Settings row and screen title: how to report something to a person, and the helplines"
+    },
+    "settingsDataRow": "Your data",
+    "@settingsDataRow": {
+        "description": "Settings row and screen title: what Ronda keeps and how to change or delete it"
+    },
+    "settingsSignOutRow": "Sign out of this account",
+    "@settingsSignOutRow": {
+        "description": "Settings row that signs out after a confirmation"
+    },
+    "signOutTitle": "Sign out of this account?",
+    "@signOutTitle": {
+        "description": "Sign-out confirmation: title"
+    },
+    "signOutBody": "Your group and your answers stay saved: sign in with the same account and they're still there. Until you do, this phone gets no notifications.",
+    "@signOutBody": {
+        "description": "Sign-out confirmation: what signing out keeps and what it stops"
+    },
+    "signOutConfirm": "Sign out",
+    "@signOutConfirm": {
+        "description": "Sign-out confirmation: the button that signs out"
+    },
+    "signOutCancel": "Never mind",
+    "@signOutCancel": {
+        "description": "Sign-out confirmation: the button that closes it"
+    },
+    "notificationsOn": "Notifications are on.",
+    "@notificationsOn": {
+        "description": "Notifications screen: the phone lets Ronda notify"
+    },
+    "notificationsOff": "Notifications are off.",
+    "@notificationsOff": {
+        "description": "Notifications screen: not allowed yet, and the phone can still ask"
+    },
+    "notificationsUnknown": "We couldn't check whether notifications are on on this phone.",
+    "@notificationsUnknown": {
+        "description": "Notifications screen: the permission could not be read"
+    },
+    "notificationsTurnOn": "Turn on notifications",
+    "@notificationsTurnOn": {
+        "description": "Notifications screen: button that asks the phone's permission again"
+    },
+    "notificationsRefusedHint": "If the phone didn't ask you anything, turn them on in the phone's settings.",
+    "@notificationsRefusedHint": {
+        "description": "Notifications screen: after asking, they are still off"
+    },
+    "reportBody": "Tell us what happened. A person reads it, not a program. The other person won't know you told us.",
+    "@reportBody": {
+        "description": "Report screen: who reads it"
+    },
+    "reportWriteTo": "Write to us at {email}.",
+    "@reportWriteTo": {
+        "description": "Report screen: the contact address",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "reportEmailSubject": "Ronda: something that happened",
+    "@reportEmailSubject": {
+        "description": "Subject of the report email"
+    },
+    "contactEmailButton": "Write an email",
+    "@contactEmailButton": {
+        "description": "Button that opens the mail app on a mail to Ronda"
+    },
+    "contactEmailFailed": "Your email app didn't open. Write to us at {email}.",
+    "@contactEmailFailed": {
+        "description": "Shown when no mail app opened",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "contactCallFailed": "The phone app didn't open. Dial {number}.",
+    "@contactCallFailed": {
+        "description": "Shown when no dialer opened",
+        "placeholders": {
+            "number": {
+                "type": "String"
+            }
+        }
+    },
+    "helplineTitle": "Do you need to talk to someone now?",
+    "@helplineTitle": {
+        "description": "Helpline block: title"
+    },
+    "helplineSuicidePrevention": "Suicide Prevention Line",
+    "@helplineSuicidePrevention": {
+        "description": "Helpline block: Uruguay's suicide prevention line"
+    },
+    "helplineEmergencies": "Emergencies",
+    "@helplineEmergencies": {
+        "description": "Helpline block: emergency number"
+    },
+    "helplineCall": "Call {number}",
+    "@helplineCall": {
+        "description": "Spoken label of a helpline number's button",
+        "placeholders": {
+            "number": {
+                "type": "String"
+            }
+        }
+    },
+    "dataKeepTitle": "What Ronda keeps about you",
+    "@dataKeepTitle": {
+        "description": "Your data screen: heading of what is kept"
+    },
+    "dataKeepProfile": "Your first name, roughly your age and your barrio.",
+    "@dataKeepProfile": {
+        "description": "Your data screen: kept item"
+    },
+    "dataKeepSearch": "Your days and times, the activities you picked and what you bring.",
+    "@dataKeepSearch": {
+        "description": "Your data screen: kept item"
+    },
+    "dataKeepRonda": "Your ronda and your answers: whether you're going each week and whether you carry on.",
+    "@dataKeepRonda": {
+        "description": "Your data screen: kept item"
+    },
+    "dataKeepAccount": "Your Google account, so you can sign in, and a code to send notifications to this phone.",
+    "@dataKeepAccount": {
+        "description": "Your data screen: kept item"
+    },
+    "dataKeepTerms": "When you accepted the terms.",
+    "@dataKeepTerms": {
+        "description": "Your data screen: kept item"
+    },
+    "dataNotKeptTitle": "What we don't keep",
+    "@dataNotKeptTitle": {
+        "description": "Your data screen: heading of what is not kept"
+    },
+    "dataNotKeptAudio": "Your voice note: it's deleted as soon as we read it.",
+    "@dataNotKeptAudio": {
+        "description": "Your data screen: not kept item"
+    },
+    "dataNotKeptNeeds": "What makes it hard for you to go: it stays on this phone only.",
+    "@dataNotKeptNeeds": {
+        "description": "Your data screen: not kept item"
+    },
+    "dataChange": "To change or delete your data, write to us at {email}.",
+    "@dataChange": {
+        "description": "Your data screen: how to change or delete it",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "dataEmailSubject": "Ronda: my data",
+    "@dataEmailSubject": {
+        "description": "Subject of the data email"
+    },
+    "dataEmailBody": "My Ronda account (keep this line so we can find you): {account}",
+    "@dataEmailBody": {
+        "description": "Body of the data email: the member's account id",
+        "placeholders": {
+            "account": {
+                "type": "String"
+            }
+        }
     }
 }

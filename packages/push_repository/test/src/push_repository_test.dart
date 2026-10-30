@@ -400,5 +400,22 @@ void main() {
         expect(subject.snoozePrompt, throwsA(isA<SnoozePromptFailure>()));
       });
     });
+
+    group('clearPromptSnooze', () {
+      test('deletes the stored time', () async {
+        when(() => deviceStore.delete(any())).thenAnswer((_) async {});
+
+        await subject.clearPromptSnooze();
+
+        verify(() => deviceStore.delete(PushRepository.promptSnoozeKey))
+            .called(1);
+      });
+
+      test('throws $SnoozePromptFailure when it cannot be deleted', () {
+        when(() => deviceStore.delete(any())).thenThrow(Exception('keystore'));
+
+        expect(subject.clearPromptSnooze, throwsA(isA<SnoozePromptFailure>()));
+      });
+    });
   });
 }

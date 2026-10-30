@@ -17,6 +17,7 @@ Future<void> main() async {
   await bootstrap(
     ({
       required authRepository,
+      required contactRepository,
       required flyerRepository,
       required needsRepository,
       required onboardingRepository,
@@ -26,6 +27,7 @@ Future<void> main() async {
       required rondaRepository,
     }) => App(
       authRepository: authRepository,
+      contactRepository: contactRepository,
       flyerRepository: flyerRepository,
       needsRepository: needsRepository,
       onboardingRepository: onboardingRepository,

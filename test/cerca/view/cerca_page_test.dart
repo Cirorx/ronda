@@ -19,10 +19,18 @@ void main() {
         );
       });
 
-      testWidgets('its placeholder line', (tester) async {
+      testWidgets('that the list is coming, and where your group shows', (
+        tester,
+      ) async {
         await tester.pumpApp(const CercaPage());
 
-        expect(find.text('Todavía no hay grupos acá'), findsOneWidget);
+        expect(
+          find.text(
+            'Pronto vas a ver acá los grupos cerca tuyo que tienen lugar. '
+            'Mientras tanto, si tenés grupo, lo ves en Mi ronda.',
+          ),
+          findsOneWidget,
+        );
       });
     });
   });

@@ -66,9 +66,10 @@ Target package map (create each when its first feature needs it, with the Very G
 | `device_store` | Data | flutter_secure_storage (needs, and the terms and answers held until sign-in); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
-| `push_repository` | Repository | The notification permission and the FCM token under `users/{uid}/tokens` (over `push_client` + `ronda_api`); the token never leaves it | #27 |
+| `push_repository` | Repository | The notification permission, the "Ahora no" snooze, and the FCM token under `users/{uid}/tokens` (over `push_client` + `ronda_api` + `device_store`); the token never leaves it | #27 |
 | `face_blur` | Data | `image_picker`, ML Kit face detection + `image` pixelation (native only); only it makes a `BlurredPhoto` | #44 |
 | `share_sheet` | Data | share_plus: one file to the phone's share sheet | #44 |
+| `link_opener` | Data | url_launcher: a `mailto:` or `tel:` link to the phone's mail app or dialer | #54 |
 | `flyer_repository` | Repository | The "Un mate de más" flyer: blurred photo → `make_mate_flyer` → share (over `face_blur`, `ronda_api`, `share_sheet`); its upload takes only a `BlurredPhoto` | #44 |
 | `auth_repository` | Repository | `FirebaseAuth` passed in from bootstrap | #13 |
 | `profile_repository` | Repository | Profile, eligible seat ids (over `ronda_api`); the terms and answers held on the phone until sign-in (over `device_store`) | #18 |
@@ -76,6 +77,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | `onboarding_repository` | Repository | Voice note → upload → `extract` → fields (over `voice_recorder` + `ronda_api`) | #19 |
 | `ronda_repository` | Repository | Rondas, weeks, RSVPs, proposals (proposals built in #25), Cerca tuyo's demand by barrio (#52) | #25 |
 | `organiser_repository` | Repository | The organiser agent: the admin's trace (`agent_runs`), a ronda's acta and [Algo estuvo mal], the host's rain proposal and pick, the rain check by hand (over `ronda_api`'s `OrganiserApi`) | #49 |
+| `contact_repository` | Repository | The contact address (`RONDA_CONTACT_EMAIL`) and the helplines: a mail to Ronda or a call, opened in the person's own app (over `link_opener`) | #54 |
 
 Rules the agents apply (from `layered-architecture` and `bloc`):
 - Bootstrap (`main_<flavor>.dart` / `bootstrap.dart`) builds every data client and repository and
@@ -549,6 +551,13 @@ Before any build: `keytool -list -v -keystore ~/.android/debug.keystore -alias a
 -storepass android` for the debug key, `keytool -list -v -keystore <path>.jks -alias upload` for a
 release key.
 
+**Contact address** (`RONDA_CONTACT_EMAIL`). Ajustes' "Contar algo que pasó" and "Tus datos"
+show one address and open a mail to it (`contact_repository`, over `link_opener` and
+url_launcher). It is read once in `lib/bootstrap.dart` from `--dart-define=RONDA_CONTACT_EMAIL=…`;
+missing or empty, it is `hola@ciroapps.com`. Both build scripts below pass the
+`RONDA_CONTACT_EMAIL` environment variable through. The address is public (it is on the screen),
+not a secret. A person must read it: route it to a watched inbox before a build reaches members.
+
 **Android build** (`scripts/distribute_android.sh ["<release notes>"]`): the production release
 APK with `--obfuscate`, uploaded to the `pilot` group with the notes (default: the last commit's
 subject). The app id comes from `lib/firebase_options_production.dart`. Symbols go to
@@ -583,7 +592,8 @@ scripts, and the app's fonts with their OFL licences). No build step, no Firebas
   `firebase deploy` deploys Hosting too: always pass `--only`.
 - `scripts/build_web.sh [production|development]` regenerates the FCM worker from that flavor's
   options, runs `flutter build web --release --base-href /app/` on its entrypoint with
-  `--dart-define=FCM_VAPID_KEY` (required for production), and copies `build/web` to
+  `--dart-define=FCM_VAPID_KEY` (required for production) and `RONDA_CONTACT_EMAIL` (optional,
+  above), and copies `build/web` to
   `hosting/app/`. To try Hosting locally: `scripts/build_web.sh development` with the emulators
   up, then `http://127.0.0.1:5002/app/`.
 - Add to Home Screen (iOS 16.4+, needed for push) uses what `web/` already has: `display:

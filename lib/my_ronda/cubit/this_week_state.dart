@@ -5,7 +5,7 @@ enum ThisWeekStatus {
   /// Reading.
   loading,
 
-  /// The member is in no ronda yet: "Estamos armando tu grupo".
+  /// The member is in no ronda yet: "Todavía no tenés grupo".
   noGroup,
 
   /// [ThisWeekState.week] is their ronda's upcoming meeting.

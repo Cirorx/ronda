@@ -11,6 +11,7 @@ Repository layer. This phone's push notifications for a member, over `push_clien
 | `keepDeviceRegistered(uid)` | Saves every refreshed token while listened to |
 | `unregisterDevice(uid)` | Before sign-out: deletes `users/{uid}/tokens/{token}`, then the FCM token itself (nothing on a browser that never allowed notifications) |
 | `promptSnoozed()` / `snoozePrompt()` | "Ahora no" on the card, remembered on the phone (`push.promptSnoozedAt`) for `promptSnooze`, 7 days |
+| `clearPromptSnooze()` | Forgets "Ahora no" (Ajustes → Avisos), so the card may show again |
 
 The token never leaves this package: callers get none, and `RegisterDeviceFailure` /
 `UnregisterDeviceFailure` / `SnoozePromptFailure` / `PushPermissionFailure` carry no detail. Tests run `ronda_api` over `fake_cloud_firestore`.

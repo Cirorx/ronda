@@ -42,6 +42,8 @@ const returnToParameter = 'from';
 ///   to Mi ronda or onboarding.
 /// - a ronda's flyer (`/volante/{rondaId}`): like the tabs; the server
 ///   decides who may make it.
+/// - Ajustes' screens (`/ajustes/avisos`, `/ajustes/contar`,
+///   `/ajustes/datos`): like the tabs, inside the Ajustes tab.
 /// - a ronda's acta (`/acta/{rondaId}`) and the host's rain proposal
 ///   (`/lluvia/{rondaId}/{week}`, opened from the push): like the tabs; the
 ///   rules decide who reads them.
@@ -178,6 +180,20 @@ GoRouter createAppRouter({
               GoRoute(
                 path: SettingsPage.path,
                 builder: (_, _) => const SettingsPage(),
+                routes: [
+                  GoRoute(
+                    path: NotificationsPage.segment,
+                    builder: (_, _) => const NotificationsPage(),
+                  ),
+                  GoRoute(
+                    path: ReportPage.segment,
+                    builder: (_, _) => const ReportPage(),
+                  ),
+                  GoRoute(
+                    path: YourDataPage.segment,
+                    builder: (_, _) => const YourDataPage(),
+                  ),
+                ],
               ),
             ],
           ),

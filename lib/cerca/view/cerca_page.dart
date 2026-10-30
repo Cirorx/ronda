@@ -1,7 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:ronda/l10n/l10n.dart';
 
-/// The Cerca tab. A placeholder until the list of open places exists.
+/// The Cerca tab. Until the list of open places exists, it says the list is
+/// coming and points to Mi ronda.
 class const CercaPage({super.key}) extends StatelessWidget {
   static const path = '/cerca';
 

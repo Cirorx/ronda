@@ -38,7 +38,8 @@ fi
 version=$(sed -nE 's/^version: *([^ ]+).*/\1/p' pubspec.yaml)
 symbols="symbols/android/$version-$(git rev-parse --short HEAD)"
 flutter build apk --release --flavor production -t lib/main_production.dart \
-  --obfuscate --split-debug-info="$symbols"
+  --obfuscate --split-debug-info="$symbols" \
+  --dart-define=RONDA_CONTACT_EMAIL="${RONDA_CONTACT_EMAIL:-}"
 apk=build/app/outputs/flutter-apk/app-production-release.apk
 
 # The key that signed the APK: its SHA-1 and SHA-256 must be on the Android app in Firebase and
