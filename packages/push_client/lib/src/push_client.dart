@@ -315,7 +315,7 @@ class PushClient {
       body: body,
       payload: buttons?.payload,
       notificationDetails: NotificationDetails(
-        android: _details(actions: buttons?.actions ?? const []),
+        android: _details(body: body, actions: buttons?.actions ?? const []),
       ),
     );
   }
@@ -367,11 +367,12 @@ class PushClient {
       id: id,
       title: title,
       body: body,
-      notificationDetails: NotificationDetails(android: _details()),
+      notificationDetails: NotificationDetails(android: _details(body: body)),
     );
   }
 
   static AndroidNotificationDetails _details({
+    required String body,
     List<AndroidNotificationAction> actions = const [],
   }) => AndroidNotificationDetails(
     rsvpChannelId,
@@ -379,6 +380,8 @@ class PushClient {
     icon: notificationIcon,
     importance: Importance.high,
     priority: Priority.high,
+    // Expanded, the whole body shows: ¿seguimos? ends on who sees the answer.
+    styleInformation: BigTextStyleInformation(body),
     // Each button answers in the background (no app opens) and takes the
     // notification away.
     actions: actions,

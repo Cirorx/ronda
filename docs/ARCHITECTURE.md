@@ -26,8 +26,9 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   ├─ Storage: audio + blurred photos; deleted on success, hourly sweeper, lifecycle as backstop
   ├─ Functions (Python 3.13, 2nd gen):
   │    callables  extract (Transcribe → Spark), propose_groups (CP-SAT, admin), answer_rsvp,
-  │               run_job(name, now?, force?) (admin, for tests and the demo), make_mate_flyer
-  │               (SAM → cutouts, Muse Image background → text + QR in code)
+  │               answer_seguimos, run_job(name, now?, force?) (admin, for tests and the
+  │               demo), make_mate_flyer (SAM → cutouts, Muse Image background → text + QR
+  │               in code)
   │    scheduled  one dispatcher on the hour in Montevideo (`dispatch`) → run_<job>(db, now)
   │               for every job in `jobs.JOBS`; hourly audio sweeper (`sweep_audio`
   │               deletes `audio/` objects older than 1 h); hourly Cerca counts (`refresh_cerca`,
@@ -102,12 +103,16 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 - `rondas/{id}`: pretext, barrio, slot {day, time}, place {name, landmark, lat, lng} (public
   places only), size, status (forming | active | paused | ended), hosts {anfitrion, cola,
   rotatesOn}, despues {kind: none | place | home, label, address?, hostOk}
-  (members-only read; the address is deleted at the end of the day and never sent in a push), season {start, end}, openSeatFromWeek: 4,
+  (members-only read; the address is deleted at the end of the day and never sent in a push),
+  season {start, end} (the ISO dates of its first and last meeting, set by the ¿seguimos? close,
+  which also makes the ronda `active`), openSeatFromWeek: 4,
   rsvpLead {daysBefore 1–6, hour 9–20}? (when the RSVP push goes out, Montevideo time; missing
   or out of range reads as two days before at 19:00, so a Saturday ronda takes Friday with
   `{daysBefore: 1, hour: 19}`).
 - `rondas/{id}/members/{uid}`: brings, state (active | paused | left), joinedAt, pausedUntil?
-  (the first meeting date they are back for, `YYYY-MM-DD`; "Pausar 2 semanas").
+  (the first meeting date they are back for, `YYYY-MM-DD`; "Pausar 2 semanas"), leftAt? (a
+  "no" to ¿seguimos? leaves at its close; the document and `users/{uid}/rondas/{id}` stay, so
+  their phone still finds the ronda and shows "Gracias por venir.").
 - Rules: a ronda and its members list are read by that ronda's members only (a
   `members/{uid}` document for the caller); no client writes either.
 - `users/{uid}/rondas/{rondaId}`: joinedAt. How a member's phone finds their ronda (a query on
@@ -134,8 +139,40 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   not paused and haven't answered. `run_job {name: 'rsvp_push', force: true}` (the admin's
   "Mandarlo ahora") skips the lead time and the meeting-day limit, never the gate or the
   once-a-week mark.
-- `rondas/{id}/private/seguimos`: {uid: yes | no}, written by a callable, read by no client; at
-  the close only the outcome lands on the ronda (`season`), the admin sees counts (#9).
+- ¿Seguimos? (#9, built in #46, `functions/seguimos.py`):
+  - `rondas/{id}/private/seguimos`: askedAt, firstMeeting, asked [uids], answers {uid: yes |
+    no}, choices {uid: join | wait}, then closedAt, outcome (season | didntFill), meeting; or
+    {skipped: "late", skippedAt} when the ask came too late. Read by no client, not even the
+    admin (rules test: `rules/seguimos.test.js`).
+  - `rondas/{id}/seguimos/{uid}`: the member's own question and what came of it, read by that
+    member only: status (open | closed), askedAt, answer?, answeredAt?, then closedAt, outcome
+    (season | gracias | didntFill), alternatives [{rondaId, line, pretext, barrio, slot,
+    placesLeft, next}] (after a no: up to two; below the floor: the nearest), floor?, wait
+    {until, start}?, choice? (join | wait).
+  - `seguimos_counts/{rondaId}`: what /admin shows, read by the admin claim only: line (es-419),
+    status (open | season | didntFill), asked, yes, no, unanswered, choices {join, wait},
+    season?, askedAt, closedAt?, updatedAt. Counts only.
+  - The ask: the `seguimos_ask` job (`run_seguimos_ask(db, now)`) asks every active member of a
+    ronda with no season at 20:00 Montevideo on the day of its first meeting (the next day for
+    an evening slot), once per ronda. The first meeting is the earliest `weeks/` date (which
+    survives a later change of `slot.day`), or the slot's first day after approval when there is
+    none. It catches up on later runs, held 21:00–09:00, but never once the RSVP push for a
+    later meeting has gone out (the ronda is marked `skipped: late`). Push: `data.type:
+    seguimos`, drawn with [Sí] [No].
+  - The answer: `answer_seguimos {rondaId, answer: yes | no}` (members who were asked, while it
+    is open; it can change until the close), or after a close below the floor `{rondaId,
+    choice: join | wait}`. Writes the private answers, the member's own document and the counts
+    in one transaction.
+  - The close runs inside the next RSVP push for that ronda (`rsvp.run_rsvp_push` →
+    `seguimos.close`), with the ronda read at send time. Yeses from members still in ≥ the
+    pretext's floor (`SizeRule.floor`: 4; fútbol 8): `season` is set for `SEASON_WEEKS` (4)
+    meetings from the one the push is for, the ronda becomes `active`, and the RSVP body opens
+    with "Seguimos los martes, hasta el martes 24/11. Nadie sabe qué contestó cada uno."
+    (members the RSVP skips get those words alone). Each "no" leaves (`state: left`) and gets
+    "Gracias por venir." with up to two open rondas within the solver's ten blocks that have
+    places, same pretext first. Below the floor: no season, `status` unchanged, and everyone
+    still in gets the didn't-fill words instead of the RSVP; their pick is recorded for the
+    admin (the bench and threshold flows are #48).
 - `waitlists/{barrio_pretext_slot}`: entries[{uid, at}], threshold: 6, deadline.
 - `bench/{rondaId}`: ordered uids.
 - `avoid/{pairId}`: uidA, uidB (report-apart; read by the solver only).

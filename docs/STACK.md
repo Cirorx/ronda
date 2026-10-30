@@ -62,7 +62,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | Package | Layer | Wraps / owns | First issue |
 |---|---|---|---|
 | `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
-| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `run_job`) | #13 |
+| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`) | #13 |
 | `device_store` | Data | flutter_secure_storage (needs); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
@@ -397,6 +397,22 @@ Built in #45 (`functions/rsvp.py`, `functions/fcm.py`, `packages/push_client`, `
 - **Emulators:** FCM has no emulator, so `fcm.send` sends nothing under `FUNCTIONS_EMULATOR`. A
   second functions emulator is reached with `--dart-define=FIREBASE_FUNCTIONS_PORT=<port>` on
   `main_development.dart`.
+
+Built in #46 (`functions/seguimos.py`, `packages/push_client`, `lib/bootstrap.dart`,
+`lib/my_ronda/`):
+- **The ask** has the RSVP push's shape with `data: {type: "seguimos", rondaId, title, body}`
+  (no week: the server refuses an answer once the question has closed). `PushClient` draws it
+  with "Sí" and "No" (`seguimos.yes` / `seguimos.no`, `SeguimosActionLabels`), and
+  `answerRsvpInBackground` answers either push: `PushClient.seguimosActionFrom` reads the tap
+  and `answer_seguimos` records it through `RondaRepository`. The notice that replaces the push
+  says the answer was saved, never which: it shows on the lock screen.
+- **The close's own messages** ("Gracias por venir.", the didn't-fill words, the season's words
+  for whoever the RSVP skipped) are `data.type: "seguimosResult"`, drawn plain.
+- Every Ronda notification uses `BigTextStyleInformation`, so the expanded notification shows
+  the whole body ("… Nadie del grupo se entera de lo que digas.").
+- Checked 2026-10-29 on the Pixel 8 emulator: one HTTP v1 data message built by the real job
+  showed with [Yes] [No]; [Yes] with the app's process killed recorded the answer through the
+  callable and the notice replaced the push.
 
 ## Native and project checklist
 

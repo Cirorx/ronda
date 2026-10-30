@@ -553,6 +553,11 @@ void main() {
           for (final action in actions) {
             expect(action.showsUserInterface, isFalse);
           }
+          expect(
+            (details.android!.styleInformation! as BigTextStyleInformation)
+                .bigText,
+            '¿Seguimos los sábados?',
+          );
         });
 
         test('shows without buttons when no labels were given', () async {
