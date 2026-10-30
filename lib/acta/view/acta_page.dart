@@ -99,6 +99,7 @@ class const ActaView({super.key}) extends StatelessWidget {
                               alwaysUse24HourFormat: true,
                             ),
                             if (line.byHost) l10n.actaByHost,
+                            if (line.byRule) l10n.actaByRule,
                           ].join(' · '),
                           style: textTheme.labelMedium,
                         ),

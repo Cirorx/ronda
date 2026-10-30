@@ -34,10 +34,13 @@ dates in the examples are demo data. Everything not listed here is out of the bu
     person reads it. There is no in-app report form, no "Bajar una copia" and no "Borrar todo"
     yet: changes and deletions are done by hand on request.
   - Still to come: "Tomarme unas semanas", "Cambiarme de grupo", "Dejar Ronda", "Lo que te
-    complica ir" (on the phone only), "Tu persona de confianza".
+    complica ir" (on the phone only). "Tu persona de confianza" is chosen and changed on Mi
+    ronda for now (§ The weekly loop, Buddy).
 - **Admin** (Ciro only): this week's numbers, grupos propuestos, reportes, "Lo que mandó el
   programa", flyer scans per spot, and "Lugar, hora y anfitriones" (each ronda's public place,
-  hour and hosts, and its latest "¿Quién vino?").
+  hour and hosts, its latest "¿Quién vino?", and how the coming meeting's "¿Abrís vos?" is going:
+  "Buscando quién abre el 5/11: Mirta no puede.", "El 5/11 abre Facu en lugar de Mirta." or
+  "Nadie confirmó que abre el 5/11: Mirta no puede.").
 - (The Bitácora tab from the planilla is not in the build.)
 
 ## Onboarding
@@ -184,8 +187,22 @@ dates in the examples are demo data. Everything not listed here is out of the bu
     confirmar"), the push says the same, and there is no host. The card reads "Abre Mirta.
     Cierra Jorge."; the anfitrión reads "Abrís vos: llegás diez minutos antes y saludás a los que
     van llegando." and the cola "Cerrás vos: te quedás hasta el final." A place that looks like a
-    home or an address is refused ("La ronda se junta solo en lugares públicos"). The monthly
-    turns and "¿Abrís vos?" come later.
+    home or an address is refused ("La ronda se junta solo en lugares públicos").
+  - The monthly turns (#50's `assign_hosts`, built): the admin's pick is this month's turn and
+    stays the override. Each new month the cola opens and the next member, by when they
+    joined, closes, skipping anyone paused or gone. Nothing starts the turns but the admin. The
+    card adds "Este mes abre Jorge y cierra Ana. Los próximos turnos: diciembre, abre Ana y
+    cierra Facu; enero, …", and the acta "Este mes abre Ana y cierra Facu. Así toca por turno."
+    marked "Regla fija". No push: the turns show months ahead.
+  - "¿Abrís vos?" (built): when the anfitrión said "esta no", is paused or gone, or hasn't
+    answered by noon the day before, the cola gets "Mirta no puede el jueves. ¿Abrís vos?" (or
+    "Mirta no confirmó que viene el jueves.") with what opening is, on the card and in a push.
+    The cola has two hours; then everyone else coming gets "Todavía nadie abre el jueves.
+    ¿Abrís vos?", which names nobody. The first [Sí, abro yo] opens it, says "voy" for them, and
+    the card reads "Esta semana abre Facu." ("Esta semana abrís vos: …" for them); they get the
+    attendance ask. With nobody by the start, the admin sees "Nadie confirmó que abre". The
+    anfitrión's "voy" ends it. Nothing is asked from 21:00 to 09:00. Fixed rules in code, not
+    the model; the acta says who was asked and who opens, never why the anfitrión can't.
 - **Bench:** every "esta no" pings the next person on the bench with a deadline: "Se liberó un
   lugar para hoy. Truco en el Club Lagomar, martes 19:30. Estabas en la lista de espera. ¿Lo
   tomás? Tenés hasta las 17:00." [Lo tomo] [Esta vez no]. No fines, ever.
@@ -217,21 +234,40 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   person is asked first. "La ven solo los de este grupo, y la borramos cuando termina el día."
   Members read on the card "Después, si querés: bizcochos en lo de Mirta, Av. Central 1234 (20
   min)"; the push names the home but never carries the address, since it shows on lock screens.
+  - Built (#47): the anfitrión, the cola or whoever opens that week sets it from the card
+    (¿Hay después esta semana?): "Esta semana no", a public place ("¿Qué hay?", "¿Dónde?"),
+    or "En lo de alguien del grupo" (themselves or anyone coming, and the address: "Nunca va en
+    un aviso…"). Someone else's home asks that person first, on their card and in a push that
+    names neither the home nor the address ("Mirta pregunta si el después de esta semana puede
+    ser donde vivís."); members see nothing until [Sí, puede ser]. [Mejor no] deletes the
+    address, and the host reads "Ana prefiere que no sea donde vive." The words pass the word
+    gates (no money, no emoji; a public place can't read as an address). Set before the RSVP
+    push, it rides in it: "Después, si querés, bizcochos en lo de Mirta."; set after, it shows
+    on the card only. The address is deleted once the meeting's day ends.
 - **Attendance:** "¿Quién vino hoy?" — the host taps [Vino] / [No vino] per person; "Nadie más
   ve esta lista." No check-in codes. It is asked an hour into the meeting (20:00 at the latest,
   before the quiet hours) of the anfitrión, or the cola when the anfitrión said "esta no" or
-  is paused; the push opens Mi ronda, whose card shows the anfitrión and the cola "¿Quién vino
-  hoy?" with how many are marked. Taps can be corrected for six days. The list has everyone in
+  is paused (whoever took over opening comes first); a tap on the push opens the roll, on
+  Android too, and the card shows the anfitrión and the cola "¿Quién vino hoy?" with how many
+  are marked. Taps can be corrected for six days. The list has everyone in
   the ronda for that meeting in first-name order, "esta no" included, so it gives nobody's
   answer away. With no host the admin records it from "Lugar, hora y anfitriones". Members
   never see who came; the admin sees the record.
 - **Buddy:** chosen after the first ronda: "Si un día faltás sin avisar, ¿a quién le avisamos?
   Elegí a alguien que ya tenga tu WhatsApp." (a +1 is the natural pick) — "Nadie más se entera,
   y no avisamos a tu familia." After one miss without "esta no", only that person gets "Graciela
-  no vino el jueves. Te eligió a vos para estas cosas. ¿Le escribís? Ella no sabe que te
-  avisamos." [Le escribo] opens WhatsApp with no number and no text: the buddy opens the chat
-  they already have. Ronda never asks for, stores or sends the number (#9). Hidden where WhatsApp
-  can't be opened. [Ahora no]. No escalation, no family.
+  no vino el jueves. Te eligió a vos para estas cosas. ¿Le escribís? Graciela no sabe que te
+  avisamos." (the name again, not "Ella": Ronda keeps no gender). [Le escribo] opens WhatsApp
+  with no number and no text: the buddy opens the chat they already have. Ronda never asks for,
+  stores or sends the number (#9). Hidden where WhatsApp can't be opened, and on web. [Ahora
+  no]. No escalation, no family.
+  - Built (#50's `prompt_buddy`): the question shows on Mi ronda once a meeting has passed
+    since the member joined, with the other members by first name, [Elegir] and [Ahora no]
+    (nobody, which stops the question). Then "Si faltás sin avisar, le avisamos a Ana. Nadie
+    más se entera." [Cambiar], or "…no le avisamos a nadie." [Elegir a alguien]. On Fridays
+    from 10:00, a member marked [No vino] at a meeting in the past week, who hadn't said "esta
+    no" and wasn't paused, is mentioned once to their buddy only: a push, and the card on the
+    buddy's Mi ronda. A fixed rule in code; it is in the admin's trace and never in the acta.
 - **Pause:** "Tomarte unas semanas" — 2 semanas / Un mes / Hasta que yo vuelva, each with its
   return date. "Nadie pregunta por qué." Longer than two weeks, the seat is held two weeks and
   then offered to the bench.

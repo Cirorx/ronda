@@ -203,12 +203,20 @@ class RondaRepository {
       .switchMap(
         (rondaId) => rondaId == null
             ? Stream<ThisWeek?>.value(null)
-            : Rx.combineLatest4(
+            : Rx.combineLatest5(
                 _rondasApi.watchRonda(rondaId),
                 _rondasApi.watchMember(rondaId, uid),
-                _rondasApi.watchWeekView(rondaId),
+                _viewAndDespues(rondaId),
                 _rondasApi.watchAnswer(rondaId, uid),
-                _thisWeek,
+                _rondasApi.watchHandoffAsk(rondaId, uid),
+                (ronda, member, week, answer, handoff) => _thisWeek(
+                  ronda,
+                  member,
+                  week.$1,
+                  answer,
+                  despues: week.$2,
+                  handoff: handoff,
+                ),
               ),
       )
       .handleError(
@@ -222,12 +230,27 @@ class RondaRepository {
       .map((ids) => ids.isEmpty ? null : (ids.toList()..sort()).first)
       .distinct();
 
+  /// The week's view, and the después of the week it shows.
+  Stream<(WeekViewDocument?, DespuesDocument?)> _viewAndDespues(
+    String rondaId,
+  ) => _rondasApi
+      .watchWeekView(rondaId)
+      .switchMap(
+        (view) => view == null
+            ? Stream.value((null, null))
+            : _rondasApi
+                  .watchDespues(rondaId, view.week)
+                  .map((despues) => (view, despues)),
+      );
+
   static ThisWeek? _thisWeek(
     RondaDocument? ronda,
     MemberDocument? member,
     WeekViewDocument? view,
-    AnswerDocument? answer,
-  ) {
+    AnswerDocument? answer, {
+    DespuesDocument? despues,
+    HandoffAskDocument? handoff,
+  }) {
     if (ronda == null || member == null) return null;
     return ThisWeek(
       rondaId: ronda.id,
@@ -259,11 +282,58 @@ class RondaRepository {
             uid: person.uid,
             firstName: person.firstName,
             brings: person.brings,
+            guest: person.guest,
           ),
       ],
       noCount: view?.noCount,
       unansweredCount: view?.unansweredCount,
       hasLeft: member.state == 'left',
+      turns: [
+        for (final turn in ronda.turns)
+          if (DateTime.tryParse('${turn.month}-01') case final month?)
+            HostTurn(
+              month: month,
+              anfitrion: Host(
+                uid: turn.anfitrionUid,
+                firstName: turn.anfitrionName,
+              ),
+              cola: Host(uid: turn.colaUid, firstName: turn.colaName),
+            ),
+      ],
+      opener: ronda.openerWeek != null && ronda.openerWeek == view?.week
+          ? _hostOf(ronda.openerUid, ronda.openerName)
+          : null,
+      despues: switch (despues) {
+        final despues? when despues.week == view?.week => _despues(despues),
+        _ => null,
+      },
+      handoffAsk: switch (handoff) {
+        HandoffAskDocument(:final week, status: 'open')
+            when week == view?.week =>
+          HandoffAsk(
+            week: week,
+            date: DateTime.tryParse(handoff.date) ?? DateTime(0),
+            hour: handoff.hour,
+            fromName: handoff.fromName.isEmpty ? null : handoff.fromName,
+            reason: HandoffReason.values.asNameMap()[handoff.reason],
+          ),
+        _ => null,
+      },
+    );
+  }
+
+  static Despues? _despues(DespuesDocument despues) {
+    final kind = DespuesKind.values.asNameMap()[despues.kind];
+    final status = DespuesStatus.values.asNameMap()[despues.status];
+    if (kind == null || status == null) return null;
+    return Despues(
+      kind: kind,
+      status: status,
+      setBy: Host(uid: despues.setByUid, firstName: despues.setByName),
+      what: despues.what,
+      where: despues.where,
+      homeOf: _hostOf(despues.homeOfUid, despues.homeName),
+      address: despues.address,
     );
   }
 
@@ -504,9 +574,147 @@ class RondaRepository {
               ),
             _ => null,
           },
+          handoff: switch (row.handoff) {
+            final handoff?
+                when DateTime.tryParse(handoff.date) != null &&
+                    HandoffStep.values.asNameMap()[handoff.step] != null =>
+              HandoffSummary(
+                date: DateTime.parse(handoff.date),
+                step: HandoffStep.values.byName(handoff.step),
+                fromName: handoff.fromName,
+                takenName: handoff.takenName,
+              ),
+            _ => null,
+          },
         ),
     ];
   });
+
+  /// Sets ronda [rondaId]'s después for its upcoming meeting of [week]:
+  /// [kind] with [what], and [where] for a public place, or [homeOfUid]
+  /// (the caller when `null`) and [address] for a home. This week's hosts
+  /// only.
+  ///
+  /// Throws a [HostsFailure]: [HostsFailureReason.notPublic] when the words
+  /// aren't allowed (an address for a public place, money, an emoji).
+  Future<void> setDespues({
+    required String rondaId,
+    required String week,
+    required DespuesKind kind,
+    String? what,
+    String? where,
+    String? homeOfUid,
+    String? address,
+  }) => _hostsGuard(
+    () => _rondasApi.setDespues(
+      rondaId: rondaId,
+      week: week,
+      kind: kind.name,
+      what: what,
+      where: where,
+      homeOfUid: homeOfUid,
+      address: address,
+    ),
+    refused: HostsFailureReason.notPublic,
+  );
+
+  /// Says whether the después of ronda [rondaId]'s meeting of [week] may be
+  /// at the caller's home.
+  ///
+  /// Throws a [HostsFailure]: [HostsFailureReason.passed] once there is
+  /// nothing to answer.
+  Future<void> answerDespues({
+    required String rondaId,
+    required String week,
+    required bool yes,
+  }) => _hostsGuard(
+    () => _rondasApi.answerDespues(rondaId: rondaId, week: week, yes: yes),
+    refused: HostsFailureReason.passed,
+  );
+
+  /// "Sí, abro yo" ([yes]) or "Hoy no puedo" for ronda [rondaId]'s meeting
+  /// of [week].
+  ///
+  /// Throws a [HostsFailure]: [HostsFailureReason.passed] once someone else
+  /// opens it or the question closed.
+  Future<void> answerHandoff({
+    required String rondaId,
+    required String week,
+    required bool yes,
+  }) => _hostsGuard(
+    () => _rondasApi.answerHandoff(rondaId: rondaId, week: week, yes: yes),
+    refused: HostsFailureReason.passed,
+  );
+
+  /// [uid]'s open buddy card in their ronda, now and on every change;
+  /// `null` while there is none. The stream errors with a [HostsFailure].
+  Stream<BuddyAsk?> watchBuddyAsk(String uid) => _myRondaId(uid)
+      .switchMap(
+        (rondaId) => rondaId == null
+            ? Stream<BuddyAsk?>.value(null)
+            : _rondasApi
+                  .watchBuddyAsk(rondaId, uid)
+                  .map(
+                    (card) =>
+                        card == null ||
+                            card.status != 'open' ||
+                            card.asks.isEmpty
+                        ? null
+                        : BuddyAsk(
+                            rondaId: rondaId,
+                            misses: [
+                              for (final miss in card.asks)
+                                BuddyMiss(
+                                  firstName: miss.firstName,
+                                  dayId: miss.day,
+                                ),
+                            ],
+                          ),
+                  ),
+      )
+      .handleError(
+        (Object error) => throw _hostsFailure(error),
+        test: (error) => error is Exception,
+      );
+
+  /// Closes [uid]'s buddy card in ronda [rondaId] ([Le escribo], [Ahora
+  /// no]).
+  ///
+  /// Throws a [HostsFailure].
+  Future<void> closeBuddyAsk({required String rondaId, required String uid}) =>
+      _hostsGuard(() => _rondasApi.closeBuddyAsk(rondaId, uid));
+
+  /// Whether it is time for the caller to choose a buddy in ronda
+  /// [rondaId], who they could choose, and who they chose.
+  ///
+  /// Throws a [HostsFailure].
+  Future<BuddyOptions> buddyOptions(String rondaId) => _hostsGuard(() async {
+    final document = await _rondasApi.buddyOptions(rondaId);
+    return BuddyOptions(
+      due: document.due,
+      chosen: document.chosen,
+      choices: [
+        for (final choice in document.choices)
+          SetupMember(uid: choice.uid, firstName: choice.firstName),
+      ],
+      buddy: switch ((document.buddyUid, document.buddyName)) {
+        (final uid?, final name) => SetupMember(
+          uid: uid,
+          firstName: name ?? '',
+        ),
+        _ => null,
+      },
+    );
+  });
+
+  /// Saves the caller's buddy in ronda [rondaId]: [buddyUid], or `null`
+  /// for nobody ("Ahora no").
+  ///
+  /// Throws a [HostsFailure].
+  Future<void> setBuddy({required String rondaId, String? buddyUid}) =>
+      _hostsGuard(
+        () => _rondasApi.setBuddy(rondaId: rondaId, buddyUid: buddyUid),
+      );
 
   /// Sets ronda [rondaId]'s public place, hour and hosts at once; a `null`
   /// takes each one away. Admin only.

@@ -6,3 +6,4 @@ export 'proposal.dart';
 export 'ronda_candidates.dart';
 export 'seguimos.dart';
 export 'this_week.dart';
+export 'weekly_loop.dart';

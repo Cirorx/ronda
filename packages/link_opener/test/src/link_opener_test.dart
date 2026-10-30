@@ -8,6 +8,21 @@ void main() {
       expect(LinkOpener(), isA<LinkOpener>());
     });
 
+    group('canOpen', () {
+      test('asks the platform whether an app takes the link', () async {
+        Uri? asked;
+        final opener = LinkOpener(
+          canLaunch: (url) async {
+            asked = url;
+            return true;
+          },
+        );
+
+        expect(await opener.canOpen(Uri.parse('whatsapp://send')), isTrue);
+        expect(asked, equals(Uri.parse('whatsapp://send')));
+      });
+    });
+
     group('open', () {
       final uri = Uri.parse('tel:911');
 

@@ -30,6 +30,13 @@ final class const ThisWeekState({
 
   /// The "Esta no" sheet is up.
   final bool estaNoSheet = false,
+
+  /// An answer to "¿Abrís vos?" or to the después at this member's home is
+  /// on its way.
+  final bool acting = false,
+
+  /// Why the last of those answers wasn't saved.
+  final HostsFailureReason? actionFailure,
 }) extends Equatable {
   /// Whether the card asks "¿Venís?": nothing answered yet (a pause answers
   /// for them), or changing it.
@@ -41,6 +48,8 @@ final class const ThisWeekState({
     bool? answerFailed,
     bool? changing,
     bool? estaNoSheet,
+    bool? acting,
+    HostsFailureReason? Function()? actionFailure,
   }) => ThisWeekState(
     status: status,
     week: week,
@@ -48,6 +57,8 @@ final class const ThisWeekState({
     answerFailed: answerFailed ?? this.answerFailed,
     changing: changing ?? this.changing,
     estaNoSheet: estaNoSheet ?? this.estaNoSheet,
+    acting: acting ?? this.acting,
+    actionFailure: actionFailure == null ? this.actionFailure : actionFailure(),
   );
 
   @override
@@ -58,5 +69,7 @@ final class const ThisWeekState({
     answerFailed,
     changing,
     estaNoSheet,
+    acting,
+    actionFailure,
   ];
 }

@@ -95,6 +95,9 @@ void main() {
           onDidReceiveBackgroundNotificationResponse: any(
             named: 'onDidReceiveBackgroundNotificationResponse',
           ),
+          onDidReceiveNotificationResponse: any(
+            named: 'onDidReceiveNotificationResponse',
+          ),
         ),
       ).thenAnswer((_) async => true);
       when(
@@ -187,6 +190,9 @@ void main() {
             verify(
                   () => notifications.initialize(
                     settings: captureAny(named: 'settings'),
+                    onDidReceiveNotificationResponse: any(
+                      named: 'onDidReceiveNotificationResponse',
+                    ),
                   ),
                 ).captured.single
                 as InitializationSettings;
@@ -481,6 +487,9 @@ void main() {
             () => notifications.initialize(
               settings: any(named: 'settings'),
               onDidReceiveBackgroundNotificationResponse: _onRsvpAction,
+              onDidReceiveNotificationResponse: any(
+                named: 'onDidReceiveNotificationResponse',
+              ),
             ),
           ).called(1);
         });
@@ -753,6 +762,130 @@ void main() {
           );
 
           verifyNothingShown();
+        });
+      });
+      group('taps that open a screen', () {
+        NotificationResponse body(String? payload, {String? actionId}) =>
+            NotificationResponse(
+              notificationResponseType:
+                  NotificationResponseType.selectedNotification,
+              actionId: actionId,
+              payload: payload,
+            );
+
+        const roll = '{"type":"attendance","rondaId":"r1","week":"2026-W45"}';
+
+        test(
+          'the attendance ask carries its ronda and week to the tap',
+          () async {
+            await buildSubject().showMessage(
+              const RemoteMessage(
+                messageId: 'message-5',
+                data: {
+                  'type': 'attendance',
+                  'rondaId': 'r1',
+                  'week': '2026-W45',
+                  'title': '¿Quién vino hoy?',
+                  'body': 'Marcá quién vino.',
+                },
+              ),
+            );
+
+            final payload = verify(
+              () => notifications.show(
+                id: any(named: 'id'),
+                title: any(named: 'title'),
+                body: any(named: 'body'),
+                notificationDetails: any(named: 'notificationDetails'),
+                payload: captureAny(named: 'payload'),
+              ),
+            ).captured.single;
+            expect(payload, equals(roll));
+          },
+        );
+
+        test('tapFrom reads a tap on the body of the attendance ask', () {
+          final tap = PushClient.tapFrom(body(roll))!;
+
+          expect(
+            (tap.type, tap.rondaId, tap.week),
+            ('attendance', 'r1', '2026-W45'),
+          );
+        });
+
+        test(
+          'tapFrom ignores buttons, other pushes and malformed payloads',
+          () {
+            expect(PushClient.tapFrom(null), isNull);
+            expect(
+              PushClient.tapFrom(body(roll, actionId: 'rsvp.yes')),
+              isNull,
+            );
+            expect(
+              PushClient.tapFrom(body('{"rondaId":"r1","week":"w"}')),
+              isNull,
+            );
+            expect(PushClient.tapFrom(body('not json')), isNull);
+            expect(PushClient.tapFrom(body(null)), isNull);
+          },
+        );
+
+        test('a tap while the app runs comes out of taps', () async {
+          final subject = buildSubject();
+          await subject.initialize(
+            channelName: 'name',
+            channelDescription: 'd',
+          );
+          final handler =
+              verify(
+                    () => notifications.initialize(
+                      settings: any(named: 'settings'),
+                      onDidReceiveNotificationResponse: captureAny(
+                        named: 'onDidReceiveNotificationResponse',
+                      ),
+                    ),
+                  ).captured.single
+                  as DidReceiveNotificationResponseCallback;
+
+          final tapped = expectLater(
+            subject.taps,
+            emits(isA<PushTap>().having((t) => t.rondaId, 'rondaId', 'r1')),
+          );
+          handler(body('{"rondaId":"r1"}'));
+          handler(body(roll));
+          await tapped;
+        });
+
+        test('launchTap reads the tap that started the app', () async {
+          when(() => notifications.getNotificationAppLaunchDetails())
+              .thenAnswer(
+                (_) async => NotificationAppLaunchDetails(
+                  true,
+                  notificationResponse: body(roll),
+                ),
+              );
+
+          expect((await buildSubject().launchTap())?.week, '2026-W45');
+        });
+
+        test(
+          'launchTap is null when no notification started the app',
+          () async {
+            when(() => notifications.getNotificationAppLaunchDetails())
+                .thenAnswer(
+                  (_) async => const NotificationAppLaunchDetails(false),
+                );
+            expect(await buildSubject().launchTap(), isNull);
+
+            when(() => notifications.getNotificationAppLaunchDetails())
+                .thenAnswer((_) async => null);
+            expect(await buildSubject().launchTap(), isNull);
+          },
+        );
+
+        test('launchTap is null on web', () async {
+          expect(await buildSubject(isWeb: true).launchTap(), isNull);
+          verifyNever(() => notifications.getNotificationAppLaunchDetails());
         });
       });
     });

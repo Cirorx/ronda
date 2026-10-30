@@ -95,8 +95,9 @@ void main() {
         findsOneWidget,
       );
       const rondaKept =
-          'Tu ronda y tus respuestas: si vas cada semana, si seguís y si '
-          'fuiste (lo anota quien abre).';
+          'Tu ronda y tus respuestas: si vas cada semana, si seguís, si '
+          'fuiste (lo anota quien abre) y a quién le avisamos si faltás sin '
+          'avisar.';
       for (final text in [
         'Lo que Ronda guarda de vos',
         'Tu nombre de pila, tu edad más o menos y tu barrio.',

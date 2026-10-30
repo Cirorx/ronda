@@ -2,6 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ronda/attendance/widgets/roll_link.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/this_week_cubit.dart';
+import 'package:ronda/my_ronda/widgets/despues_section.dart';
+import 'package:ronda/my_ronda/widgets/handoff_ask.dart';
 import 'package:ronda/my_ronda/widgets/this_week_labels.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -11,7 +13,8 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// and "Esta no" (or the answer and "Cambiar mi respuesta"), and who's
 /// coming: the yeses by first name, their role and what they bring, only
 /// counts for the rest. The anfitrión and the cola also get "¿Quién vino
-/// hoy?" once the meeting's roll exists.
+/// hoy?" once the meeting's roll exists. It carries the monthly turns,
+/// "¿Abrís vos?" while it is open to this member, and the después.
 class const ThisWeekCard({
   required final ThisWeekState state,
   required final String uid,
@@ -96,8 +99,12 @@ class const ThisWeekCard({
                   Text(l10n.placeLine(week), style: textTheme.bodyLarge),
                   if (l10n.hostsLine(week, uid: uid) case final hosts?)
                     Text(hosts, style: textTheme.bodyMedium),
+                  if (l10n.turnsLine(week) case final turns?)
+                    Text(turns, style: textTheme.bodySmall),
                 ],
               ),
+              if (week.handoffAsk case final ask?) HandoffAskSection(ask: ask),
+              DespuesSection(week: week, uid: uid),
               if (state.answering) const LinearProgressIndicator(),
               if (state.answerFailed)
                 NoteBanner(

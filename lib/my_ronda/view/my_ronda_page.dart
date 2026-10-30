@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:push_repository/push_repository.dart';
 import 'package:ronda/acta/acta.dart';
 import 'package:ronda/app/app.dart';
+import 'package:ronda/buddy/buddy.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/bench_offer_cubit.dart';
 import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
@@ -20,10 +21,10 @@ import 'package:ronda_ui/ronda_ui.dart';
 
 /// The Mi ronda tab: the notifications ask on top while it's pending, then
 /// an offer of a freed seat from a bench while one matters, the ¿seguimos?
-/// card while there is one, then this week's card, or "Todavía no tenés
-/// grupo" with the waiting list's card before a group exists. A
-/// member who left at the ¿seguimos? close sees only that card ("Gracias por
-/// venir.").
+/// card while there is one, then this week's card and the buddy, or
+/// "Todavía no tenés grupo" with the waiting list's card before a group
+/// exists. A member who left at the ¿seguimos? close sees only that card
+/// ("Gracias por venir.").
 ///
 /// It is where everyone with a profile lands, right after onboarding saves,
 /// so the [PushCubit] it provides also keeps this phone's token saved.
@@ -150,8 +151,10 @@ class const MyRondaView({required final String uid, super.key})
                   const SizedBox.shrink(),
                 ThisWeekStatus.ready => ThisWeekCard(state: state, uid: uid),
               },
-              if (state.week case final week? when !week.hasLeft)
+              if (state.week case final week? when !week.hasLeft) ...[
+                BuddySection(rondaId: week.rondaId, uid: uid),
                 ActaLink(rondaId: week.rondaId),
+              ],
             ],
           ),
         ),

@@ -20,6 +20,10 @@ abstract final class MyRondaFixtures {
     Host? cola,
     DateTime? pausedUntil,
     bool withView = true,
+    Host? opener,
+    List<HostTurn> turns = const [],
+    Despues? despues,
+    HandoffAsk? handoffAsk,
   }) => ThisWeek(
     rondaId: 'r1',
     pretextId: 'mate',
@@ -39,6 +43,33 @@ abstract final class MyRondaFixtures {
     going: withView ? going : const [],
     noCount: withView ? noCount : null,
     unansweredCount: withView ? unansweredCount : null,
+    opener: opener,
+    turns: turns,
+    despues: despues,
+    handoffAsk: handoffAsk,
+  );
+
+  static const mirta = Host(uid: 'demo-101', firstName: 'Mirta');
+  static const jorge = Host(uid: 'demo-102', firstName: 'Jorge');
+  static const me = Host(uid: uid, firstName: 'Ana');
+
+  /// Saturday 31/10's "¿Abrís vos?" to the cola: Mirta said "esta no".
+  static final handoffAsk = HandoffAsk(
+    week: '2026-W44',
+    date: DateTime(2026, 10, 31),
+    hour: '16:00',
+    fromName: 'Mirta',
+    reason: HandoffReason.no,
+  );
+
+  /// The después at Mirta's home, an invented address.
+  static const homeDespues = Despues(
+    kind: DespuesKind.home,
+    status: DespuesStatus.set,
+    setBy: mirta,
+    what: 'bizcochos',
+    homeOf: mirta,
+    address: 'Av. Central 1234',
   );
 
   static Seguimos seguimos({

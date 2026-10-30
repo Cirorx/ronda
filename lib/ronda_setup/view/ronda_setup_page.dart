@@ -162,6 +162,9 @@ class const _RondaCard(final RondaSetup ronda) extends StatelessWidget {
               l10n.setupHosts(name(ronda.anfitrionUid), name(ronda.colaUid)),
               style: textTheme.bodyMedium,
             ),
+            if (ronda.handoff case final handoff?)
+              if (_handoffLine(l10n, handoff) case final line?)
+                Text(line, style: textTheme.bodyMedium),
             SizedBox(height: spacing.xs),
             MergeSemantics(
               child: Semantics(
@@ -191,4 +194,22 @@ class const _RondaCard(final RondaSetup ronda) extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The upcoming meeting's "¿Abrís vos?" on the admin's list: who is being
+/// looked for, who opens instead, or that nobody does; nothing once the
+/// anfitrión said "voy" after all.
+String? _handoffLine(AppLocalizations l10n, HandoffSummary handoff) {
+  final date = l10n.shortDate(handoff.date);
+  return switch (handoff.step) {
+    HandoffStep.cola ||
+    HandoffStep.members => l10n.setupHandoffAsking(date, handoff.fromName),
+    HandoffStep.taken => l10n.setupHandoffTaken(
+      date,
+      handoff.takenName ?? '',
+      handoff.fromName,
+    ),
+    HandoffStep.nobody => l10n.setupHandoffNobody(date, handoff.fromName),
+    HandoffStep.back => null,
+  };
 }

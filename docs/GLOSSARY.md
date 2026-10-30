@@ -24,14 +24,16 @@ issues, docs, code, commit messages.
 | `Season` | temporada | The run of weeks a ronda commits to after ¿seguimos? |
 | `Seguimos` | ¿seguimos? | The private vote after the first meeting; the season starts when the yeses reach the pretext's floor (4; fútbol 8) |
 | `Rsvp` | voy / esta no | The weekly answer. Default is in; "esta no" never asks why |
-| `Anfitrion` | abre ("llega primero") | The host who opens the meeting this month; set by the admin with the place and the hour (`RondaSetup`) |
-| `Cola` | cierra ("se queda al final") | The co-host who closes; asked first when the anfitrión can't |
+| `Anfitrion` | abre ("llega primero") | The host who opens the meeting this month; set by the admin with the place and the hour (`RondaSetup`), then by the monthly turns |
+| `Cola` | cierra ("se queda al final") | The co-host who closes; asked first when the anfitrión can't, and next month's anfitrión |
+| `HostTurn` | "Este mes abre Jorge y cierra Ana" | One month's anfitrión and cola; a ronda carries this month's and the next two (`turns`). The cola opens next month and the next member closes |
+| `Handoff` | ¿Abrís vos? | Finding someone to open one meeting when the anfitrión can't: the cola, then the others coming, then the admin. Whoever says yes is that week's `opener` |
 | `Attendance` | ¿Quién vino hoy? | Who came to a meeting, by [Vino] / [No vino]: tapped by the anfitrión or the cola on the meeting's roll (`AttendanceRoll`), read by the admin only |
 | `Bench` | banco | Ordered neighbours who take a seat freed by an "esta no" that week: seated nowhere, same pretext and slot, within ten blocks, the seat passing their needs filter, longest waiting first |
 | `BenchOffer` | "se liberó un lugar" | One freed seat offered to one person on the bench, with a deadline: [Lo tomo] [Esta vez no] |
 | `Guest` | (vas esta vez) | Who took a freed seat: goes to that one meeting, listed in "who's coming" and on the roll, never a member |
-| `Despues` | después | The optional 20-minute after-spot the host sets each week; may be a member's home, shown only to that ronda; its address is deleted when the day ends |
-| `Buddy` | tu persona de confianza | The member someone chose to write to them after one missed week |
+| `Despues` | después | The optional 20-minute after-spot the host sets each week; may be a member's home (asked first when it isn't the host's), shown only to that ronda; its address is deleted when the day ends |
+| `Buddy` | tu persona de confianza | The member someone chose to write to them after one missed week (`users/{uid}.buddyUid`); told on Friday, by first name only, and opens WhatsApp with no number |
 | `Acta` | lo que hizo el programa | The members' log of every organiser-agent action, with "Algo estuvo mal" |
 | `AgentRun` | (admin only) | One run of the organiser agent; its steps are the trace, each labelled with who decided it (`by`: code, model or person) |
 | `Gate` | (none) | A rule in code that every outgoing message passes (quiet hours, no emoji, voseo, no money, bot disclosure, one routine push a week) |

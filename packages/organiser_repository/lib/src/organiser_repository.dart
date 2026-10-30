@@ -50,6 +50,7 @@ class OrganiserRepository {
                 at: entry.ts,
                 summary: entry.summary,
                 byHost: entry.decidedBy == 'host',
+                byRule: entry.decidedBy == 'rule',
               ),
         ],
       );

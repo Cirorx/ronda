@@ -91,6 +91,32 @@ void main() {
           throwsA(isA<ContactFailure>()),
         );
       });
+      group('WhatsApp', () {
+        test('opens it with no number and no text', () async {
+          await build().openWhatsApp();
+
+          expect(opened(), equals(Uri.parse('whatsapp://send')));
+        });
+
+        test('says whether the phone has it', () async {
+          when(() => linkOpener.canOpen(any())).thenAnswer((_) async => true);
+          expect(await build().canOpenWhatsApp(), isTrue);
+
+          when(() => linkOpener.canOpen(any())).thenThrow(Exception('plugin'));
+          expect(await build().canOpenWhatsApp(), isFalse);
+        });
+
+        test('never on web', () async {
+          final web = ContactRepository(
+            linkOpener: linkOpener,
+            email: _email,
+            isWeb: true,
+          );
+
+          expect(await web.canOpenWhatsApp(), isFalse);
+          verifyNever(() => linkOpener.canOpen(any()));
+        });
+      });
     });
   });
 }

@@ -86,6 +86,49 @@ void main() {
       expect(find.textContaining('Quién vino'), findsNothing);
     });
 
+    testWidgets('says how the upcoming "¿Abrís vos?" is going', (tester) async {
+      RondaSetup withHandoff(String id, HandoffStep step) => RondaSetup(
+        rondaId: id,
+        pretextId: 'mate',
+        barrioId: 'el-pinar-sur',
+        slotDayId: 'thu',
+        slotBandId: 'afternoon',
+        members: const [],
+        handoff: HandoffSummary(
+          date: DateTime(2026, 11, 5),
+          step: step,
+          fromName: 'Mirta',
+          takenName: step == HandoffStep.taken ? 'Facu' : null,
+        ),
+      );
+      await pump(
+        tester,
+        RondaSetupState(
+          status: RondaSetupStatus.ready,
+          rondas: [
+            withHandoff('a', HandoffStep.cola),
+            withHandoff('b', HandoffStep.taken),
+            withHandoff('c', HandoffStep.nobody),
+            withHandoff('d', HandoffStep.back),
+          ],
+        ),
+      );
+
+      expect(
+        find.text('Buscando quién abre el 5/11: Mirta no puede.'),
+        findsOneWidget,
+      );
+      expect(find.text('El 5/11 abre Facu en lugar de Mirta.'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Nadie confirmó que abre el 5/11: Mirta no puede.'),
+        200,
+      );
+      expect(
+        find.text('Nadie confirmó que abre el 5/11: Mirta no puede.'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('a ronda set up shows all three and its latest roll', (
       tester,
     ) async {

@@ -134,6 +134,25 @@ class const BenchOfferAction({
   this;
 }
 
+/// {@template push_tap}
+/// A tap on a notification's body (not on one of its buttons) that should
+/// open a screen of its own: which kind of push, its ronda and its
+/// meeting's week.
+/// {@endtemplate}
+class const PushTap({
+  /// The push's `data.type` (`attendance`).
+  required final String type,
+
+  /// The ronda's id.
+  required final String rondaId,
+
+  /// The meeting's ISO week (`2026-W45`).
+  required final String week,
+}) {
+  /// {@macro push_tap}
+  this;
+}
+
 /// {@template push_client}
 /// Firebase Cloud Messaging and the phone's notifications for Ronda.
 ///
@@ -149,8 +168,10 @@ class const BenchOfferAction({
 /// "seguimos"`) gets "Sí" and "No" the same way, read by
 /// [seguimosActionFrom]. The offer of a freed seat (`data.type ==
 /// "benchOffer"`) gets "Lo tomo" and "Esta vez no", read by
-/// [benchOfferActionFrom]. On web, notifications are the service worker's and
-/// the browser's.
+/// [benchOfferActionFrom]. A tap on the body of the attendance ask
+/// (`data.type == "attendance"`) comes out of [taps], or [launchTap] when it
+/// started the app, so the app opens the roll instead of Mi ronda. On web,
+/// notifications are the service worker's and the browser's.
 ///
 /// It logs nothing, and the token it returns must never reach a log either.
 /// {@endtemplate}
@@ -218,6 +239,16 @@ class PushClient {
   /// `data.type` of the ¿seguimos? push (`functions/seguimos.py`).
   static const seguimosType = 'seguimos';
 
+  /// `data.type` of "¿Quién vino hoy?" (`functions/attendance.py`), whose
+  /// tap opens the roll ([taps]).
+  static const attendanceType = 'attendance';
+
+  final _taps = StreamController<PushTap>.broadcast();
+
+  /// Taps on the body of a notification that opens a screen of its own,
+  /// while the app runs (in front or behind).
+  Stream<PushTap> get taps => _taps.stream;
+
   /// The "Sí" button's action id on the ¿seguimos? push.
   static const seguimosYesAction = 'seguimos.yes';
 
@@ -260,6 +291,9 @@ class PushClient {
     if (_isWeb) return;
     await _notifications.initialize(
       onDidReceiveBackgroundNotificationResponse: onRsvpAction,
+      onDidReceiveNotificationResponse: (response) {
+        if (tapFrom(response) case final tap?) _taps.add(tap);
+      },
       settings: const InitializationSettings(
         android: AndroidInitializationSettings(notificationIcon),
         // The permission is asked from a tap, never at launch.
@@ -282,6 +316,15 @@ class PushClient {
             importance: Importance.high,
           ),
         );
+  }
+
+  /// The tap that started the app, when a notification [taps] would route
+  /// did; `null` otherwise, and on web.
+  Future<PushTap?> launchTap() async {
+    if (_isWeb) return null;
+    final details = await _notifications.getNotificationAppLaunchDetails();
+    if (details == null || !details.didNotificationLaunchApp) return null;
+    return tapFrom(details.notificationResponse);
   }
 
   /// Whether notifications are allowed, without asking.
@@ -359,7 +402,7 @@ class PushClient {
       id: message.messageId.hashCode,
       title: title,
       body: body,
-      payload: buttons?.payload,
+      payload: buttons?.payload ?? _tapPayload(data),
       notificationDetails: NotificationDetails(
         android: _details(body: body, actions: buttons?.actions ?? const []),
       ),
@@ -414,6 +457,36 @@ class PushClient {
       ),
     _ => null,
   };
+
+  /// What a tap on the body carries to [tapFrom]: the attendance ask's ronda
+  /// and week; `null` for every other push.
+  static String? _tapPayload(Map<String, dynamic> data) => switch (data) {
+    {
+      'type': attendanceType,
+      'rondaId': final String rondaId,
+      'week': final String week,
+    } =>
+      jsonEncode({'type': attendanceType, 'rondaId': rondaId, 'week': week}),
+    _ => null,
+  };
+
+  /// The screen a tap on a notification's body opens, or `null` for a tap
+  /// on a button, a push that opens Mi ronda, or a malformed payload.
+  static PushTap? tapFrom(NotificationResponse? response) {
+    if (response == null || response.actionId != null) return null;
+    try {
+      if (jsonDecode(response.payload ?? '') case {
+        'type': attendanceType,
+        'rondaId': final String rondaId,
+        'week': final String week,
+      }) {
+        return PushTap(type: attendanceType, rondaId: rondaId, week: week);
+      }
+    } on FormatException {
+      return null;
+    }
+    return null;
+  }
 
   /// Shows a plain notification [id] on the [rsvpChannelId] channel, in
   /// place of any showing with that id: what became of a tap on "Voy" or

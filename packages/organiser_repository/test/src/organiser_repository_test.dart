@@ -234,6 +234,7 @@ void main() {
       test("keeps the newest week's lines, oldest first", () {
         when(() => api.watchActa('r1')).thenAnswer(
           (_) => Stream.value([
+            _entry('d', '2026-W45', 21, 'rule'),
             _entry('c', '2026-W45', 20, 'host'),
             _entry('b', '2026-W45', 18, 'agent'),
             _entry('a', '2026-W44', 18, 'agent'),
@@ -257,6 +258,13 @@ void main() {
                   at: DateTime.utc(2026, 11, 4, 20),
                   summary: 'Línea c.',
                   byHost: true,
+                ),
+                ActaLine(
+                  id: 'd',
+                  at: DateTime.utc(2026, 11, 4, 21),
+                  summary: 'Línea d.',
+                  byHost: false,
+                  byRule: true,
                 ),
               ],
             ),

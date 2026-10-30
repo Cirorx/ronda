@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:auth_repository/auth_repository.dart';
 import 'package:contact_repository/contact_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,6 +11,7 @@ import 'package:organiser_repository/organiser_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:push_repository/push_repository.dart';
 import 'package:ronda/app/app.dart';
+import 'package:ronda/attendance/attendance.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -53,7 +56,9 @@ class const App({
   }
 }
 
-/// Shows the router in Ronda's day and night themes.
+/// Shows the router in Ronda's day and night themes, and opens the roll
+/// when "¿Quién vino hoy?" is tapped on Android, whether the tap started the
+/// app or found it running.
 class AppView extends StatefulWidget {
   const new({super.key});
 
@@ -70,8 +75,26 @@ class _AppViewState extends State<AppView> {
     refreshListenable: _refresh,
   );
 
+  StreamSubscription<OpenedRoll>? _rolls;
+
+  @override
+  void initState() {
+    super.initState();
+    final push = context.read<PushRepository>();
+    _rolls = push.openedRolls.listen(_openRoll);
+    unawaited(
+      push.launchedRoll().then((roll) {
+        if (roll != null && mounted) _openRoll(roll);
+      }),
+    );
+  }
+
+  void _openRoll(OpenedRoll roll) =>
+      unawaited(_router.push(AttendancePage.location(roll.rondaId, roll.week)));
+
   @override
   void dispose() {
+    unawaited(_rolls?.cancel());
     _router.dispose();
     _refresh.dispose();
     super.dispose();

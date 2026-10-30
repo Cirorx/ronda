@@ -416,6 +416,50 @@ void main() {
 
         expect(subject.clearPromptSnooze, throwsA(isA<SnoozePromptFailure>()));
       });
+      group('the roll a tap opens', () {
+        const roll = PushTap(
+          type: 'attendance',
+          rondaId: 'r1',
+          week: '2026-W45',
+        );
+        const other = PushTap(type: 'other', rondaId: 'r1', week: '2026-W45');
+
+        test('openedRolls turns attendance taps into rolls', () {
+          when(() => pushClient.taps)
+              .thenAnswer((_) => Stream.fromIterable([other, roll]));
+
+          expect(
+            subject.openedRolls,
+            emitsInOrder([
+              const OpenedRoll(rondaId: 'r1', week: '2026-W45'),
+              emitsDone,
+            ]),
+          );
+        });
+
+        test('launchedRoll reads the tap that started the app', () async {
+          when(() => pushClient.launchTap()).thenAnswer((_) async => roll);
+
+          expect(
+            await subject.launchedRoll(),
+            const OpenedRoll(rondaId: 'r1', week: '2026-W45'),
+          );
+        });
+
+        test(
+          'launchedRoll is null for no tap, another tap, or a failure',
+          () async {
+            when(() => pushClient.launchTap()).thenAnswer((_) async => null);
+            expect(await subject.launchedRoll(), isNull);
+
+            when(() => pushClient.launchTap()).thenAnswer((_) async => other);
+            expect(await subject.launchedRoll(), isNull);
+
+            when(() => pushClient.launchTap()).thenThrow(Exception('plugin'));
+            expect(await subject.launchedRoll(), isNull);
+          },
+        );
+      });
     });
   });
 }

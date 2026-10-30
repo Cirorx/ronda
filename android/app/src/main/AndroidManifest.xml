@@ -72,5 +72,11 @@
             <action android:name="android.intent.action.DIAL"/>
             <data android:scheme="tel"/>
         </intent>
+        <!-- A buddy's [Le escribo] opens WhatsApp with no number (#9): without this the
+             button can't tell WhatsApp is there, and hides. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="whatsapp"/>
+        </intent>
     </queries>
 </manifest>

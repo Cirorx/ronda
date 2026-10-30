@@ -65,6 +65,37 @@ void main() {
       expect(find.text('Te toca llevar el pan.'), findsOneWidget);
     });
 
+    testWidgets('carries the turns, "¿Abrís vos?" and the después', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        ready(
+          MyRondaFixtures.week(
+            turns: [
+              HostTurn(
+                month: DateTime(2026, 10),
+                anfitrion: MyRondaFixtures.mirta,
+                cola: MyRondaFixtures.jorge,
+              ),
+            ],
+            handoffAsk: MyRondaFixtures.handoffAsk,
+            despues: MyRondaFixtures.homeDespues,
+          ),
+        ),
+      );
+
+      expect(find.text('Este mes abre Mirta y cierra Jorge.'), findsOneWidget);
+      expect(
+        find.text('Mirta no puede el sábado. ¿Abrís vos?'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Después, si querés: bizcochos en lo de Mirta'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('Voy and Esta no answer through the cubit', (tester) async {
       await pump(tester, ready(MyRondaFixtures.week()));
 

@@ -88,6 +88,30 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
+    testWidgets('a line a fixed rule decided says so', (tester) async {
+      await pump(
+        tester,
+        ActaState(
+          status: ActaStatus.ready,
+          acta: Acta(
+            week: '2026-W45',
+            lines: [
+              ActaLine(
+                id: 'c',
+                at: DateTime(2026, 11, 2),
+                summary:
+                    'Este mes abre Jorge y cierra Ana. Así toca por turno.',
+                byHost: false,
+                byRule: true,
+              ),
+            ],
+          ),
+        ),
+      );
+
+      expect(find.textContaining('Regla fija'), findsOneWidget);
+    });
+
     testWidgets('offers to read it again when it failed', (tester) async {
       await pump(tester, const ActaState(status: ActaStatus.failure));
 

@@ -1,8 +1,11 @@
+import 'package:ronda_api/src/rondas/weekly_loop_documents.dart';
+
 /// {@template ronda_document}
 /// One `rondas/{id}` document, in its wire shape, as `approve_proposal`
-/// writes it (`functions/proposals.py`) and the admin's `set_ronda_setup`
-/// completes it (`functions/hosts.py`): only the fields a member's card
-/// reads.
+/// writes it (`functions/proposals.py`), the admin's `set_ronda_setup`
+/// completes it (`functions/hosts.py`) and the weekly loop's jobs keep it
+/// (`functions/rotation.py`, `functions/handoff.py`): only the fields a
+/// member's card reads.
 /// {@endtemplate}
 class const RondaDocument({
   /// The document id.
@@ -47,6 +50,21 @@ class const RondaDocument({
 
   /// The season's last meeting (`2026-11-24`).
   final String? seasonEnd,
+
+  /// The month the hosts are for (`2026-11`), once the admin chose both.
+  final String? hostsMonth,
+
+  /// The turns of who opens and who closes, this month first.
+  final List<HostTurnDocument> turns = const [],
+
+  /// The ISO week someone took over opening ("¿Abrís vos?").
+  final String? openerWeek,
+
+  /// Who took it over.
+  final String? openerUid,
+
+  /// Their first name.
+  final String? openerName,
 }) {
   /// {@macro ronda_document}
   this;
@@ -91,6 +109,16 @@ class const RondaDocument({
           {'end': final String end} => end,
           _ => null,
         },
+        hostsMonth: _host(json, 'month'),
+        turns: switch (json['turns']) {
+          final List<Object?> turns => [
+            for (final turn in turns) HostTurnDocument.fromJson(turn),
+          ],
+          _ => const [],
+        },
+        openerWeek: _opener(json, 'week'),
+        openerUid: _opener(json, 'uid'),
+        openerName: _opener(json, 'firstName'),
       );
     }
     throw FormatException('rondas/$id has another shape');
@@ -194,6 +222,10 @@ class const GoingDocument({
 
   /// What they bring, as ids.
   required final List<String> brings,
+
+  /// Whether they took a freed seat from the bench for this meeting only,
+  /// and are no member (`functions/bench.py`).
+  final bool guest = false,
 }) {
   /// {@macro going_document}
   this;
@@ -211,6 +243,7 @@ class const GoingDocument({
         uid: uid,
         firstName: firstName,
         brings: _ids(brings),
+        guest: json['guest'] == true,
       );
     }
     throw const FormatException('views/week has another shape');
@@ -249,6 +282,15 @@ String? _host(Map<String, Object?> json, String key) => switch (json['hosts']) {
   },
   _ => null,
 };
+
+String? _opener(Map<String, Object?> json, String key) =>
+    switch (json['opener']) {
+      final Map<Object?, Object?> opener => switch (opener[key]) {
+        final String value when value.isNotEmpty => value,
+        _ => null,
+      },
+      _ => null,
+    };
 
 List<String> _ids(List<Object?> values) {
   if (values.any((value) => value is! String)) {

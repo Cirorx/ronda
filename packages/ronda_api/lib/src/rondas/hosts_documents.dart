@@ -1,3 +1,5 @@
+import 'package:ronda_api/src/rondas/weekly_loop_documents.dart';
+
 /// {@template ronda_setup_document}
 /// One ronda as the admin's `ronda_setups` callable returns it
 /// (`functions/hosts.py`): what it is, its place, hour and hosts (each
@@ -42,6 +44,9 @@ class const RondaSetupDocument({
 
   /// Its latest attendance roll, if one was written.
   final RollSummaryDocument? roll,
+
+  /// The upcoming meeting's "¿Abrís vos?", if the anfitrión can't open it.
+  final HandoffSummaryDocument? handoff,
 }) {
   /// {@macro ronda_setup_document}
   this;
@@ -78,6 +83,10 @@ class const RondaSetupDocument({
         roll: switch (json['roll']) {
           null => null,
           final roll => RollSummaryDocument.fromJson(roll),
+        },
+        handoff: switch (json['handoff']) {
+          null => null,
+          final handoff => HandoffSummaryDocument.fromJson(handoff),
         },
       );
     }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
+import 'package:contact_repository/contact_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -30,6 +31,8 @@ class _MockAppBloc extends MockBloc<AppEvent, AppState> implements AppBloc;
 class _MockPushRepository extends Mock implements PushRepository;
 
 class _MockRondaRepository extends Mock implements RondaRepository;
+
+class _MockContactRepository extends Mock implements ContactRepository;
 
 class _MockPushCubit extends MockCubit<PushState> implements PushCubit;
 
@@ -119,8 +122,18 @@ void main() {
     late SeguimosCubit seguimosCubit;
     late BenchOfferCubit benchOfferCubit;
     late WaitingCubit waitingCubit;
+    late RondaRepository rondaRepository;
+    late ContactRepository contactRepository;
 
     setUp(() {
+      rondaRepository = _MockRondaRepository();
+      contactRepository = _MockContactRepository();
+      when(() => rondaRepository.watchBuddyAsk(any()))
+          .thenAnswer((_) => Stream.value(null));
+      when(() => rondaRepository.buddyOptions(any())).thenAnswer(
+        (_) async => const BuddyOptions(due: false, chosen: false, choices: []),
+      );
+      when(contactRepository.canOpenWhatsApp).thenAnswer((_) async => false);
       pushCubit = _MockPushCubit();
       thisWeekCubit = _MockThisWeekCubit();
       seguimosCubit = _MockSeguimosCubit();
@@ -141,15 +154,21 @@ void main() {
     });
 
     Future<void> pump(WidgetTester tester) => tester.pumpApp(
-      MultiBlocProvider(
+      MultiRepositoryProvider(
         providers: [
-          BlocProvider.value(value: pushCubit),
-          BlocProvider.value(value: thisWeekCubit),
-          BlocProvider.value(value: seguimosCubit),
-          BlocProvider.value(value: benchOfferCubit),
-          BlocProvider.value(value: waitingCubit),
+          RepositoryProvider.value(value: rondaRepository),
+          RepositoryProvider.value(value: contactRepository),
         ],
-        child: const MyRondaView(uid: MyRondaFixtures.uid),
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: pushCubit),
+            BlocProvider.value(value: thisWeekCubit),
+            BlocProvider.value(value: seguimosCubit),
+            BlocProvider.value(value: benchOfferCubit),
+            BlocProvider.value(value: waitingCubit),
+          ],
+          child: const MyRondaView(uid: MyRondaFixtures.uid),
+        ),
       ),
     );
 

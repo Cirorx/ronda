@@ -13,6 +13,10 @@ part 'this_week_state.dart';
 /// ([ThisWeekState.estaNoSheet]); from it the member stays in, pauses two
 /// weeks, or takes it back. A failed answer leaves the card as it was, with
 /// [ThisWeekState.answerFailed] for the line that says so.
+///
+/// It also answers what the card asks this member about the week: "¿Abrís
+/// vos?" ([handoffAnswered]) and the después at their home
+/// ([homeAnswered]).
 class ThisWeekCubit extends Cubit<ThisWeekState> {
   new({required this._uid, required this._rondaRepository})
     : super(const ThisWeekState());
@@ -36,6 +40,8 @@ class ThisWeekCubit extends Cubit<ThisWeekState> {
               week: week,
               answering: state.answering,
               estaNoSheet: state.estaNoSheet,
+              acting: state.acting,
+              actionFailure: state.actionFailure,
             ),
           ),
           onError: (Object error, StackTrace stackTrace) {
@@ -59,6 +65,52 @@ class ThisWeekCubit extends Cubit<ThisWeekState> {
 
   /// The sheet closed, whichever way.
   void sheetClosed() => emit(state.copyWith(estaNoSheet: false));
+
+  /// "Sí, abro yo" ([yes]) or "Hoy no puedo".
+  Future<void> handoffAnswered({required bool yes}) async {
+    final week = state.week;
+    final ask = week?.handoffAsk;
+    if (week == null || ask == null) return;
+    await _act(
+      () => _rondaRepository.answerHandoff(
+        rondaId: week.rondaId,
+        week: ask.week,
+        yes: yes,
+      ),
+    );
+  }
+
+  /// "Sí, puede ser" ([yes]) or "Mejor no" to the después at this member's
+  /// home.
+  Future<void> homeAnswered({required bool yes}) async {
+    final week = state.week;
+    final meeting = week?.week;
+    if (week == null || meeting == null) return;
+    await _act(
+      () => _rondaRepository.answerDespues(
+        rondaId: week.rondaId,
+        week: meeting,
+        yes: yes,
+      ),
+    );
+  }
+
+  Future<void> _act(Future<void> Function() call) async {
+    if (state.acting) return;
+    emit(state.copyWith(acting: true, actionFailure: () => null));
+    try {
+      await call();
+    } on HostsFailure catch (failure, stackTrace) {
+      addError(failure, stackTrace);
+      if (!isClosed) {
+        emit(
+          state.copyWith(acting: false, actionFailure: () => failure.reason),
+        );
+      }
+      return;
+    }
+    if (!isClosed) emit(state.copyWith(acting: false));
+  }
 
   Future<void> _answer(
     RsvpAnswer answer, {

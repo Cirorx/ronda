@@ -434,6 +434,20 @@ Built in #48 (`functions/bench.py`, `packages/push_client`, `lib/bootstrap.dart`
   bench, attendance and the ¿seguimos? close on the stand-in with every suite, and on the
   Firestore emulator with `scripts/week_on_emulators.sh` (project `demo-ronda-bench`).
 
+Built in #47 and #50 (`packages/push_client`, `packages/push_repository`, `lib/app/view/app.dart`,
+`packages/link_opener`, `packages/contact_repository`):
+- **Taps that open a screen:** "¿Quién vino hoy?" (`data.type: attendance`) is drawn with a
+  payload `{type, rondaId, week}` and no buttons. A tap on its body comes out of
+  `PushClient.taps` (FLN's `onDidReceiveNotificationResponse`) while the app runs, or
+  `launchTap()` (`getNotificationAppLaunchDetails`) when it started the app; `PushRepository`
+  turns them into `OpenedRoll`s and `AppView` pushes `/asistencia/{rondaId}/{week}`. Every other
+  push still opens Mi ronda, whose card asks "¿Abrís vos?", the después at your home and the
+  buddy's card. Not checked on a device yet (no emulator in that session).
+- **WhatsApp for a buddy:** `ContactRepository.openWhatsApp` opens `whatsapp://send` with no
+  number and no text; `canOpenWhatsApp` asks url_launcher, which on Android 11+ needs the
+  `whatsapp` scheme in the manifest's `<queries>` (added), and is always false on web, so
+  [Le escribo] hides there.
+
 ## Native and project checklist
 
 **Firebase project `ronda-uy`** (Blaze, decided 2026-10-27; budget alert at $20, `max_instances`

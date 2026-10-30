@@ -2,7 +2,8 @@ import 'package:equatable/equatable.dart';
 
 /// {@template acta_line}
 /// One line of "Lo que hizo el programa": what the organiser did, in the
-/// server's es-419, and whether the host decided it.
+/// server's es-419, and whether the host decided it or a fixed rule in code
+/// did (the monthly turns), not the model.
 /// {@endtemplate}
 class const ActaLine({
   /// The line's id.
@@ -16,12 +17,15 @@ class const ActaLine({
 
   /// Whether the host decided it (their pick), not the program.
   required final bool byHost,
+
+  /// Whether a fixed rule in code decided it, with no model.
+  final bool byRule = false,
 }) extends Equatable {
   /// {@macro acta_line}
   this;
 
   @override
-  List<Object?> get props => [id, at, summary, byHost];
+  List<Object?> get props => [id, at, summary, byHost, byRule];
 }
 
 /// {@template acta}

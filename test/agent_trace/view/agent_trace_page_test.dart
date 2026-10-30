@@ -15,17 +15,21 @@ class _MockAgentTraceCubit extends MockCubit<AgentTraceState>
 
 final _at = DateTime(2026, 11, 4, 18, 4);
 
-AgentRun _run(String id, AgentRunStatus status, {bool forced = false}) =>
-    AgentRun(
-      id: id,
-      rondaId: 'ronda-rain',
-      week: '2026-W45',
-      status: status,
-      startedAt: _at,
-      forced: forced,
-      model: forced ? '' : 'meta-models/muse-spark-open-1026',
-      note: forced ? '' : 'Listo: le propuse opciones al anfitrión.',
-    );
+AgentRun _run(
+  String id,
+  AgentRunStatus status, {
+  bool forced = false,
+  String? model,
+}) => AgentRun(
+  id: id,
+  rondaId: 'ronda-rain',
+  week: '2026-W45',
+  status: status,
+  startedAt: _at,
+  forced: forced,
+  model: model ?? (forced ? '' : 'meta-models/muse-spark-open-1026'),
+  note: forced ? '' : 'Listo: le propuse opciones al anfitrión.',
+);
 
 void main() {
   group(AgentTracePage, () {
@@ -158,6 +162,22 @@ void main() {
         findsOneWidget,
       );
       expect(find.byType(AgentStepTile), findsOneWidget);
+    });
+
+    testWidgets('a code job says it ran a rule with no model', (tester) async {
+      await pump(
+        tester,
+        AgentTraceState(
+          status: AgentTraceStatus.ready,
+          runs: [_run('h', AgentRunStatus.done, model: '')],
+          selectedRunId: 'h',
+        ),
+      );
+
+      expect(
+        find.text('ronda-rain · terminó · regla en código, sin modelo'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('a run by hand says so', (tester) async {

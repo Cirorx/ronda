@@ -3,6 +3,13 @@ import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/onboarding/widgets/onboarding_labels.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
+/// How long a después lasts, as the card says it.
+const despuesMinutes = 20;
+
+/// The weekday id (`thu`) of [date], for [AppLocalizations.weekdayName].
+String weekdayId(DateTime date) =>
+    const ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'][date.weekday - 1];
+
 /// The Mi ronda card's words for a [ThisWeek], in the app's language.
 extension ThisWeekLabels on AppLocalizations {
   /// "31/10".
@@ -36,10 +43,15 @@ extension ThisWeekLabels on AppLocalizations {
   };
 
   /// "Abre Mirta. Cierra Jorge.", or "Abrís vos: …" for the host reading
-  /// it; `null` while the ronda has no host.
+  /// it, and "Esta semana abre Facu." when someone took over opening this
+  /// week ("¿Abrís vos?"); `null` while the ronda has no host.
   String? hostsLine(ThisWeek week, {required String uid}) {
     final parts = [
-      if (week.anfitrion case final host? when host.uid == uid)
+      if (week.opener case final host? when host.uid == uid)
+        thisWeekOpenerYou
+      else if (week.opener case final host?)
+        thisWeekOpenerOpens(host.firstName)
+      else if (week.anfitrion case final host? when host.uid == uid)
         thisWeekYouOpen
       else if (week.anfitrion case final host?)
         thisWeekHostOpens(host.firstName),
@@ -49,6 +61,82 @@ extension ThisWeekLabels on AppLocalizations {
         thisWeekHostCloses(host.firstName),
     ];
     return parts.isEmpty ? null : parts.join(' ');
+  }
+
+  /// "Este mes abre Jorge y cierra Ana. Los próximos turnos: diciembre,
+  /// abre Ana y cierra Facu; …": the monthly turns; `null` without them.
+  String? turnsLine(ThisWeek week) {
+    if (week.turns case [final now, ...final ahead]) {
+      return [
+        thisWeekMonthHosts(now.anfitrion.firstName, now.cola.firstName),
+        if (ahead.isNotEmpty)
+          thisWeekTurnsAhead(
+            ahead
+                .map(
+                  (turn) => thisWeekTurn(
+                    monthName('m${turn.month.month}'),
+                    turn.anfitrion.firstName,
+                    turn.cola.firstName,
+                  ),
+                )
+                .join('; '),
+          ),
+      ].join(' ');
+    }
+    return null;
+  }
+
+  /// "Después, si querés: bizcochos en lo de Mirta, Av. Central 1234 (20
+  /// min)": the week's después once it is set; `null` with none.
+  String? despuesLine(Despues? despues) => switch (despues) {
+    Despues(
+      status: DespuesStatus.set,
+      kind: DespuesKind.place,
+      :final what?,
+      :final where?,
+    ) =>
+      despuesLinePlace(what, where, despuesMinutes),
+    Despues(
+      status: DespuesStatus.set,
+      kind: DespuesKind.home,
+      :final what?,
+      :final homeOf?,
+      :final address?,
+    ) =>
+      despuesLineHome(what, homeOf.firstName, address, despuesMinutes),
+    Despues(
+      status: DespuesStatus.set,
+      kind: DespuesKind.home,
+      :final what?,
+      :final homeOf?,
+    ) =>
+      despuesLineHomeNoAddress(what, homeOf.firstName, despuesMinutes),
+    _ => null,
+  };
+
+  /// "Mirta no puede el jueves. ¿Abrís vos?": to the cola it names the
+  /// anfitrión, to the others nobody.
+  String handoffQuestion(HandoffAsk ask) {
+    final day = weekdayName(weekdayId(ask.date));
+    return switch ((ask.fromName, ask.reason)) {
+      (final name?, HandoffReason.unanswered) => handoffUnanswered(name, day),
+      (final name?, _) => handoffCantCome(name, day),
+      (null, _) => handoffNobody(day),
+    };
+  }
+
+  /// "Abrir es llegar diez minutos antes, a las 15:50, …": the time only
+  /// when the ronda has an [hour].
+  String openingWords(String? hour) {
+    final parts = hour?.split(':').map(int.tryParse).toList();
+    if (parts case [final int h, final int m]) {
+      final early = h * 60 + m - 10;
+      final time =
+          '${(early ~/ 60).toString().padLeft(2, '0')}:'
+          '${(early % 60).toString().padLeft(2, '0')}';
+      return handoffOpeningAt(time);
+    }
+    return handoffOpening;
   }
 
   /// "Llega primero · Pan": a neighbour's role, when they have one, and

@@ -6,6 +6,7 @@ import 'package:ronda_api/src/rondas/hosts_documents.dart';
 import 'package:ronda_api/src/rondas/pilot_numbers_document.dart';
 import 'package:ronda_api/src/rondas/ronda_documents.dart';
 import 'package:ronda_api/src/rondas/seguimos_documents.dart';
+import 'package:ronda_api/src/rondas/weekly_loop_documents.dart';
 
 /// {@template rondas_api}
 /// A member's side of their ronda: which ronda they are in, the ronda, their
@@ -98,6 +99,21 @@ class const RondasApi({
       'choice': choice,
     });
   }
+
+  /// The callable this week's hosts set the después with.
+  static const setDespuesCallable = 'set_despues';
+
+  /// The callable whose home the después would be at answers with.
+  static const answerDespuesCallable = 'answer_despues';
+
+  /// The callable that answers "¿Abrís vos?".
+  static const answerHandoffCallable = 'answer_handoff';
+
+  /// The callable that says whether it is time to choose a buddy, and who.
+  static const buddyOptionsCallable = 'buddy_options';
+
+  /// The callable that saves the member's buddy.
+  static const setBuddyCallable = 'set_buddy';
 
   /// The ids of the rondas [uid] is in (`users/{uid}/rondas`), now and on
   /// every change.
@@ -212,6 +228,112 @@ class const RondasApi({
       'hour': hour,
       'anfitrion': anfitrionUid ?? '',
       'cola': colaUid ?? '',
+    });
+  }
+
+  /// Ronda [rondaId]'s después for [week] (`rondas/{id}/despues/{week}`);
+  /// `null` while there is none. Members read it once it is set; whoever
+  /// set it and whose home it is, at any time.
+  Stream<DespuesDocument?> watchDespues(String rondaId, String week) =>
+      _watch('rondas/$rondaId/despues/$week', DespuesDocument.fromJson);
+
+  /// Sets ronda [rondaId]'s después for its upcoming meeting of [week]
+  /// (`set_despues`): [kind] `none`, `place` with [what] and [where], or
+  /// `home` with [what], [homeOfUid] (the caller when `null`) and
+  /// [address]. This week's hosts only.
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails:
+  /// `failed-precondition` when the words aren't allowed.
+  Future<void> setDespues({
+    required String rondaId,
+    required String week,
+    required String kind,
+    String? what,
+    String? where,
+    String? homeOfUid,
+    String? address,
+  }) async {
+    await functions.httpsCallable(setDespuesCallable).call<Object?>({
+      'rondaId': rondaId,
+      'week': week,
+      'kind': kind,
+      'what': ?what,
+      'where': ?where,
+      'homeOf': ?homeOfUid,
+      'address': ?address,
+    });
+  }
+
+  /// Says yes or no ([yes]) to the después at the caller's home, for ronda
+  /// [rondaId]'s meeting of [week] (`answer_despues`).
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails.
+  Future<void> answerDespues({
+    required String rondaId,
+    required String week,
+    required bool yes,
+  }) async {
+    await functions.httpsCallable(answerDespuesCallable).call<Object?>({
+      'rondaId': rondaId,
+      'week': week,
+      'answer': yes ? 'yes' : 'no',
+    });
+  }
+
+  /// Member [uid]'s own "¿Abrís vos?" in ronda [rondaId]
+  /// (`rondas/{id}/handoff_asks/{uid}`); `null` until they are asked.
+  Stream<HandoffAskDocument?> watchHandoffAsk(String rondaId, String uid) =>
+      _watch('rondas/$rondaId/handoff_asks/$uid', HandoffAskDocument.fromJson);
+
+  /// "Sí, abro yo" ([yes]) or "Hoy no puedo" for ronda [rondaId]'s meeting
+  /// of [week] (`answer_handoff`).
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails:
+  /// `failed-precondition` once someone else opens it.
+  Future<void> answerHandoff({
+    required String rondaId,
+    required String week,
+    required bool yes,
+  }) async {
+    await functions.httpsCallable(answerHandoffCallable).call<Object?>({
+      'rondaId': rondaId,
+      'week': week,
+      'answer': yes ? 'yes' : 'no',
+    });
+  }
+
+  /// Member [uid]'s buddy card in ronda [rondaId]
+  /// (`rondas/{id}/buddy_asks/{uid}`); `null` until someone who chose them
+  /// misses a week.
+  Stream<BuddyAskDocument?> watchBuddyAsk(String rondaId, String uid) =>
+      _watch('rondas/$rondaId/buddy_asks/$uid', BuddyAskDocument.fromJson);
+
+  /// Closes member [uid]'s buddy card in ronda [rondaId], the one write the
+  /// rules let them make there.
+  Future<void> closeBuddyAsk(String rondaId, String uid) => firestore
+      .doc('rondas/$rondaId/buddy_asks/$uid')
+      .update({'status': 'closed', 'closedAt': FieldValue.serverTimestamp()});
+
+  /// Whether it is time for the caller to choose a buddy in ronda
+  /// [rondaId], and who they could choose (`buddy_options`).
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails, and a
+  /// [FormatException] for another shape.
+  Future<BuddyOptionsDocument> buddyOptions(String rondaId) async {
+    final result = await functions
+        .httpsCallable(buddyOptionsCallable)
+        .call<Object?>({'rondaId': rondaId});
+    return BuddyOptionsDocument.fromJson(result.data);
+  }
+
+  /// Saves the caller's buddy in ronda [rondaId] (`set_buddy`): another
+  /// member's [buddyUid], or `null` for nobody.
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails.
+  Future<void> setBuddy({required String rondaId, String? buddyUid}) async {
+    await functions.httpsCallable(setBuddyCallable).call<Object?>({
+      'rondaId': rondaId,
+      'buddyUid': buddyUid ?? '',
     });
   }
 

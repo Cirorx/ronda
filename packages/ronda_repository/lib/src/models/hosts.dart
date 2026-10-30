@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:ronda_repository/src/models/weekly_loop.dart';
 
 /// {@template ronda_setup}
 /// One ronda on the admin's "Lugar, hora y anfitriones": what it is, its
@@ -44,6 +45,9 @@ class const RondaSetup({
 
   /// Its latest roll, once the attendance job wrote one.
   final RollSummary? roll,
+
+  /// The upcoming meeting's "¿Abrís vos?", when the anfitrión can't open it.
+  final HandoffSummary? handoff,
 }) extends Equatable {
   /// {@macro ronda_setup}
   this;
@@ -62,6 +66,7 @@ class const RondaSetup({
     anfitrionUid,
     colaUid,
     roll,
+    handoff,
   ];
 }
 

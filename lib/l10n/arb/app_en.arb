@@ -1927,7 +1927,7 @@
     "@dataKeepSearch": {
         "description": "Your data screen: kept item"
     },
-    "dataKeepRonda": "Your ronda and your answers: whether you're going each week, whether you carry on and whether you came (whoever opens notes it down).",
+    "dataKeepRonda": "Your ronda and your answers: whether you're going each week, whether you carry on, whether you came (whoever opens notes it down) and who we tell if you miss a week without saying.",
     "@dataKeepRonda": {
         "description": "Your data screen: kept item"
     },
@@ -2654,5 +2654,423 @@
                 "type": "String"
             }
         }
+    },
+    "thisWeekOpenerOpens": "This week {name} opens.",
+    "@thisWeekOpenerOpens": {
+        "description": "Mi ronda: who took over opening this week",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "thisWeekOpenerYou": "This week you open: you arrive ten minutes early and greet whoever arrives.",
+    "@thisWeekOpenerYou": {
+        "description": "Mi ronda: the member reading took over opening this week"
+    },
+    "thisWeekMonthHosts": "This month {anfitrion} opens and {cola} closes.",
+    "@thisWeekMonthHosts": {
+        "description": "Mi ronda: this month's turn",
+        "placeholders": {
+            "anfitrion": {
+                "type": "String"
+            },
+            "cola": {
+                "type": "String"
+            }
+        }
+    },
+    "thisWeekTurnsAhead": "Next turns: {turns}.",
+    "@thisWeekTurnsAhead": {
+        "description": "Mi ronda: the months ahead",
+        "placeholders": {
+            "turns": {
+                "type": "String"
+            }
+        }
+    },
+    "thisWeekTurn": "{month}, {anfitrion} opens and {cola} closes",
+    "@thisWeekTurn": {
+        "description": "Mi ronda: one month's turn",
+        "placeholders": {
+            "month": {
+                "type": "String"
+            },
+            "anfitrion": {
+                "type": "String"
+            },
+            "cola": {
+                "type": "String"
+            }
+        }
+    },
+    "monthName": "{month, select, m1{January} m2{February} m3{March} m4{April} m5{May} m6{June} m7{July} m8{August} m9{September} m10{October} m11{November} m12{December} other{}}",
+    "@monthName": {
+        "description": "A month's name, by m1 to m12",
+        "placeholders": {
+            "month": {
+                "type": "String"
+            }
+        }
+    },
+    "weekdayName": "{day, select, mon{Monday} tue{Tuesday} wed{Wednesday} thu{Thursday} fri{Friday} sat{Saturday} sun{Sunday} other{}}",
+    "@weekdayName": {
+        "description": "A weekday's name inside a sentence, by its id",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "handoffTitle": "Will you open?",
+    "@handoffTitle": {
+        "description": "Mi ronda: the question when the anfitrión can't open"
+    },
+    "handoffCantCome": "{name} can't make it on {day}. Will you open?",
+    "@handoffCantCome": {
+        "description": "Mi ronda: to the cola, the anfitrión can't come",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "handoffUnanswered": "{name} hasn't said whether they're coming on {day}. Will you open?",
+    "@handoffUnanswered": {
+        "description": "Mi ronda: to the cola, the anfitrión didn't answer",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "handoffNobody": "Nobody is opening on {day} yet. Will you open?",
+    "@handoffNobody": {
+        "description": "Mi ronda: to the others, nobody opens yet",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "handoffOpeningAt": "Opening means arriving ten minutes early, at {time}, and greeting whoever arrives. That's all.",
+    "@handoffOpeningAt": {
+        "description": "Mi ronda: what opening is, with the time",
+        "placeholders": {
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "handoffOpening": "Opening means arriving ten minutes early and greeting whoever arrives. That's all.",
+    "@handoffOpening": {
+        "description": "Mi ronda: what opening is, with no hour set"
+    },
+    "handoffYes": "Yes, I'll open",
+    "@handoffYes": {
+        "description": "Mi ronda: taking over opening"
+    },
+    "handoffNo": "I can't today",
+    "@handoffNo": {
+        "description": "Mi ronda: not taking over opening"
+    },
+    "handoffPassed": "No need any more: someone else is opening.",
+    "@handoffPassed": {
+        "description": "Mi ronda: someone else took it first"
+    },
+    "weekActionError": "That wasn't saved. Try again.",
+    "@weekActionError": {
+        "description": "Mi ronda: an answer on the card wasn't saved"
+    },
+    "despuesLinePlace": "Afterwards, if you like: {what} at {where} ({minutes} min)",
+    "@despuesLinePlace": {
+        "description": "Mi ronda: the después at a public place",
+        "placeholders": {
+            "what": {
+                "type": "String"
+            },
+            "where": {
+                "type": "String"
+            },
+            "minutes": {
+                "type": "int"
+            }
+        }
+    },
+    "despuesLineHome": "Afterwards, if you like: {what} at {name}'s, {address} ({minutes} min)",
+    "@despuesLineHome": {
+        "description": "Mi ronda: the después at a member's home",
+        "placeholders": {
+            "what": {
+                "type": "String"
+            },
+            "name": {
+                "type": "String"
+            },
+            "address": {
+                "type": "String"
+            },
+            "minutes": {
+                "type": "int"
+            }
+        }
+    },
+    "despuesLineHomeNoAddress": "Afterwards, if you like: {what} at {name}'s ({minutes} min)",
+    "@despuesLineHomeNoAddress": {
+        "description": "Mi ronda: the después at a home, its address already deleted",
+        "placeholders": {
+            "what": {
+                "type": "String"
+            },
+            "name": {
+                "type": "String"
+            },
+            "minutes": {
+                "type": "int"
+            }
+        }
+    },
+    "despuesAsking": "We asked {name} whether the después can be at their place. Nobody else sees it until they say yes.",
+    "@despuesAsking": {
+        "description": "Mi ronda: to the host, waiting for the home's yes",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "despuesDeclined": "{name} would rather not host it. You can pick another place.",
+    "@despuesDeclined": {
+        "description": "Mi ronda: to the host, the home said no",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "despuesNone": "No después this week.",
+    "@despuesNone": {
+        "description": "Mi ronda: the host said there is none"
+    },
+    "despuesHomeQuestion": "{name} asks whether this week's después can be at your place: {what}, {address}.",
+    "@despuesHomeQuestion": {
+        "description": "Mi ronda: to whose home it would be",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "what": {
+                "type": "String"
+            },
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "despuesHomeYes": "Yes, it can",
+    "@despuesHomeYes": {
+        "description": "Mi ronda: the home says yes"
+    },
+    "despuesHomeNo": "Rather not",
+    "@despuesHomeNo": {
+        "description": "Mi ronda: the home says no"
+    },
+    "despuesSet": "Is there a después this week?",
+    "@despuesSet": {
+        "description": "Mi ronda: the host's button to set the después"
+    },
+    "despuesChange": "Change the después",
+    "@despuesChange": {
+        "description": "Mi ronda: the host's button to change the después"
+    },
+    "despuesSheetBody": "Twenty minutes after the ronda, for whoever wants. Only this group sees it, and we delete it when the day ends.",
+    "@despuesSheetBody": {
+        "description": "Después sheet: what it is"
+    },
+    "despuesKindNone": "Not this week",
+    "@despuesKindNone": {
+        "description": "Después sheet: no después"
+    },
+    "despuesKindPlace": "A public place nearby",
+    "@despuesKindPlace": {
+        "description": "Después sheet: a public place"
+    },
+    "despuesKindHome": "At someone's place",
+    "@despuesKindHome": {
+        "description": "Después sheet: someone's home"
+    },
+    "despuesWhat": "What is there?",
+    "@despuesWhat": {
+        "description": "Después sheet: what there is"
+    },
+    "despuesWhatHint": "biscuits",
+    "@despuesWhatHint": {
+        "description": "Después sheet: an example of what there is"
+    },
+    "despuesWhere": "Where?",
+    "@despuesWhere": {
+        "description": "Después sheet: the public place"
+    },
+    "despuesWhereHint": "the café on the corner",
+    "@despuesWhereHint": {
+        "description": "Después sheet: an example of a public place"
+    },
+    "despuesWhose": "At whose place?",
+    "@despuesWhose": {
+        "description": "Después sheet: whose home"
+    },
+    "despuesMine": "At my place",
+    "@despuesMine": {
+        "description": "Después sheet: the host's own home"
+    },
+    "despuesWhoseNote": "If it isn't your place, we ask that person first.",
+    "@despuesWhoseNote": {
+        "description": "Después sheet: someone else's home is asked first"
+    },
+    "despuesAddress": "Address",
+    "@despuesAddress": {
+        "description": "Después sheet: the home's address"
+    },
+    "despuesAddressHint": "Av. Central 1234",
+    "@despuesAddressHint": {
+        "description": "Después sheet: an invented address"
+    },
+    "despuesAddressNote": "It never goes in a notification: only this group sees it on the card, and it's deleted when the day ends.",
+    "@despuesAddressNote": {
+        "description": "Después sheet: where the address shows"
+    },
+    "despuesSave": "Save",
+    "@despuesSave": {
+        "description": "Después sheet: save"
+    },
+    "despuesSaving": "Saving…",
+    "@despuesSaving": {
+        "description": "Después sheet: saving"
+    },
+    "despuesMissing": "Fill in what's missing.",
+    "@despuesMissing": {
+        "description": "Después sheet: a field is empty"
+    },
+    "despuesRefused": "Check what you wrote: no money or emoji, and a public place without a door number. A home goes under «At someone's place».",
+    "@despuesRefused": {
+        "description": "Después sheet: the server refused the words"
+    },
+    "despuesSaveError": "That wasn't saved. Try again.",
+    "@despuesSaveError": {
+        "description": "Después sheet: save failed"
+    },
+    "buddyTitle": "If you miss a week without saying, who should we tell?",
+    "@buddyTitle": {
+        "description": "Mi ronda: choosing a buddy"
+    },
+    "buddyBody": "Pick someone who already has your WhatsApp. Nobody else finds out, and we don't tell your family.",
+    "@buddyBody": {
+        "description": "Mi ronda: choosing a buddy, who it should be"
+    },
+    "buddyChoose": "Choose",
+    "@buddyChoose": {
+        "description": "Mi ronda: save the buddy"
+    },
+    "buddyNotNow": "Not now",
+    "@buddyNotNow": {
+        "description": "Mi ronda: choose nobody for now"
+    },
+    "buddyChosen": "If you miss without saying, we tell {name}. Nobody else finds out.",
+    "@buddyChosen": {
+        "description": "Mi ronda: the buddy chosen",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "buddyNobody": "If you miss without saying, we tell nobody.",
+    "@buddyNobody": {
+        "description": "Mi ronda: nobody chosen"
+    },
+    "buddyChange": "Change",
+    "@buddyChange": {
+        "description": "Mi ronda: change the buddy"
+    },
+    "buddyPickSomeone": "Pick someone",
+    "@buddyPickSomeone": {
+        "description": "Mi ronda: choose a buddy after choosing nobody"
+    },
+    "buddySaveError": "That wasn't saved. Try again.",
+    "@buddySaveError": {
+        "description": "Mi ronda: the buddy wasn't saved"
+    },
+    "buddyAskBody": "{name} didn't come on {day}. They chose you for this. Will you write to them? {name} doesn't know we told you.",
+    "@buddyAskBody": {
+        "description": "Mi ronda: to a buddy, after a miss",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "buddyAskWrite": "I'll write",
+    "@buddyAskWrite": {
+        "description": "Mi ronda: open WhatsApp, with no number"
+    },
+    "buddyAskNotNow": "Not now",
+    "@buddyAskNotNow": {
+        "description": "Mi ronda: close the buddy card"
+    },
+    "setupHandoffAsking": "Looking for someone to open on {date}: {name} can't.",
+    "@setupHandoffAsking": {
+        "description": "Admin: the handoff is asking",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            },
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "setupHandoffTaken": "On {date} {taken} opens instead of {name}.",
+    "@setupHandoffTaken": {
+        "description": "Admin: someone took over opening",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            },
+            "taken": {
+                "type": "String"
+            },
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "setupHandoffNobody": "Nobody has confirmed opening on {date}: {name} can't.",
+    "@setupHandoffNobody": {
+        "description": "Admin: nobody took over opening",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            },
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "actaByRule": "Fixed rule",
+    "@actaByRule": {
+        "description": "Members: a line a fixed rule in code decided, with no model"
+    },
+    "traceNoModel": "rule in code, no model",
+    "@traceNoModel": {
+        "description": "Admin: a run of a code job, with no model"
     }
 }

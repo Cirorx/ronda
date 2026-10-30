@@ -172,7 +172,10 @@ class const _Trace(final AgentTraceState state) extends StatelessWidget {
               [
                 run.rondaId,
                 _status(l10n, run.status),
-                if (run.model.isNotEmpty) run.model,
+                if (run.model.isNotEmpty)
+                  run.model
+                else if (run.status == AgentRunStatus.done)
+                  l10n.traceNoModel,
                 if (run.forced) l10n.traceRunByHand,
               ].join(' · '),
               style: textTheme.titleMedium,

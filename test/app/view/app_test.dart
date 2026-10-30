@@ -107,6 +107,9 @@ void main() {
           .thenAnswer((_) => Stream.value(null));
       when(() => flyerRepository.canBlurFaces).thenReturn(true);
       when(flyerRepository.retrieveLostPhoto).thenAnswer((_) async => null);
+      when(() => pushRepository.openedRolls)
+          .thenAnswer((_) => const Stream.empty());
+      when(pushRepository.launchedRoll).thenAnswer((_) async => null);
       when(pushRepository.permission)
           .thenAnswer((_) async => PushPermission.blocked);
       when(rondaRepository.watchLatestProposal)
@@ -776,6 +779,36 @@ void main() {
         expect((page.rondaId, page.week), ('ronda-1', '2026-W45'));
         verify(() => rondaRepository.watchRoll('ronda-1', '2026-W45'))
             .called(1);
+      });
+
+      testWidgets('by opening the roll when "¿Quién vino hoy?" is tapped', (
+        tester,
+      ) async {
+        final rolls = StreamController<OpenedRoll>();
+        addTearDown(() => unawaited(rolls.close()));
+        when(() => pushRepository.openedRolls).thenAnswer((_) => rolls.stream);
+        when(() => rondaRepository.watchRoll(any(), any()))
+            .thenAnswer((_) => Stream.value(null));
+        await pumpSignedIn(tester);
+
+        rolls.add(const OpenedRoll(rondaId: 'ronda-1', week: '2026-W45'));
+        await tester.pumpAndSettle();
+
+        final page = tester.widget<AttendancePage>(find.byType(AttendancePage));
+        expect((page.rondaId, page.week), ('ronda-1', '2026-W45'));
+      });
+
+      testWidgets('by opening the roll when its tap started the app', (
+        tester,
+      ) async {
+        when(pushRepository.launchedRoll).thenAnswer(
+          (_) async => const OpenedRoll(rondaId: 'ronda-1', week: '2026-W45'),
+        );
+        when(() => rondaRepository.watchRoll(any(), any()))
+            .thenAnswer((_) => Stream.value(null));
+        await pumpSignedIn(tester);
+
+        expect(find.byType(AttendancePage), findsOneWidget);
       });
 
       testWidgets('by opening the setup and the roll under $AdminPage '

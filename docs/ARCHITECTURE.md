@@ -34,11 +34,15 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   │               ronda_setups and set_ronda_setup (admin: place, hour and hosts),
   │               record_attendance (a host's or the admin's "Vino" / "No vino"),
   │               answer_bench_offer ([Lo tomo] / [Esta vez no]), answer_waitlist (the
-  │               pick after a waiting list didn't fill)
+  │               pick after a waiting list didn't fill),
+  │               set_despues and answer_despues (the después), answer_handoff ("¿Abrís
+  │               vos?"), buddy_options and set_buddy (the buddy)
   │    triggers   bench_on_answer (an RSVP answer changed) and bench_on_offer (an offer
   │               was answered) run that ronda's bench at once
   │    scheduled  one dispatcher on the hour in Montevideo (`dispatch`) → run_<job>(db, now)
-  │               for every job in `jobs.JOBS`; hourly audio sweeper (`sweep_audio`
+  │               for every job in `jobs.JOBS` (rsvp_push, seguimos_ask, rain_check,
+  │               attendance_ask, bench, waitlists, and the code jobs assign_hosts, handoff,
+  │               prompt_buddy, despues_sweep); hourly audio sweeper (`sweep_audio`
   │               deletes `audio/` objects older than 1 h); hourly Cerca counts (`refresh_cerca`,
   │               until the dispatcher adopts `run_refresh_cerca`)
   │    http       flyer_landing (public: counts a flyer's scan, answers /f/{id})
@@ -69,7 +73,9 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 ## Data model (Firestore, draft)
 
 - `users/{uid}`: firstName, ageBand, barrio, slots[], pretexts[], brings[], plusOneUid?,
-  buddyUid?, terms {version, acceptedAt}, createdAt. Sign-in is Google: no phone number is held. **Never:** address, cédula, birth
+  buddyUid? (who hears when they miss a week without saying so, `""` for nobody; written by
+  `set_buddy`, which checks it is another member of their ronda, and read back only by its
+  owner and the server), terms {version, acceptedAt}, createdAt. Sign-in is Google: no phone number is held. **Never:** address, cédula, birth
   date, lives-alone, nationality, mood, needs.
 - `users/{uid}/private/eligible`: seatIds[], updatedAt (written by the phone; read by the solver only).
 - `seat_facts/{seatId}` (decided in #20): what the server publishes for the phone's filter, one
@@ -117,9 +123,9 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   both once a profile exists, including one saved before on another phone.
 - `rondas/{id}`: pretext, barrio, slot {day, time, hour?}, place {name, landmark?, lat?, lng?}
   (public places only), size, status (forming | active | paused | ended), hosts {anfitrion,
-  cola, anfitrionName, colaName, rotatesOn?}, setupAt, despues {kind: none | place | home, label, address?, hostOk}
-  (members-only read; the address is deleted at the end of the day and never sent in a push),
-  season {start, end} (the ISO dates of its first and last meeting, set by the ¿seguimos? close,
+  cola, anfitrionName, colaName, month?}, turns [{month, anfitrion, anfitrionName, cola,
+  colaName}] (this month first, then the next two), opener {week, uid, firstName}? (who took
+  over opening that week, "¿Abrís vos?"), setupAt, season {start, end} (the ISO dates of its first and last meeting, set by the ¿seguimos? close,
   which also makes the ronda `active`), openSeatFromWeek: 4,
   rsvpLead {daysBefore 1–6, hour 9–20}? (when the RSVP push goes out, Montevideo time; missing
   or out of range reads as two days before at 19:00, so a Saturday ronda takes Friday with
@@ -137,8 +143,9 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
     them later. The sheet sets no `lat`/`lng` (no map pins): the rain check reads the barrio's
     centroid.
   - Hosts are members of the ronda and two different people; their first names ride along so
-    members' cards say "Abre Mirta. Cierra Jorge." without reading a profile. The monthly
-    rotation (`rotatesOn`) is not built.
+    members' cards say "Abre Mirta. Cierra Jorge." without reading a profile. With both chosen,
+    the pick stamps the month (`hosts.month`, Montevideo) and writes `turns`; the monthly job
+    goes on from it (the weekly loop's code jobs, below).
   - Until they are set: the card says "Lugar y hora a confirmar" (or just the missing one), the
     RSVP push's body opens with the same words and its title names the band ("Jueves a la
     tarde"), the rain check reads the whole band, and there is no host.
@@ -163,16 +170,19 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
     `dateOverride` when there is one), an hour into the meeting and 20:00 at the latest (an
     hour before the band ends while there is no hour), it writes the roll and pushes the ask
     to the anfitrión, else the cola (each only while in for the meeting and not having said
-    "esta no"), once per ronda and week; held 21:00–09:00 like every push. Push: `data.type:
-    attendance` with rondaId and week, drawn plain (a tap opens Mi ronda on Android, where the
-    host's card links the roll); web opens `/asistencia/{rondaId}/{week}`. With no host to ask,
+    "esta no"), once per ronda and week; held 21:00–09:00 like every push. Whoever took over
+    opening that week (`opener`) is asked before both. Push: `data.type: attendance` with
+    rondaId and week, drawn plain; a tap opens `/asistencia/{rondaId}/{week}` on Android
+    (`PushClient.taps` and `launchTap`, `PushRepository.openedRolls`, routed by `AppView`) and on
+    web (the link). With no host to ask,
     the roll is written with nobody asked: the server holds no admin uid (the claim lives on
     the Auth token), so the admin finds it on `/admin/rondas`.
   - `rondas/{id}/rolls/{isoWeek}`: the host's roll: week, date, line, hour, people [{uid,
     firstName}] (the members in for that meeting, by first name; who said "esta no" stays on,
     so the order gives nobody away), marks {uid: bool} (the host's copy of the record),
-    askedUid, askedRole (anfitrion | cola | ""), askedAt, updatedAt. `get` by the ronda's
-    anfitrión and cola and the admin, never listed (rules test: `rules/hosts.test.js`).
+    askedUid, askedRole (opener | anfitrion | cola | ""), askedAt, updatedAt. `get` by the
+    ronda's anfitrión and cola, the host it was sent to (`askedUid`) and the admin, never
+    listed (rules tests: `rules/hosts.test.js`, `rules/despues.test.js`).
   - `record_attendance {rondaId, week, uid, came}`: the ronda's anfitrión or cola (still in the
     ronda), the host the roll was sent to, or the admin; for someone on the roll; until six
     days after the meeting. Writes `weeks/{w}.attendance.{uid}` and the roll's mark in one
@@ -270,6 +280,54 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
     with places, `seguimos.alternatives`), choice?, updatedAt. Deleted when they wait nowhere.
   - `answer_waitlist {choice: join | wait}` while the card says didntFill; `join` needs the
     nearby ronda, which the admin then adds them to ("Sumar a esta ronda").
+- The weekly loop's code jobs (#47, #50), fixed rules with no model; their messages go through
+  the organiser's outbox (gates, trace with `model: ""`, steps `by: code`, introduction on a
+  first message) as kind `ask`, which isn't routine. A guest from the bench (`weeks/{w}.guests`)
+  is no member, so none of them reaches one: never asked to open, never in the turns, never a
+  buddy nor prompted after a miss, never a home for the después nor a reader of it (the narrow
+  reading: #47 and #50 speak of the ronda's members; `GoingNeighbour.guest` keeps them off the
+  después sheet).
+  - `rondas/{id}/despues/{isoWeek}` (`functions/despues.py`): week, date, kind (none | place
+    | home), what, where (place), homeOf and homeName (home), address (home, until the day
+    ends), setBy, setByName, status (set | asking | declined), updatedAt, answeredAt?,
+    addressDeletedAt?. `set_despues {rondaId, week?, kind, what?, where?, homeOf?, address?}`
+    (the week's anfitrión, cola or opener; the upcoming meeting only; the words pass the word
+    gates, the home's address skipping only the address check, `gates.check_words(home=True)`)
+    replaces the week's document; someone else's home is `asking` and gets the question
+    (`data.type: despues`). `answer_despues {rondaId, week, answer}` (whose home it is): yes →
+    `set`, no → `declined` and the address deleted. `despues_sweep` deletes the address once
+    the meeting's day (its `dateOverride`, if any) is over. The RSVP push adds "Después, si
+    querés, … en lo de Mirta." when it is set (never the address). Rules: the ronda's members
+    `get` it once `set` (or a missing one); whoever set it and whose home it is, always; never
+    listed or written by a client (`rules/despues.test.js`).
+  - "¿Abrís vos?" (`functions/handoff.py`, job `handoff`): `rondas/{id}/handoffs/{isoWeek}`
+    (no client reads it): week, date, hour, fromUid, fromName, reason (no | away | unanswered),
+    step (cola | members | taken | nobody | back), asked, declined, askedAt, deadline, takenBy?,
+    takenName?. `rondas/{id}/handoff_asks/{uid}` (that member only): week, date, hour, fromName
+    and reason (the cola's only), status (open | taken | closed), answer?. It starts once the
+    week's RSVP push went out, when the anfitrión's answer is "esta no", they are paused or
+    gone, or there is none by noon the day before; the cola for two hours, then everyone else
+    in for the meeting who hasn't said no, until it starts; nothing from 21:00 to 09:00
+    (checked before anything is claimed). The job reads `weeks/{w}.rsvp`, so it learns of an
+    "esta no" within the hour. `answer_handoff {rondaId, week, answer}`: the first yes (in a
+    transaction) sets `opener`, closes the other questions and says "voy" for them; a no moves
+    it on at once when everyone asked said no. With nobody, `ronda_setups` carries the step
+    for `/admin/rondas`.
+  - The turns (`functions/rotation.py`, job `assign_hosts`): when `hosts.month` is behind the
+    current month in Montevideo, the cola opens and the next active member by `joinedAt`
+    closes, once per month missed; `turns` is rewritten and the acta gets one line,
+    `decidedBy: rule` ("Regla fija"). Hosts from before `month` existed get it stamped,
+    unchanged.
+  - The buddy (`functions/buddy.py`): `buddy_options {rondaId}` → {due (a meeting of the ronda
+    since the member joined), chosen, buddyUid, buddyName, choices [{uid, firstName}]};
+    `set_buddy {rondaId, buddyUid}`. The `prompt_buddy` job, Fridays from 10:00: for each
+    `weeks/{w}` of the past seven days, each member with `attendance` false, no "esta no" and no
+    pause, whose `buddyUid` is another member of that ronda, once
+    (`rondas/{id}/buddy_prompts/{isoWeek}.prompted`, no client reads it): the buddy gets the
+    push (`data.type: buddy`) and `rondas/{id}/buddy_asks/{buddyUid}` {status open, asks
+    [{firstName, day, week, at}]}, which only they read and only they close (`status: closed`,
+    `closedAt == request.time`; `rules/buddy.test.js`). The admin's trace has it; the acta
+    doesn't.
 - `avoid/{pairId}`: uidA, uidB (report-apart; read by the solver only).
 - `reports/{id}`: reporter, reported, rondaId, tag, text (minimal), status.
 - `acta/{rondaId}/entries/{runId}-{k}` (built in #49, `functions/organiser/trace.py`): week, ts,
@@ -480,8 +538,9 @@ weights and limits are in `solver/README.md`; every rule name and number is in
   home for the después). ("Ronda nunca pide plata" is in the terms and on the flyers; a
   message that mentions money is held.)
 
-Built in #49 (`functions/organiser/`, `functions/rain.py`; `assign_hosts`, `prompt_buddy`,
-and "Ronda se calla" are #50; `offer_bench_seat` is built in #48, below):
+Built in #49 (`functions/organiser/`, `functions/rain.py`; "Ronda se calla" is #50;
+`offer_bench_seat` is built in #48, below; `assign_hosts` and `prompt_buddy` are built as plain
+code jobs with no model, § Data model, the weekly loop's code jobs):
 - **Model:** `organiser.model.ChatModel` speaks OpenAI-compatible Chat Completions, streamed,
   with `reasoning_effort: low`, to Muse Spark Open on Baseten (`meta-models/muse-spark-open-1026`);
   `FallbackModel` moves to `muse-spark-1.3` on the Meta Model API for the rest of a run when Spark
@@ -521,7 +580,7 @@ and "Ronda se calla" are #50; `offer_bench_seat` is built in #48, below):
   get the option's message through the gates (kind `change`). Without a pick, the next hourly run
   marks it expired: "queda como está". The host's screen is `/lluvia/{rondaId}/{week}`, which the
   web push links to; Android draws the push but a tap opens Mi ronda, not the screen, until
-  `PushClient` routes taps.
+  `PushClient` routes those taps too (it routes the attendance ask's).
 - **Screens:** `/admin/programa` (the live trace, "Correr el chequeo de lluvia" and "Probar a las
   22:00", which runs it at 22:00 today so the gates hold what it would send); `/acta/{rondaId}`
   (members, linked from Mi ronda); `/lluvia/{rondaId}/{week}` (the host).

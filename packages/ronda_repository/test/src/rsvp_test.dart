@@ -40,6 +40,10 @@ void main() {
 
     setUp(() {
       rondasApi = _MockRondasApi();
+      when(() => rondasApi.watchHandoffAsk(any(), any()))
+          .thenAnswer((_) => Stream.value(null));
+      when(() => rondasApi.watchDespues(any(), any()))
+          .thenAnswer((_) => Stream.value(null));
       subject = RondaRepository(
         proposalsApi: _MockProposalsApi(),
         rondasApi: rondasApi,

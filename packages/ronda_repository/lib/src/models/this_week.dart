@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:ronda_repository/src/models/weekly_loop.dart';
 
 /// A member's weekly answer ("voy" / "esta no").
 enum RsvpAnswer {
@@ -76,6 +77,18 @@ class const ThisWeek({
   /// Whether this member left the ronda (a "no" to ¿seguimos? leaves at its
   /// close): there is no week for them to answer.
   final bool hasLeft = false,
+
+  /// The months' turns of who opens and who closes, this month first.
+  final List<HostTurn> turns = const [],
+
+  /// Who took over opening [week] ("¿Abrís vos?"), when someone did.
+  final Host? opener,
+
+  /// [week]'s después, as this member may see it.
+  final Despues? despues,
+
+  /// "¿Abrís vos?" for [week], while it is open to this member.
+  final HandoffAsk? handoffAsk,
 }) extends Equatable {
   /// {@macro this_week}
   this;
@@ -101,6 +114,10 @@ class const ThisWeek({
     noCount,
     unansweredCount,
     hasLeft,
+    turns,
+    opener,
+    despues,
+    handoffAsk,
   ];
 }
 
@@ -133,12 +150,16 @@ class const GoingNeighbour({
 
   /// What they bring, as ids.
   required final List<String> brings,
+
+  /// Whether they took a freed seat from the bench for this meeting only,
+  /// and are no member: never a host, a buddy or a home for the después.
+  final bool guest = false,
 }) extends Equatable {
   /// {@macro going_neighbour}
   this;
 
   @override
-  List<Object?> get props => [uid, firstName, brings];
+  List<Object?> get props => [uid, firstName, brings, guest];
 }
 
 /// {@template rsvp_push_result}

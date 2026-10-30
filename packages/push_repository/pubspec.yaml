@@ -10,6 +10,7 @@ environment:
 dependencies:
   device_store:
     path: ../device_store
+  equatable: ^2.0.7
   flutter:
     sdk: flutter
   push_client:
