@@ -13,6 +13,8 @@ options.set_global_options(region=REGION, max_instances=2)
 
 # Meta Model API key, from Secret Manager (`firebase functions:secrets:set MODEL_API_KEY`).
 MODEL_API_KEY = params.SecretParam("MODEL_API_KEY")
+# Baseten key for the organiser agent's Muse Spark Open (`functions:secrets:set BASETEN_API_KEY`).
+BASETEN_API_KEY = params.SecretParam("BASETEN_API_KEY")
 
 
 # Callables verify the caller's ID token with the default Admin app, so it must exist before
@@ -257,6 +259,7 @@ MONTEVIDEO = "America/Montevideo"
     max_instances=1,
     timeout_sec=300,
     memory=options.MemoryOption.MB_512,
+    secrets=[MODEL_API_KEY, BASETEN_API_KEY],
 )
 def dispatch(event: scheduler_fn.ScheduledEvent) -> None:
     """Runs every job that is due at the scheduled time (jobs.JOBS)."""
@@ -270,6 +273,7 @@ def dispatch(event: scheduler_fn.ScheduledEvent) -> None:
     max_instances=1,
     timeout_sec=300,
     memory=options.MemoryOption.MB_512,
+    secrets=[MODEL_API_KEY, BASETEN_API_KEY],
     invoker="public",
 )
 def run_job(req: https_fn.CallableRequest) -> dict:
@@ -367,4 +371,43 @@ def answer_seguimos(req: https_fn.CallableRequest) -> dict:
             choice=data.get("choice"),
         )
     except seguimos.SeguimosError as e:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e
+
+
+# --- The organiser agent (#49): the host's pick after the rain check -----------------------
+
+
+@https_fn.on_call(
+    region=REGION,
+    max_instances=2,
+    memory=options.MemoryOption.MB_512,
+    invoker="public",
+)
+def answer_move(req: https_fn.CallableRequest) -> dict:
+    """Records the host's pick for a rain proposal and sends its one message to the members:
+    `{rondaId, week, choice: covered | postpone | asIs}`. The proposal's host only (rain.py)."""
+    import jobs
+    import rain
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "sign in first")
+    data = req.data if isinstance(req.data, dict) else {}
+    ronda_id, week, choice = data.get("rondaId"), data.get("week"), data.get("choice")
+    if not all(isinstance(v, str) and v and "/" not in v for v in (ronda_id, week, choice)):
+        raise https_fn.HttpsError(
+            https_fn.FunctionsErrorCode.INVALID_ARGUMENT, "rondaId, week and choice are required"
+        )
+    context = jobs.context()
+    try:
+        return rain.answer_move(
+            _firestore(),
+            req.auth.uid,
+            ronda_id,
+            week,
+            choice,
+            _now(),
+            send=context.send,
+            app_url=context.app_url,
+        )
+    except rain.MoveError as e:
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e

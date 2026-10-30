@@ -1434,5 +1434,301 @@
                 "type": "int"
             }
         }
+    },
+    "organiserLoadError": "We couldn't read what the program did. Try again.",
+    "@organiserLoadError": {
+        "description": "Trace, acta and rain screens: reading failed"
+    },
+    "traceTitle": "What the program sent",
+    "@traceTitle": {
+        "description": "Admin: the organiser's trace, title and the link to it"
+    },
+    "traceBody": "Every step of the program, live. Whatever goes out or is held passes the gates first.",
+    "@traceBody": {
+        "description": "Admin: what the trace is"
+    },
+    "traceRun": "Run the rain check",
+    "@traceRun": {
+        "description": "Admin: runs the rain check now for every ronda"
+    },
+    "traceRunAtNight": "Try it at 22:00 (nothing goes out)",
+    "@traceRunAtNight": {
+        "description": "Admin: runs the rain check as if it were 22:00, to show the gate"
+    },
+    "traceRunning": "Running…",
+    "@traceRunning": {
+        "description": "Admin: while the rain check runs"
+    },
+    "traceRunResult": "{count, plural, =0{There was no ronda to check.} =1{It checked 1 ronda.} other{It checked {count} rondas.}}",
+    "@traceRunResult": {
+        "description": "Admin: how many rondas the rain check looked at",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "traceRunFailed": "{count, plural, =1{1 run failed: look at its steps.} other{{count} runs failed: look at their steps.}}",
+    "@traceRunFailed": {
+        "description": "Admin: rain check runs that failed",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "traceEmpty": "The program hasn't run yet.",
+    "@traceEmpty": {
+        "description": "Admin: no runs yet"
+    },
+    "traceRunLabel": "Week {week} · {time}",
+    "@traceRunLabel": {
+        "description": "Admin: one run in the list",
+        "placeholders": {
+            "week": {
+                "type": "String"
+            },
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "traceRunByHand": "by hand",
+    "@traceRunByHand": {
+        "description": "Admin: a run the admin started"
+    },
+    "traceStatusRunning": "running",
+    "@traceStatusRunning": {
+        "description": "Admin: run status"
+    },
+    "traceStatusDone": "done",
+    "@traceStatusDone": {
+        "description": "Admin: run status"
+    },
+    "traceStatusCapped": "hit the step cap",
+    "@traceStatusCapped": {
+        "description": "Admin: run status"
+    },
+    "traceStatusStopped": "stopped",
+    "@traceStatusStopped": {
+        "description": "Admin: run status"
+    },
+    "traceStatusFailed": "failed",
+    "@traceStatusFailed": {
+        "description": "Admin: run status"
+    },
+    "traceStatusOther": "unknown",
+    "@traceStatusOther": {
+        "description": "Admin: run status this app doesn't know"
+    },
+    "traceFlags": "{count, plural, =0{Nobody tapped “Something was wrong”.} =1{1 person tapped “Something was wrong”.} other{{count} people tapped “Something was wrong”.}}",
+    "@traceFlags": {
+        "description": "Admin: members who flagged the acta",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "traceLastWords": "Last words: {note}",
+    "@traceLastWords": {
+        "description": "Admin: the model's last words",
+        "placeholders": {
+            "note": {
+                "type": "String"
+            }
+        }
+    },
+    "traceModelStep": "{model} · {seconds} s",
+    "@traceModelStep": {
+        "description": "Admin: one model answer",
+        "placeholders": {
+            "model": {
+                "type": "String"
+            },
+            "seconds": {
+                "type": "String"
+            }
+        }
+    },
+    "traceCalls": "Calls {tools}",
+    "@traceCalls": {
+        "description": "Admin: the tools a model answer calls",
+        "placeholders": {
+            "tools": {
+                "type": "String"
+            }
+        }
+    },
+    "traceReason": "Why: {reason}",
+    "@traceReason": {
+        "description": "Admin: the model's reason for a tool call",
+        "placeholders": {
+            "reason": {
+                "type": "String"
+            }
+        }
+    },
+    "traceRefused": "Refused",
+    "@traceRefused": {
+        "description": "Admin: a tool call refused or malformed"
+    },
+    "traceToHost": "To {name}, who opens",
+    "@traceToHost": {
+        "description": "Admin: a message to the host",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "traceToMember": "To {name}",
+    "@traceToMember": {
+        "description": "Admin: a message to a member",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "traceSent": "Sent",
+    "@traceSent": {
+        "description": "Admin: a message that went out"
+    },
+    "traceHeld": "Held: {reason}.",
+    "@traceHeld": {
+        "description": "Admin: a message a gate stopped",
+        "placeholders": {
+            "reason": {
+                "type": "String"
+            }
+        }
+    },
+    "traceHeldUntil": "Held: {reason}. It could go out on {date} at {time}.",
+    "@traceHeldUntil": {
+        "description": "Admin: a message held at night, and when it could go",
+        "placeholders": {
+            "reason": {
+                "type": "String"
+            },
+            "date": {
+                "type": "String"
+            },
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "traceUnreachable": "Not delivered: no phone took it.",
+    "@traceUnreachable": {
+        "description": "Admin: a message no phone got"
+    },
+    "traceSkipped": "Emulator: nothing is sent.",
+    "@traceSkipped": {
+        "description": "Admin: a message under the emulator"
+    },
+    "traceStopped": "Stopped: {why}",
+    "@traceStopped": {
+        "description": "Admin: why a run stopped",
+        "placeholders": {
+            "why": {
+                "type": "String"
+            }
+        }
+    },
+    "actaTitle": "What the program did",
+    "@actaTitle": {
+        "description": "Members: the acta's title and the link to it"
+    },
+    "actaLink": "What the program did this week",
+    "@actaLink": {
+        "description": "Mi ronda: the link to the acta"
+    },
+    "actaIntro": "Ronda uses a program to tell you about times, places and rain. This is everything it did this week.",
+    "@actaIntro": {
+        "description": "Members: what the acta is"
+    },
+    "actaEmpty": "The program hasn't done anything this week yet.",
+    "@actaEmpty": {
+        "description": "Members: an empty acta"
+    },
+    "actaByHost": "The host decided",
+    "@actaByHost": {
+        "description": "Members: a line the host decided"
+    },
+    "actaFooter": "It read nobody's messages and sent nothing outside hours.",
+    "@actaFooter": {
+        "description": "Members: the acta's last line"
+    },
+    "actaReport": "Something was wrong",
+    "@actaReport": {
+        "description": "Members: flags the acta for the admin"
+    },
+    "actaReported": "Thanks. We'll look into it.",
+    "@actaReported": {
+        "description": "Members: after flagging"
+    },
+    "actaReportFailed": "It wasn't saved. Try again.",
+    "@actaReportFailed": {
+        "description": "Members: flagging failed"
+    },
+    "rainMoveIntro": "{count, plural, =0{Nobody else gets a message.} =1{Whatever you pick reaches 1 person in a single message.} other{Whatever you pick reaches the {count} of them in a single message.}} If you don't answer before 21:00, it stays as it is.",
+    "@rainMoveIntro": {
+        "description": "Host: how the pick reaches the members",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "rainMoveStandIn": "Nobody opens this ronda yet, so we're asking you.",
+    "@rainMoveStandIn": {
+        "description": "Host: a stand-in host until hosts are set"
+    },
+    "rainMoveTheyGet": "They'll get, exactly:",
+    "@rainMoveTheyGet": {
+        "description": "Host: the members' message for the picked option"
+    },
+    "rainMoveFirstMessage": "Whoever gets their first message from the program sees “Soy un programa…” before it.",
+    "@rainMoveFirstMessage": {
+        "description": "Host: the disclosure some members see first"
+    },
+    "rainMoveSend": "Send it",
+    "@rainMoveSend": {
+        "description": "Host: sends the picked option"
+    },
+    "rainMoveSending": "Sending…",
+    "@rainMoveSending": {
+        "description": "Host: while it sends"
+    },
+    "rainMoveSent": "{count, plural, =0{Done. It reached no phone.} =1{Done. It reached 1.} other{Done. It reached {count}.}}",
+    "@rainMoveSent": {
+        "description": "Host: after sending",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "rainMovePicked": "You chose: {label}.",
+    "@rainMovePicked": {
+        "description": "Host: the option chosen",
+        "placeholders": {
+            "label": {
+                "type": "String"
+            }
+        }
+    },
+    "rainMoveExpired": "Time's up: it stays as it is.",
+    "@rainMoveExpired": {
+        "description": "Host: past the deadline"
+    },
+    "rainMoveNone": "There's nothing to decide.",
+    "@rainMoveNone": {
+        "description": "Host: no proposal"
+    },
+    "rainMoveError": "It wasn't sent. Try again.",
+    "@rainMoveError": {
+        "description": "Host: sending failed"
     }
 }

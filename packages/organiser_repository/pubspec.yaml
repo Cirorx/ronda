@@ -1,0 +1,24 @@
+name: organiser_repository
+description: The organiser agent's trace, the members' acta and the host's rain proposal, over ronda_api.
+version: 0.1.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ^3.47.0
+
+dependencies:
+  equatable: ^2.0.7
+  firebase_core: ^5.1.0
+  flutter:
+    sdk: flutter
+  ronda_api:
+    path: ../ronda_api
+
+dev_dependencies:
+  cloud_firestore: ^7.1.0
+  cloud_functions: ^7.0.1
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+  very_good_analysis: ^11.0.0

@@ -28,13 +28,14 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   │    callables  extract (Transcribe → Spark), propose_groups (CP-SAT, admin), answer_rsvp,
   │               answer_seguimos, run_job(name, now?, force?) (admin, for tests and the
   │               demo), make_mate_flyer (SAM → cutouts, Muse Image background → text + QR
-  │               in code)
+  │               in code), answer_move (the host's pick after the rain check)
   │    scheduled  one dispatcher on the hour in Montevideo (`dispatch`) → run_<job>(db, now)
   │               for every job in `jobs.JOBS`; hourly audio sweeper (`sweep_audio`
   │               deletes `audio/` objects older than 1 h); hourly Cerca counts (`refresh_cerca`,
   │               until the dispatcher adopts `run_refresh_cerca`)
   │    http       flyer_landing (public: counts a flyer's scan, answers /f/{id})
-  │    agent
+  │    agent      functions/organiser/ (loop, tools, gates, trace) run by the `rain_check` job
+  │               (functions/rain.py) inside `dispatch` and `run_job`
   ├─ Hosting: Flutter web app under /app; plain-HTML Cerca tuyo at / and /f/{id}
   └─ FCM → APNs (iOS only with the Apple Developer Program)
 Meta Model API: Voice Transcribe, Spark 1.3, SAM 3.1, Muse Image
@@ -177,9 +178,39 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
 - `bench/{rondaId}`: ordered uids.
 - `avoid/{pairId}`: uidA, uidB (report-apart; read by the solver only).
 - `reports/{id}`: reporter, reported, rondaId, tag, text (minimal), status.
-- `acta/{rondaId}/entries/{id}`: tool, summary, decidedBy (agent | host), ts.
-- `agent_runs/{runId}/steps/{n}`: ts, tool, argsSummary, reason, resultSummary, latencyMs, model,
-  gate (allowed | blocked). Admin-only; rendered live as the agent trace.
+- `acta/{rondaId}/entries/{runId}-{k}` (built in #49, `functions/organiser/trace.py`): week, ts,
+  tool, summary (es-419, written in code like the pushes; the model's own words only through
+  `log_acta`, after the word gates), decidedBy (agent | host), runId. Read by that ronda's
+  members as "Lo que hizo el programa" (`/acta/{rondaId}`); one line per tool call and per send.
+- `acta/{rondaId}/flags/{uid}`: exactly `{week, at}` (`at == request.time`), written by a member
+  of that ronda for themselves when they tap [Algo estuvo mal]; read by the admin only, who sees
+  the count on the trace (rules test: `rules/organiser.test.js`).
+- `agent_runs/{runId}`: job, rondaId, week, startedAt, endedAt, status (running | done | capped
+  | stopped | failed), model, forced, note (the model's last words, Markdown stripped),
+  stepCount, actaCount. The rain check's run is `{rondaId}_{week}_rain` (claimed in a transaction,
+  so once a week; a failed run is claimed again on the next hour); a forced run adds
+  the time it ran for (`_20261104T2200`).
+- `agent_runs/{runId}/steps/{n}` (`001`, `002`…): n, ts, kind and what it carries: `model`
+  (model, latencyMs, toolCalls, content), `tool` (tool, argsSummary, reason, resultSummary,
+  status ok | refused | invalid, latencyMs, model), `message` (toRole, toName, title, text, gate
+  allowed | blocked, gateName, gateReason, releaseAt, outcome sent | held | unreachable |
+  skipped), `host` (the pick, or the deadline passing), `note`, `stop` (why). Admin-only (the
+  rules match `agent_runs/{document=**}`); rendered live at `/admin/programa`.
+- `rondas/{id}/moves/{isoWeek}` (#49, `functions/organiser/moves.py`): the rain proposal to the
+  host: week, date, hour, hostUid, hostName, hostFallback, title, body, runId, forecast
+  {rainProbability, rainMm, gustsKmh}, options [{id covered | postpone | asIs, label, message,
+  placeId?, placeName?, date?}], recipients, deadline (21:00 the evening before), status
+  (pending | decided | expired), createdAt; once decided choice, decidedAt, sent, held. `get`
+  by its `hostUid` only, never listed. A pick writes `weeks/{w}.placeOverride {placeId, name}`
+  or `weeks/{w}.dateOverride` (`YYYY-MM-DD`); the Mi ronda card and `views/week` don't read
+  either yet, so members learn the change from the push.
+- `places/{id}`: covered public places the organiser may offer when it rains: name (with its
+  article, "el Salón Comunal de El Pinar"), barrios[], covered, kind (`public`). Read by the
+  server only. The demo set is `data/demo/invented_places.json`; the real project has none until
+  the owner adds them.
+- `users/{uid}/private/agent`: what the gates remember of a person: introducedAt (their first
+  organiser message, which carries "Soy un programa") and routine {isoWeek: at}. No client
+  reads it.
 - `proposals/{id}` (built in #25, `functions/proposals.py`): status (pending | approved),
   solverStatus, groups[{id (seat id), barrio, pretext, slot, checks, members[{uid, firstName,
   ageBand, distanceBlocks, plusOneInGroup?}]}], unseated[uids], rejectedAlternative {brokenRule,
@@ -253,10 +284,11 @@ project checklist. Everything seeded is invented:
   brings per uid, deterministically. Every uid starts with `demo-`: the rules leave no room for a
   label field on `users/{uid}`, so the id is the label.
 - Documents: `seat_facts/{seatId}` (144: 9 barrios × 4 pretexts × the 4 demo slots);
+  `places/demo-*` (5 invented covered public places, `data/demo/invented_places.json`);
   `users/{uid}` with the profile, `plusOneUid` on whoever brings a +1 (as the generator gives
   it) and the accepted terms; `users/{uid}/private/eligible` = `{seatIds, updatedAt}`; and
   `avoid/{uidA}_{uidB}` per report-apart pair, uids in order (one pair in the 30 set). Needs are
-  never seeded. The 30 set is 205 documents.
+  never seeded. The 30 set is 210 documents.
 - Every timestamp is one fixed demo moment (`DEMO_TIME`), never the server's, so two resets leave
   identical documents (Firestore's own create and update times aside).
 - Reset deletes every Auth account and document of the project through the emulators' clear
@@ -308,6 +340,47 @@ weights and limits are in `solver/README.md`; every rule name and number is in
   routine push a week, public places only for the ronda itself (the host may set a home
   for the después). ("Ronda nunca pide plata" is in the terms and on the
   flyers, not in messages.)
+
+Built in #49 (`functions/organiser/`, `functions/rain.py`; `assign_hosts`, `prompt_buddy`,
+`offer_bench_seat` and "Ronda se calla" are #50):
+- **Model:** `organiser.model.ChatModel` speaks OpenAI-compatible Chat Completions, streamed,
+  with `reasoning_effort: low`, to Muse Spark Open on Baseten (`meta-models/muse-spark-open-1026`);
+  `FallbackModel` moves to `muse-spark-1.3` on the Meta Model API for the rest of a run when Spark
+  Open errors or leaks raw `<atem:` text. Keys come from the function's secrets
+  (`BASETEN_API_KEY`, `MODEL_API_KEY`, bound to `dispatch` and `run_job`) and the client is built
+  only when a ronda is due.
+- **Loop** (`organiser.agent.run_agent`): at most 12 model turns. Every tool call is validated
+  with pydantic (`extra="forbid"`, every field required, `""` for none, so the schemas carry no
+  `anyOf`); a call that doesn't fit gets the error as its result and one more turn, and a second
+  bad turn stops the run. The model's words are Markdown-stripped before they are kept.
+- **What the model sees:** the pretext, the meeting's day, hour and place name, the time, and the
+  covered places' ids and names; counts from `count_rsvps`. No member's name, uid or address.
+- **Gates** (`organiser.gates`, `organiser.text`), in order, on every message: quiet hours (held
+  with `releaseAt`, the next 09:00), disclosure (the outbox adds "Hola, X. Soy un programa…" to a
+  person's first organiser message and the gate checks it), no emoji, voseo (tú-only words; the
+  checker's limits are in `text.py`), one routine message a week (the RSVP push is that ronda's
+  routine message; a host's proposal and a host-decided change are not routine), public places
+  (a place a message sends people to must be `public`, and no "en lo de" or address in the
+  words). `log_acta` text passes the word gates. A held message is a `message` step with
+  outcome `held` ("Frenado") and the reason; a sent one `sent` ("Salió").
+- **The rain decision** (`rain.run_rain_check`, job `rain_check`): the evening before each
+  meeting, 18:00 to 21:00 in Montevideo, once per ronda and week. The agent reads the forecast
+  for the meeting's two hours (a slot's band starts at 10, 16 or 19 until a host sets an hour),
+  and when the worst hour reaches 60% it checks the sunset, the last bus (a tear-off flyer's
+  stored `lastBus` for the barrio, so `scripts/last_bus.py` runs once per flyer, not per week)
+  and the counts, then `propose_move`s: a covered place of the barrio, another day up to three
+  days later, and always "Vamos igual", each with the exact member message written in code. The
+  gates run before anything is written; a held proposal leaves no move. The host is
+  `hosts.anfitrion` while active, else the first active member, flagged `hostFallback`.
+- **The host's pick** (`answer_move {rondaId, week, choice}`): the move's host only, before 21:00;
+  claimed in a transaction, so one push per member and a second call sends nothing; the members
+  get the option's message through the gates (kind `change`). Without a pick, the next hourly run
+  marks it expired: "queda como está". The host's screen is `/lluvia/{rondaId}/{week}`, which the
+  web push links to; Android draws the push but a tap opens Mi ronda, not the screen, until
+  `PushClient` routes taps.
+- **Screens:** `/admin/programa` (the live trace, "Correr el chequeo de lluvia" and "Probar a las
+  22:00", which runs it at 22:00 today so the gates hold what it would send); `/acta/{rondaId}`
+  (members, linked from Mi ronda); `/lluvia/{rondaId}/{week}` (the host).
 
 ## Data sources and licences
 

@@ -999,6 +999,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0+1"
+  organiser_repository:
+    dependency: "direct main"
+    description:
+      path: "packages/organiser_repository"
+      relative: true
+    source: path
+    version: "0.1.0+1"
   package_config:
     dependency: transitive
     description:

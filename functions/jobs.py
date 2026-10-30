@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import fcm
+import rain
 import rsvp
 import seguimos
 
@@ -42,6 +43,9 @@ JOBS: dict[str, Callable[[object, datetime, Context], dict]] = {
         db, now, send=context.send, app_url=context.app_url, force=context.force
     ),
     "seguimos_ask": lambda db, now, context: seguimos.run_seguimos_ask(
+        db, now, send=context.send, app_url=context.app_url, force=context.force
+    ),
+    "rain_check": lambda db, now, context: rain.run_rain_check(
         db, now, send=context.send, app_url=context.app_url, force=context.force
     ),
 }

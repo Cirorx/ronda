@@ -41,6 +41,8 @@ dependencies:
     path: packages/needs_repository
   onboarding_repository:
     path: packages/onboarding_repository
+  organiser_repository:
+    path: packages/organiser_repository
   profile_repository:
     path: packages/profile_repository
   push_client:

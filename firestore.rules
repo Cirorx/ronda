@@ -198,5 +198,40 @@ service cloud.firestore {
     match /seguimos_counts/{rondaId} {
       allow read: if isAdmin();
     }
+
+    // The organiser agent (#49, docs/ARCHITECTURE.md § Organiser agent). The agent writes
+    // everything here with the admin SDK; no client writes any of it but [Algo estuvo mal].
+    //
+    // The trace: every run and its steps, for the admin only.
+    match /agent_runs/{document=**} {
+      allow read: if isAdmin();
+    }
+
+    // "Lo que hizo el programa": the ronda's acta, read by its members.
+    match /acta/{rondaId}/entries/{entryId} {
+      allow read: if isMemberOf(rondaId);
+    }
+
+    // [Algo estuvo mal]: one per member, exactly the week they read and when they tapped.
+    // The admin reads them; nobody else, not even the member who tapped.
+    match /acta/{rondaId}/flags/{uid} {
+      allow create, update: if isOwner(uid) && isMemberOf(rondaId) && isActaFlag();
+      allow read: if isAdmin();
+    }
+
+    function isActaFlag() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['week', 'at'])
+          && data.keys().hasAll(['week', 'at'])
+          && data.week is string
+          && data.week.matches('[0-9]{4}-W[0-9]{2}')
+          && data.at == request.time;
+    }
+
+    // A rain proposal for one meeting, opened by its host from the push: `get` only, so
+    // nobody lists a ronda's proposals. places/{id} and users/{uid}/private/agent stay closed.
+    match /rondas/{rondaId}/moves/{week} {
+      allow get: if request.auth != null && resource.data.hostUid == request.auth.uid;
+    }
   }
 }

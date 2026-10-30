@@ -5,6 +5,7 @@ import copy
 import inspect
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
+from typing import ClassVar
 
 import pytest
 from firebase_functions import https_fn, scheduler_fn
@@ -476,4 +477,70 @@ class TestAnswerSeguimos:
 
         with pytest.raises(https_fn.HttpsError) as excinfo:
             call(main.answer_seguimos, stranger, {"rondaId": "ronda-1", "answer": "yes"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED
+
+
+class TestOrganiser:
+    """#49: the agent runs inside the dispatcher and `run_job`, so both get the model keys; the
+    host's pick is the `answer_move` callable."""
+
+    @pytest.mark.parametrize("function", [main.dispatch, main.run_job])
+    def test_the_jobs_get_both_model_keys(self, function):
+        secrets = {s["key"] for s in function.__firebase_endpoint__.secretEnvironmentVariables}
+
+        assert secrets == {"MODEL_API_KEY", "BASETEN_API_KEY"}
+
+    @pytest.fixture
+    def proposed(self, monkeypatch):
+        """A rain proposal for Mirta (demo-101), made at 18:00 the evening before; the
+        callable runs at 20:30 with a stand-in sender."""
+        import jobs
+        import rain
+        from tests.organiser_fakes import WED_18, WED_2030, FakeWeather, ScriptedModel, rain_script
+        from tests.organiser_fakes import documents as rainy
+        from tests.test_rsvp import Sender
+
+        db = FakeFirestore(rainy(hosts={"anfitrion": "demo-101"}))
+        rain.run_rain_check(
+            db,
+            WED_18,
+            send=Sender(),
+            model=ScriptedModel(rain_script()),
+            weather=FakeWeather(),
+        )
+        sender = Sender()
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setattr(main, "_now", lambda: WED_2030)
+        monkeypatch.setattr(jobs, "context", lambda: jobs.Context(send=sender, app_url="x"))
+        return sender
+
+    MOVE: ClassVar[dict] = {"rondaId": "ronda-rain", "week": "2026-W45", "choice": "covered"}
+    HOST = SimpleNamespace(uid="demo-101", token={})
+
+    def test_refuses_a_signed_out_caller(self, proposed):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.answer_move, None, self.MOVE)
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+
+    @pytest.mark.parametrize(
+        "data",
+        [None, {}, {**MOVE, "week": 45}, {**MOVE, "rondaId": "a/b"}, {**MOVE, "choice": ""}],
+    )
+    def test_refuses_missing_arguments(self, proposed, data):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.answer_move, self.HOST, data)
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.INVALID_ARGUMENT
+
+    def test_sends_the_hosts_pick_once(self, proposed):
+        result = call(main.answer_move, self.HOST, self.MOVE)
+
+        assert result["status"] == "decided"
+        assert result["sent"] == 3
+        assert len(proposed.messages) == 4
+
+    def test_refuses_anyone_but_the_host(self, proposed):
+        member = SimpleNamespace(uid="demo-102", token={})
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.answer_move, member, self.MOVE)
         assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED

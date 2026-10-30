@@ -49,3 +49,19 @@ The shapes are in `docs/ARCHITECTURE.md` § Data model.
 
 Extension methods can't be stubbed with mocktail: a repository test over them passes a real
 `RondaApi` built on `FakeFirebaseFirestore`.
+
+## The organiser agent (`OrganiserApi`, #49)
+
+| Member | Does |
+|---|---|
+| `OrganiserApi(firestore:, functions:)` | Built in bootstrap |
+| `Stream<List<AgentRunDocument>> watchRuns()` | The newest 10 `agent_runs`, newest first (admin only) |
+| `Stream<List<AgentStepDocument>> watchSteps(String runId)` | A run's steps in order, as they land |
+| `Stream<int> watchFlagCount(String rondaId)` | How many members tapped [Algo estuvo mal] (admin only) |
+| `Stream<List<ActaEntryDocument>> watchActa(String rondaId)` | The newest 40 acta lines, newest first (the ronda's members) |
+| `Future<void> flagActa({rondaId, uid, week})` | Writes `acta/{rondaId}/flags/{uid}` = `{week, at: server time}` |
+| `Stream<MoveDocument?> watchMove(String rondaId, String week)` | The rain proposal (its host only) |
+| `Future<({String status, int sent})> answerMove({rondaId, week, choice})` | The `answer_move` callable |
+| `Future<Map<String, int>> runRainCheck({DateTime? at})` | `run_job` for `rain_check`, forced, at `at` in UTC when given (admin only) |
+
+The wire shapes are in `docs/ARCHITECTURE.md` § Data model.

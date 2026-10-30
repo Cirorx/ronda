@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:push_repository/push_repository.dart';
+import 'package:ronda/acta/acta.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
 import 'package:ronda/my_ronda/cubit/this_week_cubit.dart';
@@ -211,7 +212,26 @@ void main() {
         await pump(tester);
 
         expect(find.byType(ThisWeekCard), findsNothing);
+        expect(find.byType(ActaLink), findsNothing);
         expect(find.text('Gracias por venir.'), findsOneWidget);
+      });
+
+      testWidgets("one line to the program's acta under the card", (
+        tester,
+      ) async {
+        when(() => thisWeekCubit.state).thenReturn(
+          ThisWeekState(
+            status: ThisWeekStatus.ready,
+            week: MyRondaFixtures.week(),
+          ),
+        );
+        await pump(tester);
+        await tester.scrollUntilVisible(find.byType(ActaLink), 200);
+
+        expect(
+          tester.widget<ActaLink>(find.byType(ActaLink)).rondaId,
+          MyRondaFixtures.week().rondaId,
+        );
       });
 
       testWidgets('a retry when the ronda cannot be read', (tester) async {

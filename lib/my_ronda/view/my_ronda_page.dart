@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:push_repository/push_repository.dart';
+import 'package:ronda/acta/acta.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
@@ -116,6 +117,8 @@ class const MyRondaView({required final String uid, super.key})
                   const SizedBox.shrink(),
                 ThisWeekStatus.ready => ThisWeekCard(state: state, uid: uid),
               },
+              if (state.week case final week? when !week.hasLeft)
+                ActaLink(rondaId: week.rondaId),
             ],
           ),
         ),

@@ -62,7 +62,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | Package | Layer | Wraps / owns | First issue |
 |---|---|---|---|
 | `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
-| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`) | #13 |
+| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`) | #13 |
 | `device_store` | Data | flutter_secure_storage (needs); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
@@ -74,7 +74,8 @@ Target package map (create each when its first feature needs it, with the Very G
 | `profile_repository` | Repository | Profile, eligible seat ids (over `ronda_api`) | #18 |
 | `needs_repository` | Repository | Needs and the seat filter, over `device_store` only: this repository has no network path | #18 |
 | `onboarding_repository` | Repository | Voice note → upload → `extract` → fields (over `voice_recorder` + `ronda_api`) | #19 |
-| `ronda_repository` | Repository | Rondas, weeks, RSVPs, proposals, acta (proposals built in #25) | #25 |
+| `ronda_repository` | Repository | Rondas, weeks, RSVPs, proposals (proposals built in #25) | #25 |
+| `organiser_repository` | Repository | The organiser agent: the admin's trace (`agent_runs`), a ronda's acta and [Algo estuvo mal], the host's rain proposal and pick, the rain check by hand (over `ronda_api`'s `OrganiserApi`) | #49 |
 
 Rules the agents apply (from `layered-architecture` and `bloc`):
 - Bootstrap (`main_<flavor>.dart` / `bootstrap.dart`) builds every data client and repository and
@@ -175,7 +176,10 @@ pass it everywhere, so nothing lands on another attached device.
    stays on the phone).
 
 ## Security (from `static-security`)
-- Meta and Baseten keys exist only in Cloud Functions config. The app ships Firebase's web/app
+- Meta and Baseten keys exist only in Cloud Functions config: `MODEL_API_KEY` and
+  `BASETEN_API_KEY` in Secret Manager, bound to the functions that call a model (`extract`,
+  `make_mate_flyer`, and `dispatch` and `run_job` for the organiser agent). They reach the code as
+  environment variables and are never logged. The app ships Firebase's web/app
   config, which is public by design: restrict those API keys to the Firebase APIs and the app ids
   in the Google Cloud console.
 - Needs, tokens and anything personal go to flutter_secure_storage; shared_preferences holds

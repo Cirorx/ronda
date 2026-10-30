@@ -96,7 +96,8 @@ def test_resetting_twice_with_the_documented_command_leaves_identical_state():
     first, second = states
     assert first == second
     assert first == demo_data.documents(30)
-    assert len(first) == 205  # 144 seat facts, 30 profiles, 30 eligible documents, 1 avoid pair
+    # 144 seat facts, 30 profiles, 30 eligible documents, 1 avoid pair, 5 covered places
+    assert len(first) == 210
 
 
 def test_reset_after_the_two_hundred_set_leaves_only_the_thirty():
@@ -226,9 +227,16 @@ def test_a_project_reset_deletes_the_proposals_and_rondas_built_from_demo_uids_a
     member = a_real_member()
     built_from_demo = a_ronda("demo-built", ["demo-001", "demo-002"]) | {
         "proposals/demo-built": a_proposal(["demo-001", "demo-002"], ["demo-003"], ["demo-built"]),
+        "rondas/demo-built/moves/2026-W45": {"hostUid": "demo-001", "status": "pending"},
+        "acta/demo-built/entries/run-001": {"week": "2026-W45", "summary": "Miró el pronóstico."},
+        "agent_runs/demo-run": {"rondaId": "demo-built", "status": "done"},
+        "agent_runs/demo-run/steps/001": {"n": 1, "kind": "tool"},
     }
     real = a_ronda("real", ["member-1"]) | {
         "proposals/real": a_proposal(["member-1"], [], ["real"]),
+        "acta/real/entries/run-001": {"week": "2026-W45", "summary": "Miró el pronóstico."},
+        "agent_runs/real-run": {"rondaId": "real", "status": "done"},
+        "places/club-real": {"name": "el Club", "covered": True, "kind": "public"},
     }
     mixed = a_ronda("mixed", ["demo-004", "member-1"]) | {
         "proposals/mixed": a_proposal(["demo-004"], ["member-1"], ["mixed"]),

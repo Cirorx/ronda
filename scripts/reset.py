@@ -14,10 +14,11 @@ From the repo root, in the emulators:
         uv run --python 3.13 scripts/reset.py
 
 deletes every Auth account and every Firestore document of the project with the emulators' own
-clear endpoints, then seeds the 30 invented sign-ups and the seat facts (seed.py 30). That is the
-golden path today: seats published, the demo sign-ups present, and the person on the phone not
-signed up yet, so onboarding shows. Every seeded timestamp is one fixed demo moment, so running it
-twice leaves identical documents. `reset.py 200` gives the same clean state with the 200 set.
+clear endpoints, then seeds the 30 invented sign-ups, the seat facts and the covered places
+(seed.py 30). That is the golden path today: seats published, the demo sign-ups present, and the
+person on the phone not signed up yet, so onboarding shows. Every seeded timestamp is one fixed
+demo moment, so running it twice leaves identical documents. `reset.py 200` gives the same clean
+state with the 200 set.
 The project is GCLOUD_PROJECT, or else the default in .firebaserc.
 
 On the real project, with Application Default Credentials and no emulator hosts:
@@ -89,9 +90,11 @@ def clear_demo(client: firestore.Client) -> int:
     uid, the seat facts either demo set writes, and what the solver and approval built from demo
     people alone: each `proposals/{id}` whose groups and unseated name only demo uids, and each
     `rondas/{id}` whose members are all demo uids, with everything under it (members, weeks,
-    views, answers, private). A proposal or ronda that names any other uid, or a ronda with no
-    members, is kept and listed. A seat fact at a demo path that isn't the invented one raises
-    NotDemoData before anything is deleted. Returns the documents deleted.
+    views, answers, private, moves) and the organiser's acta and runs about it, and the
+    `places/demo-*` the organiser offers when it rains. A proposal or ronda that names any other
+    uid, or a ronda with no members, is kept and listed. A seat fact at a demo path that isn't
+    the invented one raises NotDemoData before anything is deleted. Returns the documents
+    deleted.
     """
     invented = demo_data.documents(30) | demo_data.documents(200)
     seat_paths = [path for path in invented if path.startswith("seat_facts/")]
@@ -118,9 +121,18 @@ def clear_demo(client: firestore.Client) -> int:
         print(f"Kept, not built from demo uids alone: {', '.join(sorted(kept))}.")
 
     deleted = 0
+    demo_rondas = {ronda.id for ronda, demo in rondas if demo}
     for ronda, demo in rondas:
         if demo:
             deleted += client.recursive_delete(ronda)
+            deleted += client.recursive_delete(client.document(f"acta/{ronda.id}"))
+    for run in client.collection("agent_runs").stream():
+        if run.to_dict().get("rondaId") in demo_rondas:
+            deleted += client.recursive_delete(run.reference)
+    for place in client.collection("places").list_documents():
+        if place.id.startswith(DEMO_UID_PREFIX):
+            place.delete()
+            deleted += 1
     for snapshot, demo in proposals:
         if demo:
             deleted += client.recursive_delete(snapshot.reference)
@@ -170,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
     count = seed.seed(args.people)
     print(
         f"Reset {project}: no Auth accounts, {count} demo documents "
-        f"({args.people} sign-ups and the seat facts)."
+        f"({args.people} sign-ups, the seat facts and the covered places)."
     )
     return 0
 
@@ -187,7 +199,8 @@ def _reset_demo(project: str, people: int) -> int:
     count = seed.write(client, demo_data.documents(people))
     print(
         f"Reset the demo data of {project} ({where}): deleted {deleted} demo documents, wrote "
-        f"{count} ({people} sign-ups and the seat facts). Other documents and Auth untouched."
+        f"{count} ({people} sign-ups, the seat facts and the covered places). Other documents "
+        "and Auth untouched."
     )
     return 0
 

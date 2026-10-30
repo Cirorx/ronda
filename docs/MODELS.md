@@ -59,6 +59,15 @@ approved. Modal (`https://inference.us-west.modal.direct`, proxy token `wk-…`)
 its tool support isn't documented. Fallbacks, in order: a JSON action list validated with
 pydantic; the agent on `muse-spark-1.3` (loses the open-weights bonus for those calls).
 
+**As built in #49** (`functions/organiser/model.py`, docs/ARCHITECTURE.md § Organiser agent): the
+agent streams Chat Completions to `meta-models/muse-spark-open-1026` with `tools` and
+`extra_body={"reasoning_effort": "low"}`, gathering each tool call's id, name and argument
+fragments by index as `s4_baseten_tools.py` does. An SDK or connection error, or `<atem:` in the
+answer, moves the rest of the run to `muse-spark-1.3` on the Meta Model API (same request; no
+`tool_choice`, so "auto"). Every argument is validated with pydantic and retried once with the
+error; answers are Markdown-stripped. No paid call ran while building it: the tests play back
+scripted turns shaped like the smoke test's stream, and the first real run is the owner's.
+
 ## Meta tooling for building
 
 Counts toward "Use of Meta AI tooling" (25% of the score); mention what was used in the README.

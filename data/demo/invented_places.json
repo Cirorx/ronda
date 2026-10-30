@@ -1,0 +1,35 @@
+{
+  "_note": "Invented demo data: no real places. Covered public places near the demo barrios, where the organiser agent may offer to move a ronda when it rains (functions/rain.py). Barrio names are real places in Ciudad de la Costa; the halls, the gym and the library are invented. Each name carries its article, as the agent's sentences need (\"nos vemos en el Salón Comunal de El Pinar\"). kind is public: the ronda itself only meets in public places.",
+  "places": {
+    "demo-salon-shangrila": {
+      "name": "el Salón Comunal de Shangrilá",
+      "barrios": ["shangrila", "san-jose-de-carrasco"],
+      "covered": true,
+      "kind": "public"
+    },
+    "demo-gimnasio-lagomar": {
+      "name": "el Gimnasio Techado de Lagomar",
+      "barrios": ["lagomar-sur", "lagomar-norte"],
+      "covered": true,
+      "kind": "public"
+    },
+    "demo-salon-solymar": {
+      "name": "el Salón Comunal de Solymar",
+      "barrios": ["solymar-sur", "solymar-norte", "lomas-de-solymar"],
+      "covered": true,
+      "kind": "public"
+    },
+    "demo-biblioteca-solymar": {
+      "name": "la Biblioteca de Solymar",
+      "barrios": ["solymar-sur"],
+      "covered": true,
+      "kind": "public"
+    },
+    "demo-salon-el-pinar": {
+      "name": "el Salón Comunal de El Pinar",
+      "barrios": ["el-pinar-sur", "el-pinar-norte"],
+      "covered": true,
+      "kind": "public"
+    }
+  }
+}

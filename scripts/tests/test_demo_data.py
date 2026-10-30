@@ -215,3 +215,16 @@ def test_every_timestamp_is_the_one_demo_moment(state):
     stamps = {stamp for fields in state.values() for stamp in timestamps(fields)}
     assert stamps == {demo_data.DEMO_TIME}
     assert demo_data.DEMO_TIME.utcoffset() is not None
+
+
+def test_the_covered_places_are_invented_public_and_near_demo_barrios(state):
+    places = _collection(state, r"places/.+")
+
+    assert len(places) == 5
+    for path, place in places.items():
+        assert path.startswith("places/demo-"), path
+        assert place["covered"] is True
+        assert place["kind"] == "public"
+        assert place["name"].startswith(("el ", "la ")), path
+        assert set(place["barrios"]) <= BARRIOS, path
+    assert set().union(*(p["barrios"] for p in places.values())) == BARRIOS

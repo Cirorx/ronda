@@ -4,6 +4,7 @@ import 'package:flyer_repository/flyer_repository.dart';
 import 'package:go_router/go_router.dart';
 import 'package:needs_repository/needs_repository.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
+import 'package:organiser_repository/organiser_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:push_repository/push_repository.dart';
 import 'package:ronda/app/app.dart';
@@ -18,6 +19,7 @@ class const App({
   required final FlyerRepository flyerRepository,
   required final NeedsRepository needsRepository,
   required final OnboardingRepository onboardingRepository,
+  required final OrganiserRepository organiserRepository,
   required final ProfileRepository profileRepository,
   required final PushRepository pushRepository,
   required final RondaRepository rondaRepository,
@@ -31,6 +33,7 @@ class const App({
         RepositoryProvider.value(value: flyerRepository),
         RepositoryProvider.value(value: needsRepository),
         RepositoryProvider.value(value: onboardingRepository),
+        RepositoryProvider.value(value: organiserRepository),
         RepositoryProvider.value(value: profileRepository),
         RepositoryProvider.value(value: pushRepository),
         RepositoryProvider.value(value: rondaRepository),

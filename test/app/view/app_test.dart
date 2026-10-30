@@ -8,15 +8,19 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:needs_repository/needs_repository.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
+import 'package:organiser_repository/organiser_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:push_repository/push_repository.dart';
+import 'package:ronda/acta/acta.dart';
 import 'package:ronda/admin/admin.dart';
+import 'package:ronda/agent_trace/agent_trace.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/cerca/cerca.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda/mate_flyer/mate_flyer.dart';
 import 'package:ronda/my_ronda/my_ronda.dart';
 import 'package:ronda/onboarding/onboarding.dart';
+import 'package:ronda/rain_move/rain_move.dart';
 import 'package:ronda/settings/settings.dart';
 import 'package:ronda/welcome/welcome.dart';
 import 'package:ronda_repository/ronda_repository.dart';
@@ -35,6 +39,8 @@ class _MockPushRepository extends Mock implements PushRepository;
 class _MockOnboardingRepository extends Mock implements OnboardingRepository;
 
 class _MockFlyerRepository extends Mock implements FlyerRepository;
+
+class _MockOrganiserRepository extends Mock implements OrganiserRepository;
 
 const _user = User(id: 'demo-uid');
 
@@ -58,6 +64,7 @@ void main() {
     late RondaRepository rondaRepository;
     late PushRepository pushRepository;
     late FlyerRepository flyerRepository;
+    late OrganiserRepository organiserRepository;
     late StreamController<User> users;
     late StreamController<Profile?> profiles;
 
@@ -74,6 +81,12 @@ void main() {
       rondaRepository = _MockRondaRepository();
       pushRepository = _MockPushRepository();
       flyerRepository = _MockFlyerRepository();
+      organiserRepository = _MockOrganiserRepository();
+      when(organiserRepository.watchRuns).thenAnswer((_) => Stream.value([]));
+      when(() => organiserRepository.watchActa(any()))
+          .thenAnswer((_) => Stream.value(const Acta()));
+      when(() => organiserRepository.watchMove(any(), any()))
+          .thenAnswer((_) => Stream.value(null));
       when(() => flyerRepository.canBlurFaces).thenReturn(true);
       when(flyerRepository.retrieveLostPhoto).thenAnswer((_) async => null);
       when(pushRepository.permission)
@@ -103,6 +116,7 @@ void main() {
       flyerRepository: flyerRepository,
       needsRepository: needsRepository,
       onboardingRepository: _MockOnboardingRepository(),
+      organiserRepository: organiserRepository,
       profileRepository: profileRepository,
       pushRepository: pushRepository,
       rondaRepository: rondaRepository,
@@ -467,6 +481,52 @@ void main() {
           ),
           same(flyerRepository),
         );
+      });
+
+      testWidgets('by opening the trace under $AdminPage without a profile', (
+        tester,
+      ) async {
+        await tester.pumpWidget(buildSubject());
+        users.add(_user);
+        await tester.pump();
+        profiles.add(null);
+        await tester.pumpAndSettle();
+
+        GoRouter.of(tester.element(find.byType(OnboardingPage)))
+            .go(AgentTracePage.path);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AgentTracePage), findsOneWidget);
+        verify(organiserRepository.watchRuns).called(1);
+      });
+
+      testWidgets('by opening the $ActaPage of a ronda', (tester) async {
+        await pumpSignedIn(tester);
+
+        GoRouter.of(tester.element(find.byType(MyRondaPage)))
+            .go(ActaPage.location('ronda-1'));
+        await tester.pumpAndSettle();
+
+        expect(
+          tester.widget<ActaPage>(find.byType(ActaPage)).rondaId,
+          equals('ronda-1'),
+        );
+        verify(() => organiserRepository.watchActa('ronda-1')).called(1);
+      });
+
+      testWidgets("by opening the host's $RainMovePage from its link", (
+        tester,
+      ) async {
+        await pumpSignedIn(tester);
+
+        GoRouter.of(tester.element(find.byType(MyRondaPage)))
+            .go(RainMovePage.location('ronda-1', '2026-W45'));
+        await tester.pumpAndSettle();
+
+        final page = tester.widget<RainMovePage>(find.byType(RainMovePage));
+        expect((page.rondaId, page.week), ('ronda-1', '2026-W45'));
+        verify(() => organiserRepository.watchMove('ronda-1', '2026-W45'))
+            .called(1);
       });
 
       testWidgets('by keeping signed-out people off $AdminPage', (

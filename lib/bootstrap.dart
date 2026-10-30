@@ -17,6 +17,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:flyer_repository/flyer_repository.dart';
 import 'package:needs_repository/needs_repository.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
+import 'package:organiser_repository/organiser_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:push_client/push_client.dart';
 import 'package:push_repository/push_repository.dart';
@@ -33,6 +34,7 @@ typedef AppBuilder = FutureOr<Widget> Function({
   required FlyerRepository flyerRepository,
   required NeedsRepository needsRepository,
   required OnboardingRepository onboardingRepository,
+  required OrganiserRepository organiserRepository,
   required ProfileRepository profileRepository,
   required PushRepository pushRepository,
   required RondaRepository rondaRepository,
@@ -220,6 +222,7 @@ Future<void> bootstrap(
     functions: functions,
   );
   final rondasApi = RondasApi(firestore: firestore, functions: functions);
+  final organiserApi = OrganiserApi(firestore: firestore, functions: functions);
   final voiceRecorder = VoiceRecorder();
   // ML Kit is built on the first detection, which never happens on web.
   final faceBlur = FaceBlur();
@@ -273,6 +276,7 @@ Future<void> bootstrap(
     voiceRecorder: voiceRecorder,
     rondaApi: rondaApi,
   );
+  final organiserRepository = OrganiserRepository(organiserApi: organiserApi);
 
   runApp(
     await builder(
@@ -280,6 +284,7 @@ Future<void> bootstrap(
       flyerRepository: flyerRepository,
       needsRepository: needsRepository,
       onboardingRepository: onboardingRepository,
+      organiserRepository: organiserRepository,
       profileRepository: profileRepository,
       pushRepository: pushRepository,
       rondaRepository: rondaRepository,
