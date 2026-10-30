@@ -29,3 +29,12 @@ class SaveEligibleSeatIdsFailure implements Exception {
   /// {@macro save_eligible_seat_ids_failure}
   const new();
 }
+
+/// {@template hold_on_phone_failure}
+/// Keeping the conditions or the onboarding answers on this phone until
+/// sign-in, or deleting them, failed.
+/// {@endtemplate}
+class HoldOnPhoneFailure implements Exception {
+  /// {@macro hold_on_phone_failure}
+  const new();
+}

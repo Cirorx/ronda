@@ -1,5 +1,5 @@
 name: profile_repository
-description: A member's profile (lo que traés) and the conditions they accepted, over ronda_api.
+description: A member's profile (lo que traés) and the conditions they accepted, over ronda_api, held on the phone (device_store) until sign-in.
 version: 0.1.0+1
 publish_to: none
 
@@ -8,6 +8,8 @@ environment:
   flutter: ^3.47.0
 
 dependencies:
+  device_store:
+    path: ../device_store
   equatable: ^2.0.7
   flutter:
     sdk: flutter

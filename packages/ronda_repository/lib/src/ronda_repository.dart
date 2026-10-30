@@ -12,13 +12,24 @@ import 'package:rxdart/rxdart.dart';
 ///
 /// For a member it follows their ronda's week as one [ThisWeek] and records
 /// their answer; its failures are [RsvpFailure]s.
+///
+/// For anyone, signed in or not, it reads a barrio's [Cerca] demand.
 /// {@endtemplate}
 class RondaRepository {
   /// {@macro ronda_repository}
-  const new({required this._proposalsApi, required this._rondasApi});
+  const new({
+    required this._proposalsApi,
+    required this._rondasApi,
+    this._cercaTimeout = defaultCercaTimeout,
+  });
 
   final ProposalsApi _proposalsApi;
   final RondasApi _rondasApi;
+  final Duration _cercaTimeout;
+
+  /// How long [cerca] waits for the counts before it gives up: offline, a
+  /// read may otherwise wait for a connection that never comes.
+  static const defaultCercaTimeout = Duration(seconds: 8);
 
   /// The job that sends the weekly RSVP push.
   static const rsvpPushJob = 'rsvp_push';
@@ -52,6 +63,36 @@ class RondaRepository {
   /// Throws a [ProposalsFailure].
   Future<void> undoApproval(String id) =>
       _guard(() => _proposalsApi.undoApproval(id));
+
+  /// Cerca tuyo's demand in [barrioId]; empty while the barrio has no counts
+  /// yet.
+  ///
+  /// Throws a [CercaFailure] when the read fails or takes longer than the
+  /// timeout ([defaultCercaTimeout] by default).
+  Future<Cerca> cerca(String barrioId) async {
+    final CercaDocument? document;
+    try {
+      document = await _rondasApi.readCerca(barrioId).timeout(_cercaTimeout);
+    } on Exception {
+      throw const CercaFailure();
+    }
+    return Cerca(
+      barrioId: barrioId,
+      bySlot: [
+        for (final row in document?.slotWaiting ?? const <CercaSlotWaiting>[])
+          CercaWaiting(
+            pretextId: row.pretext,
+            slotId: row.slot,
+            count: row.count,
+          ),
+      ],
+      byPretext: [
+        for (final row
+            in document?.pretextWaiting ?? const <CercaPretextWaiting>[])
+          CercaWaiting(pretextId: row.pretext, count: row.count),
+      ],
+    );
+  }
 
   /// [uid]'s ronda and its upcoming meeting, now and on every change;
   /// `null` while they are in no ronda. The stream errors with an

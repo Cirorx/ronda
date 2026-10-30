@@ -42,6 +42,44 @@ void main() {
       });
     });
 
+    group('readCerca', () {
+      test("reads the barrio's demand", () async {
+        await firestore.doc('cerca/el-pinar-sur').set({
+          'barrio': 'el-pinar-sur',
+          'rondas': [
+            {
+              'pretext': 'mate',
+              'slot': 'sat-afternoon',
+              'ageFrom': 60,
+              'ageTo': null,
+              'members': 4,
+              'cap': 6,
+              'waiting': 3,
+            },
+          ],
+          'waiting': [
+            {'pretext': 'mate', 'count': 5},
+          ],
+        });
+
+        final cerca = await subject.readCerca('el-pinar-sur');
+
+        expect(cerca!.barrio, 'el-pinar-sur');
+        expect([
+          for (final row in cerca.slotWaiting)
+            (row.pretext, row.slot, row.count),
+        ], equals([('mate', 'sat-afternoon', 3)]));
+        expect([
+          for (final count in cerca.pretextWaiting)
+            (count.pretext, count.count),
+        ], equals([('mate', 5)]));
+      });
+
+      test('returns null when the barrio has no counts yet', () async {
+        expect(await subject.readCerca('el-pinar-sur'), isNull);
+      });
+    });
+
     group('watchRonda', () {
       test('reads the ronda with its public place', () async {
         await firestore.doc('rondas/r1').set({

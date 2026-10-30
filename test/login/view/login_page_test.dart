@@ -28,6 +28,24 @@ void main() {
         expect(find.byType(LoginView), findsOneWidget);
         final context = tester.element(find.byType(LoginView));
         expect(context.read<LoginCubit>().state, equals(const LoginState()));
+        expect(
+          tester.widget<LoginView>(find.byType(LoginView)).reason,
+          equals(LoginReason.signIn),
+        );
+      });
+
+      testWidgets('$LoginView with the reason it was given', (tester) async {
+        await tester.pumpApp(
+          RepositoryProvider.value(
+            value: authRepository,
+            child: const LoginPage(reason: LoginReason.keepSeat),
+          ),
+        );
+
+        expect(
+          tester.widget<LoginView>(find.byType(LoginView)).reason,
+          equals(LoginReason.keepSeat),
+        );
       });
     });
   });

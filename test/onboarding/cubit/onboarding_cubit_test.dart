@@ -527,7 +527,11 @@ void main() {
         ],
       );
 
-      for (final status in [OnboardingStatus.saving, OnboardingStatus.saved]) {
+      for (final status in [
+        OnboardingStatus.saving,
+        OnboardingStatus.saved,
+        OnboardingStatus.held,
+      ]) {
         blocTest<OnboardingCubit, OnboardingState>(
           'does nothing while ${status.name}',
           build: buildCubit,
@@ -552,6 +556,165 @@ void main() {
         act: (cubit) => cubit.save(),
         expect: () => const <OnboardingState>[],
       );
+    });
+
+    group('signed out', () {
+      OnboardingCubit buildSignedOut() => OnboardingCubit(
+        uid: '',
+        profileRepository: profileRepository,
+        needsRepository: needsRepository,
+      );
+
+      setUp(() {
+        when(() => profileRepository.holdAnswers(any()))
+            .thenAnswer((_) async {});
+      });
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'save holds the needs and the answers on the phone, and nothing '
+        'leaves it',
+        build: buildSignedOut,
+        seed: () => _answered,
+        act: (cubit) => cubit.save(),
+        expect: () => [
+          _answered.copyWith(status: OnboardingStatus.saving),
+          _answered.copyWith(status: OnboardingStatus.held),
+        ],
+        verify: (_) {
+          verifyInOrder([
+            () => needsRepository.save(const Needs({Need.noCar})),
+            () => profileRepository.holdAnswers(
+              Profile(
+                firstName: 'Marta',
+                ageBand: AgeBand.sixties,
+                barrio: Barrio.solymarNorte,
+                pretexts: const {Pretext.mate},
+                slots: {_thursday},
+                brings: const {Bring.termo},
+              ),
+            ),
+          ]);
+          verifyNever(profileRepository.publishedSeats);
+          verifyNever(() => profileRepository.createProfile(any(), any()));
+        },
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'save emits failure when the phone cannot hold the answers',
+        setUp: () {
+          when(() => profileRepository.holdAnswers(any()))
+              .thenThrow(const HoldOnPhoneFailure());
+        },
+        build: buildSignedOut,
+        seed: () => _answered,
+        act: (cubit) => cubit.save(),
+        expect: () => [
+          _answered.copyWith(status: OnboardingStatus.saving),
+          _answered.copyWith(status: OnboardingStatus.failure),
+        ],
+      );
+    });
+
+    group('load', () {
+      final held = Profile(
+        firstName: 'Marta',
+        ageBand: AgeBand.sixties,
+        barrio: Barrio.solymarNorte,
+        pretexts: const {Pretext.mate},
+        slots: {_thursday},
+        brings: const {Bring.termo},
+      );
+
+      /// [held] and the needs on the read-back, as [load] opens them.
+      final opened = OnboardingState(
+        step: OnboardingStep.review,
+        pretexts: const {Pretext.mate},
+        brings: const {Bring.termo},
+        slots: {_thursday},
+        barrio: Barrio.solymarNorte,
+        ageBand: AgeBand.sixties,
+        needs: const {Need.noCar},
+        firstName: const FirstName.dirty('Marta'),
+      );
+
+      setUp(() {
+        when(profileRepository.heldAnswers).thenAnswer((_) async => held);
+        when(needsRepository.read)
+            .thenAnswer((_) async => const Needs({Need.noCar}));
+      });
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'signed in, opens the held answers and saves them straight away',
+        build: buildCubit,
+        act: (cubit) => cubit.load(),
+        expect: () => [
+          opened,
+          opened.copyWith(status: OnboardingStatus.saving),
+          opened.copyWith(status: OnboardingStatus.saved),
+        ],
+        verify: (_) {
+          verify(() => profileRepository.createProfile('demo-uid', held))
+              .called(1);
+        },
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'signed out, opens the held answers on the read-back',
+        build: () => OnboardingCubit(
+          uid: '',
+          profileRepository: profileRepository,
+          needsRepository: needsRepository,
+        ),
+        act: (cubit) => cubit.load(),
+        expect: () => [opened],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'stays on the first question when nothing is held',
+        setUp: () {
+          when(profileRepository.heldAnswers).thenAnswer((_) async => null);
+        },
+        build: buildCubit,
+        act: (cubit) => cubit.load(),
+        expect: () => const <OnboardingState>[],
+        verify: (_) {
+          verifyNever(needsRepository.read);
+        },
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'stays on the first question when the needs cannot be read',
+        setUp: () {
+          when(needsRepository.read).thenThrow(Exception('keychain'));
+        },
+        build: buildCubit,
+        act: (cubit) => cubit.load(),
+        expect: () => const <OnboardingState>[],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'does nothing on the recorder',
+        build: () => OnboardingCubit(
+          uid: 'demo-uid',
+          profileRepository: profileRepository,
+          needsRepository: needsRepository,
+          startWithVoice: true,
+        ),
+        act: (cubit) => cubit.load(),
+        expect: () => const <OnboardingState>[],
+        verify: (_) {
+          verifyNever(profileRepository.heldAnswers);
+        },
+      );
+
+      test('emits nothing once closed', () async {
+        final cubit = buildCubit();
+        final load = cubit.load();
+        await cubit.close();
+        await load;
+
+        expect(cubit.state, equals(const OnboardingState()));
+      });
     });
 
     group('by voice', () {
@@ -648,6 +811,20 @@ void main() {
           firstName: FirstName.dirty('Marta'),
         ).isComplete,
         isFalse,
+      );
+    });
+
+    test('a save is underway while saving, saved or held', () {
+      expect(
+        [
+          for (final status in OnboardingStatus.values)
+            if (status.isUnderway) status,
+        ],
+        equals([
+          OnboardingStatus.saving,
+          OnboardingStatus.saved,
+          OnboardingStatus.held,
+        ]),
       );
     });
 

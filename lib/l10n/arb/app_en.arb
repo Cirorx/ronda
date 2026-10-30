@@ -30,7 +30,7 @@
     },
     "loginTitle": "First, sign in with your account",
     "@loginTitle": {
-        "description": "Heading of the sign-in screen, shown after the person picks how to join"
+        "description": "Heading of the sign-in screen when it opens to return somewhere (?from=/admin)"
     },
     "loginNoPosting": "We never post anything to your account",
     "@loginNoPosting": {
@@ -59,6 +59,86 @@
     "loginError": "We couldn't sign you in. Try again.",
     "@loginError": {
         "description": "Shown when sign-in fails for any reason other than connection or cancelling"
+    },
+    "loginKeepSeatTitle": "Keep your place",
+    "@loginKeepSeatTitle": {
+        "description": "Heading of the sign-in screen after the payoff, in the buttons path"
+    },
+    "loginKeepSeatBody": "To keep your place and let you know the day of the ronda, sign in with your account.",
+    "@loginKeepSeatBody": {
+        "description": "Under the heading of the sign-in screen after the payoff"
+    },
+    "loginVoiceTitle": "To listen to you, we need you to sign in with your account",
+    "@loginVoiceTitle": {
+        "description": "Heading of the sign-in screen after the voice door, which signs in before recording because the server reads the audio"
+    },
+    "payoffTitle": "Here's what there is for you",
+    "@payoffTitle": {
+        "description": "Heading of the payoff screen, after the read-back and before sign-in"
+    },
+    "payoffDemandAtSlot": "{count, plural, =1{1 neighbour near you signed up} other{{count} neighbours near you signed up}} for {pretext} {slot}.",
+    "@payoffDemandAtSlot": {
+        "description": "How many neighbours in the person's barrio wait for one of their pretexts at one of their slots. Never a seat count",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            },
+            "pretext": {
+                "type": "String"
+            },
+            "slot": {
+                "type": "String"
+            }
+        }
+    },
+    "payoffDemand": "{count, plural, =1{1 neighbour near you signed up} other{{count} neighbours near you signed up}} for {pretext}.",
+    "@payoffDemand": {
+        "description": "How many neighbours in the person's barrio wait for one of their pretexts, at any slot. Never a seat count",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            },
+            "pretext": {
+                "type": "String"
+            }
+        }
+    },
+    "payoffPretext": "{pretext, select, mate{mate} truco{truco} futbol5{five-a-side} caminata{walks} other{{pretext}}}",
+    "@payoffPretext": {
+        "description": "A pretext inside a payoff demand line, by its stored id",
+        "placeholders": {
+            "pretext": {
+                "type": "String"
+            }
+        }
+    },
+    "payoffSlot": "{day, select, mon{on Monday} tue{on Tuesday} wed{on Wednesday} thu{on Thursday} fri{on Friday} sat{on Saturday} sun{on Sunday} other{}} {band, select, morning{mornings} afternoon{afternoons} evening{evenings} other{}}",
+    "@payoffSlot": {
+        "description": "A weekly slot inside a payoff demand line, by its stored day and band ids",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            },
+            "band": {
+                "type": "String"
+            }
+        }
+    },
+    "payoffNext": "We'll let you know when your ronda comes together.",
+    "@payoffNext": {
+        "description": "Under the payoff's demand lines"
+    },
+    "payoffFirstOnes": "You're one of the first near you: we'll let you know when there are five of us.",
+    "@payoffFirstOnes": {
+        "description": "Payoff when nobody else in the barrio signed up for the person's pretexts"
+    },
+    "payoffUnavailable": "We couldn't check who else signed up near you just now. We'll let you know when your ronda comes together.",
+    "@payoffUnavailable": {
+        "description": "Payoff when the counts can't be read (offline, an error)"
+    },
+    "payoffContinue": "Keep my place",
+    "@payoffContinue": {
+        "description": "The payoff's button, which leads to sign-in"
     },
     "welcomeTitle": "Five neighbours, a few blocks away, the same day every week.",
     "@welcomeTitle": {

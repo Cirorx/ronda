@@ -1,10 +1,12 @@
-# Onboarding by buttons, the golden path: welcome door → Google sign-in → the seven questions →
-# the read-back → "Está bien, guardalo" → Mi ronda.
+# Onboarding by buttons, the golden path: welcome door → the seven questions and the read-back,
+# signed out → "Está bien, guardalo" holds the answers on the phone → the payoff ("Esto es lo que
+# hay para vos") → "Guardá tu lugar", Google sign-in → the terms and the profile saved → Mi ronda.
 #
 # Needs the development flavor built with --dart-define=EMULATOR_GOOGLE_CREDENTIAL=true, the
 # local Firebase emulators, and a reset before every run: the flow always signs in as the same
 # demo Google account, and once that account has a profile the app skips onboarding. How to boot,
-# reset, build, install and run: docs/STACK.md § End-to-end flows (Maestro).
+# reset, build, install and run: docs/STACK.md § End-to-end flows (Maestro). `clearState: true`
+# also wipes the answers and terms a previous run held on the phone.
 #
 # The answers sit on a seat the demo data has (solymar-norte_mate_sun-afternoon). "Caminar mucho"
 # stays on the phone and leaves only the seats within ten blocks of Solymar Norte eligible.
@@ -20,8 +22,8 @@ tags:
 - launchApp:
     clearState: true
 
-# Welcome: tapping a door accepts the terms and moves on to sign-in. A debug build takes a few
-# seconds to draw its first frame.
+# Welcome: tapping a door accepts the terms (held on the phone) and opens the questions, signed
+# out. A debug build takes a few seconds to draw its first frame.
 - extendedWaitUntil:
     visible:
       id: welcome.buttons
@@ -29,19 +31,11 @@ tags:
 - tapOn:
     id: welcome.buttons
 
-# Sign-in with the emulator's demo Google account, then the terms write and the profile read.
-- extendedWaitUntil:
-    visible:
-      id: login_google
-    timeout: 15000
-- tapOn:
-    id: login_google
-
 # 1 of 7: what they'd like to do.
 - extendedWaitUntil:
     visible:
       id: onboarding.pretexts.mate
-    timeout: 30000
+    timeout: 15000
 - tapOn:
     id: onboarding.pretexts.mate
 - tapOn:
@@ -98,7 +92,8 @@ tags:
 - tapOn:
     id: onboarding.next
 
-# The read-back, then the save: needs on the phone, eligible seat ids, then the profile.
+# The read-back. Signed out, "Está bien, guardalo" holds the needs and the answers on the phone;
+# nothing is written yet.
 - extendedWaitUntil:
     visible:
       id: onboarding.review.firstName
@@ -106,7 +101,25 @@ tags:
 - tapOn:
     id: onboarding.save
 
-# Saved: the router leaves onboarding for the Mi ronda tab.
+# The payoff: Solymar Norte's demand from the public cerca/solymar-norte, read signed out (or
+# "Sos de los primeros" when the emulator has no counts). Never seats, names or places.
+- extendedWaitUntil:
+    visible:
+      id: payoff.continue
+    timeout: 15000
+- tapOn:
+    id: payoff.continue
+
+# "Guardá tu lugar": sign-in with the emulator's demo Google account.
+- extendedWaitUntil:
+    visible:
+      id: login_google
+    timeout: 15000
+- tapOn:
+    id: login_google
+
+# Signed in: the held terms, then the needs filter, the eligible seat ids and the profile, saved
+# straight away; the router leaves for the Mi ronda tab.
 - extendedWaitUntil:
     visible:
       id: myRonda

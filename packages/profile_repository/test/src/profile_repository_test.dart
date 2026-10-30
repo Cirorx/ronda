@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:device_store/device_store.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +13,8 @@ class _MockRondaApi extends Mock implements RondaApi;
 class _MockFirebaseStorage extends Mock implements FirebaseStorage;
 
 class _MockFirebaseFunctions extends Mock implements FirebaseFunctions;
+
+class _MockDeviceStore extends Mock implements DeviceStore;
 
 void main() {
   group(ProfileRepository, () {
@@ -40,7 +43,10 @@ void main() {
 
     setUp(() {
       rondaApi = _MockRondaApi();
-      subject = ProfileRepository(rondaApi: rondaApi);
+      subject = ProfileRepository(
+        rondaApi: rondaApi,
+        deviceStore: _MockDeviceStore(),
+      );
     });
 
     group('watchProfile', () {
@@ -194,6 +200,7 @@ void main() {
             storage: _MockFirebaseStorage(),
             functions: _MockFirebaseFunctions(),
           ),
+          deviceStore: _MockDeviceStore(),
         );
       });
 

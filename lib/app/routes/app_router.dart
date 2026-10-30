@@ -1,3 +1,4 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:ronda/acta/acta.dart';
@@ -10,6 +11,7 @@ import 'package:ronda/login/login.dart';
 import 'package:ronda/mate_flyer/mate_flyer.dart';
 import 'package:ronda/my_ronda/my_ronda.dart';
 import 'package:ronda/onboarding/onboarding.dart';
+import 'package:ronda/payoff/payoff.dart';
 import 'package:ronda/rain_move/rain_move.dart';
 import 'package:ronda/settings/settings.dart';
 import 'package:ronda/welcome/welcome.dart';
@@ -20,15 +22,19 @@ import 'package:ronda/welcome/welcome.dart';
 const returnToParameter = 'from';
 
 /// Builds the app's router: the welcome screen with sign-in and the terms
-/// under it, onboarding, and one shell with a branch per tab.
+/// under it, onboarding, the payoff with its sign-in under it, and one shell
+/// with a branch per tab.
 ///
 /// Where people may be follows [appBloc]'s state, and [refreshListenable]
 /// fires when it changes, so the redirect runs again on every change:
-/// - signed out: the welcome screen and the terms; sign-in only after a
-///   welcome door accepted the terms;
+/// - signed out: the welcome screen and the terms; once a welcome door
+///   accepted the terms, also the questions, the payoff and either sign-in
+///   (the answers stay on the phone until then);
 /// - signed in, profile not read yet: wherever they are;
-/// - signed in without a profile: onboarding;
-/// - signed in with a profile: the tabs, never welcome or onboarding;
+/// - signed in without a profile: onboarding, which saves the answers held
+///   on the phone straight away when there are some;
+/// - signed in with a profile: the tabs, never welcome, onboarding or the
+///   payoff;
 /// - the admin screen and its trace (`/admin/programa`): anyone signed in, with or without a profile (the
 ///   owner need not onboard); the server decides who sees a proposal.
 ///   Signed-out people sent from it to the welcome screen carry
@@ -55,6 +61,9 @@ GoRouter createAppRouter({
           location == WelcomePage.path ||
           location.startsWith('${WelcomePage.path}/');
       final onOnboarding = location == OnboardingPage.path;
+      final onPayoff =
+          location == PayoffPage.path ||
+          location.startsWith('${PayoffPage.path}/');
       final onAdmin =
           location == AdminPage.path ||
           location.startsWith('${AdminPage.path}/');
@@ -67,16 +76,19 @@ GoRouter createAppRouter({
           ? '${WelcomePage.path}?$returnToParameter=${AdminPage.path}'
           : WelcomePage.path;
       final app = appBloc.state;
+      // Past a welcome door: the terms are accepted, on this phone.
+      final pastDoor = location == LoginPage.path || onOnboarding || onPayoff;
       return switch (app.status) {
-        AppStatus.unauthenticated when !onWelcome => welcome,
-        AppStatus.unauthenticated
-            when location == LoginPage.path && app.pendingTerms == null =>
+        AppStatus.unauthenticated when !onWelcome && !pastDoor => welcome,
+        AppStatus.unauthenticated when pastDoor && app.pendingTerms == null =>
           welcome,
         AppStatus.unauthenticated || AppStatus.loadingProfile => null,
         AppStatus.onboarding =>
           onOnboarding || onAdmin ? null : returnTo ?? OnboardingPage.path,
         AppStatus.authenticated =>
-          onWelcome || onOnboarding ? returnTo ?? MyRondaPage.path : null,
+          onWelcome || onOnboarding || onPayoff
+              ? returnTo ?? MyRondaPage.path
+              : null,
       };
     },
     onException: (_, _, router) => router.go(MyRondaPage.path),
@@ -88,7 +100,11 @@ GoRouter createAppRouter({
         routes: [
           GoRoute(
             path: LoginPage.segment,
-            builder: (_, _) => const LoginPage(),
+            builder: (context, _) => LoginPage(
+              reason: context.read<AppBloc>().state.door == OnboardingDoor.voice
+                  ? LoginReason.voice
+                  : LoginReason.signIn,
+            ),
           ),
           GoRoute(
             path: TermsPage.segment,
@@ -99,6 +115,16 @@ GoRouter createAppRouter({
       GoRoute(
         path: OnboardingPage.path,
         builder: (_, _) => const OnboardingPage(),
+      ),
+      GoRoute(
+        path: PayoffPage.path,
+        builder: (_, _) => const PayoffPage(),
+        routes: [
+          GoRoute(
+            path: LoginPage.segment,
+            builder: (_, _) => const LoginPage(reason: LoginReason.keepSeat),
+          ),
+        ],
       ),
       GoRoute(
         path: AdminPage.path,

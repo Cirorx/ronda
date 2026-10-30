@@ -257,7 +257,10 @@ Future<void> bootstrap(
     googleSignInFlow: googleSignInFlow,
   );
   const needsRepository = NeedsRepository(deviceStore: deviceStore);
-  final profileRepository = ProfileRepository(rondaApi: rondaApi);
+  final profileRepository = ProfileRepository(
+    rondaApi: rondaApi,
+    deviceStore: deviceStore,
+  );
   final rondaRepository = RondaRepository(
     proposalsApi: proposalsApi,
     rondasApi: rondasApi,

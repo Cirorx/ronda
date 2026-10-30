@@ -15,6 +15,10 @@ part 'onboarding_state.dart';
 /// Only the seat ids they let through leave the phone, to
 /// `users/{uid}/private/eligible`. Where the person goes after saving is the
 /// router's call: it follows the profile, not this cubit.
+///
+/// Signed out (no uid), "Está bien, guardalo" holds the answers on this
+/// phone instead ([OnboardingStatus.held]), and the payoff and sign-in come
+/// next. Once someone signs in, [load] finds them and saves them.
 class OnboardingCubit extends Cubit<OnboardingState> {
   new({
     required this._uid,
@@ -23,9 +27,43 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     bool startWithVoice = false,
   }) : super(OnboardingState(recording: startWithVoice));
 
+  /// The signed-in person's uid, or empty while nobody is signed in.
   final String _uid;
   final ProfileRepository _profileRepository;
   final NeedsRepository _needsRepository;
+
+  bool get _signedIn => _uid.isNotEmpty;
+
+  /// Opens the answers held on this phone, if any, on the read-back; for
+  /// someone signed in, saves them straight away. Does nothing on the
+  /// recorder, or when nothing is held.
+  Future<void> load() async {
+    if (state.recording) return;
+    final Profile? held;
+    final Needs needs;
+    try {
+      held = await _profileRepository.heldAnswers();
+      if (held == null) return;
+      needs = await _needsRepository.read();
+    } on Exception {
+      // Unreadable needs would save a filter they never chose: ask again.
+      return;
+    }
+    if (isClosed) return;
+    emit(
+      OnboardingState(
+        step: OnboardingStep.review,
+        pretexts: held.pretexts,
+        brings: held.brings,
+        slots: held.slots,
+        barrio: held.barrio,
+        ageBand: held.ageBand,
+        needs: needs.values,
+        firstName: FirstName.dirty(held.firstName),
+      ),
+    );
+    if (_signedIn) await save();
+  }
 
   /// What a voice note said: the answers it understood replace the ones
   /// held, and the read-back opens. Ids nobody stores are dropped.
@@ -128,27 +166,33 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   /// Any step failing fails the save and writes no profile, so the person
   /// stays on the read-back and "Está bien, guardalo" runs every step again:
   /// the solver can't seat someone whose eligible ids never arrived.
+  ///
+  /// Signed out, it keeps the needs and the answers on this phone instead,
+  /// and nothing leaves it: the seats are read only once signed in.
   Future<void> save() async {
     final OnboardingState(:ageBand, :barrio, :status) = state;
     if (state.step != OnboardingStep.review || !state.isComplete) return;
     if (ageBand == null || barrio == null) return;
-    if (status case OnboardingStatus.saving || OnboardingStatus.saved) return;
+    if (status.isUnderway) return;
     emit(state.copyWith(status: OnboardingStatus.saving));
+    final needs = Needs(state.needs);
+    final answers = Profile(
+      firstName: state.firstName.name,
+      ageBand: ageBand,
+      barrio: barrio,
+      pretexts: state.pretexts,
+      slots: state.slots,
+      brings: state.brings,
+    );
     try {
-      final needs = Needs(state.needs);
       await _needsRepository.save(needs);
+      if (!_signedIn) {
+        await _profileRepository.holdAnswers(answers);
+        emit(state.copyWith(status: OnboardingStatus.held));
+        return;
+      }
       await _publishEligibleSeatIds(needs, barrio);
-      await _profileRepository.createProfile(
-        _uid,
-        Profile(
-          firstName: state.firstName.name,
-          ageBand: ageBand,
-          barrio: barrio,
-          pretexts: state.pretexts,
-          slots: state.slots,
-          brings: state.brings,
-        ),
-      );
+      await _profileRepository.createProfile(_uid, answers);
       emit(state.copyWith(status: OnboardingStatus.saved));
     } on Exception {
       emit(state.copyWith(status: OnboardingStatus.failure));

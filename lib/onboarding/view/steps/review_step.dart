@@ -25,9 +25,7 @@ class const ReviewStep({super.key}) extends StatelessWidget {
     final spacing = context.appSpacing;
     final state = context.watch<OnboardingCubit>().state;
     final cubit = context.read<OnboardingCubit>();
-    final saving =
-        state.status == OnboardingStatus.saving ||
-        state.status == OnboardingStatus.saved;
+    final saving = state.status.isUnderway;
 
     ReadBackField field(
       OnboardingStep step,

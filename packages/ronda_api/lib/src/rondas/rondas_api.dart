@@ -1,12 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:ronda_api/src/rondas/cerca_document.dart';
 import 'package:ronda_api/src/rondas/ronda_documents.dart';
 import 'package:ronda_api/src/rondas/seguimos_documents.dart';
 
 /// {@template rondas_api}
 /// A member's side of their ronda: which ronda they are in, the ronda, their
 /// own member document, "who's coming" to the upcoming meeting and their own
-/// answer, plus the `answer_rsvp` callable. Also the admin's `run_job`.
+/// answer, plus the `answer_rsvp` callable. Also the admin's `run_job`, and
+/// Cerca tuyo's public counts, which anyone may read signed in or not.
 ///
 /// The rules let a member read only their own ronda, its view of the week
 /// and their own answer; the raw answers stay on the server.
@@ -74,6 +76,14 @@ class const RondasApi({
             SeguimosCountsDocument.fromJson(doc.id, doc.data()),
         ],
       );
+
+  /// `cerca/{barrio}` once, or `null` when the barrio has no counts yet.
+  /// Anyone may `get` it, signed in or not.
+  Future<CercaDocument?> readCerca(String barrio) async =>
+      switch ((await firestore.doc('cerca/$barrio').get()).data()) {
+        final data? => CercaDocument.fromJson(barrio, data),
+        null => null,
+      };
 
   Stream<T?> _watch<T>(String path, T Function(Map<String, Object?>) read) =>
       firestore

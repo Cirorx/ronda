@@ -20,6 +20,8 @@ import 'package:ronda/login/login.dart';
 import 'package:ronda/mate_flyer/mate_flyer.dart';
 import 'package:ronda/my_ronda/my_ronda.dart';
 import 'package:ronda/onboarding/onboarding.dart';
+import 'package:ronda/onboarding/view/steps/steps.dart';
+import 'package:ronda/payoff/payoff.dart';
 import 'package:ronda/rain_move/rain_move.dart';
 import 'package:ronda/settings/settings.dart';
 import 'package:ronda/welcome/welcome.dart';
@@ -65,13 +67,20 @@ void main() {
     late PushRepository pushRepository;
     late FlyerRepository flyerRepository;
     late OrganiserRepository organiserRepository;
+    late OnboardingRepository onboardingRepository;
     late StreamController<User> users;
     late StreamController<Profile?> profiles;
+
+    /// The answers held on this phone, as `ProfileRepository` holds them.
+    Profile? held;
 
     setUpAll(() {
       registerFallbackValue(
         TermsAcceptance(version: '', acceptedAt: DateTime(2026)),
       );
+      registerFallbackValue(_profile);
+      registerFallbackValue(Needs.none);
+      registerFallbackValue(<SeatFacts>[]);
     });
 
     setUp(() {
@@ -82,6 +91,7 @@ void main() {
       pushRepository = _MockPushRepository();
       flyerRepository = _MockFlyerRepository();
       organiserRepository = _MockOrganiserRepository();
+      onboardingRepository = _MockOnboardingRepository();
       when(organiserRepository.watchRuns).thenAnswer((_) => Stream.value([]));
       when(() => organiserRepository.watchActa(any()))
           .thenAnswer((_) => Stream.value(const Acta()));
@@ -109,13 +119,48 @@ void main() {
           .thenAnswer((_) => profiles.stream);
       when(() => profileRepository.acceptTerms(any(), any()))
           .thenAnswer((_) async {});
+      held = null;
+      when(() => profileRepository.holdTerms(any())).thenAnswer((_) async {});
+      when(profileRepository.heldTerms).thenAnswer((_) async => null);
+      when(profileRepository.clearHeldTerms).thenAnswer((_) async {});
+      when(() => profileRepository.holdAnswers(any())).thenAnswer(
+        (invocation) async =>
+            held = invocation.positionalArguments.single as Profile,
+      );
+      when(profileRepository.heldAnswers).thenAnswer((_) async => held);
+      when(profileRepository.clearHeldAnswers).thenAnswer((_) async {
+        held = null;
+      });
+      var needs = Needs.none;
+      when(needsRepository.read).thenAnswer((_) async => needs);
+      when(() => needsRepository.save(any())).thenAnswer(
+        (invocation) async =>
+            needs = invocation.positionalArguments.single as Needs,
+      );
+      when(() => needsRepository.eligibleSeatIds(any(), any()))
+          .thenReturn(const []);
+      when(profileRepository.publishedSeats).thenAnswer((_) async => const []);
+      when(
+        () => profileRepository.saveEligibleSeatIds(
+          uid: any(named: 'uid'),
+          seatIds: any(named: 'seatIds'),
+        ),
+      ).thenAnswer((_) async {});
+      when(() => profileRepository.createProfile(any(), any()))
+          .thenAnswer((_) async {});
+      when(() => rondaRepository.cerca(any())).thenAnswer(
+        (_) async => const Cerca(
+          barrioId: 'solymar-norte',
+          byPretext: [CercaWaiting(pretextId: 'mate', count: 3)],
+        ),
+      );
     });
 
     Widget buildSubject() => App(
       authRepository: authRepository,
       flyerRepository: flyerRepository,
       needsRepository: needsRepository,
-      onboardingRepository: _MockOnboardingRepository(),
+      onboardingRepository: onboardingRepository,
       organiserRepository: organiserRepository,
       profileRepository: profileRepository,
       pushRepository: pushRepository,
@@ -289,6 +334,9 @@ void main() {
       Finder buttonsDoor() =>
           find.bySemanticsIdentifier(WelcomePage.buttonsDoorIdentifier);
 
+      Finder voiceDoor() =>
+          find.bySemanticsIdentifier(WelcomePage.voiceDoorIdentifier);
+
       testWidgets('by landing signed-out people on $WelcomePage', (
         tester,
       ) async {
@@ -320,15 +368,158 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(LoginPage), findsNothing);
 
-        await tester.tap(buttonsDoor());
+        await tester.tap(voiceDoor());
         await tester.pumpAndSettle();
         expect(find.byType(LoginPage), findsOneWidget);
+        expect(
+          find.text(
+            'To listen to you, we need you to sign in with your '
+            'account',
+          ),
+          findsOneWidget,
+        );
         verifyNever(() => profileRepository.acceptTerms(any(), any()));
+      });
+
+      testWidgets('by keeping signed-out people off the questions and the '
+          'payoff until a door is tapped', (tester) async {
+        await pumpSignedOut(tester);
+        final router = GoRouter.of(tester.element(find.byType(WelcomePage)));
+
+        for (final path in [
+          OnboardingPage.path,
+          PayoffPage.path,
+          PayoffPage.signInPath,
+        ]) {
+          router.go(path);
+          await tester.pumpAndSettle();
+          expect(find.byType(WelcomePage), findsOneWidget, reason: path);
+        }
+      });
+
+      testWidgets('by opening the questions, signed out, after the buttons '
+          'door', (tester) async {
+        await pumpSignedOut(tester);
+
+        await tester.tap(buttonsDoor());
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnboardingPage), findsOneWidget);
+        expect(find.byType(PretextsStep), findsOneWidget);
+        expect(find.byType(LoginPage), findsNothing);
+        verify(() => profileRepository.holdTerms(any())).called(1);
+        verifyNever(() => profileRepository.acceptTerms(any(), any()));
+      });
+
+      testWidgets('by asking the questions, then the payoff, then sign-in '
+          'once, then saving the profile and the terms', (tester) async {
+        Future<void> tapId(String identifier) async {
+          final target = find.bySemanticsIdentifier(identifier);
+          await tester.ensureVisible(target);
+          await tester.pumpAndSettle();
+          await tester.tap(target);
+          await tester.pumpAndSettle();
+        }
+
+        await pumpSignedOut(tester);
+        await tester.tap(buttonsDoor());
+        await tester.pumpAndSettle();
+
+        for (final identifier in [
+          'onboarding.pretexts.mate',
+          'onboarding.next',
+          'onboarding.brings.pan',
+          'onboarding.next',
+          'onboarding.slots.6.1',
+          'onboarding.next',
+          'onboarding.barrio.solymarNorte',
+          'onboarding.next',
+          'onboarding.ageBand.sixties',
+          'onboarding.next',
+          'onboarding.needs.walkALot',
+          'onboarding.next',
+        ]) {
+          await tapId(identifier);
+        }
+        await tester.enterText(find.byType(TextField), 'Marta');
+        await tester.pumpAndSettle();
+        await tapId('onboarding.next');
+        await tapId(ReviewStep.saveIdentifier);
+
+        // Held on the phone, nothing written: the payoff, signed out.
+        final answers = Profile(
+          firstName: 'Marta',
+          ageBand: AgeBand.sixties,
+          barrio: Barrio.solymarNorte,
+          pretexts: const {Pretext.mate},
+          slots: {const Slot(SlotDay.sunday, SlotBand.afternoon)},
+          brings: const {Bring.pan},
+        );
+        expect(held, equals(answers));
+        expect(find.byType(PayoffPage), findsOneWidget);
+        expect(
+          find.text('3 neighbours near you signed up for mate.'),
+          findsOneWidget,
+        );
+        verify(() => rondaRepository.cerca('solymar-norte')).called(1);
+        verifyNever(profileRepository.publishedSeats);
+        verifyNever(() => profileRepository.createProfile(any(), any()));
+
+        await tapId(PayoffView.continueIdentifier);
+        expect(find.byType(LoginPage), findsOneWidget);
+        expect(find.text('Keep your place'), findsOneWidget);
+
+        // Signed in: the terms, then the held answers saved straight away.
+        users.add(_user);
+        await tester.pumpAndSettle();
+        profiles.add(null);
+        await tester.pumpAndSettle();
+        verifyInOrder([
+          () => profileRepository.acceptTerms('demo-uid', any()),
+          () => needsRepository.save(const Needs({Need.walkALot})),
+          () => profileRepository.saveEligibleSeatIds(
+            uid: 'demo-uid',
+            seatIds: const [],
+          ),
+          () => profileRepository.createProfile('demo-uid', answers),
+        ]);
+
+        profiles.add(answers);
+        await tester.pumpAndSettle();
+        expect(find.byType(MyRondaPage), findsOneWidget);
+        expect(held, isNull);
+      });
+
+      testWidgets('by keeping the answers when the person backs out of '
+          'sign-in', (tester) async {
+        held = _profile;
+        await pumpSignedOut(tester);
+        await tester.tap(buttonsDoor());
+        await tester.pumpAndSettle();
+        expect(find.byType(ReviewStep), findsOneWidget);
+
+        await tester.tap(find.bySemanticsIdentifier(ReviewStep.saveIdentifier));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.bySemanticsIdentifier(PayoffView.continueIdentifier),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(LoginPage), findsOneWidget);
+
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+        expect(find.byType(PayoffPage), findsOneWidget);
+
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+        expect(find.byType(ReviewStep), findsOneWidget);
+        expect(find.text('Marta'), findsOneWidget);
+        expect(held, equals(_profile));
       });
 
       testWidgets('by going back from $LoginPage to the doors', (tester) async {
         await pumpSignedOut(tester);
-        await tester.tap(buttonsDoor());
+        await tester.tap(voiceDoor());
         await tester.pumpAndSettle();
 
         await tester.tap(find.byType(BackButton));
@@ -358,8 +549,10 @@ void main() {
 
       testWidgets('by recording the terms and opening $OnboardingPage once '
           'someone without a profile signs in', (tester) async {
+        when(onboardingRepository.startVoiceNote).thenAnswer((_) async {});
+        when(onboardingRepository.discardVoiceNote).thenAnswer((_) async {});
         await pumpSignedOut(tester);
-        await tester.tap(buttonsDoor());
+        await tester.tap(voiceDoor());
         await tester.pumpAndSettle();
 
         users.add(_user);
@@ -425,6 +618,8 @@ void main() {
           LoginPage.path,
           TermsPage.path,
           OnboardingPage.path,
+          PayoffPage.path,
+          PayoffPage.signInPath,
         ]) {
           router.go(path);
           await tester.pumpAndSettle();

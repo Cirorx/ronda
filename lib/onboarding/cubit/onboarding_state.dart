@@ -43,8 +43,15 @@ enum OnboardingStatus {
   /// Saved; the router moves on once the profile arrives.
   saved,
 
+  /// Held on this phone while nobody is signed in; the payoff and sign-in
+  /// come next.
+  held,
+
   /// The save failed; the read-back offers it again.
-  failure,
+  failure;
+
+  /// Whether the save is in flight or done, so "Está bien, guardalo" waits.
+  bool get isUnderway => this == saving || this == saved || this == held;
 }
 
 final class const OnboardingState({

@@ -53,6 +53,10 @@ void main() {
           .thenAnswer((_) => Stream.value(null));
       when(() => profileRepository.acceptTerms(any(), any()))
           .thenAnswer((_) async {});
+      when(() => profileRepository.holdTerms(any())).thenAnswer((_) async {});
+      when(profileRepository.heldTerms).thenAnswer((_) async => null);
+      when(profileRepository.clearHeldTerms).thenAnswer((_) async {});
+      when(profileRepository.clearHeldAnswers).thenAnswer((_) async {});
     });
 
     AppBloc buildBloc() => AppBloc(
@@ -187,6 +191,83 @@ void main() {
           AppState(status: AppStatus.onboarding, user: _user),
           AppState(status: AppStatus.authenticated, user: _user),
         ],
+        verify: (_) {
+          verify(profileRepository.clearHeldAnswers).called(1);
+        },
+      );
+
+      blocTest<AppBloc, AppState>(
+        'stops holding answers once, however often the profile changes',
+        setUp: () {
+          when(() => authRepository.user)
+              .thenAnswer((_) => Stream.value(_user));
+          when(() => profileRepository.watchProfile('demo-uid'))
+              .thenAnswer((_) => Stream.fromIterable([_profile, _profile]));
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const AppUserSubscriptionRequested()),
+        verify: (_) {
+          verify(profileRepository.clearHeldAnswers).called(1);
+        },
+      );
+
+      blocTest<AppBloc, AppState>(
+        'adds the error when the held answers cannot be cleared',
+        setUp: () {
+          when(() => authRepository.user)
+              .thenAnswer((_) => Stream.value(_user));
+          when(() => profileRepository.watchProfile('demo-uid'))
+              .thenAnswer((_) => Stream.value(_profile));
+          when(profileRepository.clearHeldAnswers)
+              .thenThrow(const HoldOnPhoneFailure());
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const AppUserSubscriptionRequested()),
+        expect: () => const [
+          AppState(status: AppStatus.loadingProfile, user: _user),
+          AppState(status: AppStatus.authenticated, user: _user),
+        ],
+        errors: () => [isA<HoldOnPhoneFailure>()],
+      );
+
+      blocTest<AppBloc, AppState>(
+        'writes the acceptance held on the phone when none is in memory, '
+        'then stops holding it',
+        setUp: () {
+          when(() => authRepository.user)
+              .thenAnswer((_) => Stream.value(_user));
+          when(profileRepository.heldTerms).thenAnswer((_) async => _terms);
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const AppUserSubscriptionRequested()),
+        expect: () => const [
+          AppState(status: AppStatus.loadingProfile, user: _user),
+          AppState(status: AppStatus.onboarding, user: _user),
+        ],
+        verify: (_) {
+          verify(() => profileRepository.acceptTerms('demo-uid', _terms))
+              .called(1);
+          verify(profileRepository.clearHeldTerms).called(1);
+        },
+      );
+
+      blocTest<AppBloc, AppState>(
+        'adds the error, and moves on, when the held acceptance cannot be '
+        'cleared',
+        setUp: () {
+          when(() => authRepository.user)
+              .thenAnswer((_) => Stream.value(_user));
+          when(profileRepository.heldTerms).thenAnswer((_) async => _terms);
+          when(profileRepository.clearHeldTerms)
+              .thenThrow(const HoldOnPhoneFailure());
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const AppUserSubscriptionRequested()),
+        expect: () => const [
+          AppState(status: AppStatus.loadingProfile, user: _user),
+          AppState(status: AppStatus.onboarding, user: _user),
+        ],
+        errors: () => [isA<HoldOnPhoneFailure>()],
       );
 
       blocTest<AppBloc, AppState>(
@@ -253,15 +334,32 @@ void main() {
 
     group(AppTermsAccepted, () {
       blocTest<AppBloc, AppState>(
-        'holds the acceptance while nobody is signed in, writing nothing',
+        'holds the acceptance in memory and on the phone while nobody is '
+        'signed in, writing nothing',
         build: buildBloc,
         act: (bloc) => bloc.add(const AppTermsAccepted()),
         expect: () => [
           AppState(status: AppStatus.unauthenticated, pendingTerms: _terms),
         ],
         verify: (_) {
+          verify(() => profileRepository.holdTerms(_terms)).called(1);
           verifyNever(() => profileRepository.acceptTerms(any(), any()));
         },
+      );
+
+      blocTest<AppBloc, AppState>(
+        'keeps the acceptance in memory, adding the error, when the phone '
+        'cannot hold it',
+        setUp: () {
+          when(() => profileRepository.holdTerms(any()))
+              .thenThrow(const HoldOnPhoneFailure());
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const AppTermsAccepted()),
+        expect: () => [
+          AppState(status: AppStatus.unauthenticated, pendingTerms: _terms),
+        ],
+        errors: () => [isA<HoldOnPhoneFailure>()],
       );
 
       blocTest<AppBloc, AppState>(
@@ -295,6 +393,8 @@ void main() {
         verify: (_) {
           verify(() => profileRepository.acceptTerms('demo-uid', _terms))
               .called(1);
+          verify(profileRepository.clearHeldTerms).called(1);
+          verifyNever(profileRepository.heldTerms);
         },
       );
 

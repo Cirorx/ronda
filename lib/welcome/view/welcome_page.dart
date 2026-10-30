@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/login/login.dart';
+import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/welcome/welcome.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -13,8 +14,11 @@ const voiceDoorEnabled = true;
 /// conditions they accept by going through one.
 ///
 /// Tapping a door adds [AppTermsAccepted]; once [AppBloc] holds the
-/// acceptance, this page moves on to sign-in, keeping the query the router
-/// gave it (where sign-in started, `?from=/admin`).
+/// acceptance, this page moves on: "Tocando botones" to the questions,
+/// signed out (sign-in comes after the payoff); "Con un audio" to sign-in,
+/// because the server reads the audio. Someone sent here to sign in and
+/// return (`?from=/admin`) goes to sign-in through either door, keeping
+/// that query.
 class const WelcomePage({
   /// Whether "Con un audio" is shown; [voiceDoorEnabled] in the app.
   final bool showVoiceDoor = voiceDoorEnabled,
@@ -45,9 +49,15 @@ class const WelcomePage({
       listenWhen: (previous, current) =>
           current.pendingTerms != null &&
           current.pendingTerms != previous.pendingTerms,
-      listener: (context, _) => context.go(
-        GoRouterState.of(context).uri.replace(path: LoginPage.path).toString(),
-      ),
+      listener: (context, state) {
+        final uri = GoRouterState.of(context).uri;
+        final returning = uri.queryParameters.containsKey(returnToParameter);
+        context.go(
+          state.door == OnboardingDoor.buttons && !returning
+              ? OnboardingPage.path
+              : uri.replace(path: LoginPage.path).toString(),
+        );
+      },
       child: Scaffold(
         body: SafeArea(
           // The doors and the terms note sit at the bottom while they fit,

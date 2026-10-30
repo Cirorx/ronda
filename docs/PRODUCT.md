@@ -24,14 +24,26 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   the person picks ("sesenta y pico").
 - **Terms by continuing, no consent screen.** Under the doors: "Al seguir, aceptás las
   condiciones de Ronda." Tapping either door is the acceptance; the app records the terms
-  version and the time. The link opens "Las condiciones, en corto": six plain points (free,
+  version and the time, held on the phone until sign-in and written right after it. The link opens "Las condiciones, en corto": six plain points (free,
   public places and adults only, what is kept, audio deleted at once, see or delete your data
   in Ajustes, reports read by a person) and one line on where things happen: "Tus datos se
   guardan en Brasil; el audio lo procesa Meta y el inicio de sesión Google, en EE. UU."
-- **Sign-in** comes after the door: "Primero, entrá con tu cuenta", with "No publicamos nada en
-  tu cuenta", "No vemos tus contactos, tus fotos ni tus mails" and "En Ronda te conocen solo por
-  tu nombre de pila". [Seguir con Google]; "¿No tenés cuenta de Google? Te ayudamos a crear una
-  en un minuto."
+- **Payoff** after the read-back, signed out: "Esto es lo que hay para vos", from the answers and
+  Cerca tuyo's public `cerca/{barrio}` counts. It shows demand, never seats: "Hay 4 anotados para
+  mate los sábados de tarde cerca tuyo." (the slot only where the counts have one; otherwise "Hay
+  4 anotados para mate cerca tuyo."), then "Te avisamos cuando se arme tu ronda." With nobody
+  else: "Sos de los primeros en tu zona: te avisamos cuando seamos cinco." Offline or unreadable:
+  "Ahora no pudimos ver quién más se anotó cerca tuyo." No names, places or "4 de 6": nothing yet
+  lets a new sign-up take a seat in an existing ronda, and the solver can still split or trim a
+  group. [Guardame el lugar] leads to sign-in.
+- **Sign-in** after the payoff: "Guardá tu lugar", "Para guardarte el lugar y avisarte el día de
+  la ronda, entrá con tu cuenta.", with "No publicamos nada en tu cuenta", "No vemos tus
+  contactos, tus fotos ni tus mails" and "En Ronda te conocen solo por tu nombre de pila".
+  [Seguir con Google]; "¿No tenés cuenta de Google? Te ayudamos a crear una en un minuto.", a link
+  that opens Google's create-account page in the browser. After the voice door, which signs in
+  before recording because the server reads the audio: "Para escucharte necesitamos que entres
+  con tu cuenta", with the same three lines. Backing out of sign-in keeps the answers on the
+  phone. (Signing in at the end of the voice path with a temporary account comes later.)
 - **Voice:** "Te escuchamos", ≤ 60 s, "Ideas de qué contar" shown as a plain checklist while
   recording and ticked on the read-back from what the transcript covered (live ticking would
   need live transcription; decided 2026-10-27),
@@ -40,9 +52,12 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   nada"; "Tu audio ya se borró."; [Está bien, guardalo] [Grabar de nuevo].
 - **Microphone blocked:** "No podemos usar el micrófono", three steps to allow it, or
   [Prefiero tocar botones].
-- **Order:** welcome (doors + terms note) → door → sign-in → the steps. The voice door stays
-  hidden until voice onboarding is built. Signed-in people without a profile land on the
-  steps; with a profile, on the tabs.
+- **Order (buttons):** welcome (doors + terms note) → the seven questions and the read-back,
+  signed out → the payoff → "Guardá tu lugar" sign-in → the profile and the terms saved → Mi
+  ronda. Until sign-in the answers and the terms stay on the phone, so backing out of sign-in
+  or closing the app doesn't mean answering again. **Order (voice):** welcome → sign-in → the
+  recording → "¿Entendimos bien?" → saved. Signed-in people without a profile land on the steps
+  (or straight on the save, when the phone holds answers); with a profile, on the tabs.
 - **Buttons, seven questions and a read-back** (one per screen, "1 de 7"):
   1. "¿Qué te gustaría hacer?" (mate en la rambla, truco, fútbol 5, caminata; "no hace falta
      saber").
@@ -59,7 +74,8 @@ dates in the examples are demo data. Everything not listed here is out of the bu
      filters; the server gets seat ids. [Seguir] [Saltear].
   7. "¿Cómo te llamás?" ("Solo el nombre de pila. Así te conocen en la ronda.").
   Then the read-back "¿Está todo bien?" with every answer and a "Cambiar" on each, "Todavía no
-  guardamos nada", and [Está bien, guardalo].
+  guardamos nada", and [Está bien, guardalo] (signed out, it keeps the answers on the phone and
+  opens the payoff).
 - **Before the system asks for notifications:** "¿Te avisamos los martes?" — "Uno por semana,
   el martes a las 19", "Algún otro solo si cambia algo", "Nunca de noche: solo entre las 9 y
   las 21." [Sí, avisame] [Ahora no].

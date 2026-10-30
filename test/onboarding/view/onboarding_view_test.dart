@@ -144,6 +144,45 @@ void main() {
         verify(() => cubit.back()).called(1);
       });
 
+      testWidgets('leaves on the system back button on the first question', (
+        tester,
+      ) async {
+        var left = 0;
+        when(() => cubit.state).thenReturn(const OnboardingState());
+        await tester.pumpApp(
+          BlocProvider.value(
+            value: cubit,
+            child: OnboardingView(onLeave: () => left++),
+          ),
+        );
+
+        await tester.binding.handlePopRoute();
+        await tester.pump();
+
+        expect(left, equals(1));
+        verifyNever(() => cubit.back());
+      });
+
+      testWidgets('calls back, not leave, past the first question', (
+        tester,
+      ) async {
+        var left = 0;
+        when(() => cubit.state)
+            .thenReturn(const OnboardingState(step: OnboardingStep.brings));
+        await tester.pumpApp(
+          BlocProvider.value(
+            value: cubit,
+            child: OnboardingView(onLeave: () => left++),
+          ),
+        );
+
+        await tester.binding.handlePopRoute();
+        await tester.pump();
+
+        expect(left, equals(0));
+        verify(() => cubit.back()).called(1);
+      });
+
       testWidgets('calls back on the read-back', (tester) async {
         await pumpSubject(tester, _answered);
 
@@ -520,7 +559,11 @@ void main() {
         verify(() => cubit.save()).called(1);
       });
 
-      for (final status in [OnboardingStatus.saving, OnboardingStatus.saved]) {
+      for (final status in [
+        OnboardingStatus.saving,
+        OnboardingStatus.saved,
+        OnboardingStatus.held,
+      ]) {
         testWidgets('disables saving while ${status.name}', (tester) async {
           await pumpSubject(tester, _answered.copyWith(status: status));
 

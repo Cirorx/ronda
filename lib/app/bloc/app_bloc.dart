@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
@@ -13,8 +15,10 @@ part 'app_state.dart';
 /// a profile to onboarding and everyone else to the tabs.
 ///
 /// It also carries the conditions accepted on the welcome screen across
-/// sign-in: tapping a door is the acceptance, and it is written to
-/// `users/{uid}` only once the person is signed in.
+/// sign-in: tapping a door is the acceptance, held in memory and on this
+/// phone, and it is written to `users/{uid}` only once the person is signed
+/// in, so it survives backing out of sign-in or the app being closed. Once
+/// a profile exists, the phone stops holding onboarding answers.
 ///
 /// Signing out goes through here too ([AppSignOutRequested]), so this
 /// phone's push token is forgotten while the member may still delete it.
@@ -78,25 +82,44 @@ class AppBloc extends Bloc<AppEvent, AppState> {
         door: state.door,
       ),
     );
-    if (state.pendingTerms case final terms?) {
+    // Held on the phone too, for a sign-in that outlived the app.
+    final terms = state.pendingTerms ?? await _profileRepository.heldTerms();
+    if (terms != null) {
       try {
         await _profileRepository.acceptTerms(user.id, terms);
         emit(state.withPendingTerms(null));
+        await _profileRepository.clearHeldTerms();
       } on AcceptTermsFailure catch (error, stackTrace) {
         // Kept pending: the next sign-in tries again.
+        addError(error, stackTrace);
+      } on HoldOnPhoneFailure catch (error, stackTrace) {
         addError(error, stackTrace);
       }
     }
 
     await emit.onEach(
       _profileRepository.watchProfile(user.id),
-      onData: (profile) => emit(
-        state.withStatus(
-          profile == null ? AppStatus.onboarding : AppStatus.authenticated,
-        ),
-      ),
+      onData: (profile) {
+        if (profile != null && state.status != AppStatus.authenticated) {
+          // Saved, or saved before on another phone: nothing left to hold.
+          unawaited(_clearHeldAnswers());
+        }
+        emit(
+          state.withStatus(
+            profile == null ? AppStatus.onboarding : AppStatus.authenticated,
+          ),
+        );
+      },
       onError: addError,
     );
+  }
+
+  Future<void> _clearHeldAnswers() async {
+    try {
+      await _profileRepository.clearHeldAnswers();
+    } on HoldOnPhoneFailure catch (error, stackTrace) {
+      addError(error, stackTrace);
+    }
   }
 
   /// Deletes this phone's push token and its document first, while the
@@ -128,6 +151,12 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     final terms = TermsAcceptance(version: termsVersion, acceptedAt: _now());
     if (state.user.isEmpty) {
       emit(state.withDoor(event.door).withPendingTerms(terms));
+      try {
+        await _profileRepository.holdTerms(terms);
+      } on HoldOnPhoneFailure catch (error, stackTrace) {
+        // Still held in memory: only closing the app before sign-in loses it.
+        addError(error, stackTrace);
+      }
       return;
     }
     if (state.door != event.door) emit(state.withDoor(event.door));

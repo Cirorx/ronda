@@ -17,7 +17,8 @@
 
 ```
 Phone (Flutter: iOS, Android, web)
-  ├─ welcome (terms accepted by continuing) → onboarding (buttons | voice) → upload audio
+  ├─ welcome (terms accepted by continuing) → buttons: questions and payoff signed out, then
+  │    sign-in | voice: sign-in, then the recording → upload audio
   ├─ needs → local filters → eligible seat ids → Firestore
   ├─ face blur (ML Kit) → upload blurred photo
   └─ FCM pushes in; RSVP / attendance / reports out
@@ -80,8 +81,8 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   - The phone writes `users/{uid}/private/eligible` = exactly `{seatIds, updatedAt}` (rules check
     the keys, a list of at most 1000 strings shaped `{barrio}_{pretext}_{slot}`, and
     `updatedAt == request.time`). No client reads it back, not even its owner or the admin.
-  - When: on "Está bien, guardalo", after the needs are saved on the phone and before the
-    profile. The phone filters by needs only (pretext and slot are the solver's match). If
+  - When: on "Está bien, guardalo" (for answers given signed out, right after sign-in), after
+    the needs are saved on the phone and before the profile. The phone filters by needs only (pretext and slot are the solver's match). If
     reading the seats or writing the ids fails, the save fails and no profile is written, so
     the person retries from the read-back and nobody reaches the tabs without eligible ids.
   - Known limits: the solver's hard `withinTenBlocks` already drops far seats, so "caminar mucho"
@@ -101,6 +102,12 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   rejected, at the top level or inside a list element (rules test: `rules/users.test.js`). The
   `terms` write comes first and creates the document; the profile lands on it when onboarding is
   saved.
+- Before sign-in nothing is written: the buttons path is answered signed out, so the accepted
+  terms (`held.terms`: version, acceptedAt) and the answers (`held.answers`: the profile fields
+  as ids) wait on the phone in `device_store`, through `profile_repository`; the needs are in
+  `needs_repository` as always. Right after sign-in the app writes the held terms, then saves
+  the held answers as on "Está bien, guardalo" (needs filter, eligible ids, profile), and clears
+  both once a profile exists, including one saved before on another phone.
 - `rondas/{id}`: pretext, barrio, slot {day, time}, place {name, landmark, lat, lng} (public
   places only), size, status (forming | active | paused | ended), hosts {anfitrion, cola,
   rotatesOn}, despues {kind: none | place | home, label, address?, hostOk}
@@ -235,7 +242,9 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
   members, `cap` is the pretext's largest ronda, 6 or 10; `waiting` counts sign-ups in that barrio
   who picked its pretext and slot and sit in no ronda), `waiting[{pretext, count}]` the same
   sign-ups by pretext, and updatedAt. No uid, name or place. Anyone may `get` one, signed in or
-  not; nobody lists or writes them from a client (rules test: `rules/public.test.js`). The
+  not; nobody lists or writes them from a client (rules test: `rules/public.test.js`). The app's
+  onboarding payoff reads one signed out, the waiting counts only (`ronda_repository`'s
+  `cerca`, 8 s timeout). The
   hourly `refresh_cerca` rewrites all of them with `run_refresh_cerca(db, now)`; once #28 writes
   `waitlists`, their entries should feed the waiting counts too.
 - `flyers/{id}`: one collection for both printed flyers, told apart by `kind` (a document with
