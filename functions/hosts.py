@@ -6,13 +6,17 @@ admin sets them the card says "Lugar y hora a confirmar", the RSVP push says the
 check reads the whole time band, and there is no host. Two admin callables back the screen at
 `/admin/rondas`:
 
-- `setups(db)` (`ronda_setups`): every ronda that still meets, with its place, hour and hosts,
-  its members by first name (the admin can't read `users/` or a ronda's members from a client)
-  and its latest attendance roll, for the admin who records it when no host can.
+- `setups(db, now)` (`ronda_setups`): every ronda that still meets, with its place, hour and
+  hosts, its members by first name (the admin can't read `users/` or a ronda's members from a
+  client), its latest attendance roll, for the admin who records it when no host can, and the
+  upcoming meeting's "¿Abrís vos?" (handoff.py), where "Nadie confirmó que abre" reaches the
+  admin.
 - `set_setup(db, data, now)` (`set_ronda_setup`): writes all three at once on
   `rondas/{id}`: `place {name, landmark?}`, `slot.hour` ("16:00", inside the band) and `hosts
-  {anfitrion, cola, anfitrionName, colaName}`. An empty value removes it. The first names ride
-  along so members' cards say "Abre Jorge y cierra Ana" without reading anyone's profile.
+  {anfitrion, cola, anfitrionName, colaName, month?}`. An empty value removes it. The first
+  names ride along so members' cards say "Abre Jorge y cierra Ana" without reading anyone's
+  profile. With both hosts chosen, the pick is this month's turn: it stamps the month and
+  writes the months ahead (`turns`, rotation.py), which the monthly job goes on from.
 
 The place is the ronda's own, so it must be public: its words pass the organiser's word gates
 (no emoji, voseo, nothing that looks like a home or an address), the same ones every message
@@ -21,6 +25,8 @@ naming it passes later. A home is only ever for the después.
 
 from datetime import datetime
 
+import handoff
+import rotation
 import rsvp
 from organiser import gates
 
@@ -65,7 +71,24 @@ def _latest_roll(db, ronda_id: str) -> dict | None:
     }
 
 
-def setups(db) -> list[dict]:
+def _handoff(db, ronda_id: str, ronda: dict, now: datetime) -> dict | None:
+    """The upcoming meeting's "¿Abrís vos?", when there is one: who it is for, and how it is
+    going (`cola`, `members`, `taken`, `nobody` or `back`)."""
+    day, week = handoff.meeting_of(db, ronda_id, ronda, rsvp.local(now).date())
+    snapshot = db.document(f"rondas/{ronda_id}/handoffs/{week}").get()
+    if not snapshot.exists:
+        return None
+    state = snapshot.to_dict() or {}
+    return {
+        "week": week,
+        "date": day.isoformat(),
+        "step": state.get("step") or "",
+        "fromName": state.get("fromName", ""),
+        "takenName": state.get("takenName", ""),
+    }
+
+
+def setups(db, now: datetime) -> list[dict]:
     """Every ronda that still meets, as the admin's screen shows it, by its line."""
     rows = []
     for snapshot in db.collection("rondas").stream():
@@ -90,6 +113,7 @@ def setups(db) -> list[dict]:
                     for uid in sorted(members, key=lambda u: (names[u], u))
                 ],
                 "roll": _latest_roll(db, snapshot.id),
+                "handoff": _handoff(db, snapshot.id, ronda, now),
             }
         )
     return sorted(rows, key=lambda row: (row["line"], row["rondaId"]))
@@ -159,6 +183,15 @@ def set_setup(db, data: object, now: datetime) -> dict:
         raise SetupError("invalid-argument", "the anfitrión and the cola are two people")
     names = rsvp._first_names(db, chosen.values())
     hosts = {**chosen, **{f"{role}Name": names[uid] for role, uid in chosen.items()}}
+    turns = DELETE_FIELD
+    if len(chosen) == 2:
+        hosts["month"] = rotation.month_of(now)
+        turns = rotation.turns(
+            db,
+            rotation.cycle(members),
+            (chosen["anfitrion"], chosen["cola"]),
+            hosts["month"],
+        )
 
     if hour is None:
         slot.pop("hour", None)
@@ -169,6 +202,7 @@ def set_setup(db, data: object, now: datetime) -> dict:
             "place": place if place is not None else DELETE_FIELD,
             "slot": slot,
             "hosts": hosts if hosts else DELETE_FIELD,
+            "turns": turns,
             "setupAt": now,
         }
     )

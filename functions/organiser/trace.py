@@ -17,9 +17,9 @@
   - `note`: what code decided or noticed: note;
   - `stop`: why the loop stopped early.
 - `acta/{rondaId}/entries/{runId}-{k}`: week, ts, tool, summary (es-419, written in code, like
-  the pushes), decidedBy (`agent` | `host`), runId. What the ronda's members read, as
-  "Lo que hizo el programa"; the model's own words reach it only through `log_acta`, after
-  the gates.
+  the pushes), decidedBy (`agent` | `host` | `rule`, a code job's fixed rule), runId. What the
+  ronda's members read, as "Lo que hizo el programa"; the model's own words reach it only
+  through `log_acta`, after the gates.
 
 Times are the run's clock (`now`, which the admin may set) plus the seconds since it started,
 so a run at a simulated 22:00 reads as 22:00 in both records.
@@ -31,6 +31,8 @@ from datetime import datetime, timedelta
 
 AGENT = "agent"
 HOST = "host"
+RULE = "rule"
+"""`decidedBy` of a line a code job wrote by a fixed rule, with no model (the monthly hosts)."""
 
 CODE = "code"
 MODEL = "model"

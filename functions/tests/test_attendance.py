@@ -118,6 +118,17 @@ class TestTheAsk:
 
         assert (roll(db)["askedUid"], roll(db)["askedRole"]) == ("demo-102", "cola")
 
+    def test_who_took_over_opening_that_week_is_asked_first(self):
+        opener = {"week": WEEK, "uid": "demo-104", "firstName": "Facu"}
+        db = FakeFirestore(documents(hosts=HOSTS, opener=opener))
+        last_week = FakeFirestore(documents(hosts=HOSTS, opener={**opener, "week": "2026-W44"}))
+
+        ask(db)
+        ask(last_week)
+
+        assert (roll(db)["askedUid"], roll(db)["askedRole"]) == ("demo-104", "opener")
+        assert roll(last_week)["askedRole"] == "anfitrion"
+
     def test_who_is_paused_is_off_the_list_and_cant_be_asked(self):
         db = FakeFirestore(documents(hosts={"anfitrion": HOST}))
         db.documents[f"rondas/{RONDA}/members/{HOST}"] |= {

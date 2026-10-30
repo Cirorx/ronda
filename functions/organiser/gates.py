@@ -13,13 +13,15 @@ In order:
    and says so only in the terms and on the flyers. Held as "menciona plata".
 6. `routine`: one routine message a week per member. The week's RSVP push ("¿Venís?") is that
    ronda's routine message, so a routine message from the organiser in the same week is held.
-   A change the host decided (a rain move) and a proposal to the host are not routine.
+   A change the host decided (a rain move), a proposal to the host and a question to one person
+   (`ASK`, from a code job) are not routine.
 7. `public_place`: the ronda itself only meets in public places. A message that sends people
    somewhere must name a public place, and its words must not look like a home or an address
    (`text.private_place`). A home is only for the después, which the organiser never sends.
 
 `check_words` runs only the gates about words (3, 4, 5 and the address check of 7), for what
-members read that isn't a message: the acta.
+members read that isn't a message: the acta. With `home=True` it skips the address check, for
+the después, the one place a home and its address may be named (never in a push).
 """
 
 from dataclasses import dataclass
@@ -39,6 +41,9 @@ HOST = "host"
 OFFER = "offer"
 """A seat freed by an "esta no", offered to one person on the bench (bench.py). Not routine:
 that person had no RSVP from the ronda, and code allows one offer per freed seat at a time."""
+ASK = "ask"
+"""A question to one person about one meeting, sent by a code job, not the model ("¿Abrís
+vos?", the después where someone lives, a buddy's check-in)."""
 
 PUBLIC = "public"
 """`places/{id}.kind` of a place the ronda itself may meet in."""
@@ -96,15 +101,16 @@ def release_time(now: datetime) -> datetime:
     return datetime.combine(day, time(rsvp.QUIET_UNTIL), tzinfo=rsvp.MONTEVIDEO)
 
 
-def check_words(words: str) -> Verdict:
-    """The gates about words alone: no emoji, voseo, no money, no home or address."""
+def check_words(words: str, *, home: bool = False) -> Verdict:
+    """The gates about words alone: no emoji, voseo, no money, and no home or address unless
+    `home` (the después)."""
     if found := text.emoji(words):
         return Verdict(False, "emoji", f"tiene un emoji ({found})")
     if found := text.tu_forms(words):
         return Verdict(False, "voseo", f"no está en voseo: «{found}»")
     if found := text.money(words):
         return Verdict(False, "money", f"menciona plata («{found}»)")
-    if found := text.private_place(words):
+    if not home and (found := text.private_place(words)):
         return Verdict(False, "public_place", f"parece una casa o una dirección: «{found}»")
     return ALLOWED
 

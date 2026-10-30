@@ -686,3 +686,81 @@ class TestHostsAndAttendance:
         with pytest.raises(https_fn.HttpsError) as excinfo:
             call(main.record_attendance, member, self.TAP)
         assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED
+
+
+class TestWeeklyLoopCodeJobs:
+    """The después, "¿Abrís vos?" and the buddy (#47, #50): despues.py, handoff.py and buddy.py
+    hold the rules; these check auth, the wiring and the error codes."""
+
+    @pytest.fixture
+    def loop_db(self, monkeypatch) -> FakeFirestore:
+        import jobs
+        from tests.organiser_fakes import at
+        from tests.organiser_fakes import documents as rainy
+        from tests.test_rsvp import Sender
+
+        db = FakeFirestore(rainy(hosts={"anfitrion": "demo-101", "cola": "demo-102"}))
+        db.documents["rondas/ronda-rain/weeks/2026-W45"]["rsvp"]["demo-101"] = "no"
+        sender = Sender()
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setattr(main, "_now", lambda: at(4, 10))
+        monkeypatch.setattr(jobs, "context", lambda: jobs.Context(send=sender, app_url="x"))
+        return db
+
+    MIRTA = SimpleNamespace(uid="demo-101", token={})
+    JORGE = SimpleNamespace(uid="demo-102", token={})
+    ANA = SimpleNamespace(uid="demo-103", token={})
+
+    @pytest.mark.parametrize(
+        "function",
+        [
+            main.set_despues,
+            main.answer_despues,
+            main.answer_handoff,
+            main.buddy_options,
+            main.set_buddy,
+        ],
+    )
+    def test_each_needs_a_signed_in_caller(self, function, loop_db):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(function, None, {"rondaId": "ronda-rain"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+
+    def test_the_host_sets_a_despues_and_the_home_answers(self, loop_db):
+        home = {
+            "rondaId": "ronda-rain",
+            "kind": "home",
+            "what": "bizcochos",
+            "address": "Av. Central 1234",
+            "homeOf": "demo-103",
+        }
+
+        assert call(main.set_despues, self.MIRTA, home)["status"] == "asking"
+        answer = {"rondaId": "ronda-rain", "week": "2026-W45", "answer": "yes"}
+        assert call(main.answer_despues, self.ANA, answer) == {"status": "set"}
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.set_despues, self.ANA, {"rondaId": "ronda-rain", "kind": "none"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED
+
+    def test_the_cola_answers_abris_vos(self, loop_db):
+        import handoff
+        from tests.organiser_fakes import at
+        from tests.test_rsvp import Sender
+
+        handoff.run_handoff(loop_db, at(4, 10), send=Sender())
+        answer = {"rondaId": "ronda-rain", "week": "2026-W45", "answer": "yes"}
+
+        assert call(main.answer_handoff, self.JORGE, answer) == {"status": "taken"}
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.answer_handoff, self.ANA, answer)
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED
+
+    def test_a_member_chooses_a_buddy(self, loop_db):
+        data = {"rondaId": "ronda-rain", "buddyUid": "demo-101"}
+
+        assert call(main.buddy_options, self.JORGE, {"rondaId": "ronda-rain"})["chosen"] is False
+        assert call(main.set_buddy, self.JORGE, data)["buddyName"] == "Mirta"
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.set_buddy, self.JORGE, {**data, "buddyUid": "demo-102"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.INVALID_ARGUMENT

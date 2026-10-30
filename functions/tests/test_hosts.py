@@ -31,7 +31,7 @@ class TestSetups:
         db = bare()
         db.documents["rondas/ended"] = {"status": "ended", "slot": {"day": "thu"}}
 
-        (row,) = hosts.setups(db)
+        (row,) = hosts.setups(db, NOW)
 
         assert row == {
             "rondaId": RONDA,
@@ -49,6 +49,7 @@ class TestSetups:
                 {"uid": HOST, "firstName": "Mirta"},
             ],
             "roll": None,
+            "handoff": None,
         }
 
     def test_shows_what_is_set_and_the_latest_roll(self):
@@ -60,7 +61,7 @@ class TestSetups:
         )  # fmt: skip
         db.documents[f"rondas/{RONDA}/rolls/2026-W44"] = {"date": "2026-10-29"}
 
-        (row,) = hosts.setups(db)
+        (row,) = hosts.setups(db, NOW)
 
         assert row["hour"] == "16:00"
         assert row["place"] == {"name": "frente al quiosco", "landmark": ""}
@@ -71,7 +72,22 @@ class TestSetups:
         db = bare()
         db.documents[f"rondas/{RONDA}"]["place"] = {"name": "la plaza", "landmark": 3}
 
-        assert hosts.setups(db)[0]["place"] == {"name": "la plaza", "landmark": ""}
+        assert hosts.setups(db, NOW)[0]["place"] == {"name": "la plaza", "landmark": ""}
+
+    def test_shows_how_the_upcoming_meetings_handoff_is_going(self):
+        db = bare()
+        db.documents[f"rondas/{RONDA}/handoffs/2026-W45"] = {
+            "step": "nobody",
+            "fromName": "Mirta",
+        }
+
+        assert hosts.setups(db, NOW)[0]["handoff"] == {
+            "week": "2026-W45",
+            "date": "2026-11-05",
+            "step": "nobody",
+            "fromName": "Mirta",
+            "takenName": "",
+        }
 
 
 class TestSetSetup:
@@ -94,9 +110,16 @@ class TestSetSetup:
             "cola": "demo-103",
             "anfitrionName": "Jorge",
             "colaName": "Ana",
+            "month": "2026-11",
         }
         assert ronda["setupAt"] == NOW
         assert result["hosts"] == ronda["hosts"]
+        # The pick is this month's turn; the cola opens next month (rotation.py).
+        assert [(t["month"], t["anfitrionName"], t["colaName"]) for t in ronda["turns"]] == [
+            ("2026-11", "Jorge", "Ana"),
+            ("2026-12", "Ana", "Facu"),
+            ("2027-01", "Facu", "Mirta"),
+        ]
 
     def test_empty_values_take_each_one_away(self):
         db = FakeFirestore(documents(hosts={"anfitrion": HOST}))
@@ -106,6 +129,7 @@ class TestSetSetup:
         assert ronda["place"] == {"name": "la plaza"}
         assert ronda["slot"] == {"day": "thu", "time": "afternoon"}
         assert ronda["hosts"] == {"cola": "demo-104", "colaName": "Facu"}
+        assert "turns" not in ronda
 
         setup(db)
         ronda = db.documents[f"rondas/{RONDA}"]

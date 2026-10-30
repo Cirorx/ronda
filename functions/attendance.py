@@ -12,9 +12,10 @@ On meeting day, an hour into the meeting, the host gets "¿Quién vino hoy?" and
   whatever the day and hour, never past the gate.
 - `record(db, uid, admin, data, now)`: the `record_attendance` callable's body, one tap.
 
-Who is asked: the anfitrión, else the cola (the anfitrión paused, left or said "esta no" that
-week), else nobody: the server holds no admin uid (the claim lives on the Auth token only), so
-a ronda with no host shows its roll on the admin's `/admin/rondas`, and the admin records it.
+Who is asked: whoever took over opening that week ("¿Abrís vos?", handoff.py), else the
+anfitrión, else the cola (the anfitrión paused, left or said "esta no" that week), else
+nobody: the server holds no admin uid (the claim lives on the Auth token only), so a ronda
+with no host shows its roll on the admin's `/admin/rondas`, and the admin records it.
 
 Where things live (docs/ARCHITECTURE.md § Data model):
 - `rondas/{id}/weeks/{isoWeek}.attendance {uid: bool}`: the record, read by the admin only
@@ -22,7 +23,8 @@ Where things live (docs/ARCHITECTURE.md § Data model):
 - `rondas/{id}/rolls/{isoWeek}`: the host's roll, `get` by the ronda's anfitrión and cola and
   the admin: week, date, line, hour, people [{uid, firstName}] (the members in for that
   meeting), marks {uid: bool} (the host's copy of the record), askedUid, askedRole
-  (anfitrion | cola | ""), askedAt, updatedAt.
+  (opener | anfitrion | cola | ""), askedAt, updatedAt. The host asked reads it too, by the
+  rules' `askedUid`, when they are neither the anfitrión nor the cola.
 """
 
 import logging
@@ -51,6 +53,8 @@ BODY = "{line}. Marcá quién vino. Nadie más ve esta lista."
 
 ANFITRION = "anfitrion"
 COLA = "cola"
+OPENER = "opener"
+"""Who took over opening one meeting when the anfitrión couldn't (handoff.py)."""
 
 
 class AttendanceError(Exception):
@@ -106,11 +110,17 @@ def people(db, ronda_id: str, meeting: date, guests: dict[str, dict] | None = No
     ]
 
 
-def asked(ronda: dict, in_list: set[str], answers: dict[str, str]) -> tuple[str, str]:
-    """`(uid, role)` of the host to ask: the anfitrión, else the cola, each only while in for
-    the meeting and not having said "esta no"; `("", "")` when neither can."""
-    hosts = ronda.get("hosts") or {}
-    for role in (ANFITRION, COLA):
+def asked(
+    ronda: dict, in_list: set[str], answers: dict[str, str], week: str = ""
+) -> tuple[str, str]:
+    """`(uid, role)` of the host to ask: who took over opening that `week` ("¿Abrís vos?",
+    handoff.py), else the anfitrión, else the cola, each only while in for the meeting and not
+    having said "esta no"; `("", "")` when none can."""
+    hosts = dict(ronda.get("hosts") or {})
+    opener = ronda.get("opener") or {}
+    if week and opener.get("week") == week:
+        hosts[OPENER] = opener.get("uid")
+    for role in (OPENER, ANFITRION, COLA):
         uid = hosts.get(role)
         if uid in in_list and answers.get(uid) != rsvp.NO:
             return uid, role
@@ -195,7 +205,7 @@ def run_attendance_ask(
             continue
         week_snapshot = db.document(f"rondas/{ronda_id}/weeks/{week}").get()
         in_list = people(db, ronda_id, meeting, rsvp.guests(week_snapshot))
-        uid, role = asked(ronda, {p["uid"] for p in in_list}, rsvp._rsvp(week_snapshot))
+        uid, role = asked(ronda, {p["uid"] for p in in_list}, rsvp._rsvp(week_snapshot), week)
         line = rsvp.ronda_line(ronda)
         roll = {
             "week": week,

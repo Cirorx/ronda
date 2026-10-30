@@ -13,8 +13,12 @@ from datetime import datetime
 
 import attendance
 import bench
+import buddy
+import despues
 import fcm
+import handoff
 import rain
+import rotation
 import rsvp
 import seguimos
 import waitlists
@@ -58,6 +62,15 @@ JOBS: dict[str, Callable[[object, datetime, Context], dict]] = {
         db, now, send=context.send, app_url=context.app_url, force=context.force
     ),
     "waitlists": lambda db, now, context: waitlists.run_waitlists(db, now),
+    # The weekly loop's code jobs (#47, #50): fixed rules, no model.
+    "assign_hosts": lambda db, now, context: rotation.run_assign_hosts(db, now),
+    "handoff": lambda db, now, context: handoff.run_handoff(
+        db, now, send=context.send, app_url=context.app_url, force=context.force
+    ),
+    "prompt_buddy": lambda db, now, context: buddy.run_prompt_buddy(
+        db, now, send=context.send, app_url=context.app_url, force=context.force
+    ),
+    "despues_sweep": lambda db, now, context: despues.run_despues_sweep(db, now),
 }
 
 

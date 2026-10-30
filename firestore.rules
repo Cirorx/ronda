@@ -264,5 +264,47 @@ service cloud.firestore {
     match /waiting/{uid} {
       allow read: if isOwner(uid);
     }
+
+    // The weekly loop's code jobs (#47, #50: functions/despues.py, handoff.py, buddy.py). They
+    // write everything here with the admin SDK; no client writes any of it but a buddy closing
+    // their own card.
+    //
+    // The roll also opens to whoever took over opening that week ("¿Abrís vos?") when the
+    // attendance ask went to them: overlapping matches add up, so this widens the rolls block
+    // for that one person and that one roll.
+    match /rondas/{rondaId}/rolls/{week} {
+      allow get: if request.auth != null && resource.data.askedUid == request.auth.uid;
+    }
+
+    // The después of one meeting, which may be a member's home and its address: the ronda's
+    // members `get` it once it is set (asking for one that isn't there yet is fine); whoever
+    // set it and the person whose home it would be, at any time. Never listed, so nobody
+    // finds another week's; never public (not in Cerca, flyers or the seat page). The address
+    // is deleted when the day ends.
+    match /rondas/{rondaId}/despues/{week} {
+      allow get: if isMemberOf(rondaId) && (resource == null
+          || resource.data.status == 'set'
+          || resource.data.get('setBy', '') == request.auth.uid
+          || resource.data.get('homeOf', '') == request.auth.uid);
+    }
+
+    // "¿Abrís vos?": each member gets only their own question. Who was asked, who said no and
+    // why the anfitrión can't (rondas/{id}/handoffs/{week}) stays closed.
+    match /rondas/{rondaId}/handoff_asks/{uid} {
+      allow get: if isOwner(uid) && isMemberOf(rondaId);
+    }
+
+    // A buddy's card ("Graciela no vino el jueves…"), read by that buddy only, who closes it
+    // ([Le escribo] or [Ahora no]) and changes nothing else. Who was prompted
+    // (rondas/{id}/buddy_prompts/{week}) stays closed, and the choice itself lives on the
+    // chooser's own users/{uid}.buddyUid.
+    match /rondas/{rondaId}/buddy_asks/{uid} {
+      allow get: if isOwner(uid) && isMemberOf(rondaId);
+      allow update: if isOwner(uid) && isMemberOf(rondaId)
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'closedAt'])
+          && request.resource.data.status == 'closed'
+          && request.resource.data.closedAt == request.time;
+    }
   }
 }

@@ -283,15 +283,21 @@ def _names(names: list[str]) -> str:
     return f"{', '.join(shown[:-1])} y {shown[-1]}"
 
 
-def push_body(going_names: list[str], brings: Iterable[str], *, unknown: str = "") -> str:
+def push_body(
+    going_names: list[str], brings: Iterable[str], *, unknown: str = "", despues: str = ""
+) -> str:
     """ "Ya van Mirta y Jorge. Te toca llevar el pan. ¿Venís?": who's coming so far, what this
-    member brings, and the question; `unknown` ("Lugar y hora a confirmar.") goes first."""
+    member brings, and the question; `unknown` ("Lugar y hora a confirmar.") goes first, and
+    the week's `despues` ("Después, si querés, bizcochos en lo de Mirta.") before the
+    question."""
     sentences = [unknown] if unknown else []
     if going_names:
         verb = "Ya va" if len(going_names) == 1 else "Ya van"
         sentences.append(f"{verb} {_names(going_names)}.")
     if turn := next((BRING_TURNS[b] for b in brings if b in BRING_TURNS), None):
         sentences.append(turn)
+    if despues:
+        sentences.append(despues)
     sentences.append("¿Venís?")
     return " ".join(sentences)
 
@@ -553,15 +559,18 @@ def _send_ronda(
 ) -> tuple[int, set[str]]:
     """Sends the push to every member in for `meeting` who hasn't answered yet, with
     `lead_in` before the body; returns how many messages were delivered and who it addressed."""
+    import despues as despues_words  # here, not at the top: despues imports this module
+
     rsvp = _rsvp(week_ref.get())
     going = [names[uid] for uid in yes_uids(rsvp, members, names) if names[uid]]
     title = ronda_line(ronda)
+    after = despues_words.push_words(db, ronda_id, iso_week(meeting))
     messages, owners, addressed = [], [], set()
     for uid, member in counted(members).items():
         if uid in rsvp or _paused_on(member, meeting):
             continue
         addressed.add(uid)
-        body = push_body(going, member.get("brings", []), unknown=to_confirm(ronda))
+        body = push_body(going, member.get("brings", []), unknown=to_confirm(ronda), despues=after)
         for message in rsvp_messages(
             tokens=_tokens(db, uid),
             title=title,

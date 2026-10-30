@@ -490,7 +490,7 @@ def _setup_call(req: https_fn.CallableRequest, run):
 )
 def ronda_setups(req: https_fn.CallableRequest) -> dict:
     """Every ronda that still meets with its place, hour, hosts and members. Admin only."""
-    return _setup_call(req, lambda hosts: {"rondas": hosts.setups(_firestore())})
+    return _setup_call(req, lambda hosts: {"rondas": hosts.setups(_firestore(), _now())})
 
 
 @https_fn.on_call(
@@ -606,3 +606,91 @@ def answer_waitlist(req: https_fn.CallableRequest) -> dict:
         return waitlists.answer(_firestore(), req.auth.uid, data.get("choice"), _now())
     except waitlists.WaitlistError as e:
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e
+
+
+# --- The weekly loop's code jobs (#47, #50): the después, "¿Abrís vos?" and the buddy --------
+
+
+def _member_call(req: https_fn.CallableRequest, refusal: type[Exception], run):
+    """Runs `run()` for a signed-in caller, mapping a `refusal` to its code."""
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "sign in first")
+    try:
+        return run()
+    except refusal as e:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def set_despues(req: https_fn.CallableRequest) -> dict:
+    """Sets the upcoming meeting's después, `{rondaId, week?, kind, what?, where?, homeOf?,
+    address?}`. This week's hosts only (despues.py)."""
+    import despues
+    import jobs
+
+    context = jobs.context()
+    return _member_call(
+        req,
+        despues.DespuesError,
+        lambda: despues.set_despues(
+            _firestore(), req.auth.uid, req.data, _now(), send=context.send, app_url=context.app_url
+        ),
+    )
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def answer_despues(req: https_fn.CallableRequest) -> dict:
+    """The person whose home the después would be says yes or no, `{rondaId, week, answer}`."""
+    import despues
+
+    db = _firestore()
+    return _member_call(
+        req, despues.DespuesError, lambda: despues.answer(db, req.auth.uid, req.data, _now())
+    )
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def answer_handoff(req: https_fn.CallableRequest) -> dict:
+    """ "Sí, abro yo" or "Hoy no puedo", `{rondaId, week, answer: yes | no}`, from a member
+    asked "¿Abrís vos?" (handoff.py)."""
+    import handoff
+    import jobs
+
+    context = jobs.context()
+    return _member_call(
+        req,
+        handoff.HandoffError,
+        lambda: handoff.answer(
+            _firestore(), req.auth.uid, req.data, _now(), send=context.send, app_url=context.app_url
+        ),
+    )
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def buddy_options(req: https_fn.CallableRequest) -> dict:
+    """Whether it is time to choose a buddy in ronda `rondaId`, who could be chosen, and who
+    is (buddy.py). Members of that ronda only."""
+    import buddy
+
+    return _member_call(
+        req, buddy.BuddyError, lambda: buddy.options(_firestore(), req.auth.uid, req.data, _now())
+    )
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def set_buddy(req: https_fn.CallableRequest) -> dict:
+    """Chooses the caller's buddy in ronda `rondaId`, `{rondaId, buddyUid}`; `""` is nobody."""
+    import buddy
+
+    db = _firestore()
+    return _member_call(req, buddy.BuddyError, lambda: buddy.choose(db, req.auth.uid, req.data))
