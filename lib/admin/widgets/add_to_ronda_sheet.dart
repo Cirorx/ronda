@@ -9,8 +9,13 @@ import 'package:ronda_ui/ronda_ui.dart';
 
 /// "Sumar a esta ronda": who is in the ronda now, and every sign-up who
 /// could join it, with what doesn't match. Someone in another ronda moves,
-/// after a confirmation. Opened from an approved ronda's card.
+/// after a confirmation in a sheet over this one. Sumar and Pasar are
+/// commits, felt as one ([RondaHaptics]); what came of them is read out.
+/// Opened from an approved ronda's card.
 class const AddToRondaSheet({super.key}) extends StatelessWidget {
+  /// Prefix of the move confirmation's actions' semantics identifiers.
+  static const moveIdentifier = 'add_to_ronda.move';
+
   /// Opens the sheet for ronda [rondaId] with its own [AddToRondaCubit].
   static Future<void> show(
     BuildContext context, {
@@ -43,26 +48,55 @@ class const AddToRondaSheet({super.key}) extends StatelessWidget {
       shrinkWrap: true,
       padding: EdgeInsetsDirectional.all(spacing.lg),
       children: [
+        // The title, and a close button for a mouse, which can't tap the
+        // sheet's handle.
+        Row(
+          spacing: spacing.xs,
+          children: [
+            Expanded(
+              child: candidates == null
+                  ? const SizedBox.shrink()
+                  : Semantics(
+                      header: true,
+                      child: Text(
+                        l10n.addToRondaTitle(candidates.line),
+                        style: textTheme.titleMedium,
+                      ),
+                    ),
+            ),
+            const CloseButton(),
+          ],
+        ),
         if (candidates == null)
           switch (state.status) {
             AddToRondaStatus.failure => Column(
               spacing: spacing.sm,
               children: [
-                Text(l10n.addToRondaLoadError, style: textTheme.bodyLarge),
+                Semantics(
+                  container: true,
+                  liveRegion: true,
+                  child: Text(
+                    l10n.addToRondaLoadError,
+                    style: textTheme.bodyLarge,
+                  ),
+                ),
                 OutlinedButton(
                   onPressed: context.read<AddToRondaCubit>().load,
                   child: Text(l10n.adminRetry),
                 ),
               ],
             ),
-            _ => const Center(child: CircularProgressIndicator()),
+            _ => Semantics(
+              container: true,
+              liveRegion: true,
+              child: Text(
+                l10n.addToRondaLoading,
+                textAlign: TextAlign.center,
+                style: textTheme.bodyLarge,
+              ),
+            ),
           }
         else ...[
-          Text(
-            l10n.addToRondaTitle(candidates.line),
-            style: textTheme.titleMedium,
-          ),
-          SizedBox(height: spacing.xxs),
           Text(
             [
               l10n.addToRondaTaken(candidates.taken, candidates.cap),
@@ -72,10 +106,7 @@ class const AddToRondaSheet({super.key}) extends StatelessWidget {
           ),
           if (_outcome(l10n, state) case (final variant, final message)) ...[
             SizedBox(height: spacing.sm),
-            Semantics(
-              liveRegion: true,
-              child: NoteBanner(variant: variant, message: message),
-            ),
+            NoteBanner(variant: variant, message: message),
           ],
           if (candidates.full) ...[
             SizedBox(height: spacing.sm),
@@ -129,7 +160,7 @@ class const AddToRondaSheet({super.key}) extends StatelessWidget {
 }
 
 /// One sign-up: name, barrio and slots, the ronda they are in, what doesn't
-/// match, and Sumar (or "Pasar a esta ronda").
+/// match, and Sumar (or "Pasar a esta ronda", which asks first).
 class const _CandidateTile({
   required final Candidate candidate,
   required final bool full,
@@ -181,7 +212,9 @@ class const _CandidateTile({
           OutlinedButton(
             onPressed: full || adding != null
                 ? null
-                : () => _add(context, moving),
+                : moving == null
+                ? RondaHaptics.onCommit(() => _add(context))
+                : () => _move(context, moving),
             child: Text(
               adding == candidate
                   ? l10n.addToRondaAdding
@@ -195,29 +228,24 @@ class const _CandidateTile({
     );
   }
 
-  Future<void> _add(BuildContext context, String? moving) async {
+  Future<void> _add(BuildContext context) =>
+      context.read<AddToRondaCubit>().add(candidate);
+
+  /// "¿Pasar a Jorge?" in a sheet over this one: Pasar moves them, felt as
+  /// a commit; Cancelar, the scrim or a drag down leave everything as it
+  /// was.
+  Future<void> _move(BuildContext context, String moving) async {
+    final l10n = context.l10n;
     final cubit = context.read<AddToRondaCubit>();
-    if (moving != null) {
-      final l10n = context.l10n;
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(l10n.addToRondaMoveTitle(candidate.firstName)),
-          content: Text(l10n.addToRondaMoveBody(moving)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(l10n.addToRondaCancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(l10n.addToRondaMoveConfirm),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true) return;
-    }
-    await cubit.add(candidate);
+    final confirmed = await StepSheet(
+      identifier: AddToRondaSheet.moveIdentifier,
+      title: l10n.addToRondaMoveTitle(candidate.firstName),
+      body: l10n.addToRondaMoveBody(moving),
+      primaryLabel: l10n.addToRondaMoveConfirm,
+      onPrimary: RondaHaptics.onCommit(() => Navigator.of(context).pop(true))!,
+      secondaryLabel: l10n.addToRondaCancel,
+      onSecondary: () => Navigator.of(context).pop(false),
+    ).show<bool>(context);
+    if (confirmed ?? false) await cubit.add(candidate);
   }
 }

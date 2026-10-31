@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -190,13 +192,11 @@ void main() {
       expect(find.text('Eva'), findsOneWidget);
     });
 
-    testWidgets('shows a spinner while reading', (tester) async {
-      when(() => repository.rondaCandidates('r1')).thenAnswer(
-        (_) => Future.delayed(
-          const Duration(seconds: 1),
-          PilotFixtures.candidates,
-        ),
-      );
+    testWidgets('says what it is reading, read out', (tester) async {
+      final semantics = tester.ensureSemantics();
+      final candidates = Completer<RondaCandidates>();
+      when(() => repository.rondaCandidates('r1'))
+          .thenAnswer((_) => candidates.future);
       await tester.pumpApp(
         RepositoryProvider.value(
           value: repository,
@@ -207,8 +207,135 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(
+        tester.getSemantics(find.text('Leyendo los anotados…')),
+        isSemantics(isLiveRegion: true),
+      );
+      candidates.complete(PilotFixtures.candidates());
       await tester.pumpAndSettle();
+      semantics.dispose();
+    });
+
+    group('feels', () {
+      testWidgets('Sumar as a commit, with one light tap', (tester) async {
+        when(() => repository.addToRonda(rondaId: 'r1', uid: 'eva')).thenAnswer(
+          (_) async =>
+              const AddedToRonda(rondaId: 'r1', uid: 'eva', warnings: []),
+        );
+        await open(tester);
+        final haptics = recordHaptics(tester);
+
+        await tester.tap(button('Sumar'));
+        await tester.pumpAndSettle();
+
+        expect(haptics, ['HapticFeedbackType.lightImpact']);
+      });
+
+      testWidgets('the move asked in a sheet, felt only on Pasar', (
+        tester,
+      ) async {
+        when(
+          () => repository.addToRonda(rondaId: 'r1', uid: 'gabi', move: true),
+        ).thenAnswer(
+          (_) async => const AddedToRonda(
+            rondaId: 'r1',
+            uid: 'gabi',
+            warnings: [],
+            movedFrom: 'r2',
+          ),
+        );
+        await open(tester);
+        final haptics = recordHaptics(tester);
+
+        await tester.ensureVisible(button('Pasar a esta ronda'));
+        await tester.tap(button('Pasar a esta ronda'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byType(StepSheet), findsOneWidget);
+        expect(haptics, isEmpty);
+
+        await tester.tap(find.text('Pasar'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(StepSheet), findsNothing);
+        expect(haptics, ['HapticFeedbackType.lightImpact']);
+      });
+
+      testWidgets('nothing moves when the confirmation is dragged away', (
+        tester,
+      ) async {
+        await open(tester);
+
+        await tester.ensureVisible(button('Pasar a esta ronda'));
+        await tester.tap(button('Pasar a esta ronda'));
+        await tester.pumpAndSettle();
+        await tester.fling(
+          find.text('¿Pasar a Gabi?'),
+          const Offset(0, 600),
+          2000,
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(StepSheet), findsNothing);
+        expect(find.byType(AddToRondaSheet), findsOneWidget);
+        verifyNever(
+          () => repository.addToRonda(
+            rondaId: any(named: 'rondaId'),
+            uid: any(named: 'uid'),
+            move: any(named: 'move'),
+          ),
+        );
+      });
+
+      testWidgets('its title as a heading, and a way out', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await open(tester);
+
+        expect(
+          tester.getSemantics(
+            find.text('Sumar a Sábado a la tarde · mate en la rambla'),
+          ),
+          isSemantics(isHeader: true),
+        );
+        await tester.tap(find.byType(CloseButton));
+        await tester.pumpAndSettle();
+        expect(find.byType(AddToRondaSheet), findsNothing);
+        semantics.dispose();
+      });
+
+      testWidgets('what came of an add read out', (tester) async {
+        when(() => repository.addToRonda(rondaId: 'r1', uid: 'eva'))
+            .thenThrow(const ProposalsFailure(ProposalsFailureReason.full));
+        final semantics = tester.ensureSemantics();
+        await open(tester);
+
+        await tester.tap(button('Sumar'));
+        await tester.pumpAndSettle();
+
+        expect(
+          tester.getSemantics(
+            find.text('No se sumó: la ronda ya está completa.'),
+          ),
+          isSemantics(isLiveRegion: true),
+        );
+        semantics.dispose();
+      });
+
+      testWidgets('a failed read said and read out', (tester) async {
+        when(() => repository.rondaCandidates('r1'))
+            .thenThrow(const ProposalsFailure(ProposalsFailureReason.other));
+        final semantics = tester.ensureSemantics();
+        await open(tester);
+
+        expect(
+          tester.getSemantics(
+            find.text('No pudimos leer los anotados. Probá de nuevo.'),
+          ),
+          isSemantics(isLiveRegion: true),
+        );
+        semantics.dispose();
+      });
     });
 
     testWidgets('shows Sumando… on the one being added', (tester) async {

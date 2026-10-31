@@ -46,13 +46,36 @@ void main() {
       verify(cubit.sendTapped).called(1);
     });
 
-    testWidgets('waits while it sends', (tester) async {
+    testWidgets('sends as a commit, with one light tap', (tester) async {
+      final haptics = recordHaptics(tester);
+      await pump(tester, const RsvpPushState());
+
+      await tester.tap(button('Mandarlo ahora'));
+
+      expect(haptics, ['HapticFeedbackType.lightImpact']);
+    });
+
+    testWidgets('its title as a heading', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pump(tester, const RsvpPushState());
+
+      expect(
+        tester.getSemantics(find.text('El ¿Venís? de esta semana')),
+        isSemantics(isHeader: true),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('waits while it sends, with nothing felt', (tester) async {
+      final haptics = recordHaptics(tester);
       await pump(tester, const RsvpPushState(status: RsvpPushStatus.sending));
 
       expect(
         tester.widget<OutlinedButton>(button('Mandando…')).onPressed,
         isNull,
       );
+      await tester.tap(button('Mandando…'), warnIfMissed: false);
+      expect(haptics, isEmpty);
     });
 
     testWidgets('says how many phones it reached', (tester) async {
@@ -64,7 +87,13 @@ void main() {
         ),
       );
 
-      expect(find.text('Llegó a 5 teléfonos.'), findsOneWidget);
+      final semantics = tester.ensureSemantics();
+      await tester.pump();
+      expect(
+        tester.getSemantics(find.text('Llegó a 5 teléfonos.')),
+        isSemantics(isLiveRegion: true),
+      );
+      semantics.dispose();
     });
 
     testWidgets('says when it was sent already or held at night', (
@@ -88,9 +117,15 @@ void main() {
     });
 
     testWidgets('says it failed', (tester) async {
+      final semantics = tester.ensureSemantics();
       await pump(tester, const RsvpPushState(status: RsvpPushStatus.failed));
 
       expect(find.byType(NoteBanner), findsOneWidget);
+      expect(
+        tester.getSemantics(find.text('No se pudo. Probá de nuevo.')),
+        isSemantics(isLiveRegion: true),
+      );
+      semantics.dispose();
     });
 
     testWidgets('reads in English', (tester) async {

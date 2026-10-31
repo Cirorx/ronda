@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -59,17 +61,157 @@ void main() {
           .thenAnswer((_) async {});
     });
 
-    Future<void> pump(WidgetTester tester, AgentTraceState state) {
+    Future<void> pump(
+      WidgetTester tester,
+      AgentTraceState state, {
+      bool reduced = false,
+    }) {
       when(() => cubit.state).thenReturn(state);
       return tester.pumpApp(
-        BlocProvider.value(value: cubit, child: const AgentTraceView()),
+        reducedMotion(
+          reduced: reduced,
+          child: BlocProvider.value(
+            value: cubit,
+            child: const AgentTraceView(),
+          ),
+        ),
       );
     }
 
-    testWidgets('waits while it reads', (tester) async {
+    AgentTraceState withRuns({String? selected}) => AgentTraceState(
+      status: AgentTraceStatus.ready,
+      runs: [
+        _run('a', AgentRunStatus.done),
+        _run('b', AgentRunStatus.running, forced: true),
+      ],
+      selectedRunId: selected,
+    );
+
+    testWidgets('says what it is reading while it reads, read out', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
       await pump(tester, const AgentTraceState());
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(
+        tester.getSemantics(find.text('Leyendo lo que hizo el programa…')),
+        isSemantics(isLiveRegion: true),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('says where it is and goes back to the admin screen', (
+      tester,
+    ) async {
+      when(() => cubit.state).thenReturn(withRuns());
+      await tester.pumpApp(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => BlocProvider.value(
+                  value: cubit,
+                  child: const AgentTraceView(),
+                ),
+              ),
+            ),
+            child: const Text('Propuestas'),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Propuestas'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text('Lo que mandó el programa'),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      expect(find.byType(AgentTraceView), findsNothing);
+    });
+
+    testWidgets('sets the runs apart with a title, not a rule', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pump(tester, withRuns(selected: 'a'));
+
+      expect(find.byType(Divider), findsNothing);
+      expect(
+        tester.getSemantics(find.text('Cada vez que corrió')),
+        isSemantics(isHeader: true),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('each run chip shrinks from the touch', (tester) async {
+      await pump(tester, withRuns(selected: 'a'));
+
+      expect(
+        find.ancestor(
+          of: find.byType(ChoiceChip),
+          matching: find.byType(PressScale),
+        ),
+        findsNWidgets(2),
+      );
+    });
+
+    group('swaps the steps when another run is picked', () {
+      late StreamController<AgentTraceState> states;
+
+      setUp(() => states = StreamController<AgentTraceState>());
+
+      // Not awaited: a stream nobody listened to never reports it closed.
+      tearDown(() => unawaited(states.close()));
+
+      const runA = 'ronda-rain · terminó · meta-models/muse-spark-open-1026';
+      const runB = 'ronda-rain · corriendo · a mano';
+
+      Finder settlingIn(String text) => find.ancestor(
+        of: find.text(text),
+        matching: find.byType(ScaleTransition),
+      );
+
+      testWidgets('settling the new one in', (tester) async {
+        whenListen(cubit, states.stream, initialState: withRuns(selected: 'a'));
+        await pump(tester, withRuns(selected: 'a'));
+
+        states.add(withRuns(selected: 'b'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(find.text(runA), findsOneWidget);
+        expect(settlingIn(runB), findsWidgets);
+        await tester.pumpAndSettle();
+        expect(find.text(runA), findsNothing);
+        expect(find.text(runB), findsOneWidget);
+      });
+
+      testWidgets('with only a cross-fade under reduced motion', (
+        tester,
+      ) async {
+        whenListen(cubit, states.stream, initialState: withRuns(selected: 'a'));
+        await pump(tester, withRuns(selected: 'a'), reduced: true);
+
+        states.add(withRuns(selected: 'b'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(find.text(runA), findsOneWidget);
+        expect(settlingIn(runB), findsNothing);
+        expect(
+          find.ancestor(
+            of: find.text(runB),
+            matching: find.byType(FadeTransition),
+          ),
+          findsWidgets,
+        );
+        await tester.pumpAndSettle();
+        expect(find.text(runA), findsNothing);
+      });
     });
 
     testWidgets('is for the admin only', (tester) async {
@@ -204,6 +346,29 @@ void main() {
       verify(() => cubit.rainCheckTapped(atNight: true)).called(1);
     });
 
+    testWidgets('feels each rain check as a commit', (tester) async {
+      final haptics = recordHaptics(tester);
+      await pump(tester, const AgentTraceState(status: AgentTraceStatus.ready));
+
+      await tester.tap(find.text('Correr el chequeo de lluvia'));
+      await tester.tap(find.text('Probar a las 22:00 (no sale nada)'));
+
+      expect(haptics, [
+        'HapticFeedbackType.lightImpact',
+        'HapticFeedbackType.lightImpact',
+      ]);
+    });
+
+    testWidgets('picking a run is not a commit', (tester) async {
+      final haptics = recordHaptics(tester);
+      await pump(tester, withRuns(selected: 'a'));
+
+      await tester.tap(find.textContaining('corriendo'));
+
+      expect(haptics, isEmpty);
+      verify(() => cubit.runTapped('b')).called(1);
+    });
+
     testWidgets('waits while it runs', (tester) async {
       await pump(
         tester,
@@ -226,6 +391,20 @@ void main() {
       expect(night.onPressed, isNull);
     });
 
+    testWidgets('reads out a failed read', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pump(
+        tester,
+        const AgentTraceState(status: AgentTraceStatus.failure),
+      );
+
+      expect(
+        tester.getSemantics(find.textContaining('Probá de nuevo')),
+        isSemantics(isLiveRegion: true),
+      );
+      semantics.dispose();
+    });
+
     testWidgets('says what the run did, and what failed', (tester) async {
       await pump(
         tester,
@@ -236,10 +415,15 @@ void main() {
         ),
       );
 
+      final semantics = tester.ensureSemantics();
+      await tester.pump();
       expect(
-        find.text('Revisó 2 rondas. 1 corrida falló: mirá sus pasos.'),
-        findsOneWidget,
+        tester.getSemantics(
+          find.text('Revisó 2 rondas. 1 corrida falló: mirá sus pasos.'),
+        ),
+        isSemantics(isLiveRegion: true),
       );
+      semantics.dispose();
     });
 
     testWidgets('says when the run could not start', (tester) async {
@@ -251,7 +435,13 @@ void main() {
         ),
       );
 
-      expect(find.text('No se pudo. Probá de nuevo.'), findsOneWidget);
+      final semantics = tester.ensureSemantics();
+      await tester.pump();
+      expect(
+        tester.getSemantics(find.text('No se pudo. Probá de nuevo.')),
+        isSemantics(isLiveRegion: true),
+      );
+      semantics.dispose();
     });
   });
 }

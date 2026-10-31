@@ -4,7 +4,8 @@ import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// "El ¿Venís? de esta semana": what the weekly push does on its own, and
-/// "Mandarlo ahora" with what came of it. Reads the [RsvpPushCubit] above.
+/// "Mandarlo ahora", a commit felt as one ([RondaHaptics]), with what came
+/// of it read out. Reads the [RsvpPushCubit] above.
 class const RsvpPushSection({super.key}) extends StatelessWidget {
   /// Maestro's handle on the button.
   static const sendIdentifier = 'admin_rsvp_send';
@@ -21,15 +22,18 @@ class const RsvpPushSection({super.key}) extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: spacing.xs,
       children: [
-        Text(l10n.adminRsvpTitle, style: textTheme.titleMedium),
+        Semantics(
+          header: true,
+          child: Text(l10n.adminRsvpTitle, style: textTheme.titleMedium),
+        ),
         Text(l10n.adminRsvpBody, style: textTheme.bodyMedium),
         MergeSemantics(
           child: Semantics(
             identifier: sendIdentifier,
             child: OutlinedButton(
-              onPressed: sending
-                  ? null
-                  : context.read<RsvpPushCubit>().sendTapped,
+              onPressed: RondaHaptics.onCommit(
+                sending ? null : context.read<RsvpPushCubit>().sendTapped,
+              ),
               child: Text(sending ? l10n.adminRsvpSending : l10n.adminRsvpSend),
             ),
           ),
@@ -41,6 +45,7 @@ class const RsvpPushSection({super.key}) extends StatelessWidget {
           ),
         if (state.result case final result?)
           Semantics(
+            container: true,
             liveRegion: true,
             child: Text(
               [

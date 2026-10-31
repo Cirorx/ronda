@@ -218,8 +218,13 @@ void main() {
     testWidgets('waits, is forbidden, says when there are none, retries', (
       tester,
     ) async {
+      final semantics = tester.ensureSemantics();
       await pump(tester, const RondaSetupState());
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(
+        tester.getSemantics(find.text('Leyendo las rondas…')),
+        isSemantics(isLiveRegion: true),
+      );
 
       await pump(
         tester,
@@ -234,8 +239,49 @@ void main() {
         tester,
         const RondaSetupState(status: RondaSetupStatus.failure),
       );
+      expect(
+        tester.getSemantics(
+          find.text('No pudimos leer las rondas. Probá de nuevo.'),
+        ),
+        isSemantics(isLiveRegion: true),
+      );
       await tester.tap(find.text('Probar de nuevo'));
       verify(cubit.load).called(1);
+      semantics.dispose();
+    });
+
+    testWidgets('says where it is and goes back to the admin screen', (
+      tester,
+    ) async {
+      when(() => cubit.state).thenReturn(_ready);
+      await tester.pumpApp(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => BlocProvider.value(
+                  value: cubit,
+                  child: const RondaSetupView(),
+                ),
+              ),
+            ),
+            child: const Text('Propuestas'),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Propuestas'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text('Lugar, hora y anfitriones'),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      expect(find.byType(RondaSetupView), findsNothing);
     });
 
     group(RondaSetupSheet, () {
@@ -345,20 +391,66 @@ void main() {
         verify(() => cubit.save(rondaId: 'r1')).called(1);
       });
 
-      testWidgets('one person can not open and close', (tester) async {
+      String? errorOn(WidgetTester tester, String label) => tester
+          .widget<InputDecorator>(find.widgetWithText(InputDecorator, label))
+          .decoration
+          .errorText;
+
+      testWidgets('one person can not open and close: said on both pickers', (
+        tester,
+      ) async {
+        final haptics = recordHaptics(tester);
         await open(tester, _ready);
 
         await pick(tester, 'Abre (llega primero)', 'Ana');
         await pick(tester, 'Cierra (se queda al final)', 'Ana');
 
-        expect(
-          find.text('Abre y cierra tienen que ser dos personas distintas.'),
-          findsOneWidget,
-        );
+        const sameHost = 'Abre y cierra tienen que ser dos personas distintas.';
+        expect(errorOn(tester, 'Abre (llega primero)'), sameHost);
+        expect(errorOn(tester, 'Cierra (se queda al final)'), sameHost);
+        expect(find.byType(NoteBanner), findsNothing);
         final save = tester.widget<FilledButton>(
           find.widgetWithText(FilledButton, 'Guardar'),
         );
         expect(save.onPressed, isNull);
+        await tester.ensureVisible(find.text('Guardar'));
+        await tester.tap(find.text('Guardar'), warnIfMissed: false);
+        expect(haptics, isEmpty);
+
+        await pick(tester, 'Cierra (se queda al final)', 'nadie');
+        expect(errorOn(tester, 'Abre (llega primero)'), isNull);
+        expect(errorOn(tester, 'Cierra (se queda al final)'), isNull);
+      });
+
+      testWidgets('Guardar as a commit, with one light tap', (tester) async {
+        final haptics = recordHaptics(tester);
+        await open(tester, _ready);
+
+        await tester.ensureVisible(find.text('Guardar'));
+        await tester.tap(find.text('Guardar'));
+        await tester.pump();
+
+        expect(haptics, ['HapticFeedbackType.lightImpact']);
+      });
+
+      testWidgets('its title as a heading, and a way out', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await open(tester, _ready);
+
+        expect(
+          tester.getSemantics(
+            find.descendant(
+              of: find.byType(RondaSetupSheet),
+              matching: find.text('Jueves a la tarde · Mate en la rambla'),
+            ),
+          ),
+          isSemantics(isHeader: true),
+        );
+        await tester.tap(find.byType(CloseButton));
+        await tester.pumpAndSettle();
+        expect(find.byType(RondaSetupSheet), findsNothing);
+        verify(cubit.sheetClosed).called(1);
+        semantics.dispose();
       });
 
       testWidgets('stays open and says why when it was not saved', (
@@ -383,10 +475,19 @@ void main() {
           ),
         );
 
-        expect(
-          find.textContaining('Eso parece una casa o una dirección.'),
-          findsOneWidget,
+        const notPublic =
+            'Eso parece una casa o una dirección. La ronda se junta solo en '
+            'lugares públicos: escribí el lugar, sin número de puerta.';
+        expect(errorOn(tester, 'Lugar público'), notPublic);
+        expect(find.byType(NoteBanner), findsNothing);
+
+        await tester.enterText(
+          find.widgetWithText(TextField, 'Lugar público'),
+          'Frente al quiosco',
         );
+        await tester.pump();
+        expect(errorOn(tester, 'Lugar público'), isNull);
+
         await tester.ensureVisible(find.text('Guardar'));
         await tester.tap(find.text('Guardar'));
         await tester.pumpAndSettle();
@@ -406,8 +507,15 @@ void main() {
           ),
         );
 
-        expect(find.text('No se guardó. Probá de nuevo.'), findsOneWidget);
+        final semantics = tester.ensureSemantics();
+        await tester.pump();
+        expect(
+          tester.getSemantics(find.text('No se guardó. Probá de nuevo.')),
+          isSemantics(isLiveRegion: true),
+        );
+        expect(errorOn(tester, 'Lugar público'), isNull);
         expect(find.text('Guardando…'), findsOneWidget);
+        semantics.dispose();
       });
 
       testWidgets('drops a host who is no longer a member', (tester) async {

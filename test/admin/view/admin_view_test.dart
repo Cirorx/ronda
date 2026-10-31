@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -43,17 +45,24 @@ void main() {
       when(cubit.undo).thenAnswer((_) async {});
     });
 
-    Future<void> pump(WidgetTester tester, ProposalsState state) {
+    Future<void> pump(
+      WidgetTester tester,
+      ProposalsState state, {
+      bool reduced = false,
+    }) {
       when(() => cubit.state).thenReturn(state);
       return tester.pumpApp(
-        MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: cubit),
-            BlocProvider.value(value: rsvpPushCubit),
-            BlocProvider.value(value: seguimosCountsCubit),
-            BlocProvider.value(value: pilotNumbersCubit),
-          ],
-          child: const AdminView(),
+        reducedMotion(
+          reduced: reduced,
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: cubit),
+              BlocProvider.value(value: rsvpPushCubit),
+              BlocProvider.value(value: seguimosCountsCubit),
+              BlocProvider.value(value: pilotNumbersCubit),
+            ],
+            child: const AdminView(),
+          ),
         ),
       );
     }
@@ -75,10 +84,33 @@ void main() {
     );
 
     group('renders', () {
-      testWidgets('a spinner while loading', (tester) async {
+      testWidgets('a spinner and what it is reading while loading', (
+        tester,
+      ) async {
         await pump(tester, const ProposalsState());
 
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.text('Leyendo las propuestas…'), findsOneWidget);
+      });
+
+      testWidgets('its title in the app bar', (tester) async {
+        await pump(tester, ready(null));
+
+        expect(
+          find.descendant(
+            of: find.byType(AppBar),
+            matching: find.text('Propuestas'),
+          ),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets('its sections spaced and titled, with no rules between', (
+        tester,
+      ) async {
+        await pump(tester, ready(null));
+
+        expect(find.byType(Divider), findsNothing);
       });
 
       testWidgets('that the screen is for the admin only', (tester) async {
@@ -264,6 +296,167 @@ void main() {
         await tester.tap(button('Probar de nuevo'));
 
         verify(cubit.subscribe).called(1);
+      });
+    });
+
+    group('feels', () {
+      late StreamController<ProposalsState> states;
+
+      setUp(() => states = StreamController<ProposalsState>());
+
+      // Not awaited: a stream nobody listened to never reports it closed.
+      tearDown(() => unawaited(states.close()));
+
+      Future<void> pumpListening(
+        WidgetTester tester,
+        ProposalsState initial, {
+        bool reduced = false,
+      }) {
+        whenListen(cubit, states.stream, initialState: initial);
+        return pump(tester, initial, reduced: reduced);
+      }
+
+      Finder settlingIn(String text) => find.ancestor(
+        of: find.text(text),
+        matching: find.byType(ScaleTransition),
+      );
+
+      const nobodyYet = 'Nadie recibe nada hasta que lo aprobás.';
+      const approved = 'Aprobado. Les llega el martes a las 19.';
+
+      for (final (label, state, scroll) in [
+        ('Armar las rondas', ready(null), false),
+        ('Aprobar y avisarles', ready(AdminFixtures.proposal()), true),
+        (
+          'Deshacer',
+          ready(AdminFixtures.proposal(status: ProposalStatus.approved)),
+          false,
+        ),
+      ]) {
+        testWidgets('$label as a commit, with one light tap', (tester) async {
+          final haptics = recordHaptics(tester);
+          await pump(tester, state);
+
+          if (scroll) await tester.scrollUntilVisible(button(label), 200);
+          await tester.tap(button(label));
+
+          expect(haptics, ['HapticFeedbackType.lightImpact']);
+        });
+      }
+
+      testWidgets('nothing while a step runs and the buttons wait', (
+        tester,
+      ) async {
+        final haptics = recordHaptics(tester);
+        await pump(
+          tester,
+          ready(
+            AdminFixtures.proposal(status: ProposalStatus.approved),
+            action: ProposalsAction.undoing,
+          ),
+        );
+
+        await tester.tap(button('Deshacer'), warnIfMissed: false);
+
+        expect(haptics, isEmpty);
+        verifyNever(cubit.undo);
+      });
+
+      testWidgets('the approval settling in over the pending note', (
+        tester,
+      ) async {
+        await pumpListening(tester, ready(AdminFixtures.proposal()));
+
+        states.add(
+          ready(AdminFixtures.proposal(status: ProposalStatus.approved)),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(find.text(nobodyYet), findsOneWidget);
+        expect(settlingIn(approved), findsWidgets);
+        await tester.pumpAndSettle();
+        expect(find.text(nobodyYet), findsNothing);
+        expect(button('Deshacer'), findsOneWidget);
+      });
+
+      testWidgets('only a cross-fade with reduced motion', (tester) async {
+        await pumpListening(
+          tester,
+          ready(AdminFixtures.proposal(status: ProposalStatus.approved)),
+          reduced: true,
+        );
+
+        states.add(ready(AdminFixtures.proposal()));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(find.text(approved), findsOneWidget);
+        expect(settlingIn(nobodyYet), findsNothing);
+        expect(
+          find.ancestor(
+            of: find.text(nobodyYet),
+            matching: find.byType(FadeTransition),
+          ),
+          findsWidgets,
+        );
+        await tester.pumpAndSettle();
+        expect(find.text(approved), findsNothing);
+      });
+
+      testWidgets('the approval read out once it lands', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await pumpListening(tester, ready(AdminFixtures.proposal()));
+
+        states.add(
+          ready(AdminFixtures.proposal(status: ProposalStatus.approved)),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(
+          tester.getSemantics(find.text(approved)),
+          isSemantics(isLiveRegion: true),
+        );
+        expect(find.semantics.byLabel(nobodyYet), findsNothing);
+        await tester.pumpAndSettle();
+        semantics.dispose();
+      });
+
+      for (final (what, state, text) in [
+        ('the loading line', const ProposalsState(), 'Leyendo las propuestas…'),
+        (
+          'a failed read',
+          const ProposalsState(status: ProposalsStatus.failure),
+          'No pudimos leer las propuestas. Probá de nuevo.',
+        ),
+        (
+          'a failed step',
+          ready(null, actionFailed: true),
+          'No se pudo. Probá de nuevo.',
+        ),
+      ]) {
+        testWidgets('$what read out as it appears', (tester) async {
+          final semantics = tester.ensureSemantics();
+          await pump(tester, state);
+
+          expect(
+            tester.getSemantics(find.text(text)),
+            isSemantics(isLiveRegion: true),
+          );
+          semantics.dispose();
+        });
+      }
+
+      testWidgets('each section title as a heading', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await pump(tester, ready(null));
+
+        expect(
+          tester.getSemantics(find.text('El ¿Venís? de esta semana')),
+          isSemantics(isHeader: true),
+        );
+        semantics.dispose();
       });
     });
 

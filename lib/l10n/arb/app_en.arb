@@ -632,6 +632,10 @@
     "@adminLoadError": {
         "description": "Shown when reading the proposals fails"
     },
+    "adminLoading": "Reading the proposals…",
+    "@adminLoading": {
+        "description": "Status line on the approval screen while the proposals are read"
+    },
     "adminRetry": "Try again",
     "@adminRetry": {
         "description": "Button that reads the proposals again"
@@ -1553,6 +1557,14 @@
     "@traceEmpty": {
         "description": "Admin: no runs yet"
     },
+    "traceLoading": "Reading what the program did…",
+    "@traceLoading": {
+        "description": "Status line on the trace screen while the runs are read"
+    },
+    "traceRunsTitle": "Each time it ran",
+    "@traceRunsTitle": {
+        "description": "Section title over the program's runs on the trace screen"
+    },
     "traceRunLabel": "Week {week} · {time}",
     "@traceRunLabel": {
         "description": "Admin: one run in the list",
@@ -2058,6 +2070,10 @@
     "@addToRondaLoadError": {
         "description": "Add-to-ronda sheet: reading failed"
     },
+    "addToRondaLoading": "Reading who signed up…",
+    "@addToRondaLoading": {
+        "description": "Status line in the add-to-ronda sheet while the sign-ups are read"
+    },
     "addToRondaInOther": "Already in {line}",
     "@addToRondaInOther": {
         "description": "Add-to-ronda sheet: the person sits in another ronda",
@@ -2158,6 +2174,10 @@
     "pilotLoadError": "We couldn't count. Try again.",
     "@pilotLoadError": {
         "description": "Admin: numbers panel failed"
+    },
+    "pilotCounting": "Counting…",
+    "@pilotCounting": {
+        "description": "Status line in the pilot's numbers while they are counted"
     },
     "pilotProfiles": "Finished their profile: {count} of {of} signed up",
     "@pilotProfiles": {
@@ -2415,6 +2435,10 @@
     "setupLoadError": "We couldn't read the rondas. Try again.",
     "@setupLoadError": {
         "description": "The setup screen when it can't load"
+    },
+    "setupLoading": "Reading the rondas…",
+    "@setupLoading": {
+        "description": "Status line on the place, time and hosts screen while the rondas are read"
     },
     "setupHosts": "Opens: {anfitrion} · Closes: {cola}",
     "@setupHosts": {

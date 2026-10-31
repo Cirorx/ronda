@@ -8,8 +8,10 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// One ronda's public place, hour and hosts, in a sheet over the admin's
 /// list: the place's name and how to find it, the hour (every half hour
 /// inside the band, or none), who opens and who closes (a member, or
-/// nobody). "Guardar" sends all three; the sheet closes once they are
-/// saved and says why when they aren't.
+/// nobody). "Guardar" sends all three, felt as a commit ([RondaHaptics]);
+/// the sheet closes once they are saved and says why when they aren't: on
+/// the field at fault when there is one (a place that reads like a home,
+/// the same person opening and closing), in a note otherwise.
 class RondaSetupSheet extends StatefulWidget {
   const new({required this.ronda, super.key});
 
@@ -23,6 +25,10 @@ class RondaSetupSheet extends StatefulWidget {
   static const anfitrionIdentifier = 'setup.anfitrion';
   static const colaIdentifier = 'setup.cola';
   static const saveIdentifier = 'setup.save';
+
+  /// Lines a field's error may take before it is cut: enough for the
+  /// longest one at 200% text on a phone.
+  static const errorMaxLines = 8;
 
   /// Opens the sheet for [ronda] over [context]'s [RondaSetupCubit].
   static Future<void> show(BuildContext context, RondaSetup ronda) async {
@@ -50,6 +56,10 @@ class _RondaSetupSheetState extends State<RondaSetupSheet> {
   late String? _anfitrion = _known(widget.ronda.anfitrionUid);
   late String? _cola = _known(widget.ronda.colaUid);
 
+  /// The place's words changed since the server last refused them, so its
+  /// error no longer describes them.
+  bool _placeEdited = false;
+
   @override
   void dispose() {
     _place.dispose();
@@ -59,7 +69,12 @@ class _RondaSetupSheetState extends State<RondaSetupSheet> {
 
   bool get _sameHost => _anfitrion != null && _anfitrion == _cola;
 
+  void _placeChanged(String _) {
+    if (!_placeEdited) setState(() => _placeEdited = true);
+  }
+
   Future<void> _save() {
+    _placeEdited = false;
     String? text(TextEditingController controller) =>
         controller.text.trim().isEmpty ? null : controller.text.trim();
     return context.read<RondaSetupCubit>().save(
@@ -88,6 +103,10 @@ class _RondaSetupSheetState extends State<RondaSetupSheet> {
     Widget field(String identifier, Widget child) =>
         Semantics(identifier: identifier, child: child);
 
+    final notPublic =
+        state.saveFailure == HostsFailureReason.notPublic && !_placeEdited;
+    final sameHost = _sameHost ? l10n.setupSameHost : null;
+
     return BlocListener<RondaSetupCubit, RondaSetupState>(
       listenWhen: (previous, current) =>
           previous.saving && !current.saving && current.saveFailure == null,
@@ -103,13 +122,26 @@ class _RondaSetupSheetState extends State<RondaSetupSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: spacing.sm,
             children: [
-              Text(
-                l10n.rondaLineOf(
-                  slotDayId: ronda.slotDayId,
-                  slotBandId: ronda.slotBandId,
-                  pretextId: ronda.pretextId,
-                ),
-                style: Theme.of(context).textTheme.titleMedium,
+              // The title, and a close button for a mouse, which can't tap
+              // the sheet's handle.
+              Row(
+                spacing: spacing.xs,
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        l10n.rondaLineOf(
+                          slotDayId: ronda.slotDayId,
+                          slotBandId: ronda.slotBandId,
+                          pretextId: ronda.pretextId,
+                        ),
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                  ),
+                  const CloseButton(),
+                ],
               ),
               field(
                 RondaSetupSheet.placeIdentifier,
@@ -117,9 +149,12 @@ class _RondaSetupSheetState extends State<RondaSetupSheet> {
                   controller: _place,
                   maxLength: 60,
                   textCapitalization: TextCapitalization.sentences,
+                  onChanged: _placeChanged,
                   decoration: InputDecoration(
                     labelText: l10n.setupPlaceName,
                     hintText: l10n.setupPlaceHint,
+                    errorText: notPublic ? l10n.setupNotPublic : null,
+                    errorMaxLines: RondaSetupSheet.errorMaxLines,
                   ),
                 ),
               ),
@@ -128,6 +163,7 @@ class _RondaSetupSheetState extends State<RondaSetupSheet> {
                 TextField(
                   controller: _landmark,
                   maxLength: 80,
+                  onChanged: _placeChanged,
                   decoration: InputDecoration(
                     labelText: l10n.setupLandmark,
                     hintText: l10n.setupLandmarkHint,
@@ -153,7 +189,11 @@ class _RondaSetupSheetState extends State<RondaSetupSheet> {
                 DropdownButtonFormField<String?>(
                   initialValue: _anfitrion,
                   isExpanded: true,
-                  decoration: InputDecoration(labelText: l10n.setupAnfitrion),
+                  decoration: InputDecoration(
+                    labelText: l10n.setupAnfitrion,
+                    errorText: sameHost,
+                    errorMaxLines: RondaSetupSheet.errorMaxLines,
+                  ),
                   items: members,
                   onChanged: (uid) => setState(() => _anfitrion = uid),
                 ),
@@ -163,28 +203,28 @@ class _RondaSetupSheetState extends State<RondaSetupSheet> {
                 DropdownButtonFormField<String?>(
                   initialValue: _cola,
                   isExpanded: true,
-                  decoration: InputDecoration(labelText: l10n.setupCola),
+                  decoration: InputDecoration(
+                    labelText: l10n.setupCola,
+                    errorText: sameHost,
+                    errorMaxLines: RondaSetupSheet.errorMaxLines,
+                  ),
                   items: members,
                   onChanged: (uid) => setState(() => _cola = uid),
                 ),
               ),
-              if (_sameHost)
+              if (state.saveFailure case final reason?
+                  when reason != HostsFailureReason.notPublic)
                 NoteBanner(
                   variant: NoteBannerVariant.warning,
-                  message: l10n.setupSameHost,
-                )
-              else if (state.saveFailure case final reason?)
-                NoteBanner(
-                  variant: NoteBannerVariant.warning,
-                  message: reason == HostsFailureReason.notPublic
-                      ? l10n.setupNotPublic
-                      : l10n.setupSaveError,
+                  message: l10n.setupSaveError,
                 ),
               MergeSemantics(
                 child: Semantics(
                   identifier: RondaSetupSheet.saveIdentifier,
                   child: FilledButton(
-                    onPressed: state.saving || _sameHost ? null : _save,
+                    onPressed: RondaHaptics.onCommit(
+                      state.saving || _sameHost ? null : _save,
+                    ),
                     child: Text(
                       state.saving ? l10n.setupSaving : l10n.setupSave,
                     ),

@@ -90,14 +90,40 @@ void main() {
       verify(cubit.load).called(1);
     });
 
-    testWidgets('a spinner and no button while counting the first time', (
+    testWidgets('Contando…, read out, and no button while counting', (
       tester,
     ) async {
+      final semantics = tester.ensureSemantics();
       await pump(tester, const PilotNumbersState());
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(
+        tester.getSemantics(find.text('Contando…')),
+        isSemantics(isLiveRegion: true),
+      );
       final button = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
       expect(button.onPressed, isNull);
+      semantics.dispose();
+    });
+
+    testWidgets('Contando… over the last numbers while counting again', (
+      tester,
+    ) async {
+      await pump(tester, PilotNumbersState(numbers: PilotFixtures.numbers));
+
+      expect(find.text('Contando…'), findsOneWidget);
+      expect(find.text('En una ronda: 6 de 9'), findsOneWidget);
+    });
+
+    testWidgets('its title as a heading', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pump(tester, ready);
+
+      expect(
+        tester.getSemantics(find.text('Los números del piloto')),
+        isSemantics(isHeader: true),
+      );
+      semantics.dispose();
     });
 
     testWidgets('a warning when counting failed', (tester) async {
@@ -106,8 +132,14 @@ void main() {
         const PilotNumbersState(status: PilotNumbersStatus.failure),
       );
 
+      final semantics = tester.ensureSemantics();
+      await tester.pump();
       expect(find.byType(NoteBanner), findsOneWidget);
-      expect(find.text('No pudimos contar. Probá de nuevo.'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.text('No pudimos contar. Probá de nuevo.')),
+        isSemantics(isLiveRegion: true),
+      );
+      semantics.dispose();
     });
 
     testWidgets('nothing for anyone but the admin', (tester) async {

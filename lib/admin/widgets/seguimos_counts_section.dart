@@ -34,7 +34,10 @@ class const SeguimosCountsSection({super.key}) extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: spacing.xs,
       children: [
-        Text(l10n.adminSeguimosTitle, style: textTheme.titleMedium),
+        Semantics(
+          header: true,
+          child: Text(l10n.adminSeguimosTitle, style: textTheme.titleMedium),
+        ),
         Text(l10n.adminSeguimosBody, style: textTheme.bodyMedium),
         if (state.rondas.isEmpty)
           Text(l10n.adminSeguimosEmpty, style: textTheme.bodyMedium)

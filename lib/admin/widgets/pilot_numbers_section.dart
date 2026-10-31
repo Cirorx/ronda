@@ -21,7 +21,8 @@ BlocProvider<PilotNumbersCubit> pilotNumbersProvider() => BlocProvider(
 
 /// "Los números del piloto": sign-ups, seats, and per ronda its members,
 /// each week's RSVP and attendance, came back and ¿seguimos?, each as "x de
-/// y". Reads the [PilotNumbersCubit] above; hidden for anyone but the admin.
+/// y". "Contando…" while it counts, read out like the error. Reads the
+/// [PilotNumbersCubit] above; hidden for anyone but the admin.
 class const PilotNumbersSection({super.key}) extends StatelessWidget {
   /// Maestro's handle on "Contar de nuevo".
   static const refreshIdentifier = 'admin_pilot_refresh';
@@ -41,15 +42,27 @@ class const PilotNumbersSection({super.key}) extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: spacing.xs,
       children: [
-        Text(l10n.pilotTitle, style: textTheme.titleMedium),
+        Semantics(
+          header: true,
+          child: Text(l10n.pilotTitle, style: textTheme.titleMedium),
+        ),
         Text(l10n.pilotBody, style: textTheme.bodyMedium),
         if (state.status == PilotNumbersStatus.failure)
           NoteBanner(
             variant: NoteBannerVariant.warning,
             message: l10n.pilotLoadError,
           ),
-        if (numbers == null && state.status == PilotNumbersStatus.loading)
-          const Center(child: CircularProgressIndicator()),
+        if (state.status == PilotNumbersStatus.loading)
+          Semantics(
+            container: true,
+            liveRegion: true,
+            child: Text(
+              l10n.pilotCounting,
+              style: textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
         if (numbers != null) ...[
           Text(
             l10n.pilotProfiles(numbers.profiles.count, numbers.profiles.of),

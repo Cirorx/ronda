@@ -51,9 +51,7 @@ class const RondaSetupView({super.key}) extends StatelessWidget {
       appBar: AppBar(title: Text(l10n.setupTitle)),
       body: SafeArea(
         child: switch (state.status) {
-          RondaSetupStatus.loading => const Center(
-            child: CircularProgressIndicator(),
-          ),
+          RondaSetupStatus.loading => _Message(l10n.setupLoading, busy: true),
           RondaSetupStatus.forbidden => _Message(l10n.adminForbidden),
           RondaSetupStatus.failure => _Message(
             l10n.setupLoadError,
@@ -69,8 +67,14 @@ class const RondaSetupView({super.key}) extends StatelessWidget {
   }
 }
 
-class const _Message(final String message, {final Widget? action})
-    extends StatelessWidget {
+/// A whole-screen line: what is being read ([busy], with a quiet spinner
+/// above it), why there is nothing, or what failed, read out when it
+/// appears.
+class const _Message(
+  final String message, {
+  final Widget? action,
+  final bool busy = false,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
@@ -81,10 +85,15 @@ class const _Message(final String message, {final Widget? action})
           mainAxisSize: MainAxisSize.min,
           spacing: spacing.md,
           children: [
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge,
+            if (busy) const CircularProgressIndicator(),
+            Semantics(
+              container: true,
+              liveRegion: true,
+              child: Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
             ),
             ?action,
           ],

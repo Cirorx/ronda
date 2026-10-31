@@ -8,8 +8,11 @@ import 'package:ronda_ui/ronda_ui.dart';
 
 /// The newest proposal: "Nadie recibe nada hasta que lo aprobás.", each
 /// ronda with its checks, "Por qué no otra opción", and Aprobar; once
-/// approved, "Aprobado. Les llega el martes a las 19." with Deshacer. Under
-/// it, "El ¿Venís? de esta semana" with "Mandarlo ahora".
+/// approved, "Aprobado. Les llega el martes a las 19." with Deshacer, the
+/// one swapping for the other. Under it, spaced and titled rather than
+/// ruled off, "El ¿Venís? de esta semana", "¿Seguimos?" and the pilot's
+/// numbers. Aprobar, Deshacer and "Armar las rondas" are commits, felt as
+/// one ([RondaHaptics]).
 class const AdminView({super.key}) extends StatelessWidget {
   /// Maestro's handles on the screen's buttons.
   static const proposeIdentifier = 'admin_propose';
@@ -30,9 +33,7 @@ class const AdminView({super.key}) extends StatelessWidget {
       ),
       body: SafeArea(
         child: switch (state.status) {
-          ProposalsStatus.loading => const Center(
-            child: CircularProgressIndicator(),
-          ),
+          ProposalsStatus.loading => _Message(l10n.adminLoading, busy: true),
           ProposalsStatus.forbidden => _Message(l10n.adminForbidden),
           ProposalsStatus.failure => _Message(
             l10n.adminLoadError,
@@ -48,8 +49,14 @@ class const AdminView({super.key}) extends StatelessWidget {
   }
 }
 
-class const _Message(final String message, {final Widget? action})
-    extends StatelessWidget {
+/// A whole-screen line: what is being read ([busy], with a quiet spinner
+/// above it), why there is nothing, or what failed, read out when it
+/// appears.
+class const _Message(
+  final String message, {
+  final Widget? action,
+  final bool busy = false,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
@@ -58,16 +65,19 @@ class const _Message(final String message, {final Widget? action})
         padding: EdgeInsetsDirectional.all(spacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          spacing: spacing.md,
           children: [
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge,
+            if (busy) const CircularProgressIndicator(),
+            Semantics(
+              container: true,
+              liveRegion: true,
+              child: Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
             ),
-            if (action case final action?) ...[
-              SizedBox(height: spacing.md),
-              action,
-            ],
+            ?action,
           ],
         ),
       ),
@@ -92,7 +102,7 @@ class const _Proposal(final ProposalsState state) extends StatelessWidget {
           : proposal == null
           ? l10n.adminPropose
           : l10n.adminProposeAgain,
-      onPressed: state.busy ? null : cubit.propose,
+      onPressed: RondaHaptics.onCommit(state.busy ? null : cubit.propose),
       filled: proposal == null,
     );
 
@@ -114,24 +124,33 @@ class const _Proposal(final ProposalsState state) extends StatelessWidget {
           SizedBox(height: spacing.lg),
           propose,
         ] else ...[
-          if (pending)
-            NoteBanner(message: l10n.adminNobodyYet)
-          else ...[
-            NoteBanner(
-              variant: NoteBannerVariant.keptOnPhone,
-              message: l10n.adminApproved,
-            ),
-            SizedBox(height: spacing.xs),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: _Button(
-                identifier: AdminView.undoIdentifier,
-                label: l10n.adminUndo,
-                onPressed: state.busy ? null : cubit.undo,
-                filled: false,
-              ),
-            ),
-          ],
+          RondaSwap(
+            layoutBuilder: _topStart,
+            child: pending
+                ? NoteBanner(
+                    key: const ValueKey(ProposalStatus.pending),
+                    message: l10n.adminNobodyYet,
+                  )
+                : Column(
+                    key: const ValueKey(ProposalStatus.approved),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: spacing.xs,
+                    children: [
+                      NoteBanner(
+                        variant: NoteBannerVariant.keptOnPhone,
+                        message: l10n.adminApproved,
+                      ),
+                      _Button(
+                        identifier: AdminView.undoIdentifier,
+                        label: l10n.adminUndo,
+                        onPressed: RondaHaptics.onCommit(
+                          state.busy ? null : cubit.undo,
+                        ),
+                        filled: false,
+                      ),
+                    ],
+                  ),
+          ),
           SizedBox(height: spacing.md),
           for (final ronda in proposal.rondas) ...[
             AdminProposalCard(ronda: ronda),
@@ -140,7 +159,13 @@ class const _Proposal(final ProposalsState state) extends StatelessWidget {
           UnseatedList(proposal: proposal),
           if (proposal.rejectedReason case final reason?) ...[
             SizedBox(height: spacing.lg),
-            Text(l10n.adminWhyNotOther, style: theme.textTheme.titleMedium),
+            Semantics(
+              header: true,
+              child: Text(
+                l10n.adminWhyNotOther,
+                style: theme.textTheme.titleMedium,
+              ),
+            ),
             SizedBox(height: spacing.xxs),
             // The solver's own es-419 sentence: the admin reads Spanish.
             Text(reason, style: theme.textTheme.bodyLarge),
@@ -150,23 +175,32 @@ class const _Proposal(final ProposalsState state) extends StatelessWidget {
             _Button(
               identifier: AdminView.approveIdentifier,
               label: l10n.adminApprove,
-              onPressed: state.busy ? null : cubit.approve,
+              onPressed: RondaHaptics.onCommit(
+                state.busy ? null : cubit.approve,
+              ),
               filled: true,
             ),
             SizedBox(height: spacing.sm),
           ],
           if (pending) propose,
         ],
-        Divider(height: spacing.xlg),
+        // Sections are set apart by space and their own titles; the only
+        // rules on this screen are the planilla's, between people.
+        SizedBox(height: spacing.xlg),
         const RsvpPushSection(),
-        Divider(height: spacing.xlg),
+        SizedBox(height: spacing.xlg),
         const SeguimosCountsSection(),
-        Divider(height: spacing.xlg),
+        SizedBox(height: spacing.xlg),
         const PilotNumbersSection(),
       ],
     );
   }
 }
+
+/// Lays a [RondaSwap]'s outgoing and incoming states over each other from
+/// the top start, full width, so the swap stays in place in a list.
+Widget _topStart(Widget? current, List<Widget> previous) =>
+    Stack(fit: StackFit.passthrough, children: [...previous, ?current]);
 
 class const _Button({
   required final String identifier,

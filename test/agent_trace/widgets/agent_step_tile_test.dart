@@ -38,6 +38,26 @@ void main() {
       expect(find.text('Listo.'), findsOneWidget);
     });
 
+    testWidgets('keeps who decided legible at 200% text', (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      await pump(
+        tester,
+        AgentStep(
+          n: 12,
+          at: _at,
+          kind: AgentStepKind.note,
+          by: StepAuthor.person,
+          summary: 'Abre Facu en lugar de Mirta.',
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Persona'), findsOneWidget);
+      expect(find.text('12 · 22:00'), findsOneWidget);
+    });
+
     testWidgets('says who decided each step, and nothing for older steps', (
       tester,
     ) async {
