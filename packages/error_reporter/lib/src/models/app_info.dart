@@ -24,17 +24,19 @@ class const AppInfo({
 
   /// Reads the version and build of the running app. [isWeb], [platform]
   /// and [packageInfo] are the running app's unless a test passes them; a
-  /// version that can't be read is `unknown`.
+  /// version that can't be read within [timeout] is `unknown`. Web fetches
+  /// `version.json` for it, and the app waits for this before it starts.
   static Future<AppInfo> load({
     required String flavor,
     bool isWeb = kIsWeb,
     TargetPlatform? platform,
     Future<PackageInfo> Function() packageInfo = PackageInfo.fromPlatform,
+    Duration timeout = const Duration(seconds: 3),
   }) async {
     var version = 'unknown';
     var build = 'unknown';
     try {
-      final info = await packageInfo();
+      final info = await packageInfo().timeout(timeout);
       version = info.version;
       build = info.buildNumber;
     } on Object {

@@ -8,6 +8,8 @@ import 'package:flutter/foundation.dart';
 /// [PlatformDispatcher.onError] (uncaught async errors; step `uncaught`).
 ///
 /// Whatever handled those before still runs first (bootstrap's debug log).
+/// An uncaught error counts as handled only in release builds, or when the
+/// handler before said so: in debug the engine still prints it whole.
 /// The framework's [FlutterErrorDetails] are not sent: their context can
 /// describe widgets with what people typed, so only the exception and its
 /// stack go, scrubbed. [dispatcher] is the running app's unless a test
@@ -31,10 +33,10 @@ void installErrorHooks(
   final platform = dispatcher ?? PlatformDispatcher.instance;
   final previousPlatform = platform.onError;
   platform.onError = (error, stack) {
-    previousPlatform?.call(error, stack);
+    final handled = previousPlatform?.call(error, stack);
     unawaited(
       reporter.recordError(error, stack, fatal: true, step: 'uncaught'),
     );
-    return true;
+    return handled ?? kReleaseMode;
   };
 }

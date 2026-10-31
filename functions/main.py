@@ -700,7 +700,7 @@ def set_buddy(req: https_fn.CallableRequest) -> dict:
 
 
 @https_fn.on_call(
-    region=REGION, max_instances=2, memory=options.MemoryOption.MB_256, invoker="public"
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
 )
 def report_client_error(req: https_fn.CallableRequest) -> dict:
     """Stores the web app's scrubbed error reports, `{reports: [{platform, appVersion, build,

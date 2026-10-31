@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:error_reporter/error_reporter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -51,6 +53,16 @@ void main() {
         );
 
         expect(app.platform, equals(defaultTargetPlatform.name.toLowerCase()));
+      });
+
+      test('is unknown when the version takes too long', () async {
+        final app = await AppInfo.load(
+          flavor: 'production',
+          packageInfo: () => Completer<PackageInfo>().future,
+          timeout: const Duration(milliseconds: 10),
+        );
+
+        expect(app.version, equals('unknown'));
       });
 
       test('is unknown when the version can not be read', () async {

@@ -58,7 +58,8 @@ void main() {
       },
     );
 
-    test('reports uncaught errors as fatal and handles them', () async {
+    test('reports uncaught errors as fatal, answering as the handler '
+        'before did', () async {
       final seen = <Object>[];
       dispatcher.onError = (error, _) {
         seen.add(error);
@@ -69,7 +70,7 @@ void main() {
       final handled = dispatcher.onError!(Exception('x'), StackTrace.empty);
       await pumpEventQueue();
 
-      expect(handled, isTrue);
+      expect(handled, isFalse);
       expect(seen, hasLength(1));
       expect(reporter.sent.single.step, equals('uncaught'));
     });
@@ -81,10 +82,12 @@ void main() {
       addTearDown(() => platform.onError = null);
 
       FlutterError.onError!(FlutterErrorDetails(exception: Exception('x')));
-      platform.onError!(Exception('y'), StackTrace.empty);
+      final handled = platform.onError!(Exception('y'), StackTrace.empty);
       await pumpEventQueue();
 
       expect(reporter.sent, hasLength(2));
+      // Not handled in a debug run, so the engine still prints it.
+      expect(handled, isFalse);
     });
   });
 }
