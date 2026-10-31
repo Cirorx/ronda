@@ -27,6 +27,10 @@ class const ThisWeekCard({
   /// Whether "Quiénes van" is on the card; a desktop window shows it beside
   /// the card instead.
   final bool showWhoIsGoing = true,
+
+  /// A line the member chose to bring from their cuaderno, drawn on their
+  /// own card as a reminder; nothing when `null`.
+  final Widget? reminder,
   super.key,
 }) extends StatelessWidget {
   /// Maestro's handles: the card, the RsvpBar's prefix (`rsvp.yes`,
@@ -135,6 +139,7 @@ class const ThisWeekCard({
               ),
               if (week.week != null && showWhoIsGoing)
                 WhoIsGoing(week: week, uid: uid),
+              ?reminder,
               if (week.week case final meeting?
                   when uid == week.anfitrion?.uid || uid == week.cola?.uid)
                 RollLink(rondaId: week.rondaId, week: meeting),

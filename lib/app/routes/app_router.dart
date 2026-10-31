@@ -8,6 +8,7 @@ import 'package:ronda/app/bloc/app_bloc.dart';
 import 'package:ronda/app/view/app_shell.dart';
 import 'package:ronda/attendance/attendance.dart';
 import 'package:ronda/cerca/cerca.dart';
+import 'package:ronda/cuaderno/cuaderno.dart';
 import 'package:ronda/error_log/error_log.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda/mate_flyer/mate_flyer.dart';
@@ -55,6 +56,8 @@ const returnToParameter = 'from';
 ///   decides who may make it.
 /// - Ajustes' screens (`/ajustes/avisos`, `/ajustes/contar`,
 ///   `/ajustes/datos`): like the tabs, inside the Ajustes tab.
+/// - el cuaderno (`/ronda/cuaderno`): like the tabs, inside the Mi ronda
+///   tab;
 /// - a ronda's acta (`/acta/{rondaId}`), the host's rain proposal
 ///   (`/lluvia/{rondaId}/{week}`, opened from the push) and the host's
 ///   "¿Quién vino hoy?" (`/asistencia/{rondaId}/{week}`): like the tabs;
@@ -215,6 +218,12 @@ GoRouter createAppRouter({
               GoRoute(
                 path: MyRondaPage.path,
                 builder: (_, _) => const MyRondaPage(),
+                routes: [
+                  GoRoute(
+                    path: CuadernoPage.segment,
+                    builder: (_, _) => const CuadernoPage(),
+                  ),
+                ],
               ),
             ],
           ),

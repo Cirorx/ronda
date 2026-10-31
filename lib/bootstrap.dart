@@ -5,6 +5,7 @@ import 'package:auth_repository/auth_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:contact_repository/contact_repository.dart';
+import 'package:cuaderno_repository/cuaderno_repository.dart';
 import 'package:device_store/device_store.dart';
 import 'package:error_reporter/error_reporter.dart';
 import 'package:face_blur/face_blur.dart';
@@ -37,6 +38,7 @@ import 'package:voice_recorder/voice_recorder.dart';
 typedef AppBuilder = FutureOr<Widget> Function({
   required AuthRepository authRepository,
   required ContactRepository contactRepository,
+  required CuadernoRepository cuadernoRepository,
   required FlyerRepository flyerRepository,
   required NeedsRepository needsRepository,
   required OnboardingRepository onboardingRepository,
@@ -266,6 +268,7 @@ Future<void> bootstrap(
   final faceBlur = FaceBlur();
   final flyersApi = FlyersApi(storage: storage, functions: functions);
   final shareSheet = ShareSheet();
+  final cuadernoApi = CuadernoApi(functions: functions);
   final linkOpener = LinkOpener();
   // The channel's name shows in the phone's settings, and the push's
   // buttons, in the phone's language.
@@ -334,6 +337,13 @@ Future<void> bootstrap(
     voiceRecorder: voiceRecorder,
     rondaApi: rondaApi,
   );
+  final cuadernoRepository = CuadernoRepository(
+    deviceStore: deviceStore,
+    voiceRecorder: voiceRecorder,
+    rondaApi: rondaApi,
+    cuadernoApi: cuadernoApi,
+    shareSheet: shareSheet,
+  );
   final organiserRepository = OrganiserRepository(organiserApi: organiserApi);
   final contactRepository = ContactRepository(
     linkOpener: linkOpener,
@@ -347,6 +357,7 @@ Future<void> bootstrap(
   final app = await builder(
     authRepository: authRepository,
     contactRepository: contactRepository,
+    cuadernoRepository: cuadernoRepository,
     flyerRepository: flyerRepository,
     needsRepository: needsRepository,
     onboardingRepository: onboardingRepository,

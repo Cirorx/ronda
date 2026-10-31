@@ -11,6 +11,9 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   happens next, without promising a seat: "Armamos cada grupo con vecinos que viven cerca y buscan
   lo mismo que vos. Puede tardar, según cuántos se anoten. Cuando haya uno para vos, te avisamos y
   lo vas a ver acá."
+  Under the card, **¿Qué viste hoy?** (§ El cuaderno del barrio): a pull entry with one button,
+  [Abrir el cuaderno]. On the member's own card, the line they chose to bring shows as a
+  reminder, "Llevás esta línea: «…»".
 - **Cerca** (tab): groups with open places, groups about to start, waiting demand. Also a public
   web page with no login. Until the in-app list exists the tab says so: "Pronto vas a ver acá los
   grupos cerca tuyo que tienen lugar. Mientras tanto, si tenés grupo, lo ves en Mi ronda."
@@ -27,7 +30,9 @@ dates in the examples are demo data. Everything not listed here is out of the bu
     phone's push code; when you accepted the terms), "Lo que no guardamos" (the audio; what makes
     it hard to go, on the phone only), where it lives, and "Para cambiar o borrar tus datos,
     escribinos a <address>." with [Escribir un mail] (subject "Ronda: mis datos", the account id
-    in the body).
+    in the body). Under "Lo que no guardamos", "Tu cuaderno: queda solo en este teléfono.", and
+    below the lists "Tu cuaderno" with [Borrar mi cuaderno]: one question ("¿Borrás todo tu
+    cuaderno?") and it is gone from the phone.
   - **Salir de esta cuenta:** "¿Salís de esta cuenta?" — your group and answers stay; this phone
     stops getting notifications. [Salir] forgets this phone's push token, then signs out.
   - The address is one build value, `RONDA_CONTACT_EMAIL` (`docs/STACK.md` § Pilot builds); a
@@ -376,6 +381,35 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   "intergenerational".
 - Kept (#9): the solver's cross-age rule ships. The in-app team draw and the points table come
   after 11-04; until then the card states the house rule and teams are drawn at the table.
+
+## El cuaderno del barrio
+A private noticing log about the barrio, not a mood log (#59). It never asks "¿cómo te sentís?",
+rates anything, keeps a streak or counts days, and never says "ánimo", "bienestar", "mindfulness",
+"gratitud" or "salud". Nothing about it is pushed: it is a pull entry on Mi ronda.
+- **The question:** "¿Qué viste hoy?" Optional, any day, at most one line a day (writing again
+  changes that day's line: [Cambiar lo de hoy]). One line typed ("El jacarandá de la esquina
+  floreció."), or said: [Decilo con la voz] records up to 30 seconds, Voice Transcribe turns it
+  into words (the audio is deleted once read, "El audio se borra apenas lo leemos."), and the
+  words land in the field to read and change before [Anotar]. Nothing is written without that tap.
+- **Tus líneas:** newest first, each with a menu: [Llevar esta línea] / [Ya no la llevo] and
+  [Borrar esta línea] (with [Deshacer]). No counts, no "días seguidos"; an empty cuaderno says
+  "Todavía no anotaste nada. Alcanza con lo que veas hoy."
+- **Weekly postcard:** on the day before the ronda's meeting, and on the day itself, when the
+  last seven days hold at least one line, the cuaderno offers [Dibujar la postal]. Spark 1.3 reads
+  the lines and keeps only objects, plants, animals, weather and places as short English phrases
+  (no people, names, numbers or anything personal, filtered again in code); the Muse Image prompt
+  is built in code from those words alone, and the postcard is objects and places, never people.
+  It shows in the cuaderno with [Guardar en el teléfono] (the share sheet) and [Dibujar otra].
+  It is held in memory only: it goes away when the cuaderno closes, and saving it is how it is
+  kept. The offer says what is sent: "Mandamos las líneas, sin nombres, a un programa que dibuja,
+  y no guardamos nada."
+- **Bring one line:** the member picks one line, which shows on their own card as "Llevás esta
+  línea: «…»". It is a reminder for them: it is **not** shared with the ronda, and there is no
+  way to share it yet.
+- **Privacy:** the lines live only on the phone (`device_store`, `cuaderno.{uid}`), like needs.
+  The postcard callable receives the lines and stores nothing; the image is returned and never
+  kept by the server. [Borrar mi cuaderno] in Ajustes → Tus datos deletes everything with one
+  question.
 
 ## Safety
 - **Contar algo que pasó** (voice or text): "Contá qué pasó. Lo lee una persona, no un

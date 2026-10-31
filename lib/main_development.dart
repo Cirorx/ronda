@@ -58,6 +58,7 @@ Future<void> main() async {
     ({
       required authRepository,
       required contactRepository,
+      required cuadernoRepository,
       required flyerRepository,
       required needsRepository,
       required onboardingRepository,
@@ -69,6 +70,7 @@ Future<void> main() async {
     }) => App(
       authRepository: authRepository,
       contactRepository: contactRepository,
+      cuadernoRepository: cuadernoRepository,
       flyerRepository: flyerRepository,
       needsRepository: needsRepository,
       onboardingRepository: onboardingRepository,

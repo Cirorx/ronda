@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:auth_repository/auth_repository.dart';
 import 'package:contact_repository/contact_repository.dart';
+import 'package:cuaderno_repository/cuaderno_repository.dart';
 import 'package:error_reporter/error_reporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flyer_repository/flyer_repository.dart';
@@ -22,6 +23,7 @@ import 'package:ronda_ui/ronda_ui.dart';
 class const App({
   required final AuthRepository authRepository,
   required final ContactRepository contactRepository,
+  required final CuadernoRepository cuadernoRepository,
   required final FlyerRepository flyerRepository,
   required final NeedsRepository needsRepository,
   required final OnboardingRepository onboardingRepository,
@@ -41,6 +43,7 @@ class const App({
       providers: [
         RepositoryProvider.value(value: authRepository),
         RepositoryProvider.value(value: contactRepository),
+        RepositoryProvider.value(value: cuadernoRepository),
         RepositoryProvider.value(value: flyerRepository),
         RepositoryProvider.value(value: needsRepository),
         RepositoryProvider.value(value: onboardingRepository),

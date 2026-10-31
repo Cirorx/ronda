@@ -179,6 +179,88 @@ def extract(req: https_fn.CallableRequest) -> dict:
         raise https_fn.HttpsError(error.UNAVAILABLE, "Try again in a moment.") from e
 
 
+@https_fn.on_call(
+    region=REGION,
+    max_instances=2,
+    timeout_sec=120,
+    memory=options.MemoryOption.MB_512,
+    secrets=[MODEL_API_KEY],
+    invoker="public",
+)
+def read_line(req: https_fn.CallableRequest) -> dict:
+    """Reads the caller's short voice note at `audio/{uid}/{id}.wav` into the words it says, for
+    the cuaderno (`cuaderno.py`). Voice Transcribe only; the note is deleted before the answer
+    goes back and nothing is stored. Refuses callers who haven't accepted the terms."""
+    import httpx
+    from google.api_core.exceptions import NotFound
+
+    import cuaderno
+    import voice_signup as voice
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "Sign in first.")
+    uid = req.auth.uid
+    path = req.data.get("path") if isinstance(req.data, dict) else None
+    user = _firestore().collection("users").document(uid).get().to_dict()
+    error = https_fn.FunctionsErrorCode
+    try:
+        with httpx.Client() as http:
+            return cuaderno.read_line(
+                uid=uid,
+                path=path,
+                user=user,
+                blob=_bucket().blob,
+                api_key=MODEL_API_KEY.value,
+                http=http,
+            )
+    except voice.TermsMissing as e:
+        raise https_fn.HttpsError(error.FAILED_PRECONDITION, "Accept the terms first.") from e
+    except voice.BadVoiceNote as e:
+        raise https_fn.HttpsError(error.INVALID_ARGUMENT, "We couldn't read the note.") from e
+    except PermissionError as e:
+        raise https_fn.HttpsError(error.PERMISSION_DENIED, "Not your note.") from e
+    except NotFound as e:
+        raise https_fn.HttpsError(error.NOT_FOUND, "No note at that path.") from e
+    except voice.ModelUnavailable as e:
+        raise https_fn.HttpsError(error.UNAVAILABLE, "Try again in a moment.") from e
+
+
+# Spark 1.3 then Muse Image, one after the other (~15 s). Unlike the flyer's, this callable is
+# given no Storage bucket and writes no document: the lines come in the payload and the postcard
+# goes back in the answer.
+@https_fn.on_call(
+    region=REGION,
+    max_instances=2,
+    timeout_sec=120,
+    memory=options.MemoryOption.MB_512,
+    secrets=[MODEL_API_KEY],
+    invoker="public",
+)
+def make_postcard(req: https_fn.CallableRequest) -> dict:
+    """Draws the cuaderno's weekly postcard from the week's lines in `lines` (`cuaderno.py`) and
+    answers it as a base64 JPEG. Stores nothing."""
+    from openai import OpenAI
+
+    import cuaderno
+    import voice_signup as voice
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "Sign in first.")
+    uid = req.auth.uid
+    user = _firestore().collection("users").document(uid).get().to_dict()
+    key = MODEL_API_KEY.value
+    try:
+        return cuaderno.make_postcard(
+            uid=uid,
+            data=req.data,
+            user=user,
+            client=OpenAI(base_url=voice.META_BASE, api_key=key, timeout=60, max_retries=2),
+            painter=cuaderno.MetaPainter(key),
+        )
+    except cuaderno.PostcardError as error:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(error.code), str(error)) from error
+
+
 # SAM 3.1 and Muse Image run side by side (~20 s); Pillow composes a 1240 × 1754 flyer.
 @https_fn.on_call(
     region=REGION,

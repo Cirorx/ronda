@@ -57,3 +57,12 @@ class NothingToCutOutException implements Exception {
   /// {@macro nothing_to_cut_out_exception}
   const new();
 }
+
+/// {@template nothing_to_draw_exception}
+/// `make_postcard` found nothing in the lines a postcard can show: only
+/// people, feelings or numbers.
+/// {@endtemplate}
+class NothingToDrawException implements Exception {
+  /// {@macro nothing_to_draw_exception}
+  const new();
+}

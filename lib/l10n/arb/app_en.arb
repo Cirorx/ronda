@@ -3392,5 +3392,235 @@
                 "type": "int"
             }
         }
+    },
+    "cuadernoTitle": "The barrio notebook",
+    "@cuadernoTitle": {
+        "description": "Cuaderno screen title"
+    },
+    "cuadernoAsk": "What did you see today?",
+    "@cuadernoAsk": {
+        "description": "Cuaderno: the question, on Mi ronda and on its screen"
+    },
+    "cuadernoEntryBody": "One line about your barrio. Only you see it, and it stays on this phone.",
+    "@cuadernoEntryBody": {
+        "description": "Mi ronda card that leads to the cuaderno"
+    },
+    "cuadernoOpen": "Open the notebook",
+    "@cuadernoOpen": {
+        "description": "Mi ronda: opens the cuaderno"
+    },
+    "cuadernoLoading": "Opening your notebook…",
+    "@cuadernoLoading": {
+        "description": "Cuaderno: while it reads from the phone"
+    },
+    "cuadernoLoadError": "We couldn't open your notebook.",
+    "@cuadernoLoadError": {
+        "description": "Cuaderno: the phone's store failed"
+    },
+    "cuadernoRetry": "Try again",
+    "@cuadernoRetry": {
+        "description": "Cuaderno: retry reading it"
+    },
+    "cuadernoLineLabel": "Your line for today",
+    "@cuadernoLineLabel": {
+        "description": "Cuaderno: field label"
+    },
+    "cuadernoLineHint": "The jacaranda on the corner bloomed.",
+    "@cuadernoLineHint": {
+        "description": "Cuaderno: field example"
+    },
+    "cuadernoWrite": "Write it down",
+    "@cuadernoWrite": {
+        "description": "Cuaderno: saves today's line"
+    },
+    "cuadernoChangeToday": "Change today's line",
+    "@cuadernoChangeToday": {
+        "description": "Cuaderno: saves today's line again"
+    },
+    "cuadernoWritten": "Written down.",
+    "@cuadernoWritten": {
+        "description": "Cuaderno: after saving, read out"
+    },
+    "cuadernoWriteFailed": "We couldn't save that on this phone. Try again.",
+    "@cuadernoWriteFailed": {
+        "description": "Cuaderno: writing a line failed"
+    },
+    "cuadernoSayIt": "Say it out loud",
+    "@cuadernoSayIt": {
+        "description": "Cuaderno: starts a voice line"
+    },
+    "cuadernoVoiceReading": "Turning your recording into text…",
+    "@cuadernoVoiceReading": {
+        "description": "Cuaderno: while the voice line is read"
+    },
+    "cuadernoVoiceNoMicrophone": "We couldn't find a microphone. You can type the line instead.",
+    "@cuadernoVoiceNoMicrophone": {
+        "description": "Cuaderno voice failure"
+    },
+    "cuadernoVoiceDenied": "The phone didn't let us use the microphone. You can allow it in the phone's settings, or type the line.",
+    "@cuadernoVoiceDenied": {
+        "description": "Cuaderno voice failure"
+    },
+    "cuadernoVoiceDeniedBrowser": "The browser didn't let us use the microphone. Tap the padlock next to the address and allow it, or type the line.",
+    "@cuadernoVoiceDeniedBrowser": {
+        "description": "Cuaderno voice failure on web"
+    },
+    "cuadernoVoiceNotUnderstood": "We couldn't make out the recording. Try again closer to the phone, or type the line. The recording is already deleted.",
+    "@cuadernoVoiceNotUnderstood": {
+        "description": "Cuaderno voice failure"
+    },
+    "cuadernoVoiceTermsMissing": "Voice needs you to accept the terms first. You can type the line.",
+    "@cuadernoVoiceTermsMissing": {
+        "description": "Cuaderno voice failure"
+    },
+    "cuadernoVoiceFailed": "We couldn't turn the recording into text. Try again in a moment, or type the line.",
+    "@cuadernoVoiceFailed": {
+        "description": "Cuaderno voice failure"
+    },
+    "cuadernoKeptOnPhone": "Your notebook stays on this phone. Nobody else reads it.",
+    "@cuadernoKeptOnPhone": {
+        "description": "Cuaderno: where it lives"
+    },
+    "cuadernoLinesTitle": "Your lines",
+    "@cuadernoLinesTitle": {
+        "description": "Cuaderno: heading of the list"
+    },
+    "cuadernoEmpty": "Nothing written yet. Whatever you notice today is enough.",
+    "@cuadernoEmpty": {
+        "description": "Cuaderno: empty list"
+    },
+    "cuadernoBringExplain": "The line you bring shows on your card as a reminder. The ronda doesn't see it.",
+    "@cuadernoBringExplain": {
+        "description": "Cuaderno: what bringing a line does"
+    },
+    "cuadernoBring": "Bring this line",
+    "@cuadernoBring": {
+        "description": "Cuaderno: line menu"
+    },
+    "cuadernoBringStop": "Don't bring it",
+    "@cuadernoBringStop": {
+        "description": "Cuaderno: line menu"
+    },
+    "cuadernoBringing": "You're bringing this one.",
+    "@cuadernoBringing": {
+        "description": "Cuaderno: marks the line to bring"
+    },
+    "cuadernoDelete": "Delete this line",
+    "@cuadernoDelete": {
+        "description": "Cuaderno: line menu"
+    },
+    "cuadernoLineDeleted": "Line deleted.",
+    "@cuadernoLineDeleted": {
+        "description": "Cuaderno: snackbar after deleting a line"
+    },
+    "cuadernoUndo": "Undo",
+    "@cuadernoUndo": {
+        "description": "Cuaderno: snackbar action"
+    },
+    "cuadernoLineMenu": "Options for the line of {date}",
+    "@cuadernoLineMenu": {
+        "description": "Cuaderno: tooltip of a line's menu",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "cuadernoBringReminder": "You're bringing this line: “{line}”",
+    "@cuadernoBringReminder": {
+        "description": "Mi ronda card: the line chosen to bring",
+        "placeholders": {
+            "line": {
+                "type": "String"
+            }
+        }
+    },
+    "cuadernoPostcardTitle": "Your postcard of the week",
+    "@cuadernoPostcardTitle": {
+        "description": "Cuaderno: postcard heading"
+    },
+    "cuadernoPostcardBody": "Your ronda is close. We can draw a postcard from this week's lines: only things and places, no people. We send the lines, without names, to a program that draws, and we keep nothing.",
+    "@cuadernoPostcardBody": {
+        "description": "Cuaderno: offer of the postcard"
+    },
+    "cuadernoPostcardMake": "Draw the postcard",
+    "@cuadernoPostcardMake": {
+        "description": "Cuaderno: makes the postcard"
+    },
+    "cuadernoPostcardMaking": "Drawing your postcard. It takes a few seconds.",
+    "@cuadernoPostcardMaking": {
+        "description": "Cuaderno: while the postcard is made"
+    },
+    "cuadernoPostcardAgain": "Draw another",
+    "@cuadernoPostcardAgain": {
+        "description": "Cuaderno: makes a new postcard"
+    },
+    "cuadernoPostcardSave": "Save to the phone",
+    "@cuadernoPostcardSave": {
+        "description": "Cuaderno: opens the share sheet"
+    },
+    "cuadernoPostcardMemory": "The postcard goes away when you close the notebook. Save it to keep it.",
+    "@cuadernoPostcardMemory": {
+        "description": "Cuaderno: the postcard is not kept"
+    },
+    "cuadernoPostcardAlt": "Postcard of your week, drawn from your lines",
+    "@cuadernoPostcardAlt": {
+        "description": "Cuaderno: postcard's description for screen readers"
+    },
+    "cuadernoPostcardShareTitle": "Postcard of the barrio",
+    "@cuadernoPostcardShareTitle": {
+        "description": "Cuaderno: share sheet title"
+    },
+    "cuadernoPostcardFailed": "We couldn't draw it. Try again in a moment.",
+    "@cuadernoPostcardFailed": {
+        "description": "Cuaderno: the postcard failed"
+    },
+    "cuadernoPostcardNothing": "We found nothing to draw in this week's lines. Try things and places you saw.",
+    "@cuadernoPostcardNothing": {
+        "description": "Cuaderno: nothing to draw"
+    },
+    "cuadernoPostcardShareFailed": "We couldn't open the share menu.",
+    "@cuadernoPostcardShareFailed": {
+        "description": "Cuaderno: the share sheet failed"
+    },
+    "cuadernoEraseTitle": "Your notebook",
+    "@cuadernoEraseTitle": {
+        "description": "Your data: cuaderno heading"
+    },
+    "cuadernoEraseBody": "It is only on this phone, so we can't see it, and we can't delete it for you.",
+    "@cuadernoEraseBody": {
+        "description": "Your data: cuaderno explanation"
+    },
+    "cuadernoErase": "Delete my notebook",
+    "@cuadernoErase": {
+        "description": "Your data: deletes the cuaderno"
+    },
+    "cuadernoEraseConfirmTitle": "Delete your whole notebook?",
+    "@cuadernoEraseConfirmTitle": {
+        "description": "Your data: confirmation title"
+    },
+    "cuadernoEraseConfirmBody": "All your lines, and the one you bring, are deleted from this phone. This can't be undone.",
+    "@cuadernoEraseConfirmBody": {
+        "description": "Your data: confirmation body"
+    },
+    "cuadernoEraseConfirm": "Delete",
+    "@cuadernoEraseConfirm": {
+        "description": "Your data: confirms deleting the cuaderno"
+    },
+    "cuadernoEraseCancel": "Keep it",
+    "@cuadernoEraseCancel": {
+        "description": "Your data: backs out of deleting the cuaderno"
+    },
+    "cuadernoErased": "Your notebook was deleted.",
+    "@cuadernoErased": {
+        "description": "Your data: after deleting"
+    },
+    "cuadernoEraseFailed": "We couldn't delete it. Try again.",
+    "@cuadernoEraseFailed": {
+        "description": "Your data: deleting failed"
+    },
+    "dataNotKeptCuaderno": "Your notebook: it stays on this phone only.",
+    "@dataNotKeptCuaderno": {
+        "description": "Your data screen: not kept item"
     }
 }

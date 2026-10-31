@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:auth_repository/auth_repository.dart';
 import 'package:contact_repository/contact_repository.dart';
+import 'package:cuaderno_repository/cuaderno_repository.dart';
 import 'package:error_reporter/error_reporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -40,6 +41,8 @@ class _MockAuthRepository extends Mock implements AuthRepository;
 
 class _MockContactRepository extends Mock implements ContactRepository;
 
+class _MockCuadernoRepository extends Mock implements CuadernoRepository;
+
 class _MockNeedsRepository extends Mock implements NeedsRepository;
 
 class _MockProfileRepository extends Mock implements ProfileRepository;
@@ -76,6 +79,7 @@ void main() {
   group(App, () {
     late AuthRepository authRepository;
     late ContactRepository contactRepository;
+    late CuadernoRepository cuadernoRepository;
     late NeedsRepository needsRepository;
     late ProfileRepository profileRepository;
     late RondaRepository rondaRepository;
@@ -102,6 +106,11 @@ void main() {
       authRepository = _MockAuthRepository();
       contactRepository = _MockContactRepository();
       when(() => contactRepository.email).thenReturn('hola@example.com');
+      cuadernoRepository = _MockCuadernoRepository();
+      when(() => cuadernoRepository.changes)
+          .thenAnswer((_) => const Stream<void>.empty());
+      when(() => cuadernoRepository.read(any()))
+          .thenAnswer((_) async => Cuaderno.empty);
       needsRepository = _MockNeedsRepository();
       profileRepository = _MockProfileRepository();
       rondaRepository = _MockRondaRepository();
@@ -186,6 +195,7 @@ void main() {
     Widget buildSubject({bool walkthroughSeen = true}) => App(
       authRepository: authRepository,
       contactRepository: contactRepository,
+      cuadernoRepository: cuadernoRepository,
       flyerRepository: flyerRepository,
       needsRepository: needsRepository,
       onboardingRepository: onboardingRepository,

@@ -27,7 +27,8 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   │    client_errors
   ├─ Storage: audio + blurred photos; deleted on success, hourly sweeper, lifecycle as backstop
   ├─ Functions (Python 3.13, 2nd gen):
-  │    callables  extract (Transcribe → Spark), propose_groups (CP-SAT, admin), answer_rsvp,
+  │    callables  extract (Transcribe → Spark), read_line (Transcribe only, the cuaderno's voice
+  │               line), make_postcard (Spark strips, Muse Image draws; stores nothing), propose_groups (CP-SAT, admin), answer_rsvp,
   │               answer_seguimos, run_job(name, now?, force?) (admin, for tests and the
   │               demo), make_mate_flyer (SAM → cutouts, Muse Image background → text + QR
   │               in code), answer_move (the host's pick after the rain check),
@@ -467,6 +468,17 @@ isn't set up).
     never the label, the stop id, the ronda, the host or the image, with `Cache-Control:
     no-store`. The page posts once per tab and reads on reload; link previews run no script, so
     they count nothing.
+- **El cuaderno del barrio** (#59, `functions/cuaderno.py`) has **no collection**: the lines live
+  on the phone (`device_store`). Two callables serve it and write nothing (no Firestore client, no
+  bucket in their signatures; tested in `functions/tests/test_cuaderno.py`):
+  - `read_line {path}`: a short WAV at `audio/{uid}/{id}.wav` (the existing Storage rules and the
+    hourly sweeper), terms required; Voice Transcribe only, deleted in a `finally`, answers
+    `{text}` (≤ 280 characters).
+  - `make_postcard {lines}` (1–7 lines, ≤ 280 characters each; terms required): Spark 1.3 reads
+    the lines into objects and places (English noun phrases; `PERSONAL` and a letters-only check
+    drop anything about people), the Muse Image prompt is built in code from those words, and the
+    JPEG (long side 1024) comes back base64 in the answer. Nothing found answers
+    `failed-precondition`; a model failing answers `unavailable`. Logs carry counts and timings.
 - `client_errors/{id}` (`functions/client_errors.py`, `packages/error_reporter`): the web app's
   error log; Android and iOS report to Crashlytics instead. One document per report: platform
   (`web`, `android`, `ios` or `other`), appVersion, build, flavor (`development`, `production`
@@ -654,11 +666,14 @@ code jobs with no model, § Data model, the weekly loop's code jobs):
 - So the terms name all three in one line: "Tus datos se guardan en Brasil; el audio lo procesa
   Meta y el inicio de sesión Google, en EE. UU." They are accepted by continuing past the welcome
   screen, which links them. Ask the URCDP before onboarding pilot members.
-- Needs and mood never leave the phone, so no sensitive data crosses a border.
+- Needs and the cuaderno's lines never leave the phone, so no sensitive data crosses a border. The
+  one exception is a week's lines, which go to `make_postcard` in a call that stores nothing (Spark
+  1.3 and Muse Image run on Meta, in the US) once the member asks for the postcard, and the
+  cuaderno's short voice notes, which go through Storage like onboarding's and are deleted once read.
 
 ## Privacy and safety checklist (must hold in the demo)
 - Terms accepted (version and time recorded) before any audio or photo leaves the phone.
-- No needs, no mood, no audio, no unblurred faces in Firestore or Storage after 24 h.
+- No needs, no cuaderno lines, no audio, no unblurred faces in Firestore or Storage after 24 h.
 - Payers or institutions only ever see totals with cells ≥ 10 (after the hackathon).
 - Error reports (Crashlytics and `client_errors`) carry where and what failed, scrubbed, and at
   most a hashed uid: no names, numbers, emails, transcripts, needs or typed text (§ Data model).

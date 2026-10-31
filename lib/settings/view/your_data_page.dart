@@ -1,6 +1,7 @@
 import 'package:contact_repository/contact_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ronda/app/app.dart';
+import 'package:ronda/cuaderno/cuaderno.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/settings/cubit/contact_cubit.dart';
 import 'package:ronda/settings/widgets/contact_failure_note.dart';
@@ -74,8 +75,14 @@ class const YourDataView({super.key}) extends StatelessWidget {
             item(text),
           SizedBox(height: spacing.lg),
           heading(l10n.dataNotKeptTitle),
-          for (final text in [l10n.dataNotKeptAudio, l10n.dataNotKeptNeeds])
+          for (final text in [
+            l10n.dataNotKeptAudio,
+            l10n.dataNotKeptNeeds,
+            l10n.dataNotKeptCuaderno,
+          ])
             item(text),
+          SizedBox(height: spacing.lg),
+          const EraseCuadernoSection(),
           SizedBox(height: spacing.lg),
           Text(l10n.termsWhere, style: textTheme.bodyLarge),
           SizedBox(height: spacing.lg),

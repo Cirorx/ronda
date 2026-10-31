@@ -1,6 +1,7 @@
 import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:contact_repository/contact_repository.dart';
+import 'package:cuaderno_repository/cuaderno_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -13,6 +14,8 @@ import '../../helpers/helpers.dart';
 class _MockAppBloc extends MockBloc<AppEvent, AppState> implements AppBloc;
 
 class _MockContactRepository extends Mock implements ContactRepository;
+
+class _MockCuadernoRepository extends Mock implements CuadernoRepository;
 
 class _MockContactCubit extends MockCubit<ContactState> implements ContactCubit;
 
@@ -42,8 +45,13 @@ void main() {
       when(() => repository.email).thenReturn(_email);
 
       await tester.pumpApp(
-        RepositoryProvider<ContactRepository>.value(
-          value: repository,
+        MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider<ContactRepository>.value(value: repository),
+            RepositoryProvider<CuadernoRepository>.value(
+              value: _MockCuadernoRepository(),
+            ),
+          ],
           child: BlocProvider.value(
             value: appBloc,
             child: const YourDataPage(),
@@ -71,11 +79,14 @@ void main() {
 
     Future<void> pump(WidgetTester tester, {Locale locale = rioplatense}) =>
         tester.pumpApp(
-          BlocProvider.value(
-            value: appBloc,
+          RepositoryProvider<CuadernoRepository>.value(
+            value: _MockCuadernoRepository(),
             child: BlocProvider.value(
-              value: cubit,
-              child: const YourDataView(),
+              value: appBloc,
+              child: BlocProvider.value(
+                value: cubit,
+                child: const YourDataView(),
+              ),
             ),
           ),
           locale: locale,
@@ -108,6 +119,7 @@ void main() {
         'Lo que no guardamos',
         'Tu audio: se borra apenas lo leemos.',
         'Lo que te complica ir: queda solo en este teléfono.',
+        'Tu cuaderno: queda solo en este teléfono.',
       ]) {
         await tester.scrollUntilVisible(
           find.text(text),

@@ -1,0 +1,28 @@
+name: cuaderno_repository
+description: El cuaderno del barrio, kept on the phone only, with its voice lines and weekly postcard, over device_store, voice_recorder, ronda_api and share_sheet.
+version: 0.1.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ^3.47.0
+
+dependencies:
+  device_store:
+    path: ../device_store
+  equatable: ^2.0.7
+  flutter:
+    sdk: flutter
+  ronda_api:
+    path: ../ronda_api
+  share_sheet:
+    path: ../share_sheet
+  voice_recorder:
+    path: ../voice_recorder
+
+dev_dependencies:
+  cloud_functions: ^7.0.1
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+  very_good_analysis: ^11.0.0

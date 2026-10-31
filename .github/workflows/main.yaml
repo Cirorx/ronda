@@ -36,6 +36,7 @@ jobs:
         package:
           - packages/auth_repository
           - packages/contact_repository
+          - packages/cuaderno_repository
           - packages/device_store
           - packages/error_reporter
           - packages/face_blur

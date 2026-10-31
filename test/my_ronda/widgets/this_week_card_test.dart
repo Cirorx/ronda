@@ -34,6 +34,7 @@ void main() {
       ThisWeekState state, {
       Locale locale = rioplatense,
       bool reduced = false,
+      Widget? reminder,
     }) {
       when(() => cubit.state).thenReturn(state);
       return tester.pumpApp(
@@ -45,7 +46,11 @@ void main() {
               value: cubit,
               child: Scaffold(
                 body: SingleChildScrollView(
-                  child: ThisWeekCard(state: state, uid: MyRondaFixtures.uid),
+                  child: ThisWeekCard(
+                    state: state,
+                    uid: MyRondaFixtures.uid,
+                    reminder: reminder,
+                  ),
                 ),
               ),
             ),
@@ -67,6 +72,18 @@ void main() {
       );
       expect(find.text('¿Venís?'), findsOneWidget);
       expect(find.text('Te toca llevar el pan.'), findsOneWidget);
+    });
+
+    testWidgets('draws the reminder the member brought from their cuaderno', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        ready(MyRondaFixtures.week()),
+        reminder: const Text('un recordatorio'),
+      );
+
+      expect(find.text('un recordatorio'), findsOneWidget);
     });
 
     testWidgets('carries the turns, "¿Abrís vos?" and the después', (

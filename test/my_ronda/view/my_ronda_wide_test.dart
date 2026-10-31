@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ronda/acta/acta.dart';
+import 'package:ronda/cuaderno/cuaderno.dart';
 import 'package:ronda/my_ronda/cubit/bench_offer_cubit.dart';
 import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
 import 'package:ronda/my_ronda/cubit/this_week_cubit.dart';
@@ -36,6 +37,9 @@ class _MockBenchOfferCubit extends MockCubit<BenchOfferState>
 
 class _MockWaitingCubit extends MockCubit<WaitingState> implements WaitingCubit;
 
+class _MockCuadernoCardCubit extends MockCubit<String?>
+    implements CuadernoCardCubit;
+
 void main() {
   group('$MyRondaView on wide windows', () {
     late PushCubit pushCubit;
@@ -43,6 +47,7 @@ void main() {
     late SeguimosCubit seguimosCubit;
     late BenchOfferCubit benchOfferCubit;
     late WaitingCubit waitingCubit;
+    late CuadernoCardCubit cuadernoCardCubit;
     late RondaRepository rondaRepository;
     late ContactRepository contactRepository;
 
@@ -65,6 +70,8 @@ void main() {
       seguimosCubit = _MockSeguimosCubit();
       benchOfferCubit = _MockBenchOfferCubit();
       waitingCubit = _MockWaitingCubit();
+      cuadernoCardCubit = _MockCuadernoCardCubit();
+      when(() => cuadernoCardCubit.state).thenReturn(null);
       when(() => benchOfferCubit.state)
           .thenReturn(const BenchOfferState(status: BenchOfferCardStatus.none));
       when(() => waitingCubit.state)
@@ -94,6 +101,7 @@ void main() {
               BlocProvider.value(value: seguimosCubit),
               BlocProvider.value(value: benchOfferCubit),
               BlocProvider.value(value: waitingCubit),
+              BlocProvider.value(value: cuadernoCardCubit),
             ],
             child: const MyRondaView(uid: MyRondaFixtures.uid),
           ),

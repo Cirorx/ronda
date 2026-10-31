@@ -62,7 +62,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | Package | Layer | Wraps / owns | First issue |
 |---|---|---|---|
 | `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
-| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`, `answer_bench_offer`, `answer_waitlist`) | #13 |
+| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`, `answer_bench_offer`, `answer_waitlist`, and `read_line` and `make_postcard` through `CuadernoApi`, which has no Firestore or Storage client) | #13 |
 | `device_store` | Data | flutter_secure_storage (needs, the terms and answers held until sign-in, and whether "¿Cómo funciona?" was shown); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
@@ -70,6 +70,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | `face_blur` | Data | `image_picker`, ML Kit face detection + `image` pixelation (native only); only it makes a `BlurredPhoto` | #44 |
 | `share_sheet` | Data | share_plus: one file to the phone's share sheet | #44 |
 | `link_opener` | Data | url_launcher: a `mailto:`, `tel:` or `https:` link to the phone's mail app, dialer or browser; the app opens links only through it | #54 |
+| `cuaderno_repository` | Repository | El cuaderno del barrio (#59): lines, the line to bring and deleting it all, over `device_store` only (`cuaderno.{uid}`, no network path); a short voice note → `audio/{uid}/…` → `read_line` (Voice Transcribe, deleted once read) → words; `make_postcard` (the week's lines in the payload, the JPEG in the answer, stored nowhere); the share sheet (over `device_store`, `voice_recorder`, `ronda_api`, `share_sheet`) | #59 |
 | `flyer_repository` | Repository | The "Un mate de más" flyer: blurred photo → `make_mate_flyer` → share (over `face_blur`, `ronda_api`, `share_sheet`); its upload takes only a `BlurredPhoto` | #44 |
 | `auth_repository` | Repository | `FirebaseAuth` passed in from bootstrap; Google's page to make an account, over `link_opener` | #13 |
 | `profile_repository` | Repository | Profile, eligible seat ids (over `ronda_api`); the terms and answers held on the phone until sign-in, and whether "¿Cómo funciona?" was shown (over `device_store`) | #18 |
@@ -194,7 +195,7 @@ pass it everywhere, so nothing lands on another attached device.
 ## Security (from `static-security`)
 - Meta and Baseten keys exist only in Cloud Functions config: `MODEL_API_KEY` and
   `BASETEN_API_KEY` in Secret Manager, bound to the functions that call a model (`extract`,
-  `make_mate_flyer`, and `dispatch` and `run_job` for the organiser agent). They reach the code as
+  `read_line`, `make_postcard`, `make_mate_flyer`, and `dispatch` and `run_job` for the organiser agent). They reach the code as
   environment variables and are never logged. The app ships Firebase's web/app
   config, which is public by design: restrict those API keys to the Firebase APIs and the app ids
   in the Google Cloud console.

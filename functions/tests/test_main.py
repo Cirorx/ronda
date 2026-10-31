@@ -764,3 +764,119 @@ class TestWeeklyLoopCodeJobs:
         with pytest.raises(https_fn.HttpsError) as excinfo:
             call(main.set_buddy, self.JORGE, {**data, "buddyUid": "demo-102"})
         assert error_code(excinfo) == https_fn.FunctionsErrorCode.INVALID_ARGUMENT
+
+
+class TestReadLine:
+    @pytest.fixture
+    def reads(self, monkeypatch):
+        import cuaderno
+
+        db = FakeFirestore({"users/demo-001": {"terms": {"version": "2026-10-27"}}})
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setattr(main, "_bucket", lambda: SimpleNamespace(blob=lambda path: path))
+        monkeypatch.setenv("MODEL_API_KEY", "test-key")
+        seen: dict = {}
+
+        def read(**kwargs):
+            seen.update(kwargs)
+            if error := seen.get("raise"):
+                raise error
+            return {"text": "El jacarandá floreció."}
+
+        monkeypatch.setattr(cuaderno, "read_line", read)
+        return seen
+
+    def test_refuses_a_signed_out_caller(self, reads):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.read_line, None, {"path": NOTE_PATH})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+
+    def test_reads_the_callers_note_with_their_user_document(self, reads):
+        assert call(main.read_line, MEMBER, {"path": NOTE_PATH}) == {
+            "text": "El jacarandá floreció."
+        }
+        assert reads["uid"] == "demo-001"
+        assert reads["path"] == NOTE_PATH
+        assert reads["user"] == {"terms": {"version": "2026-10-27"}}
+        assert reads["blob"](NOTE_PATH) == NOTE_PATH
+        assert reads["api_key"] == "test-key"
+
+    def test_passes_no_path_when_the_data_is_not_a_map(self, reads):
+        call(main.read_line, MEMBER, "audio/demo-001/note-1.wav")
+        assert reads["path"] is None
+
+    @pytest.mark.parametrize(
+        ("error", "code"),
+        [
+            ("TermsMissing", https_fn.FunctionsErrorCode.FAILED_PRECONDITION),
+            ("BadVoiceNote", https_fn.FunctionsErrorCode.INVALID_ARGUMENT),
+            ("PermissionError", https_fn.FunctionsErrorCode.PERMISSION_DENIED),
+            ("NotFound", https_fn.FunctionsErrorCode.NOT_FOUND),
+            ("ModelUnavailable", https_fn.FunctionsErrorCode.UNAVAILABLE),
+        ],
+    )
+    def test_maps_each_failure_to_its_code(self, reads, error, code):
+        from google.api_core.exceptions import NotFound
+
+        import voice_signup
+
+        reads["raise"] = {
+            "TermsMissing": voice_signup.TermsMissing("demo-001"),
+            "BadVoiceNote": voice_signup.BadVoiceNote("x"),
+            "PermissionError": PermissionError("x"),
+            "NotFound": NotFound("x"),
+            "ModelUnavailable": voice_signup.ModelUnavailable("x"),
+        }[error]
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.read_line, MEMBER, {"path": NOTE_PATH})
+        assert error_code(excinfo) == code
+
+
+class TestMakePostcard:
+    @pytest.fixture
+    def made(self, monkeypatch):
+        import openai
+
+        import cuaderno
+
+        db = FakeFirestore({"users/demo-001": {"terms": {"version": "2026-10-27"}}})
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setenv("MODEL_API_KEY", "test-key")
+        monkeypatch.setattr(openai, "OpenAI", lambda **kwargs: ("client", kwargs))
+        seen: dict = {}
+
+        def make(**kwargs):
+            seen.update(kwargs)
+            if error := seen.get("raise"):
+                raise error
+            return {"image": "aW1n", "mimeType": "image/jpeg"}
+
+        monkeypatch.setattr(cuaderno, "make_postcard", make)
+        return seen
+
+    def test_refuses_a_signed_out_caller(self, made):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.make_postcard, None, {"lines": ["x"]})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+        assert "uid" not in made
+
+    def test_draws_from_the_payload_with_no_bucket_to_keep_it_in(self, made):
+        data = {"lines": ["El jacarandá floreció."]}
+
+        assert call(main.make_postcard, MEMBER, data) == {"image": "aW1n", "mimeType": "image/jpeg"}
+        assert made["uid"] == "demo-001"
+        assert made["data"] == data
+        assert made["user"] == {"terms": {"version": "2026-10-27"}}
+        assert made["client"][1]["api_key"] == "test-key"
+        assert made["painter"]._api_key == "test-key"
+        assert set(made) == {"uid", "data", "user", "client", "painter"}
+
+    def test_maps_a_postcard_error_to_its_code(self, made):
+        import cuaderno
+
+        made["raise"] = cuaderno.PostcardError("failed-precondition", "nothing to draw")
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.make_postcard, MEMBER, {})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.FAILED_PRECONDITION

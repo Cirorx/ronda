@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:cuaderno_repository/cuaderno_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:push_repository/push_repository.dart';
 import 'package:ronda/acta/acta.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/buddy/buddy.dart';
+import 'package:ronda/cuaderno/cuaderno.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/bench_offer_cubit.dart';
 import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
@@ -74,6 +76,16 @@ class const MyRondaPage({super.key}) extends StatelessWidget {
             uid: uid,
             rondaRepository: context.read<RondaRepository>(),
           )..subscribe(),
+        ),
+        BlocProvider(
+          create: (context) {
+            final cubit = CuadernoCardCubit(
+              uid: uid,
+              cuadernoRepository: context.read<CuadernoRepository>(),
+            );
+            unawaited(cubit.started());
+            return cubit;
+          },
         ),
         BlocProvider(
           create: (context) => WaitingCubit(
@@ -149,10 +161,13 @@ class const MyRondaView({required final String uid, super.key})
               state: state,
               uid: uid,
               showWhoIsGoing: !wide,
+              reminder: const BringReminder(),
             ),
           },
         ),
       ),
+      SizedBox(height: spacing.md),
+      const CuadernoEntryCard(),
     ];
     // The ronda's context: on a phone under the card, on a desktop beside it.
     final aside = <Widget>[

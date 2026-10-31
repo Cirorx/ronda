@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:contact_repository/contact_repository.dart';
+import 'package:cuaderno_repository/cuaderno_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:push_repository/push_repository.dart';
 import 'package:ronda/acta/acta.dart';
 import 'package:ronda/app/app.dart';
+import 'package:ronda/cuaderno/cuaderno.dart';
 import 'package:ronda/my_ronda/cubit/bench_offer_cubit.dart';
 import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
 import 'package:ronda/my_ronda/cubit/this_week_cubit.dart';
@@ -34,6 +36,8 @@ class _MockRondaRepository extends Mock implements RondaRepository;
 
 class _MockContactRepository extends Mock implements ContactRepository;
 
+class _MockCuadernoRepository extends Mock implements CuadernoRepository;
+
 class _MockPushCubit extends MockCubit<PushState> implements PushCubit;
 
 class _MockThisWeekCubit extends MockCubit<ThisWeekState>
@@ -47,14 +51,23 @@ class _MockBenchOfferCubit extends MockCubit<BenchOfferState>
 
 class _MockWaitingCubit extends MockCubit<WaitingState> implements WaitingCubit;
 
+class _MockCuadernoCardCubit extends MockCubit<String?>
+    implements CuadernoCardCubit;
+
 void main() {
   group(MyRondaPage, () {
     late AppBloc appBloc;
     late PushRepository pushRepository;
     late RondaRepository rondaRepository;
+    late CuadernoRepository cuadernoRepository;
 
     setUp(() {
       appBloc = _MockAppBloc();
+      cuadernoRepository = _MockCuadernoRepository();
+      when(() => cuadernoRepository.changes)
+          .thenAnswer((_) => const Stream<void>.empty());
+      when(() => cuadernoRepository.read(MyRondaFixtures.uid))
+          .thenAnswer((_) async => Cuaderno.empty);
       pushRepository = _MockPushRepository();
       rondaRepository = _MockRondaRepository();
       when(() => appBloc.state).thenReturn(
@@ -83,6 +96,9 @@ void main() {
           providers: [
             RepositoryProvider.value(value: pushRepository),
             RepositoryProvider.value(value: rondaRepository),
+            RepositoryProvider<CuadernoRepository>.value(
+              value: cuadernoRepository,
+            ),
           ],
           child: BlocProvider.value(value: appBloc, child: const MyRondaPage()),
         ),
@@ -122,6 +138,7 @@ void main() {
     late SeguimosCubit seguimosCubit;
     late BenchOfferCubit benchOfferCubit;
     late WaitingCubit waitingCubit;
+    late CuadernoCardCubit cuadernoCardCubit;
     late RondaRepository rondaRepository;
     late ContactRepository contactRepository;
 
@@ -139,6 +156,8 @@ void main() {
       seguimosCubit = _MockSeguimosCubit();
       benchOfferCubit = _MockBenchOfferCubit();
       waitingCubit = _MockWaitingCubit();
+      cuadernoCardCubit = _MockCuadernoCardCubit();
+      when(() => cuadernoCardCubit.state).thenReturn(null);
       when(() => benchOfferCubit.state)
           .thenReturn(const BenchOfferState(status: BenchOfferCardStatus.none));
       when(() => waitingCubit.state)
@@ -169,6 +188,7 @@ void main() {
                   BlocProvider.value(value: seguimosCubit),
                   BlocProvider.value(value: benchOfferCubit),
                   BlocProvider.value(value: waitingCubit),
+                  BlocProvider.value(value: cuadernoCardCubit),
                 ],
                 child: const MyRondaView(uid: MyRondaFixtures.uid),
               ),

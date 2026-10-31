@@ -38,6 +38,10 @@ issues, docs, code, commit messages.
 | `AgentRun` | (admin only) | One run of the organiser agent; its steps are the trace, each labelled with who decided it (`by`: code, model or person) |
 | `Gate` | (none) | A rule in code that every outgoing message passes (quiet hours, no emoji, voseo, no money, bot disclosure, one routine push a week) |
 | `Walkthrough` | ¿Cómo funciona? | The three cards a signed-out person sees before the welcome doors on a phone's first open (`/como-funciona`); `walkthroughSeen` is whether this phone has shown them |
+| `Cuaderno` | el cuaderno del barrio | The member's private noticing log: one line a day about what they saw in the barrio, kept only on the phone (`device_store`, `cuaderno.{uid}`); never a mood log, a streak or a count |
+| `CuadernoEntry` | línea ("¿Qué viste hoy?") | One line of the cuaderno, at most one a day; typed, or said and read back by Voice Transcribe before it is written |
+| `Postcard` | postal de la semana | The picture Muse Image draws, on the day before the meeting, from a week's lines: objects and places, never people. Held in memory, saved through the share sheet, stored nowhere by the server |
+| `Bring` (a line) | Llevar esta línea | The one line a member picks to see on their own card as a reminder; not shared with the ronda |
 | `Flyer` | volante | Paper growth: the tear-off flyer and "Hay un mate de más" |
 | `Cerca` | cerca tuyo | The public no-login page of open seats and waitlists by barrio |
 | `ClientError` | (admin only: "Errores de la app") | One scrubbed error report from the app: where (screen, step), what (code, first line, stack) and when, never who beyond a hashed uid. Web reports land in `client_errors`; Android and iOS go to Crashlytics |
