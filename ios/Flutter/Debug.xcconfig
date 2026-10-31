@@ -1,3 +1,7 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug-production.xcconfig"
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug-development.xcconfig"
 #include "Generated.xcconfig"
+// ML Kit ships no arm64 simulator slice, so its pods exclude arm64 on the simulator, and
+// Generated.xcconfig (above) would put it back. Keep this after that include
+// (docs/STACK.md, iOS build).
+EXCLUDED_ARCHS[sdk=iphonesimulator*] = i386 arm64

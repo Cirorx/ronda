@@ -787,6 +787,24 @@ What feeds it:
   lock, the `[CP]` phases and the Pods includes. Firebase (SPM) and ML Kit (Pods) each bring
   their own GoogleUtilities, GoogleDataTransport, nanopb and Promises; the Pods are dynamic
   frameworks, so it links, but the console may print "implemented in both" warnings.
+- **Simulator builds are x86_64 only.** ML Kit's binaries have no arm64 simulator slice, so its
+  pods (and `Pods-Runner.*.xcconfig`) exclude arm64 on the simulator. Flutter is meant to notice
+  and write the same exclusion into `Generated.xcconfig`, but it probes `Pods.xcodeproj` in its
+  default `Release` configuration, which in a flavored project has no Pods xcconfig behind it, so
+  it sees nothing and writes `EXCLUDED_ARCHS[sdk=iphonesimulator*]=i386`. Included after the Pods
+  xcconfigs, that line won: Runner built arm64 and x86_64 while `Pods-Runner` could build only
+  x86_64, Xcode dropped `Pods-Runner` from the dependency graph, and the debug simulator build
+  failed with "Framework 'Pods_Runner' not found" (device builds never exclude arm64, so release
+  kept working). `ios/Flutter/Debug.xcconfig` and `Release.xcconfig` now set
+  `EXCLUDED_ARCHS[sdk=iphonesimulator*] = i386 arm64` after `#include "Generated.xcconfig"`;
+  keep it last. The simulator runs the app under Rosetta (checked 2026-10-31, iPhone 17 Pro,
+  iOS 26.5). Drop the line with the Podfile once ML Kit ships a Swift package or an arm64
+  simulator slice.
+- **`pod install` needs a UTF-8 locale.** CocoaPods 1.16.2 on the system Ruby crashes without
+  one: run `cd ios && LANG=en_US.UTF-8 pod install` (after `flutter pub get`, which writes
+  `Generated.xcconfig`), and prefix `flutter build ios` the same way. A fresh worktree also lacks
+  the git-ignored `lib/firebase_options_*.dart` and `ios/config/`; copy them from the main
+  checkout before building.
 - **dSYMs:** the Runner target's last build phase, *Upload Crashlytics dSYMs*, runs
   `"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run" -gsp
   "${PROJECT_DIR}/config/production/GoogleService-Info.plist"` (that path works both in Xcode
