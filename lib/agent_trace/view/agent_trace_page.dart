@@ -26,7 +26,8 @@ class const AgentTracePage({super.key}) extends StatelessWidget {
 }
 
 /// The runs, newest first, the selected run's steps as they land, and the
-/// rain check by hand, a commit felt as one ([RondaHaptics]). Choosing
+/// rain check by hand, a commit felt as one ([RondaHaptics]). On a
+/// desktop window the selected run's steps stand beside the list. Choosing
 /// another run swaps its steps in ([RondaSwap]); steps landing in the same
 /// run simply appear.
 class const AgentTraceView({super.key}) extends StatelessWidget {
@@ -99,98 +100,114 @@ class const _Trace(final AgentTraceState state) extends StatelessWidget {
     final running = state.rainCheck == RainCheckStatus.running;
     final run = state.selectedRun;
 
-    return ListView(
-      padding: EdgeInsetsDirectional.symmetric(
-        horizontal: spacing.lg,
-        vertical: spacing.md,
-      ),
-      children: [
-        Text(l10n.traceBody, style: textTheme.bodyLarge),
-        SizedBox(height: spacing.md),
-        Wrap(
-          spacing: spacing.sm,
-          runSpacing: spacing.sm,
-          children: [
-            _Button(
-              identifier: AgentTraceView.runIdentifier,
-              label: running ? l10n.traceRunning : l10n.traceRun,
-              onPressed: RondaHaptics.onCommit(
-                running ? null : cubit.rainCheckTapped,
-              ),
-              filled: true,
-            ),
-            _Button(
-              identifier: AgentTraceView.runAtNightIdentifier,
-              label: l10n.traceRunAtNight,
-              onPressed: RondaHaptics.onCommit(
-                running ? null : () => cubit.rainCheckTapped(atNight: true),
-              ),
-              filled: false,
-            ),
-          ],
-        ),
-        if (state.rainCheck == RainCheckStatus.failed) ...[
-          SizedBox(height: spacing.sm),
-          NoteBanner(
-            variant: NoteBannerVariant.warning,
-            message: l10n.adminActionError,
-          ),
-        ],
-        if (state.result case final result?
-            when state.rainCheck == RainCheckStatus.done) ...[
-          SizedBox(height: spacing.sm),
-          Semantics(
-            container: true,
-            liveRegion: true,
-            child: Text(
-              [
-                l10n.traceRunResult(result.checked),
-                if (result.failed > 0) l10n.traceRunFailed(result.failed),
-              ].join(' '),
-              style: textTheme.bodyMedium,
-            ),
-          ),
-        ],
-        // Set apart by space and a title rather than a rule.
-        SizedBox(height: spacing.xlg),
-        Semantics(
-          header: true,
-          child: Text(l10n.traceRunsTitle, style: textTheme.titleMedium),
-        ),
-        SizedBox(height: spacing.xs),
-        if (state.runs.isEmpty)
-          Text(l10n.traceEmpty, style: textTheme.bodyLarge)
-        else ...[
-          ChipPicker(
-            identifier: AgentTraceView.runsIdentifier,
-            multiSelect: false,
-            options: [
-              for (final each in state.runs)
-                ChipPickerOption(
-                  value: each.id,
-                  label: [
-                    l10n.traceRunLabel(
-                      each.week,
-                      _when(context, each.startedAt),
-                    ),
-                    _status(l10n, each.status),
-                  ].join(' · '),
-                ),
-            ],
-            selected: {?state.selectedRunId},
-            onChanged: (chosen) => cubit.runTapped(chosen.single),
-          ),
-          SizedBox(height: spacing.md),
-          RondaSwap(
-            layoutBuilder: _topStart,
-            child: run == null
-                ? const SizedBox.shrink()
-                : _Run(key: ValueKey(run.id), run: run, state: state),
-          ),
-        ],
-      ],
+    // On a desktop window the selected run's trace stands beside the list.
+    final beside = context.windowSize == WindowSize.expanded;
+    final padding = EdgeInsetsDirectional.symmetric(
+      horizontal: spacing.lg,
+      vertical: spacing.md,
     );
+    final trace = RondaSwap(
+      layoutBuilder: _topStart,
+      child: run == null
+          ? const SizedBox.shrink()
+          : _Run(key: ValueKey(run.id), run: run, state: state),
+    );
+    final children = [
+      Text(l10n.traceBody, style: textTheme.bodyLarge),
+      SizedBox(height: spacing.md),
+      Wrap(
+        spacing: spacing.sm,
+        runSpacing: spacing.sm,
+        children: [
+          _Button(
+            identifier: AgentTraceView.runIdentifier,
+            label: running ? l10n.traceRunning : l10n.traceRun,
+            onPressed: RondaHaptics.onCommit(
+              running ? null : cubit.rainCheckTapped,
+            ),
+            filled: true,
+          ),
+          _Button(
+            identifier: AgentTraceView.runAtNightIdentifier,
+            label: l10n.traceRunAtNight,
+            onPressed: RondaHaptics.onCommit(
+              running ? null : () => cubit.rainCheckTapped(atNight: true),
+            ),
+            filled: false,
+          ),
+        ],
+      ),
+      if (state.rainCheck == RainCheckStatus.failed) ...[
+        SizedBox(height: spacing.sm),
+        NoteBanner(
+          variant: NoteBannerVariant.warning,
+          message: l10n.adminActionError,
+        ),
+      ],
+      if (state.result case final result?
+          when state.rainCheck == RainCheckStatus.done) ...[
+        SizedBox(height: spacing.sm),
+        Semantics(
+          container: true,
+          liveRegion: true,
+          child: Text(
+            [
+              l10n.traceRunResult(result.checked),
+              if (result.failed > 0) l10n.traceRunFailed(result.failed),
+            ].join(' '),
+            style: textTheme.bodyMedium,
+          ),
+        ),
+      ],
+      // Set apart by space and a title rather than a rule.
+      SizedBox(height: spacing.xlg),
+      Semantics(
+        header: true,
+        child: Text(l10n.traceRunsTitle, style: textTheme.titleMedium),
+      ),
+      SizedBox(height: spacing.xs),
+      if (state.runs.isEmpty)
+        Text(l10n.traceEmpty, style: textTheme.bodyLarge)
+      else ...[
+        ChipPicker(
+          identifier: AgentTraceView.runsIdentifier,
+          multiSelect: false,
+          options: [
+            for (final each in state.runs)
+              ChipPickerOption(
+                value: each.id,
+                label: [
+                  l10n.traceRunLabel(each.week, _when(context, each.startedAt)),
+                  _status(l10n, each.status),
+                ].join(' · '),
+              ),
+          ],
+          selected: {?state.selectedRunId},
+          onChanged: (chosen) => cubit.runTapped(chosen.single),
+        ),
+        if (!beside) ...[SizedBox(height: spacing.md), trace],
+      ],
+    ];
+
+    return switch (context.windowSize) {
+      WindowSize.compact => ListView(padding: padding, children: children),
+      WindowSize.medium => ReadableColumn(
+        child: ListView(padding: padding, children: children),
+      ),
+      WindowSize.expanded => PaperColumns(
+        mainWidth: runsWidth,
+        sideWidth: WindowSize.readableWidth,
+        main: ListView(padding: padding, children: children),
+        side: ListView(
+          padding: EdgeInsetsDirectional.symmetric(vertical: spacing.md),
+          children: [trace],
+        ),
+      ),
+    };
   }
+
+  /// The run list's width beside the trace on a desktop window.
+  static const double runsWidth = 440;
 
   static String _when(BuildContext context, DateTime at) =>
       '${MaterialLocalizations.of(context).formatShortMonthDay(at.toLocal())} '

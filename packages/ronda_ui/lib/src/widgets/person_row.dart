@@ -6,7 +6,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 ///
 /// People are initials, never photos. The ruled sheet's margin line runs
 /// between the initial and the text, so stacked rows read as one planilla.
-/// With large text the initial and the line drop out and only the words stay.
+/// A [trailing] decoration (the objects they bring, [RondaObjectIcon]) can
+/// close the row. With large text the initial, the line and the trailing
+/// decoration drop out and only the words stay.
 /// The row is read as one item.
 /// {@endtemplate}
 class const PersonRow({
@@ -24,6 +26,10 @@ class const PersonRow({
 
   /// Whether a divider runs under the row. Off for the last one.
   final bool showDivider = true,
+
+  /// Decoration at the end of the row, such as the objects they bring;
+  /// screen readers skip it, since [detail] says it in words.
+  final Widget? trailing,
   super.key,
 }) extends StatelessWidget {
   /// {@macro person_row}
@@ -105,6 +111,11 @@ class const PersonRow({
                 ),
               ),
             ),
+            if (trailing case final trailing?)
+              Padding(
+                padding: EdgeInsetsDirectional.only(start: spacing.sm),
+                child: Center(child: ExcludeSemantics(child: trailing)),
+              ),
           ],
         ),
       );

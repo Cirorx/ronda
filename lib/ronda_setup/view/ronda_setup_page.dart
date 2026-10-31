@@ -60,7 +60,10 @@ class const RondaSetupView({super.key}) extends StatelessWidget {
               child: Text(l10n.adminRetry),
             ),
           ),
-          RondaSetupStatus.ready => _Rondas(state.rondas),
+          // Wider than a phone, the cards keep to a readable column.
+          RondaSetupStatus.ready => ReadableColumn(
+            child: _Rondas(state.rondas),
+          ),
         },
       ),
     );

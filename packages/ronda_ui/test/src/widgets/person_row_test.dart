@@ -20,6 +20,41 @@ void main() {
     }
 
     group('renders', () {
+      testWidgets('a trailing decoration, out of semantics', (tester) async {
+        await tester.pumpApp(
+          const PersonRow(
+            initial: 'R',
+            name: 'Raúl',
+            detail: 'Termo',
+            trailing: RondaObjectIcon(RondaObject.termo),
+          ),
+        );
+
+        expect(find.byType(RondaObjectIcon), findsOneWidget);
+        expect(
+          tester.getRect(find.byType(RondaObjectIcon)).left,
+          greaterThan(tester.getRect(find.text('Termo')).right),
+        );
+        expect(
+          tester.getSemantics(find.text('Raúl')),
+          isSemantics(label: 'Raúl\nTermo'),
+        );
+      });
+
+      testWidgets('no trailing decoration with large text', (tester) async {
+        await tester.pumpApp(
+          const PersonRow(
+            initial: 'R',
+            name: 'Raúl',
+            detail: 'Termo',
+            trailing: RondaObjectIcon(RondaObject.termo),
+          ),
+          textScale: 2,
+        );
+
+        expect(find.byType(RondaObjectIcon), findsNothing);
+      });
+
       testWidgets('the initial, the name and the detail', (tester) async {
         await tester.pumpApp(buildSubject());
 

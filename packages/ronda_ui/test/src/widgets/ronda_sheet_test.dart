@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -92,6 +93,55 @@ void main() {
       }
       await gesture.up(timeStamp: time + stepTime);
     }
+
+    group('from a keyboard', () {
+      testWidgets('closes on Escape', (tester) async {
+        await open(tester);
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(contentKey), findsNothing);
+        expect(await result, isNull);
+      });
+
+      testWidgets('stays open on Escape when not dismissible', (tester) async {
+        await open(tester, isDismissible: false);
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(contentKey), findsOneWidget);
+      });
+
+      testWidgets('keeps focus inside and presses on Enter', (tester) async {
+        await open(tester);
+
+        bool focusedOn(String label) => find
+            .descendant(
+              of: find.byWidget(
+                FocusManager.instance.primaryFocus!.context!.widget,
+              ),
+              matching: find.text(label),
+            )
+            .evaluate()
+            .isNotEmpty;
+
+        var tabs = 0;
+        do {
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pump();
+          expect(focusedOn('Abrir'), isFalse);
+          tabs++;
+        } while (!focusedOn('Listo') && tabs < 4);
+        expect(focusedOn('Listo'), isTrue);
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+
+        expect(await result, 'listo');
+      });
+    });
 
     group('opens', () {
       testWidgets('over a scrim, resting on the bottom edge', (tester) async {

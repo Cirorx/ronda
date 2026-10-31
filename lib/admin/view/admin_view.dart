@@ -11,7 +11,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// approved, "Aprobado. Les llega el martes a las 19." with Deshacer, the
 /// one swapping for the other. Under it, spaced and titled rather than
 /// ruled off, "El ¿Venís? de esta semana", "¿Seguimos?" and the pilot's
-/// numbers. Aprobar, Deshacer and "Armar las rondas" are commits, felt as
+/// numbers. Wider than a phone it keeps to a readable column; on a
+/// desktop window who the proposal leaves out stands beside it. Aprobar,
+/// Deshacer and "Armar las rondas" are commits, felt as
 /// one ([RondaHaptics]).
 class const AdminView({super.key}) extends StatelessWidget {
   /// Maestro's handles on the screen's buttons.
@@ -97,94 +99,107 @@ class const _Proposal(final ProposalsState state) extends StatelessWidget {
       filled: proposal == null,
     );
 
-    return ListView(
-      padding: EdgeInsetsDirectional.symmetric(
-        horizontal: spacing.lg,
-        vertical: spacing.md,
-      ),
-      children: [
-        if (state.actionFailed) ...[
-          NoteBanner(
-            variant: NoteBannerVariant.warning,
-            message: l10n.adminActionError,
-          ),
-          SizedBox(height: spacing.md),
-        ],
-        if (proposal == null) ...[
-          Text(l10n.adminEmpty, style: theme.textTheme.bodyLarge),
-          SizedBox(height: spacing.lg),
-          propose,
-        ] else ...[
-          RondaSwap(
-            layoutBuilder: _topStart,
-            child: pending
-                ? NoteBanner(
-                    key: const ValueKey(ProposalStatus.pending),
-                    message: l10n.adminNobodyYet,
-                  )
-                : Column(
-                    key: const ValueKey(ProposalStatus.approved),
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: spacing.xs,
-                    children: [
-                      NoteBanner(
-                        variant: NoteBannerVariant.keptOnPhone,
-                        message: l10n.adminApproved,
-                      ),
-                      _Button(
-                        identifier: AdminView.undoIdentifier,
-                        label: l10n.adminUndo,
-                        onPressed: RondaHaptics.onCommit(
-                          state.busy ? null : cubit.undo,
-                        ),
-                        filled: false,
-                      ),
-                    ],
-                  ),
-          ),
-          SizedBox(height: spacing.md),
-          for (final ronda in proposal.rondas) ...[
-            AdminProposalCard(ronda: ronda),
-            SizedBox(height: spacing.sm),
-          ],
-          UnseatedList(proposal: proposal),
-          if (proposal.rejectedReason case final reason?) ...[
-            SizedBox(height: spacing.lg),
-            Semantics(
-              header: true,
-              child: Text(
-                l10n.adminWhyNotOther,
-                style: theme.textTheme.titleMedium,
-              ),
-            ),
-            SizedBox(height: spacing.xxs),
-            // The solver's own es-419 sentence: the admin reads Spanish.
-            Text(reason, style: theme.textTheme.bodyLarge),
-          ],
-          SizedBox(height: spacing.lg),
-          if (pending && proposal.rondas.isNotEmpty) ...[
-            _Button(
-              identifier: AdminView.approveIdentifier,
-              label: l10n.adminApprove,
-              onPressed: RondaHaptics.onCommit(
-                state.busy ? null : cubit.approve,
-              ),
-              filled: true,
-            ),
-            SizedBox(height: spacing.sm),
-          ],
-          if (pending) propose,
-        ],
-        // Sections are set apart by space and their own titles; the only
-        // rules on this screen are the planilla's, between people.
-        SizedBox(height: spacing.xlg),
-        const RsvpPushSection(),
-        SizedBox(height: spacing.xlg),
-        const SeguimosCountsSection(),
-        SizedBox(height: spacing.xlg),
-        const PilotNumbersSection(),
-      ],
+    // On a desktop window the left-out list stands beside the proposal.
+    final beside =
+        context.windowSize == WindowSize.expanded && proposal != null;
+    final padding = EdgeInsetsDirectional.symmetric(
+      horizontal: spacing.lg,
+      vertical: spacing.md,
     );
+    final children = [
+      if (state.actionFailed) ...[
+        NoteBanner(
+          variant: NoteBannerVariant.warning,
+          message: l10n.adminActionError,
+        ),
+        SizedBox(height: spacing.md),
+      ],
+      if (proposal == null) ...[
+        Text(l10n.adminEmpty, style: theme.textTheme.bodyLarge),
+        SizedBox(height: spacing.lg),
+        propose,
+      ] else ...[
+        RondaSwap(
+          layoutBuilder: _topStart,
+          child: pending
+              ? NoteBanner(
+                  key: const ValueKey(ProposalStatus.pending),
+                  message: l10n.adminNobodyYet,
+                )
+              : Column(
+                  key: const ValueKey(ProposalStatus.approved),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: spacing.xs,
+                  children: [
+                    NoteBanner(
+                      variant: NoteBannerVariant.keptOnPhone,
+                      message: l10n.adminApproved,
+                    ),
+                    _Button(
+                      identifier: AdminView.undoIdentifier,
+                      label: l10n.adminUndo,
+                      onPressed: RondaHaptics.onCommit(
+                        state.busy ? null : cubit.undo,
+                      ),
+                      filled: false,
+                    ),
+                  ],
+                ),
+        ),
+        SizedBox(height: spacing.md),
+        for (final ronda in proposal.rondas) ...[
+          AdminProposalCard(ronda: ronda),
+          SizedBox(height: spacing.sm),
+        ],
+        if (!beside) UnseatedList(proposal: proposal),
+        if (proposal.rejectedReason case final reason?) ...[
+          SizedBox(height: spacing.lg),
+          Semantics(
+            header: true,
+            child: Text(
+              l10n.adminWhyNotOther,
+              style: theme.textTheme.titleMedium,
+            ),
+          ),
+          SizedBox(height: spacing.xxs),
+          // The solver's own es-419 sentence: the admin reads Spanish.
+          Text(reason, style: theme.textTheme.bodyLarge),
+        ],
+        SizedBox(height: spacing.lg),
+        if (pending && proposal.rondas.isNotEmpty) ...[
+          _Button(
+            identifier: AdminView.approveIdentifier,
+            label: l10n.adminApprove,
+            onPressed: RondaHaptics.onCommit(state.busy ? null : cubit.approve),
+            filled: true,
+          ),
+          SizedBox(height: spacing.sm),
+        ],
+        if (pending) propose,
+      ],
+      // Sections are set apart by space and their own titles; the only
+      // rules on this screen are the planilla's, between people.
+      SizedBox(height: spacing.xlg),
+      const RsvpPushSection(),
+      SizedBox(height: spacing.xlg),
+      const SeguimosCountsSection(),
+      SizedBox(height: spacing.xlg),
+      const PilotNumbersSection(),
+    ];
+
+    return switch (context.windowSize) {
+      WindowSize.compact => ListView(padding: padding, children: children),
+      _ when beside => PaperColumns(
+        main: ListView(padding: padding, children: children),
+        side: ListView(
+          padding: EdgeInsetsDirectional.symmetric(vertical: spacing.md),
+          children: [UnseatedList(proposal: proposal)],
+        ),
+      ),
+      _ => ReadableColumn(
+        child: ListView(padding: padding, children: children),
+      ),
+    };
   }
 }
 

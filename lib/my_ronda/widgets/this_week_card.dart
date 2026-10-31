@@ -5,6 +5,7 @@ import 'package:ronda/my_ronda/cubit/this_week_cubit.dart';
 import 'package:ronda/my_ronda/widgets/despues_section.dart';
 import 'package:ronda/my_ronda/widgets/handoff_ask.dart';
 import 'package:ronda/my_ronda/widgets/this_week_labels.dart';
+import 'package:ronda/my_ronda/widgets/who_is_going.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -22,6 +23,10 @@ import 'package:ronda_ui/ronda_ui.dart';
 class const ThisWeekCard({
   required final ThisWeekState state,
   required final String uid,
+
+  /// Whether "Quiénes van" is on the card; a desktop window shows it beside
+  /// the card instead.
+  final bool showWhoIsGoing = true,
   super.key,
 }) extends StatelessWidget {
   /// Maestro's handles: the card, the RsvpBar's prefix (`rsvp.yes`,
@@ -128,7 +133,8 @@ class const ThisWeekCard({
                 layoutBuilder: RondaSwap.topStartLayout,
                 child: KeyedSubtree(key: answerKey, child: answer),
               ),
-              if (week.week != null) ..._coming(context, week),
+              if (week.week != null && showWhoIsGoing)
+                WhoIsGoing(week: week, uid: uid),
               if (week.week case final meeting?
                   when uid == week.anfitrion?.uid || uid == week.cola?.uid)
                 RollLink(rondaId: week.rondaId, week: meeting),
@@ -136,117 +142,6 @@ class const ThisWeekCard({
           ),
         ),
       ),
-    );
-  }
-
-  List<Widget> _coming(BuildContext context, ThisWeek week) {
-    final l10n = context.l10n;
-    final textTheme = Theme.of(context).textTheme;
-    final counts = l10n.counts(
-      week,
-      answered: week.myAnswer != null || week.pausedUntil != null,
-    );
-    return [
-      Semantics(
-        header: true,
-        child: Text(l10n.thisWeekWhoTitle, style: textTheme.titleSmall),
-      ),
-      if (week.going.isNotEmpty) _Going(week: week, uid: uid),
-      RondaSwap(
-        layoutBuilder: RondaSwap.topStartLayout,
-        child: Text(counts, key: ValueKey(counts), style: textTheme.bodyMedium),
-      ),
-    ];
-  }
-}
-
-/// "Quiénes van": a row per yes. Someone who joins while the card is up
-/// grows into the list ([_Arriving]); the rows there from the start don't
-/// move.
-class const _Going({required final ThisWeek week, required final String uid})
-    extends StatefulWidget {
-  @override
-  State<_Going> createState() => _GoingState();
-}
-
-class _GoingState extends State<_Going> {
-  Set<String> _arriving = const {};
-
-  @override
-  void didUpdateWidget(_Going oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final before = {for (final person in oldWidget.week.going) person.uid};
-    _arriving = {
-      for (final person in widget.week.going)
-        if (!before.contains(person.uid)) person.uid,
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final week = widget.week;
-    return Column(
-      children: [
-        for (final (index, person) in week.going.indexed)
-          _Arriving(
-            key: ValueKey(person.uid),
-            arriving: _arriving.contains(person.uid),
-            child: PersonRow(
-              initial: person.firstName.isEmpty
-                  ? '?'
-                  : person.firstName.characters.first.toUpperCase(),
-              name: person.uid == widget.uid
-                  ? l10n.thisWeekYou
-                  : person.firstName,
-              detail: l10n.roleAndBrings(week, person),
-              isYou: person.uid == widget.uid,
-              showDivider: index < week.going.length - 1,
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-/// A seat filling: a row that [arriving] opens from nothing to its height
-/// and fades in on the standard spring; any other row is simply there.
-class const _Arriving({
-  required final bool arriving,
-  required final Widget child,
-  super.key,
-}) extends StatefulWidget {
-  @override
-  State<_Arriving> createState() => _ArrivingState();
-}
-
-class _ArrivingState extends State<_Arriving> {
-  late double _shown = widget.arriving ? 0 : 1;
-
-  @override
-  void initState() {
-    super.initState();
-    if (!widget.arriving) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() => _shown = 1);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SpringBuilder(
-      value: _shown,
-      builder: (context, value, child) {
-        final shown = value.clamp(0.0, 1.0);
-        return ClipRect(
-          child: Align(
-            alignment: AlignmentDirectional.topStart,
-            heightFactor: shown,
-            child: Opacity(opacity: shown, child: child),
-          ),
-        );
-      },
-      child: widget.child,
     );
   }
 }

@@ -15,6 +15,7 @@ import 'package:ronda/my_ronda/widgets/esta_no_sheet.dart';
 import 'package:ronda/my_ronda/widgets/seguimos_card.dart';
 import 'package:ronda/my_ronda/widgets/this_week_card.dart';
 import 'package:ronda/my_ronda/widgets/waiting_card.dart';
+import 'package:ronda/my_ronda/widgets/who_is_going.dart';
 import 'package:ronda/push/push.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -26,6 +27,10 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// exists. A member who left at the ¿seguimos? close sees only that card
 /// ("Gracias por venir."). While it reads it says so; each state swaps in
 /// for the last on a [RondaSwap].
+///
+/// Wider than a phone it keeps to a readable column; on a desktop window
+/// the week's card stays in it and "Quiénes van" (with what each brings
+/// drawn), the buddy and the acta's link stand beside it ([PaperColumns]).
 ///
 /// It is where everyone with a profile lands, right after onboarding saves,
 /// so the [PushCubit] it provides also keeps this phone's token saved.
@@ -95,6 +100,68 @@ class const MyRondaView({required final String uid, super.key})
     Widget line(String text) =>
         Text(text, textAlign: TextAlign.center, style: textTheme.bodyLarge);
 
+    final wide = context.windowSize == WindowSize.expanded;
+    // The week shown beside the card on a desktop window.
+    final week = switch (state.week) {
+      final week? when !week.hasLeft && state.status == ThisWeekStatus.ready =>
+        week,
+      _ => null,
+    };
+    final main = <Widget>[
+      const PushPrompt(),
+      SizedBox(height: spacing.lg),
+      const BenchOfferCard(),
+      const SeguimosCard(),
+      RondaSwap(
+        layoutBuilder: RondaSwap.topStartLayout,
+        child: KeyedSubtree(
+          key: ValueKey((state.status, state.week?.hasLeft ?? false)),
+          child: switch (state.status) {
+            ThisWeekStatus.loading => LoadingStatus(l10n.myRondaLoading),
+            ThisWeekStatus.noGroup => Column(
+              spacing: spacing.xs,
+              children: [
+                Semantics(
+                  header: true,
+                  child: Text(
+                    l10n.myRondaNoGroupTitle,
+                    textAlign: TextAlign.center,
+                    style: textTheme.titleMedium,
+                  ),
+                ),
+                line(l10n.myRondaNoGroupBody),
+                const WaitingCard(),
+              ],
+            ),
+            ThisWeekStatus.failure => Column(
+              spacing: spacing.sm,
+              children: [
+                line(l10n.thisWeekLoadError),
+                OutlinedButton(
+                  onPressed: context.read<ThisWeekCubit>().subscribe,
+                  child: Text(l10n.thisWeekRetry),
+                ),
+              ],
+            ),
+            ThisWeekStatus.ready when state.week!.hasLeft =>
+              const SizedBox.shrink(),
+            ThisWeekStatus.ready => ThisWeekCard(
+              state: state,
+              uid: uid,
+              showWhoIsGoing: !wide,
+            ),
+          },
+        ),
+      ),
+    ];
+    // The ronda's context: on a phone under the card, on a desktop beside it.
+    final aside = <Widget>[
+      if (state.week case final week? when !week.hasLeft) ...[
+        BuddySection(rondaId: week.rondaId, uid: uid),
+        ActaLink(rondaId: week.rondaId),
+      ],
+    ];
+
     return BlocListener<ThisWeekCubit, ThisWeekState>(
       listenWhen: (previous, current) =>
           !previous.estaNoSheet && current.estaNoSheet,
@@ -112,61 +179,41 @@ class const MyRondaView({required final String uid, super.key})
         body: Semantics(
           container: true,
           identifier: MyRondaPage.identifier,
-          child: ListView(
-            padding: EdgeInsets.all(spacing.md),
-            children: [
-              const PushPrompt(),
-              SizedBox(height: spacing.lg),
-              const BenchOfferCard(),
-              const SeguimosCard(),
-              RondaSwap(
-                layoutBuilder: RondaSwap.topStartLayout,
-                child: KeyedSubtree(
-                  key: ValueKey((state.status, state.week?.hasLeft ?? false)),
-                  child: switch (state.status) {
-                    ThisWeekStatus.loading => LoadingStatus(
-                      l10n.myRondaLoading,
-                    ),
-                    ThisWeekStatus.noGroup => Column(
-                      spacing: spacing.xs,
-                      children: [
-                        Semantics(
-                          header: true,
-                          child: Text(
-                            l10n.myRondaNoGroupTitle,
-                            textAlign: TextAlign.center,
-                            style: textTheme.titleMedium,
-                          ),
-                        ),
-                        line(l10n.myRondaNoGroupBody),
-                        const WaitingCard(),
-                      ],
-                    ),
-                    ThisWeekStatus.failure => Column(
-                      spacing: spacing.sm,
-                      children: [
-                        line(l10n.thisWeekLoadError),
-                        OutlinedButton(
-                          onPressed: context.read<ThisWeekCubit>().subscribe,
-                          child: Text(l10n.thisWeekRetry),
-                        ),
-                      ],
-                    ),
-                    ThisWeekStatus.ready when state.week!.hasLeft =>
-                      const SizedBox.shrink(),
-                    ThisWeekStatus.ready => ThisWeekCard(
-                      state: state,
-                      uid: uid,
-                    ),
-                  },
-                ),
+          child: switch (context.windowSize) {
+            WindowSize.compact => ListView(
+              padding: EdgeInsets.all(spacing.md),
+              children: [...main, ...aside],
+            ),
+            WindowSize.medium => ReadableColumn(
+              child: ListView(
+                padding: EdgeInsets.all(spacing.md),
+                children: [...main, ...aside],
               ),
-              if (state.week case final week? when !week.hasLeft) ...[
-                BuddySection(rondaId: week.rondaId, uid: uid),
-                ActaLink(rondaId: week.rondaId),
-              ],
-            ],
-          ),
+            ),
+            WindowSize.expanded => PaperColumns(
+              main: ListView(
+                padding: EdgeInsets.all(spacing.md),
+                children: main,
+              ),
+              side: ListView(
+                padding: EdgeInsetsDirectional.symmetric(vertical: spacing.md),
+                children: [
+                  if (week case final week? when week.week != null)
+                    Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(spacing.md),
+                        child: WhoIsGoing(
+                          week: week,
+                          uid: uid,
+                          showObjects: true,
+                        ),
+                      ),
+                    ),
+                  ...aside,
+                ],
+              ),
+            ),
+          },
         ),
       ),
     );
