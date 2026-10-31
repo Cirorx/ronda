@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The launch screen: birome dots on paper, as the app opens. -->
+    <color name="launch_background">#FFFEFA</color>
+    <color name="launch_mark">#2341C0</color>
+</resources>

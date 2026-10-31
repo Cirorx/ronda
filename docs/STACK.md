@@ -572,6 +572,13 @@ localised in `es.lproj/InfoPlist.strings`; deployment target 15.5 (Podfile and p
 collides with the public plain-HTML pages at `/` and `/f/{id}` (§ Pilot builds); ask
 notification permission only from a tap.
 
+**App icon:** five dots in a ring (`tool/icons/ronda_mark.svg`), paper on birome. After changing
+it, `swift tool/icons/render_icons.swift` from the repo root rewrites every raster (Android
+mipmaps and Play Store icons for both flavors, the iOS launch image, the dev icon's corner flag,
+web and Hosting favicons, install and maskable icons) and the iOS `Logo.svg`; the Android vector
+files (`ic_launcher_foreground`, `ic_launcher_monochrome`, `ic_notification`,
+`ic_launch_image`) carry the same circles by hand. The development flavor adds an amber DEV band.
+
 **Needs on the phone:** one JSON blob under the key `needs`, shaped `{"needs":["walkALot","noCar"]}` (the `Need` enum names, so renaming a value loses what phones saved), in flutter_secure_storage with
 `IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device)`. On web it is
 experimental: say "lo sabe solo este navegador".

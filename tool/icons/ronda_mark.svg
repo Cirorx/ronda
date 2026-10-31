@@ -1,0 +1,4 @@
+<!-- Ronda's mark: five neighbours in a ring, the app icon's drawing. Dots at r=2.7 on a 24-unit
+     grid (2.8 at 29 px and smaller, 2.9 at 26 px and smaller). The app icon puts the grid at 66% of
+     a birome #2341C0 tile in paper #FFFEFA; render_icons.swift draws every raster from it. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#2341C0"><circle cx="12" cy="4.6" r="2.7"/><circle cx="19" cy="9.7" r="2.7"/><circle cx="16.3" cy="17.9" r="2.7"/><circle cx="7.7" cy="17.9" r="2.7"/><circle cx="5" cy="9.7" r="2.7"/></svg>

@@ -179,6 +179,20 @@ body {
   letter-spacing: -0.005em;
   text-decoration: none;
   transform-origin: left center;
+  gap: var(--space-2);
+}
+
+/* The app icon at 26 px: the five dots on a birome tile (tool/icons/ronda_mark.svg). */
+.brand-mark {
+  flex: none;
+  box-sizing: border-box;
+  width: 1.625rem;
+  height: 1.625rem;
+  padding: 0.25rem;
+  border-radius: 0.4375rem;
+  /* currentColor, so the tile darkens with the name on hover and press. */
+  background: currentColor;
+  fill: var(--paper);
 }
 
 .page {

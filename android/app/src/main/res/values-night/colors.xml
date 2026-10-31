@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The launch screen at night: paper and birome in their dark values. -->
+    <color name="launch_background">#0E1320</color>
+    <color name="launch_mark">#93A6FF</color>
+</resources>
