@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// {@template app_theme}
@@ -109,12 +110,21 @@ abstract final class AppTheme {
   /// Every theme button's style with press feedback: its shape (fill,
   /// border and ink) and its label shrink to [AppMotion.pressedScale] while
   /// pressed, from touch-down, and come back on release or drag-away.
+  ///
+  /// Inside a scroll view Flutter holds a tap's touch-down back for
+  /// [kPressTimeout] (100 ms) until it knows the touch isn't a scroll, so
+  /// [_PressOnTouchDown] marks the button pressed on the raw touch-down
+  /// itself and lets go if the touch turns into a scroll.
   static ButtonStyle _pressable(ButtonStyle style, OutlinedBorder shape) {
     return style.copyWith(
       shape: WidgetStateProperty.resolveWith(
         (states) => PressedShape.forStates(shape, states),
       ),
       animationDuration: AppMotion.press,
+      backgroundBuilder: (context, states, child) => _PressOnTouchDown(
+        enabled: !states.contains(WidgetState.disabled),
+        child: child!,
+      ),
       foregroundBuilder: (context, states, child) => _PressedLabel(
         pressed: states.contains(WidgetState.pressed),
         child: child,
@@ -336,6 +346,79 @@ class const _PressedLabel({required final bool pressed, final Widget? child})
       duration: RondaMotion.of(context).durationOr(AppMotion.press),
       curve: AppMotion.pressCurve,
       child: child,
+    );
+  }
+}
+
+/// {@template press_on_touch_down}
+/// A theme button's inside, which marks the button pressed the moment a
+/// finger or the primary mouse button goes down on it.
+///
+/// A button's tap waits, inside anything that scrolls, until the gesture
+/// arena knows the touch isn't a scroll: up to [kPressTimeout], and only
+/// then does the button show it is pressed. Apple's rule is to highlight on
+/// touch-down and cancel if the touch turns into a scroll, so this listens
+/// to the raw pointer, as [PressScale] does, and sets
+/// [WidgetState.pressed] on the button's own states controller (the one
+/// its [InkWell] carries). The shape, fill and label respond at once; the
+/// ink ripple still starts when the tap is recognised. It lets go when the
+/// finger lifts, is cancelled or moves further than a touch slop; a tap
+/// that goes through clears the state as usual.
+/// {@endtemplate}
+class _PressOnTouchDown extends StatefulWidget {
+  /// {@macro press_on_touch_down}
+  const new({required this.enabled, required this.child});
+
+  /// Whether the button can be pressed.
+  final bool enabled;
+
+  /// The button's inside.
+  final Widget child;
+
+  @override
+  State<_PressOnTouchDown> createState() => _PressOnTouchDownState();
+}
+
+class _PressOnTouchDownState extends State<_PressOnTouchDown> {
+  int? _pointer;
+  Offset _origin = Offset.zero;
+
+  WidgetStatesController? get _states =>
+      context.findAncestorWidgetOfExactType<InkWell>()?.statesController;
+
+  void _down(PointerDownEvent event) {
+    if (!widget.enabled || _pointer != null) return;
+    if (event.kind == PointerDeviceKind.mouse &&
+        event.buttons != kPrimaryMouseButton) {
+      return;
+    }
+    _pointer = event.pointer;
+    _origin = event.position;
+    _states?.update(WidgetState.pressed, true);
+  }
+
+  void _move(PointerMoveEvent event) {
+    if (event.pointer != _pointer) return;
+    if ((event.position - _origin).distance > kTouchSlop) _release();
+  }
+
+  void _end(PointerEvent event) {
+    if (event.pointer == _pointer) _release();
+  }
+
+  void _release() {
+    _pointer = null;
+    _states?.update(WidgetState.pressed, false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: _down,
+      onPointerMove: _move,
+      onPointerUp: _end,
+      onPointerCancel: _end,
+      child: widget.child,
     );
   }
 }

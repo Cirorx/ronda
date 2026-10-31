@@ -248,6 +248,115 @@ void main() {
         expect(taps, 0);
       });
 
+      group('inside a scroll view', () {
+        Widget scrolling({VoidCallback? onPressed}) => ListView(
+          children: [
+            const SizedBox(height: 300),
+            Center(
+              child: FilledButton(
+                onPressed: onPressed,
+                child: const Text('Voy'),
+              ),
+            ),
+            const SizedBox(height: 1000),
+          ],
+        );
+
+        testWidgets('shrink on touch-down, before the scroll is ruled out', (
+          tester,
+        ) async {
+          await tester.pumpApp(scrolling(onPressed: () => taps++));
+
+          final gesture = await tester.startGesture(
+            tester.getCenter(find.text('Voy')),
+          );
+          await tester.pump();
+
+          expect(shapeOf(tester).factor, AppMotion.pressedScale);
+          expect(labelScale(tester), AppMotion.pressedScale);
+          await gesture.up();
+          await tester.pump();
+          expect(shapeOf(tester).factor, 1);
+          expect(taps, 1);
+        });
+
+        testWidgets('come back, untapped, when the touch becomes a scroll', (
+          tester,
+        ) async {
+          await tester.pumpApp(scrolling(onPressed: () => taps++));
+
+          final gesture = await tester.startGesture(
+            tester.getCenter(find.text('Voy')),
+          );
+          await tester.pump();
+          await gesture.moveBy(const Offset(0, -(kTouchSlop + 20)));
+          await tester.pump();
+
+          expect(shapeOf(tester).factor, 1);
+          expect(labelScale(tester), 1);
+          await gesture.up();
+          await tester.pumpAndSettle();
+          expect(shapeOf(tester).factor, 1);
+          expect(taps, 0);
+        });
+
+        testWidgets('come back when the touch is cancelled', (tester) async {
+          await tester.pumpApp(scrolling(onPressed: () => taps++));
+
+          final gesture = await tester.startGesture(
+            tester.getCenter(find.text('Voy')),
+          );
+          await tester.pump();
+          await gesture.cancel();
+          await tester.pump();
+
+          expect(shapeOf(tester).factor, 1);
+          expect(taps, 0);
+        });
+
+        testWidgets('stay put when disabled', (tester) async {
+          await tester.pumpApp(scrolling());
+
+          final gesture = await tester.startGesture(
+            tester.getCenter(find.text('Voy')),
+          );
+          await tester.pump();
+
+          expect(shapeOf(tester).factor, 1);
+          await gesture.up();
+        });
+
+        testWidgets('stay put under a secondary mouse button', (tester) async {
+          await tester.pumpApp(scrolling(onPressed: () => taps++));
+
+          final gesture = await tester.startGesture(
+            tester.getCenter(find.text('Voy')),
+            kind: PointerDeviceKind.mouse,
+            buttons: kSecondaryMouseButton,
+          );
+          await tester.pump();
+
+          expect(shapeOf(tester).factor, 1);
+          await gesture.up();
+        });
+
+        testWidgets('take one finger at a time', (tester) async {
+          await tester.pumpApp(scrolling(onPressed: () => taps++));
+          final center = tester.getCenter(find.text('Voy'));
+
+          final first = await tester.startGesture(center);
+          final second = await tester.startGesture(center, pointer: 7);
+          await tester.pump();
+          await second.up();
+          await tester.pump();
+
+          expect(shapeOf(tester).factor, AppMotion.pressedScale);
+          await first.up();
+          await tester.pumpAndSettle();
+          expect(shapeOf(tester).factor, 1);
+        });
+      });
+
       testWidgets('step at once with reduced motion', (tester) async {
         await tester.pumpApp(buildSubject(reduced: true));
 
