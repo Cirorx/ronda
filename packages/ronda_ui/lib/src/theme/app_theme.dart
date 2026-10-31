@@ -93,6 +93,9 @@ abstract final class AppTheme {
   /// Stroke of outlined buttons, cards, chips and slot cells.
   static const double borderWidth = 1.5;
 
+  /// Width of the ring round a button focused from a keyboard.
+  static const double focusRingWidth = 3;
+
   /// The text scale from which layouts take their large-text form (see
   /// `MainGrande` and `HorariosGrande` on the screen canvas).
   static const double largeTextScale = 1.5;
@@ -115,10 +118,23 @@ abstract final class AppTheme {
   /// [kPressTimeout] (100 ms) until it knows the touch isn't a scroll, so
   /// [_PressOnTouchDown] marks the button pressed on the raw touch-down
   /// itself and lets go if the touch turns into a scroll.
-  static ButtonStyle _pressable(ButtonStyle style, OutlinedBorder shape) {
+  ///
+  /// Focused from a keyboard, the border becomes [focusRing], so where focus
+  /// is can be seen and not only guessed from the overlay. Touch never
+  /// focuses a button this way, so phones don't see it.
+  static ButtonStyle _pressable(
+    ButtonStyle style,
+    OutlinedBorder shape, {
+    required BorderSide focusRing,
+  }) {
     return style.copyWith(
       shape: WidgetStateProperty.resolveWith(
         (states) => PressedShape.forStates(shape, states),
+      ),
+      side: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.focused)
+            ? focusRing
+            : style.side?.resolve(states),
       ),
       animationDuration: AppMotion.press,
       backgroundBuilder: (context, states, child) => _PressOnTouchDown(
@@ -142,6 +158,7 @@ abstract final class AppTheme {
       horizontal: AppSpacing.unit + 0.25 * AppSpacing.unit,
     );
     const buttonSize = Size(minTarget, buttonHeight);
+    final focusRing = BorderSide(color: scheme.primary, width: focusRingWidth);
 
     return ThemeData(
       colorScheme: scheme,
@@ -172,6 +189,8 @@ abstract final class AppTheme {
             ),
           ),
           roundedLg,
+          // Paper inside the birome fill, so the ring shows on it.
+          focusRing: BorderSide(color: scheme.onPrimary, width: focusRingWidth),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -183,6 +202,7 @@ abstract final class AppTheme {
             side: BorderSide(color: scheme.primary, width: borderWidth),
           ),
           roundedLg,
+          focusRing: focusRing,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -193,6 +213,7 @@ abstract final class AppTheme {
             textStyle: textTheme.labelLarge,
           ),
           roundedLg,
+          focusRing: focusRing,
         ),
       ),
       iconButtonTheme: IconButtonThemeData(
@@ -202,6 +223,7 @@ abstract final class AppTheme {
             foregroundColor: scheme.onSurface,
           ),
           const StadiumBorder(),
+          focusRing: focusRing,
         ),
       ),
       cardTheme: CardThemeData(
@@ -290,6 +312,22 @@ abstract final class AppTheme {
           (states) => states.contains(WidgetState.selected)
               ? textTheme.labelSmall?.copyWith(color: scheme.primary)
               : textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+        ),
+      ),
+      // The tabs on a wide window: the bar's colours, standing up.
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: scheme.surface,
+        elevation: 0,
+        indicatorColor: palette.biromeTint,
+        labelType: NavigationRailLabelType.all,
+        groupAlignment: -1,
+        selectedIconTheme: IconThemeData(color: scheme.primary),
+        unselectedIconTheme: IconThemeData(color: scheme.onSurfaceVariant),
+        selectedLabelTextStyle: textTheme.labelSmall?.copyWith(
+          color: scheme.primary,
+        ),
+        unselectedLabelTextStyle: textTheme.bodySmall?.copyWith(
+          color: scheme.onSurfaceVariant,
         ),
       ),
       switchTheme: SwitchThemeData(

@@ -13,4 +13,7 @@ extension AppThemeBuildContext on BuildContext {
   /// instead of a grid, no decorations beside text).
   bool get usesLargeText =>
       MediaQuery.textScalerOf(this).scale(1) >= AppTheme.largeTextScale;
+
+  /// How much room the window gives ([WindowSize.of]).
+  WindowSize get windowSize => WindowSize.of(this);
 }

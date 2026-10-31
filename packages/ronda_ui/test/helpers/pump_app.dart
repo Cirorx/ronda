@@ -5,6 +5,12 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// which doesn't wrap overflows.
 const phoneSize = Size(360, 780);
 
+/// A tablet or a narrow window: [WindowSize.medium].
+const tabletSize = Size(800, 1000);
+
+/// A desktop window: [WindowSize.expanded].
+const desktopSize = Size(1280, 800);
+
 /// Ronda's first locale. Tests pump it by default, so a component that needs
 /// [MaterialLocalizations] fails here rather than only in the app.
 const rioplatense = Locale('es', '419');
@@ -22,15 +28,17 @@ extension PumpApp on WidgetTester {
   /// `flutter_localizations` ones serve the framework's
   /// [MaterialLocalizations], which `material_ui` widgets don't read.
   ///
-  /// The surface is [phoneSize] for the rest of the test.
+  /// The surface is [size] ([phoneSize] by default) for the rest of the
+  /// test.
   Future<void> pumpApp(
     Widget widget, {
     ThemeData? theme,
     Locale locale = rioplatense,
     double textScale = 1,
+    Size size = phoneSize,
   }) {
     view
-      ..physicalSize = phoneSize
+      ..physicalSize = size
       ..devicePixelRatio = 1;
     addTearDown(view.reset);
     return pumpWidget(

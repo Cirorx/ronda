@@ -132,6 +132,50 @@ void main() {
         expect(nav.labelTextStyle!.resolve({})?.color, AppColors.muted);
       });
 
+      test('marks the selected tab in birome on the rail too', () {
+        final rail = theme.navigationRailTheme;
+        expect(rail.selectedIconTheme?.color, AppColors.birome);
+        expect(rail.unselectedIconTheme?.color, AppColors.muted);
+        expect(rail.selectedLabelTextStyle?.color, AppColors.birome);
+        expect(rail.unselectedLabelTextStyle?.color, AppColors.muted);
+        expect(rail.labelType, NavigationRailLabelType.all);
+      });
+
+      test('rings a button focused from a keyboard', () {
+        const focused = {WidgetState.focused};
+        expect(
+          theme.filledButtonTheme.style!.side!.resolve(focused),
+          const BorderSide(
+            color: AppColors.paper,
+            width: AppTheme.focusRingWidth,
+          ),
+        );
+        for (final style in [
+          theme.outlinedButtonTheme.style!,
+          theme.textButtonTheme.style!,
+          theme.iconButtonTheme.style!,
+        ]) {
+          expect(
+            style.side!.resolve(focused),
+            const BorderSide(
+              color: AppColors.birome,
+              width: AppTheme.focusRingWidth,
+            ),
+          );
+        }
+      });
+
+      test('keeps each button its own border while not focused', () {
+        expect(theme.filledButtonTheme.style!.side!.resolve({}), isNull);
+        expect(
+          theme.outlinedButtonTheme.style!.side!.resolve({}),
+          const BorderSide(
+            color: AppColors.birome,
+            width: AppTheme.borderWidth,
+          ),
+        );
+      });
+
       test('turns a switch track yerba when on', () {
         final track = theme.switchTheme.trackColor!;
         expect(track.resolve({WidgetState.selected}), AppColors.yerba);
