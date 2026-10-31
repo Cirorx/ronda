@@ -145,6 +145,46 @@ the platform flag on, not only a `MediaQuery` override.
   (1.05–1.2) and comfortable on body (1.45). Every style sets its tracking explicitly, so
   Material's default body tracking (+0.25 px) no longer leaks in. Tabular figures stay.
 
+## Wide screens
+
+Added on 2026-10-30, after the owner tried the web app on a desktop: the screens stretched edge to
+edge. Phones are unchanged; every rule below is guarded by the window's width.
+
+| Window | Width | What changes |
+|---|---|---|
+| compact (`WindowSize.compact`) | below 600 | nothing: the phone layout |
+| medium | 600 to 839 | content keeps to a readable column; tabs stay in the bottom bar |
+| expanded | 840 and up | the tabs stand in a `NavigationRail`; screens put their context beside the column |
+
+- **Readable column.** Text, forms and cards are at most 600 wide, centred on the paper, with the
+  ruled sheet's margin line (margen at the `PersonRow` line's strength) down the start side
+  (`ReadableColumn`). Cerca, Ajustes, the terms, sign-in and the payoff use it as it is; the
+  welcome screen still stretches (its doors sit at the bottom of the window, and a short window
+  would push them out of view). Sheets were already capped at 640.
+- **Two columns, never a feed.** On expanded, `PaperColumns` puts the screen's own content in the
+  readable column and 360 of context beside it; each column scrolls on its own and keyboard focus
+  goes through the main one first. Wide windows use the room for context, not for bigger controls.
+  - Mi ronda: the week's card in the column; "Quiénes van" (initials, and what each brings drawn),
+    the buddy and the acta's link beside it.
+  - Onboarding: the questions in the column; beside them the chosen pretexts and what the person
+    brings, drawn as the ronda's objects. Related questions share a page: what you'd do and what
+    you bring, when and where, your age and what makes it hard to go, then your name. One "Seguir"
+    moves past the page. With large text even a desktop goes back to one question a page.
+  - Admin: the proposal with who it leaves out beside it; the run list with the selected run's
+    trace beside it (the trace gets the 600, the list 440); the rondas' setup in one column.
+- **Objects, not people.** `RondaObjectIcon` draws mate, termo, pelota, mazo, bizcochos and sillas
+  in code on a 24-unit grid with round 1.6 strokes, in birome on paper. Pretexts and brings map to
+  them in the app (a caminata and "Tengo ganas" have none). They are decoration: screen readers skip
+  them and large text drops them.
+- **Keyboard and mouse.** A button focused from a keyboard gets a 3 dp ring (paper inside a filled
+  button, birome on the others); touch never focuses a button that way. Hover comes only from a
+  pointer that hovers. Escape closes a dismissible sheet, focus stays inside it, and Enter presses
+  the focused button. The rail keeps the bar's press feedback and comes before the content in focus
+  order.
+- **Onboarding's bar.** The progress bar keeps to the column's width too.
+- **Tests** check the shell, onboarding, Mi ronda and the admin screens at 360, 800 and 1280, and
+  each at 200% text at 1280.
+
 ## In Flutter
 - Packages, versions, l10n setup and the native checklist: `docs/STACK.md`. State is Bloc
   (Cubit-first); fonts are bundled, not fetched.

@@ -98,7 +98,15 @@ class const OnboardingStepLayout({
           null => null,
         },
         title: switch ((questionNumber, barTitle)) {
-          (final number?, _) => _Progress(number: number, count: questionCount),
+          // Wider than a phone the bar stays as wide as the column.
+          (final number?, _) => ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: context.windowSize.isWide
+                  ? WindowSize.readableWidth
+                  : double.infinity,
+            ),
+            child: _Progress(number: number, count: questionCount),
+          ),
           (null, final barTitle?) => Text(barTitle),
           (null, null) => null,
         },

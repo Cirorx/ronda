@@ -12,18 +12,20 @@ class const CercaPage({super.key}) extends StatelessWidget {
     final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.cercaTabLabel)),
-      body: LayoutBuilder(
-        builder: (context, constraints) => SingleChildScrollView(
-          padding: EdgeInsetsDirectional.symmetric(
-            horizontal: context.appSpacing.lg,
-          ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Center(
-              child: Text(
-                l10n.cercaPlaceholder,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge,
+      body: ReadableColumn(
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: EdgeInsetsDirectional.symmetric(
+              horizontal: context.appSpacing.lg,
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(
+                child: Text(
+                  l10n.cercaPlaceholder,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
               ),
             ),
           ),

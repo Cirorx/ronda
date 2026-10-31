@@ -77,6 +77,10 @@ void main() {
           tabletSize.width / 2,
         );
         expect(find.byType(OnboardingObjects), findsNothing);
+        expect(
+          tester.getSize(find.byType(LinearProgressIndicator)).width,
+          lessThan(WindowSize.readableWidth),
+        );
       });
     });
 

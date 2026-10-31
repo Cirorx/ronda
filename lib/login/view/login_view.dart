@@ -43,92 +43,94 @@ class const LoginView({
       // Its back button returns to the welcome doors.
       appBar: AppBar(title: Text(l10n.loginBarTitle)),
       body: SafeArea(
-        child: ListView(
-          padding: EdgeInsetsDirectional.symmetric(
-            horizontal: spacing.lg,
-            vertical: spacing.md,
-          ),
-          children: [
-            Semantics(
-              header: true,
-              child: Text(title, style: textTheme.headlineMedium),
+        child: ReadableColumn(
+          child: ListView(
+            padding: EdgeInsetsDirectional.symmetric(
+              horizontal: spacing.lg,
+              vertical: spacing.md,
             ),
-            if (body case final body?) ...[
-              SizedBox(height: spacing.xs),
-              Text(body, style: textTheme.bodyLarge),
-            ],
-            SizedBox(height: spacing.lg),
-            for (final line in [
-              l10n.loginNoPosting,
-              l10n.loginNoContacts,
-              l10n.loginFirstNameOnly,
-            ])
-              Padding(
-                padding: EdgeInsetsDirectional.only(bottom: spacing.sm),
-                child: Text(line, style: textTheme.bodyLarge),
+            children: [
+              Semantics(
+                header: true,
+                child: Text(title, style: textTheme.headlineMedium),
               ),
-            SizedBox(height: spacing.lg),
-            if (state.error case final error?) ...[
-              NoteBanner(
-                variant: error == LoginError.network
-                    ? NoteBannerVariant.offline
-                    : NoteBannerVariant.warning,
-                message: error == LoginError.network
-                    ? l10n.loginNetworkError
-                    : l10n.loginError,
-              ),
-              SizedBox(height: spacing.md),
-            ],
-            MergeSemantics(
-              child: Semantics(
-                identifier: googleButtonIdentifier,
-                child: FilledButton(
-                  onPressed: inProgress
-                      ? null
-                      : () => context.read<LoginCubit>().signInWithGoogle(),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    spacing: spacing.xs,
-                    children: [
-                      if (inProgress)
-                        SizedBox.square(
-                          dimension: _spinnerSize,
-                          child: CircularProgressIndicator(
-                            strokeWidth: _spinnerStroke,
-                            semanticsLabel: l10n.loginInProgress,
+              if (body case final body?) ...[
+                SizedBox(height: spacing.xs),
+                Text(body, style: textTheme.bodyLarge),
+              ],
+              SizedBox(height: spacing.lg),
+              for (final line in [
+                l10n.loginNoPosting,
+                l10n.loginNoContacts,
+                l10n.loginFirstNameOnly,
+              ])
+                Padding(
+                  padding: EdgeInsetsDirectional.only(bottom: spacing.sm),
+                  child: Text(line, style: textTheme.bodyLarge),
+                ),
+              SizedBox(height: spacing.lg),
+              if (state.error case final error?) ...[
+                NoteBanner(
+                  variant: error == LoginError.network
+                      ? NoteBannerVariant.offline
+                      : NoteBannerVariant.warning,
+                  message: error == LoginError.network
+                      ? l10n.loginNetworkError
+                      : l10n.loginError,
+                ),
+                SizedBox(height: spacing.md),
+              ],
+              MergeSemantics(
+                child: Semantics(
+                  identifier: googleButtonIdentifier,
+                  child: FilledButton(
+                    onPressed: inProgress
+                        ? null
+                        : () => context.read<LoginCubit>().signInWithGoogle(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: spacing.xs,
+                      children: [
+                        if (inProgress)
+                          SizedBox.square(
+                            dimension: _spinnerSize,
+                            child: CircularProgressIndicator(
+                              strokeWidth: _spinnerStroke,
+                              semanticsLabel: l10n.loginInProgress,
+                            ),
+                          ),
+                        Flexible(
+                          child: Text(
+                            l10n.loginGoogleButton,
+                            textAlign: TextAlign.center,
                           ),
                         ),
-                      Flexible(
-                        child: Text(
-                          l10n.loginGoogleButton,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            SizedBox(height: spacing.xs),
-            // A link, read as one: the button keeps the 48 dp target.
-            Semantics(
-              container: true,
-              identifier: createAccountIdentifier,
-              link: true,
-              linkUrl: AuthRepository.createAccountUrl,
-              label: l10n.loginNoGoogleAccount,
-              onTap: () => context.read<LoginCubit>().createAccountTapped(),
-              excludeSemantics: true,
-              child: TextButton(
-                onPressed: () =>
-                    context.read<LoginCubit>().createAccountTapped(),
-                child: Text(
-                  l10n.loginNoGoogleAccount,
-                  textAlign: TextAlign.center,
+              SizedBox(height: spacing.xs),
+              // A link, read as one: the button keeps the 48 dp target.
+              Semantics(
+                container: true,
+                identifier: createAccountIdentifier,
+                link: true,
+                linkUrl: AuthRepository.createAccountUrl,
+                label: l10n.loginNoGoogleAccount,
+                onTap: () => context.read<LoginCubit>().createAccountTapped(),
+                excludeSemantics: true,
+                child: TextButton(
+                  onPressed: () =>
+                      context.read<LoginCubit>().createAccountTapped(),
+                  child: Text(
+                    l10n.loginNoGoogleAccount,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

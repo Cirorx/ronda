@@ -33,58 +33,62 @@ class const TermsPage({super.key}) extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.termsBarTitle)),
       body: SafeArea(
-        child: ListView(
-          padding: EdgeInsetsDirectional.symmetric(
-            horizontal: spacing.lg,
-            vertical: spacing.md,
-          ),
-          children: [
-            Semantics(
-              header: true,
-              child: Text(l10n.termsTitle, style: textTheme.headlineMedium),
+        child: ReadableColumn(
+          child: ListView(
+            padding: EdgeInsetsDirectional.symmetric(
+              horizontal: spacing.lg,
+              vertical: spacing.md,
             ),
-            SizedBox(height: spacing.md),
-            for (final (index, point) in points.indexed) ...[
-              if (index > 0) SizedBox(height: spacing.sm),
-              MergeSemantics(
-                child: Padding(
-                  padding: EdgeInsetsDirectional.symmetric(
-                    vertical: spacing.xs,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: spacing.sm,
-                    children: [
-                      Text(
-                        '${index + 1}',
-                        style: textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.primary,
+            children: [
+              Semantics(
+                header: true,
+                child: Text(l10n.termsTitle, style: textTheme.headlineMedium),
+              ),
+              SizedBox(height: spacing.md),
+              for (final (index, point) in points.indexed) ...[
+                if (index > 0) SizedBox(height: spacing.sm),
+                MergeSemantics(
+                  child: Padding(
+                    padding: EdgeInsetsDirectional.symmetric(
+                      vertical: spacing.xs,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: spacing.sm,
+                      children: [
+                        Text(
+                          '${index + 1}',
+                          style: textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
-                      ),
-                      Expanded(child: Text(point, style: textTheme.bodyLarge)),
-                    ],
+                        Expanded(
+                          child: Text(point, style: textTheme.bodyLarge),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              SizedBox(height: spacing.md),
+              Text(
+                l10n.termsWhere,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              SizedBox(height: spacing.lg),
+              MergeSemantics(
+                child: Semantics(
+                  identifier: doneIdentifier,
+                  child: FilledButton(
+                    onPressed: () => context.go(WelcomePage.path),
+                    child: Text(l10n.termsDone),
                   ),
                 ),
               ),
             ],
-            SizedBox(height: spacing.md),
-            Text(
-              l10n.termsWhere,
-              style: textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            SizedBox(height: spacing.lg),
-            MergeSemantics(
-              child: Semantics(
-                identifier: doneIdentifier,
-                child: FilledButton(
-                  onPressed: () => context.go(WelcomePage.path),
-                  child: Text(l10n.termsDone),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -51,35 +51,37 @@ class const SettingsPage({super.key}) extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsTabLabel)),
-      body: ListView(
-        children: [
-          row(
-            notificationsIdentifier,
-            Icons.notifications_outlined,
-            l10n.settingsNotificationsRow,
-            () => context.go(NotificationsPage.path),
-          ),
-          row(
-            reportIdentifier,
-            Icons.support_outlined,
-            l10n.settingsReportRow,
-            () => context.go(ReportPage.path),
-          ),
-          row(
-            dataIdentifier,
-            Icons.description_outlined,
-            l10n.settingsDataRow,
-            () => context.go(YourDataPage.path),
-          ),
-          SizedBox(height: context.appSpacing.lg),
-          row(
-            signOutIdentifier,
-            Icons.logout,
-            l10n.settingsSignOutRow,
-            () => _confirmSignOut(context),
-            opensScreen: false,
-          ),
-        ],
+      body: ReadableColumn(
+        child: ListView(
+          children: [
+            row(
+              notificationsIdentifier,
+              Icons.notifications_outlined,
+              l10n.settingsNotificationsRow,
+              () => context.go(NotificationsPage.path),
+            ),
+            row(
+              reportIdentifier,
+              Icons.support_outlined,
+              l10n.settingsReportRow,
+              () => context.go(ReportPage.path),
+            ),
+            row(
+              dataIdentifier,
+              Icons.description_outlined,
+              l10n.settingsDataRow,
+              () => context.go(YourDataPage.path),
+            ),
+            SizedBox(height: context.appSpacing.lg),
+            row(
+              signOutIdentifier,
+              Icons.logout,
+              l10n.settingsSignOutRow,
+              () => _confirmSignOut(context),
+              opensScreen: false,
+            ),
+          ],
+        ),
       ),
     );
   }

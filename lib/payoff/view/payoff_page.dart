@@ -68,49 +68,51 @@ class const PayoffView({super.key}) extends StatelessWidget {
             title: Text(l10n.payoffBarTitle),
           ),
           body: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: ListView(
-                    padding: EdgeInsetsDirectional.symmetric(
-                      horizontal: spacing.lg,
-                      vertical: spacing.sm,
+            child: ReadableColumn(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: ListView(
+                      padding: EdgeInsetsDirectional.symmetric(
+                        horizontal: spacing.lg,
+                        vertical: spacing.sm,
+                      ),
+                      children: [
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            l10n.payoffTitle,
+                            style: textTheme.headlineMedium,
+                          ),
+                        ),
+                        SizedBox(height: spacing.lg),
+                        RondaSwap(
+                          layoutBuilder: _topStart,
+                          child: _body(context, state),
+                        ),
+                      ],
                     ),
-                    children: [
-                      Semantics(
-                        header: true,
-                        child: Text(
-                          l10n.payoffTitle,
-                          style: textTheme.headlineMedium,
+                  ),
+                  Padding(
+                    padding: EdgeInsetsDirectional.fromSTEB(
+                      spacing.lg,
+                      spacing.sm,
+                      spacing.lg,
+                      spacing.md,
+                    ),
+                    child: MergeSemantics(
+                      child: Semantics(
+                        identifier: continueIdentifier,
+                        child: FilledButton(
+                          onPressed: () => context.go(PayoffPage.signInPath),
+                          child: Text(l10n.payoffContinue),
                         ),
                       ),
-                      SizedBox(height: spacing.lg),
-                      RondaSwap(
-                        layoutBuilder: _topStart,
-                        child: _body(context, state),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(
-                    spacing.lg,
-                    spacing.sm,
-                    spacing.lg,
-                    spacing.md,
-                  ),
-                  child: MergeSemantics(
-                    child: Semantics(
-                      identifier: continueIdentifier,
-                      child: FilledButton(
-                        onPressed: () => context.go(PayoffPage.signInPath),
-                        child: Text(l10n.payoffContinue),
-                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
