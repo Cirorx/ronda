@@ -11,7 +11,7 @@ vgv-ai-flutter-plugin skills (`layered-architecture`, `bloc`, `material-theming`
 |---|---|---|
 | Flutter / Dart | 3.47.8 / 3.13.7 (stable 2026-10-23) | This Mac has 3.47.1: `flutter upgrade` |
 | Android | minSdk 24, compile/target 36, Gradle 9.3.1, AGP 9.1.0, Kotlin plugin 2.3.20 (`compilerOptions` DSL, not `kotlinOptions`), JDK 17+ (this Mac runs 23); core-library desugaring on (`desugar_jdk_libs` 2.1.4, the version flutter_local_notifications 22's README names; added in #27) | Gradle 9.3.1 and AGP 9.1.0 are Flutter 3.47.8's template versions (AGP 9.1 needs Gradle ≥ 9.3.1; Flutter warns below Gradle 9.1 / AGP 9.0.1 / Kotlin 2.3.20). Like the template, `gradle.properties` keeps `android.builtInKotlin=false` and `android.newDsl=false`; `org.jetbrains.kotlin.android` stays in `settings.gradle.kts` (`apply false`) and the app module does not apply it, because the Flutter Gradle plugin applies it to the app and plugins while built-in Kotlin is off. FlutterFire BoM 35 sets the floors; `firebase-auth` 25.0.0 ships Kotlin 2.4 metadata, which Kotlin 2.2 can't read (checked 2026-10-27). Upgraded 2026-10-28 |
-| iOS | deployment target 15.5 (ML Kit), armv7 excluded in the Podfile | CocoaPods still used for ML Kit and flutter_tts |
+| iOS | deployment target 15.5 (ML Kit), in the Podfile and the project | Swift Package Manager for every plugin that ships a package (`enable-swift-package-manager` in `pubspec.yaml`); CocoaPods only for `google_mlkit_face_detection` and `google_mlkit_commons`, which have none yet (§ Monitoring, iOS build). Checked 2026-10-31 |
 | Python (functions, scripts) | 3.13 (`uv python install 3.13`) | Firebase Python functions run 3.10–3.13; this Mac's 3.14 won't deploy |
 | firebase-tools | 15.34.1 via npm | Installed under nvm's node 26. The Hosting emulator's `superstatic` 10.0.0 declares node 20, 22 and 24 only, but served the `/app` rewrite and headers correctly under node 26.5.1 (checked 2026-10-29). If it stops working: `nvm install 24`, `nvm use 24` (`.nvmrc`), reinstall firebase-tools there |
 | ortools | 9.15.6755, with `protobuf==6.33.6` pinned | Only 6.33.5/6.33.6 satisfy both ortools and google-cloud-firestore |
@@ -564,7 +564,7 @@ device transfer + `fullBackupContent`; handle `ImagePicker.retrieveLostData()`.
 **iOS:** Apple Developer Program for push; APNs key uploaded to
 Firebase; Push + Background Modes (remote notifications); Encoded App ID URL scheme;
 `NSMicrophoneUsageDescription`, `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`
-localised in `es.lproj/InfoPlist.strings`; Podfile 15.5 + armv7 excluded; the
+localised in `es.lproj/InfoPlist.strings`; deployment target 15.5 (Podfile and project); the
 `UNUserNotificationCenter` delegate line.
 
 **Web:** HTTPS (mic, secure storage); `usePathUrlStrategy()`; the Flutter app is built with
@@ -729,15 +729,37 @@ What feeds it:
 - Server side: `firebase functions:log --only <function>` (for example `extract`,
   `report_client_error`), or Cloud Logging in the console.
 
-**Not done yet (needs Xcode or the console):**
-- iOS dSYMs: Crashlytics reads native iOS frames only with the dSYM upload run script build
-  phase (`"${PODS_ROOT}/FirebaseCrashlytics/run"`, with the build's `GoogleService-Info.plist`)
-  in `ios/Runner.xcodeproj`. The plists are written but not bundled (§ Native and project
-  checklist), so add the phase with them, in Xcode, when iOS builds ship; until then iOS Dart
-  errors still arrive, with Dart symbols uploaded by hand
-  (`firebase crashlytics:symbols:upload --app=<ios app id> <symbols dir>`).
-- CocoaPods: `firebase_crashlytics` adds its pod at `pod install`; the repo reverts
-  `ios/Flutter/*.xcconfig` and `ios/Podfile` after `pub get`, so nothing of it is committed.
+**iOS build** (set up 2026-10-31):
+- **Swift Package Manager, with CocoaPods for ML Kit only.** `pubspec.yaml` turns on
+  `enable-swift-package-manager`, so Flutter adds `FlutterGeneratedPluginSwiftPackage` to
+  `ios/Runner.xcodeproj` and the Firebase plugins (Crashlytics included) resolve
+  `firebase-ios-sdk` as a Swift package. `google_mlkit_face_detection` and `google_mlkit_commons`
+  ship no package, so the build is a hybrid: `ios/Podfile` installs them alone (the build prints
+  that they lack SPM support; that is expected). `ios/Podfile`, `ios/Podfile.lock`, both
+  `swiftpm/Package.resolved` files, the `[CP]` phases in the project and the `#include?` Pods
+  lines in `ios/Flutter/Debug.xcconfig` and `Release.xcconfig` are tracked; `ios/Pods/` is not.
+  The Podfile maps the six flavored configurations (`Debug-production`, …), and each xcconfig
+  includes the Pods xcconfig of every configuration it serves (`#include?` skips the missing
+  ones; they hold the same values). Once ML Kit ships a Swift package, delete the Podfile, its
+  lock, the `[CP]` phases and the Pods includes. Firebase (SPM) and ML Kit (Pods) each bring
+  their own GoogleUtilities, GoogleDataTransport, nanopb and Promises; the Pods are dynamic
+  frameworks, so it links, but the console may print "implemented in both" warnings.
+- **dSYMs:** the Runner target's last build phase, *Upload Crashlytics dSYMs*, runs
+  `"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run" -gsp
+  "${PROJECT_DIR}/config/production/GoogleService-Info.plist"` (that path works both in Xcode
+  and under `flutter build ios`, which clones packages into `build/ios/SourcePackages`). It
+  uploads only for `*-production` configurations that make a dSYM (Release and Profile), and
+  otherwise prints a `note: Crashlytics dSYM upload skipped: …` line and exits 0, as it does
+  when the plist or the script is missing (clean checkouts, CI). The plist is passed with
+  `-gsp` because it is not bundled (§ Native and project checklist). Validation runs in the
+  build; the upload itself runs in the background (Console.app, `upload-symbols`). User script
+  sandboxing is off (the project never sets `ENABLE_USER_SCRIPT_SANDBOXING`, so it stays NO),
+  which the phase needs to read the plist; keep it off if Xcode offers its recommended settings.
+- **Dart symbols** of an obfuscated iOS build are uploaded by hand: build with
+  `--obfuscate --split-debug-info=symbols/ios/<version>-<commit>`, then
+  `firebase crashlytics:symbols:upload --app=<ios app id> symbols/ios/<version>-<commit>`
+  (the app id is `GOOGLE_APP_ID` in `ios/config/production/GoogleService-Info.plist`). Without
+  obfuscation Dart frames arrive readable and nothing needs uploading.
 
 ## Deploying
 `scripts/deploy.sh` keeps the real project in step with main, one area at a time: Firestore
