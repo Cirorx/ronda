@@ -38,7 +38,9 @@ class const PayoffPage({super.key}) extends StatelessWidget {
 /// The demand near the person, or that they are among the first, and
 /// "Guardame el lugar". Never names, places or seats.
 ///
-/// Back returns to the read-back, where the held answers open again.
+/// While the counts load it says it is looking; what they find swaps in
+/// for that line. Back returns to the read-back, where the held answers
+/// open again.
 class const PayoffView({super.key}) extends StatelessWidget {
   /// Maestro's handle on "Guardame el lugar".
   static const continueIdentifier = 'payoff.continue';
@@ -61,7 +63,10 @@ class const PayoffView({super.key}) extends StatelessWidget {
           if (!didPop) backToReadBack();
         },
         child: Scaffold(
-          appBar: AppBar(leading: BackButton(onPressed: backToReadBack)),
+          appBar: AppBar(
+            leading: BackButton(onPressed: backToReadBack),
+            title: Text(l10n.payoffBarTitle),
+          ),
           body: SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -81,7 +86,10 @@ class const PayoffView({super.key}) extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: spacing.lg),
-                      ..._body(context, state),
+                      RondaSwap(
+                        layoutBuilder: _topStart,
+                        child: _body(context, state),
+                      ),
                     ],
                   ),
                 ),
@@ -110,37 +118,69 @@ class const PayoffView({super.key}) extends StatelessWidget {
     );
   }
 
-  List<Widget> _body(BuildContext context, PayoffState state) {
+  /// What the counts say, keyed by what kind of answer it is so a new kind
+  /// swaps in.
+  Widget _body(BuildContext context, PayoffState state) {
     final l10n = context.l10n;
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
     final spacing = context.appSpacing;
     return switch (state) {
-      PayoffState(status: PayoffStatus.loading || PayoffStatus.noAnswers) => [
-        const Center(child: CircularProgressIndicator()),
-      ],
-      PayoffState(status: PayoffStatus.unavailable) => [
-        NoteBanner(
-          variant: NoteBannerVariant.offline,
-          message: l10n.payoffUnavailable,
-        ),
-      ],
-      PayoffState(:final demand) when demand.isEmpty => [
-        Text(l10n.payoffFirstOnes, style: textTheme.bodyLarge),
-      ],
-      PayoffState(:final demand) => [
-        for (final line in demand)
-          Padding(
-            padding: EdgeInsetsDirectional.only(bottom: spacing.sm),
-            child: NoteBanner(
-              icon: Icons.groups_outlined,
-              message: l10n.payoffDemandLine(line),
+      PayoffState(status: PayoffStatus.loading || PayoffStatus.noAnswers) =>
+        Row(
+          key: const ValueKey(PayoffStatus.loading),
+          spacing: spacing.sm,
+          children: [
+            const SizedBox.square(
+              dimension: _spinnerSize,
+              child: CircularProgressIndicator(strokeWidth: _spinnerStroke),
             ),
-          ),
-        SizedBox(height: spacing.xs),
-        Text(l10n.payoffNext, style: textTheme.bodyLarge),
-      ],
+            Expanded(
+              child: Text(
+                l10n.payoffLoading,
+                style: textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
+      PayoffState(status: PayoffStatus.unavailable) => NoteBanner(
+        key: const ValueKey(PayoffStatus.unavailable),
+        variant: NoteBannerVariant.offline,
+        message: l10n.payoffUnavailable,
+      ),
+      PayoffState(:final demand) when demand.isEmpty => Text(
+        key: const ValueKey(#firstOnes),
+        l10n.payoffFirstOnes,
+        style: textTheme.bodyLarge,
+      ),
+      PayoffState(:final demand) => Column(
+        key: const ValueKey(#demand),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final line in demand)
+            Padding(
+              padding: EdgeInsetsDirectional.only(bottom: spacing.sm),
+              child: NoteBanner(
+                icon: Icons.groups_outlined,
+                message: l10n.payoffDemandLine(line),
+              ),
+            ),
+          SizedBox(height: spacing.xs),
+          Text(l10n.payoffNext, style: textTheme.bodyLarge),
+        ],
+      ),
     };
   }
+
+  /// A small spinner beside the line that says what is happening.
+  static const double _spinnerSize = 24;
+  static const double _spinnerStroke = 3;
+
+  /// The two answers line up at the top while they swap.
+  static Widget _topStart(Widget? current, List<Widget> previous) =>
+      Stack(children: [...previous, ?current]);
 }
 
 extension on AppLocalizations {

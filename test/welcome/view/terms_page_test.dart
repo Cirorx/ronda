@@ -39,10 +39,29 @@ void main() {
       expect(find.text('Entendido'), findsOneWidget);
     });
 
+    testWidgets('names itself "Condiciones" in the top bar', (tester) async {
+      await tester.pumpApp(const TermsPage());
+
+      expect(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text('Condiciones'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('sets the points apart with space, not rules', (tester) async {
+      await tester.pumpApp(const TermsPage());
+
+      expect(find.byType(Divider), findsNothing);
+    });
+
     testWidgets('renders in English', (tester) async {
       await tester.pumpApp(const TermsPage(), locale: const Locale('en'));
 
       expect(find.text('The terms, in short'), findsOneWidget);
+      expect(find.text('Terms'), findsOneWidget);
     });
   });
 }

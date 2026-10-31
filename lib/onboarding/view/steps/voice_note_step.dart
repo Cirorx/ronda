@@ -27,7 +27,9 @@ class const VoiceNoteStep({super.key}) extends StatelessWidget {
 }
 
 /// The recorder, the reading screen, and the screens for a note that
-/// couldn't be read or a microphone that can't be used.
+/// couldn't be read or a microphone that can't be used: one screen under
+/// "Tu audio", whose content swaps as the note moves on, each state read
+/// out as it arrives. "Cancelar" leaves for the questions from any of them.
 class const VoiceNoteView({super.key}) extends StatelessWidget {
   /// Maestro's handle on "Terminé".
   static const doneIdentifier = 'voice.done';
@@ -65,21 +67,47 @@ class const VoiceNoteView({super.key}) extends StatelessWidget {
       FilledButton(onPressed: cubit.start, child: Text(label)),
     );
 
+    // Starting, recording and read share the recorder's screen.
+    final shows = switch (status) {
+      VoiceNoteStatus.starting ||
+      VoiceNoteStatus.recording ||
+      VoiceNoteStatus.read => VoiceNoteStatus.recording,
+      _ => status,
+    };
+    OnboardingStepLayout layout({
+      required String title,
+      required String body,
+      required Widget primaryAction,
+      required Widget child,
+      Widget? secondaryAction,
+    }) => OnboardingStepLayout(
+      barTitle: l10n.voiceBarTitle,
+      title: title,
+      body: body,
+      liveTitle: shows != VoiceNoteStatus.recording,
+      stateKey: shows,
+      onBack: onboarding.voiceCancelled,
+      backLabel: l10n.voiceCancel,
+      primaryAction: primaryAction,
+      secondaryAction: secondaryAction,
+      child: child,
+    );
+
     return BlocListener<VoiceNoteCubit, VoiceNoteState>(
       listenWhen: (previous, current) =>
           current.status == VoiceNoteStatus.read &&
           previous.status != VoiceNoteStatus.read,
       listener: (context, state) {
+        // Not once the person cancelled: this screen may still be leaving.
+        if (!onboarding.state.recording) return;
         if (state.signup case final signup?) onboarding.voiceRead(signup);
       },
-      child: switch (status) {
+      child: switch (shows) {
         VoiceNoteStatus.starting ||
         VoiceNoteStatus.recording ||
-        VoiceNoteStatus.read => OnboardingStepLayout(
+        VoiceNoteStatus.read => layout(
           title: l10n.voiceTitle,
           body: l10n.voiceBody,
-          onBack: onboarding.voiceCancelled,
-          backLabel: l10n.voiceCancel,
           primaryAction: action(
             doneIdentifier,
             FilledButton(
@@ -100,17 +128,19 @@ class const VoiceNoteView({super.key}) extends StatelessWidget {
           ),
           child: const _Recording(),
         ),
-        VoiceNoteStatus.reading => OnboardingStepLayout(
+        VoiceNoteStatus.reading => layout(
           title: l10n.voiceReadingTitle,
           body: l10n.voiceReadingBody,
-          primaryAction: const LinearProgressIndicator(),
+          primaryAction: LinearProgressIndicator(
+            semanticsLabel: l10n.voiceReadingTitle,
+          ),
           child: _Lines([
             l10n.voiceReadingTranscribe,
             l10n.voiceReadingFields,
             l10n.voiceReadingDelete,
           ]),
         ),
-        VoiceNoteStatus.notUnderstood => OnboardingStepLayout(
+        VoiceNoteStatus.notUnderstood => layout(
           title: l10n.voiceNotUnderstoodTitle,
           body: l10n.voiceNotUnderstoodBody,
           primaryAction: retry(l10n.voiceRecordAgain),
@@ -121,14 +151,14 @@ class const VoiceNoteView({super.key}) extends StatelessWidget {
             l10n.voiceTipLength,
           ]),
         ),
-        VoiceNoteStatus.failure => OnboardingStepLayout(
+        VoiceNoteStatus.failure => layout(
           title: l10n.voiceFailureTitle,
           body: l10n.voiceFailureBody,
           primaryAction: retry(l10n.voiceRecordAgain),
           secondaryAction: preferButtons,
           child: const SizedBox.shrink(),
         ),
-        VoiceNoteStatus.microphoneDenied => OnboardingStepLayout(
+        VoiceNoteStatus.microphoneDenied => layout(
           title: l10n.microphoneDeniedTitle,
           body: l10n.microphoneDeniedBody,
           primaryAction: retry(l10n.microphoneDeniedRetry),
@@ -172,8 +202,11 @@ class const _Recording() extends StatelessWidget {
             ),
           ],
         ),
-        LinearProgressIndicator(
+        // Each second's tick fills on, rather than stepping.
+        SpringBuilder(
           value: elapsed.inSeconds / VoiceNoteCubit.limit.inSeconds,
+          builder: (context, value, _) =>
+              LinearProgressIndicator(value: value.clamp(0, 1)),
         ),
         const VoiceIdeas(),
         NoteBanner(

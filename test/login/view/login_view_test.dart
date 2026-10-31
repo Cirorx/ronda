@@ -173,6 +173,52 @@ void main() {
         handle.dispose();
       });
 
+      testWidgets('"Entrar" in the top bar', (tester) async {
+        await pumpSubject(tester);
+
+        expect(
+          find.descendant(
+            of: find.byType(AppBar),
+            matching: find.text('Entrar'),
+          ),
+          findsOneWidget,
+        );
+      });
+
+      for (final status in [LoginStatus.inProgress, LoginStatus.success]) {
+        testWidgets('that it is working on the Google button while '
+            '${status.name}', (tester) async {
+          final semantics = tester.ensureSemantics();
+          when(() => cubit.state).thenReturn(LoginState(status: status));
+          await pumpSubject(tester);
+
+          expect(
+            find.descendant(
+              of: _googleButton,
+              matching: find.byType(CircularProgressIndicator),
+            ),
+            findsOneWidget,
+          );
+          expect(
+            tester.getSemantics(
+              find.bySemanticsIdentifier(LoginView.googleButtonIdentifier),
+            ),
+            isSemantics(
+              label: 'Entrando…\nSeguir con Google',
+              isButton: true,
+              isEnabled: false,
+            ),
+          );
+          semantics.dispose();
+        });
+      }
+
+      testWidgets('no spinner before sign-in starts', (tester) async {
+        await pumpSubject(tester);
+
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+      });
+
       testWidgets('no error before a failed sign-in', (tester) async {
         await pumpSubject(tester);
 
@@ -211,6 +257,26 @@ void main() {
           find.text('No pudimos hacerte entrar. Probá de nuevo.'),
           findsOneWidget,
         );
+      });
+
+      testWidgets('the error out loud', (tester) async {
+        final semantics = tester.ensureSemantics();
+        when(() => cubit.state).thenReturn(
+          const LoginState(
+            status: LoginStatus.failure,
+            error: LoginError.other,
+          ),
+        );
+
+        await pumpSubject(tester);
+
+        expect(
+          tester.getSemantics(
+            find.text('No pudimos hacerte entrar. Probá de nuevo.'),
+          ),
+          isSemantics(isLiveRegion: true),
+        );
+        semantics.dispose();
       });
     });
 

@@ -87,6 +87,7 @@ void main() {
       VoiceNoteState state, {
       Stream<VoiceNoteState>? states,
       Locale locale = rioplatense,
+      bool reduced = false,
     }) {
       if (states != null) {
         whenListen(cubit, states, initialState: state);
@@ -94,12 +95,15 @@ void main() {
         when(() => cubit.state).thenReturn(state);
       }
       return tester.pumpApp(
-        MultiBlocProvider(
-          providers: [
-            BlocProvider<OnboardingCubit>.value(value: onboarding),
-            BlocProvider<VoiceNoteCubit>.value(value: cubit),
-          ],
-          child: const VoiceNoteView(),
+        reducedMotion(
+          reduced: reduced,
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider<OnboardingCubit>.value(value: onboarding),
+              BlocProvider<VoiceNoteCubit>.value(value: cubit),
+            ],
+            child: const VoiceNoteView(),
+          ),
         ),
         locale: locale,
       );
@@ -199,6 +203,162 @@ void main() {
 
       expect(find.text('Estamos leyendo tu audio'), findsOneWidget);
       expect(find.text('· Borramos el audio'), findsOneWidget);
+    });
+
+    testWidgets('reads out that the note is being read', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpSubject(
+        tester,
+        const VoiceNoteState(status: VoiceNoteStatus.reading),
+      );
+
+      expect(
+        tester.getSemantics(find.text('Estamos leyendo tu audio')),
+        isSemantics(isHeader: true, isLiveRegion: true),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('does not read out the recorder as it opens', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpSubject(
+        tester,
+        const VoiceNoteState(status: VoiceNoteStatus.recording),
+      );
+
+      expect(
+        tester.getSemantics(find.text('Te escuchamos')),
+        isSemantics(isHeader: true, isLiveRegion: false),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('leaves for the buttons with "Cancelar" while reading', (
+      tester,
+    ) async {
+      await pumpSubject(
+        tester,
+        const VoiceNoteState(status: VoiceNoteStatus.reading),
+      );
+
+      await tester.tap(find.text('Cancelar'));
+
+      verify(() => onboarding.voiceCancelled()).called(1);
+    });
+
+    for (final status in VoiceNoteStatus.values) {
+      testWidgets('is "Tu audio" in the top bar, with "Cancelar", when '
+          '${status.name}', (tester) async {
+        await pumpSubject(tester, VoiceNoteState(status: status));
+
+        expect(
+          find.descendant(
+            of: find.byType(AppBar),
+            matching: find.text('Tu audio'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.bySemanticsIdentifier(OnboardingStepLayout.backIdentifier),
+          findsOneWidget,
+        );
+      });
+    }
+
+    group('moving on', () {
+      const recording = VoiceNoteState(status: VoiceNoteStatus.recording);
+      const reading = VoiceNoteState(status: VoiceNoteStatus.reading);
+
+      testWidgets('swaps the recorder for the reading screen in place', (
+        tester,
+      ) async {
+        await pumpSubject(tester, recording, states: Stream.value(reading));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(find.text('Te escuchamos'), findsOneWidget);
+        expect(
+          find.ancestor(
+            of: find.text('Estamos leyendo tu audio'),
+            matching: find.byType(ScaleTransition),
+          ),
+          findsWidgets,
+        );
+        expect(find.text('Tu audio'), findsOneWidget);
+
+        await tester.pump(AppMotion.standardDuration);
+        expect(find.text('Te escuchamos'), findsNothing);
+        expect(find.text('Estamos leyendo tu audio'), findsOneWidget);
+      });
+
+      testWidgets('only cross-fades with reduced motion', (tester) async {
+        await pumpSubject(
+          tester,
+          recording,
+          states: Stream.value(reading),
+          reduced: true,
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(
+          find.ancestor(
+            of: find.text('Estamos leyendo tu audio'),
+            matching: find.byType(ScaleTransition),
+          ),
+          findsNothing,
+        );
+        await tester.pump(AppMotion.crossFade);
+        expect(find.text('Te escuchamos'), findsNothing);
+      });
+
+      testWidgets('fills the timer bar on from the last second', (
+        tester,
+      ) async {
+        double bar() => tester
+            .widget<LinearProgressIndicator>(
+              find.byType(LinearProgressIndicator),
+            )
+            .value!;
+        await pumpSubject(
+          tester,
+          const VoiceNoteState(
+            status: VoiceNoteStatus.recording,
+            elapsed: Duration(seconds: 30),
+          ),
+          states: Stream.value(
+            const VoiceNoteState(
+              status: VoiceNoteStatus.recording,
+              elapsed: Duration(seconds: 36),
+            ),
+          ),
+        );
+        expect(bar(), closeTo(0.5, 1e-9));
+
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+        expect(bar(), greaterThan(0.5));
+        expect(bar(), lessThan(0.6));
+
+        await tester.pumpAndSettle();
+        expect(bar(), closeTo(0.6, 1e-9));
+      });
+
+      testWidgets('keeps a note read after "Cancelar" from the read-back', (
+        tester,
+      ) async {
+        when(() => onboarding.state).thenReturn(const OnboardingState());
+        await pumpSubject(
+          tester,
+          reading,
+          states: Stream.value(
+            const VoiceNoteState(status: VoiceNoteStatus.read, signup: _signup),
+          ),
+        );
+        await tester.pump();
+
+        verifyNever(() => onboarding.voiceRead(any()));
+      });
     });
 
     testWidgets('hands what was understood to the read-back', (tester) async {

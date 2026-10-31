@@ -6,7 +6,8 @@ import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// The read-back: every answer with its "Cambiar", what stays on the phone,
-/// and "Está bien, guardalo". After a voice note it says what was
+/// and "Está bien, guardalo", felt as it is tapped. A save that fails says
+/// so in a banner that is read out. After a voice note it says what was
 /// understood, ticks the ideas the note covered, says the audio is already
 /// deleted and offers "Grabar de nuevo".
 class const ReviewStep({super.key}) extends StatelessWidget {
@@ -41,6 +42,7 @@ class const ReviewStep({super.key}) extends StatelessWidget {
     );
 
     return OnboardingStepLayout(
+      barTitle: l10n.onboardingReviewBarTitle,
       title: state.fromVoice ? l10n.reviewVoiceTitle : l10n.reviewTitle,
       body: state.fromVoice ? l10n.reviewVoiceBody : l10n.reviewBody,
       onBack: state.fromVoice ? null : cubit.back,
@@ -59,7 +61,9 @@ class const ReviewStep({super.key}) extends StatelessWidget {
         child: Semantics(
           identifier: saveIdentifier,
           child: FilledButton(
-            onPressed: saving || !state.isComplete ? null : cubit.save,
+            onPressed: saving || !state.isComplete
+                ? null
+                : RondaHaptics.onCommit(cubit.save),
             child: Text(l10n.reviewSave),
           ),
         ),

@@ -6,7 +6,8 @@ import 'package:ronda_ui/ronda_ui.dart';
 
 /// Why sign-in comes now ("Guardá tu lugar", or why the voice door needs
 /// it), what Ronda never does with the account, the one "Seguir con Google"
-/// button, and a link to make a Google account.
+/// button, which shows it is working while sign-in runs, and a link to make
+/// a Google account. A failure says so in a banner that is read out.
 class const LoginView({
   /// Why the screen opened.
   final LoginReason reason = LoginReason.signIn,
@@ -17,6 +18,10 @@ class const LoginView({
 
   /// Maestro's handle on the link to make a Google account.
   static const createAccountIdentifier = 'login_create_account';
+
+  /// The spinner beside "Seguir con Google" while sign-in runs.
+  static const double _spinnerSize = 18;
+  static const double _spinnerStroke = 2;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +41,7 @@ class const LoginView({
 
     return Scaffold(
       // Its back button returns to the welcome doors.
-      appBar: AppBar(),
+      appBar: AppBar(title: Text(l10n.loginBarTitle)),
       body: SafeArea(
         child: ListView(
           padding: EdgeInsetsDirectional.symmetric(
@@ -81,7 +86,26 @@ class const LoginView({
                   onPressed: inProgress
                       ? null
                       : () => context.read<LoginCubit>().signInWithGoogle(),
-                  child: Text(l10n.loginGoogleButton),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: spacing.xs,
+                    children: [
+                      if (inProgress)
+                        SizedBox.square(
+                          dimension: _spinnerSize,
+                          child: CircularProgressIndicator(
+                            strokeWidth: _spinnerStroke,
+                            semanticsLabel: l10n.loginInProgress,
+                          ),
+                        ),
+                      Flexible(
+                        child: Text(
+                          l10n.loginGoogleButton,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

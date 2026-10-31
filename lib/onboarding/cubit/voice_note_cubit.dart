@@ -62,20 +62,26 @@ class VoiceNoteCubit extends Cubit<VoiceNoteState> {
   }
 
   /// "Terminé", or the limit: the note is read. Does nothing unless
-  /// recording.
+  /// recording. Cancelled while reading, the answer is dropped.
   Future<void> finish() async {
     if (state.status != VoiceNoteStatus.recording) return;
     await _stopTicking();
     emit(
       VoiceNoteState(status: VoiceNoteStatus.reading, elapsed: state.elapsed),
     );
+    final read = await _read();
+    if (!isClosed) emit(read);
+  }
+
+  /// What reading the note came to.
+  Future<VoiceNoteState> _read() async {
     try {
       final signup = await _onboardingRepository.readVoiceNote(_uid);
-      emit(VoiceNoteState(status: VoiceNoteStatus.read, signup: signup));
+      return VoiceNoteState(status: VoiceNoteStatus.read, signup: signup);
     } on VoiceNoteNotUnderstoodFailure {
-      emit(const VoiceNoteState(status: VoiceNoteStatus.notUnderstood));
+      return const VoiceNoteState(status: VoiceNoteStatus.notUnderstood);
     } on Exception {
-      emit(const VoiceNoteState(status: VoiceNoteStatus.failure));
+      return const VoiceNoteState(status: VoiceNoteStatus.failure);
     }
   }
 

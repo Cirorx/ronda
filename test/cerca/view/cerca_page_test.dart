@@ -32,6 +32,23 @@ void main() {
           findsOneWidget,
         );
       });
+
+      testWidgets('inside the page margins', (tester) async {
+        await tester.pumpApp(const CercaPage());
+
+        final text = tester.getRect(find.textContaining('Pronto vas a ver'));
+        expect(text.left, greaterThan(0));
+        expect(text.right, lessThan(phoneSize.width));
+      });
+
+      testWidgets('at 200% text without overflowing', (tester) async {
+        tester.platformDispatcher.textScaleFactorTestValue = 2;
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+        await tester.pumpApp(const CercaPage());
+
+        expect(tester.takeException(), isNull);
+      });
     });
   });
 }

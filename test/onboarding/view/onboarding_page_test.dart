@@ -12,6 +12,7 @@ import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/onboarding/view/steps/steps.dart';
 import 'package:ronda/payoff/payoff.dart';
 import 'package:ronda/welcome/welcome.dart';
+import 'package:ronda_ui/ronda_ui.dart';
 
 import '../../helpers/helpers.dart';
 
@@ -100,6 +101,7 @@ void main() {
       when(() => needsRepository.save(any())).thenAnswer((_) async {});
       when(() => profileRepository.holdAnswers(any())).thenAnswer((_) async {});
       await pumpSignedOut(tester, held: _held);
+      await tester.pump(AppMotion.standardDuration);
 
       await tester.tap(find.bySemanticsIdentifier(ReviewStep.saveIdentifier));
       await tester.pump();

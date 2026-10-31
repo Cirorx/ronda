@@ -80,11 +80,82 @@ void main() {
 
     const weekly = 'Uno por semana, el martes a las 19';
 
-    testWidgets('shows progress while checking', (tester) async {
+    testWidgets('shows progress while checking, saying what it does', (
+      tester,
+    ) async {
       await pump(tester, NotificationsStatus.checking);
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(
+        find.text('Mirando si los avisos están prendidos…'),
+        findsOneWidget,
+      );
       expect(turnOn(), findsNothing);
+    });
+
+    testWidgets('reads out what it finds', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pump(tester, NotificationsStatus.on);
+
+      expect(
+        tester.getSemantics(find.text('Los avisos están prendidos.')),
+        isSemantics(isLiveRegion: true),
+      );
+      semantics.dispose();
+    });
+
+    group('swaps the check for what it found', () {
+      Future<void> pumpFound(
+        WidgetTester tester, {
+        bool reduced = false,
+      }) async {
+        whenListen(
+          cubit,
+          Stream.value(
+            const NotificationsState(status: NotificationsStatus.on),
+          ),
+          initialState: const NotificationsState(),
+        );
+        await tester.pumpApp(
+          reducedMotion(
+            reduced: reduced,
+            child: BlocProvider.value(
+              value: cubit,
+              child: const NotificationsView(),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+
+      final found = find.text('Los avisos están prendidos.');
+      final checking = find.text('Mirando si los avisos están prendidos…');
+
+      testWidgets('settling it in', (tester) async {
+        await pumpFound(tester);
+
+        expect(checking, findsOneWidget);
+        expect(
+          find.ancestor(of: found, matching: find.byType(ScaleTransition)),
+          findsWidgets,
+        );
+        await tester.pump(AppMotion.standardDuration);
+        await tester.pump();
+        expect(checking, findsNothing);
+      });
+
+      testWidgets('only cross-fading with reduced motion', (tester) async {
+        await pumpFound(tester, reduced: true);
+
+        expect(
+          find.ancestor(of: found, matching: find.byType(ScaleTransition)),
+          findsNothing,
+        );
+        await tester.pump(AppMotion.crossFade);
+        await tester.pump();
+        expect(checking, findsNothing);
+      });
     });
 
     testWidgets('says they are on and what Ronda sends', (tester) async {
@@ -108,6 +179,24 @@ void main() {
 
       await tester.tap(turnOn());
       verify(() => cubit.turnOnTapped()).called(1);
+    });
+
+    testWidgets('is felt on "Prender los avisos"', (tester) async {
+      final haptics = recordHaptics(tester);
+      await pump(tester, NotificationsStatus.off);
+
+      await tester.tap(turnOn());
+
+      expect(haptics, ['HapticFeedbackType.lightImpact']);
+    });
+
+    testWidgets('is not felt while the prompt is open', (tester) async {
+      final haptics = recordHaptics(tester);
+      await pump(tester, NotificationsStatus.asking);
+
+      await tester.tap(turnOn());
+
+      expect(haptics, isEmpty);
     });
 
     testWidgets('disables the button while the prompt is open', (tester) async {

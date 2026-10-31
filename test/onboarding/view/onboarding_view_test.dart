@@ -589,6 +589,247 @@ void main() {
       });
     });
 
+    group('the read-back', () {
+      testWidgets('is "Tus respuestas" in the top bar', (tester) async {
+        await pumpSubject(tester, _answered);
+
+        expect(
+          find.descendant(
+            of: find.byType(AppBar),
+            matching: find.text('Tus respuestas'),
+          ),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets('is felt on "Está bien, guardalo"', (tester) async {
+        final haptics = recordHaptics(tester);
+        await pumpSubject(tester, _answered);
+
+        await tapVisible(tester, _byId(ReviewStep.saveIdentifier));
+
+        expect(haptics, ['HapticFeedbackType.lightImpact']);
+        verify(() => cubit.save()).called(1);
+      });
+
+      testWidgets('is not felt while saving is held', (tester) async {
+        final haptics = recordHaptics(tester);
+        await pumpSubject(
+          tester,
+          _answered.copyWith(status: OnboardingStatus.saving),
+        );
+
+        await tapVisible(tester, _byId(ReviewStep.saveIdentifier));
+
+        expect(haptics, isEmpty);
+      });
+
+      testWidgets('reads out a failed save', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await pumpSubject(
+          tester,
+          _answered.copyWith(status: OnboardingStatus.failure),
+        );
+
+        expect(
+          tester.getSemantics(find.text('No pudimos guardar. Probá de nuevo.')),
+          isSemantics(isLiveRegion: true),
+        );
+        semantics.dispose();
+      });
+    });
+
+    group('the needs switches', () {
+      double scaleOf(WidgetTester tester, String text) => tester
+          .widget<AnimatedScale>(
+            find
+                .ancestor(
+                  of: find.text(text),
+                  matching: find.byType(AnimatedScale),
+                )
+                .first,
+          )
+          .scale;
+
+      testWidgets('press in on touch-down, and are not felt', (tester) async {
+        final haptics = recordHaptics(tester);
+        await pumpSubject(
+          tester,
+          const OnboardingState(step: OnboardingStep.needs),
+        );
+        await tester.ensureVisible(find.text('No tengo auto'));
+        await tester.pump();
+
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.text('No tengo auto')),
+        );
+        await tester.pump();
+        expect(scaleOf(tester, 'No tengo auto'), AppMotion.pressedScale);
+
+        await gesture.up();
+        await tester.pump();
+        expect(scaleOf(tester, 'No tengo auto'), 1);
+        verify(() => cubit.needToggled(Need.noCar, marked: true)).called(1);
+        expect(haptics, isEmpty);
+      });
+    });
+
+    group('moving between steps', () {
+      Future<void> pumpMove(
+        WidgetTester tester,
+        OnboardingState from,
+        OnboardingState to, {
+        bool reduced = false,
+      }) async {
+        whenListen(cubit, Stream.value(to), initialState: from);
+        await tester.pumpApp(
+          reducedMotion(
+            reduced: reduced,
+            child: BlocProvider.value(
+              value: cubit,
+              child: const OnboardingView(),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+
+      double dxOf(WidgetTester tester, Type step) => tester
+          .widget<SlideTransition>(
+            find
+                .ancestor(
+                  of: find.byType(step),
+                  matching: find.byType(SlideTransition),
+                )
+                .first,
+          )
+          .position
+          .value
+          .dx;
+
+      double progressOf(WidgetTester tester, Type step) => tester
+          .widget<LinearProgressIndicator>(
+            find.descendant(
+              of: find.byType(step),
+              matching: find.byType(LinearProgressIndicator),
+            ),
+          )
+          .value!;
+
+      testWidgets('slides the next question in from the end, over the last', (
+        tester,
+      ) async {
+        await pumpMove(
+          tester,
+          const OnboardingState(step: OnboardingStep.brings),
+          const OnboardingState(step: OnboardingStep.slots),
+        );
+
+        expect(dxOf(tester, SlotsStep), inExclusiveRange(0, 1));
+        expect(dxOf(tester, BringsStep), inExclusiveRange(-1 / 3, 0));
+
+        await tester.pump(AppMotion.standardDuration);
+        expect(find.byType(BringsStep), findsNothing);
+        expect(dxOf(tester, SlotsStep), 0);
+      });
+
+      testWidgets('slides the open question back out the way it came', (
+        tester,
+      ) async {
+        await pumpMove(
+          tester,
+          const OnboardingState(step: OnboardingStep.slots),
+          const OnboardingState(step: OnboardingStep.brings),
+        );
+
+        expect(dxOf(tester, SlotsStep), inExclusiveRange(0, 1));
+        expect(dxOf(tester, BringsStep), inExclusiveRange(-1 / 3, 0));
+        // The leaving screen stays on top.
+        final stack = tester.widget<Stack>(
+          find
+              .ancestor(
+                of: find.byType(SlotsStep),
+                matching: find.byType(Stack),
+              )
+              .first,
+        );
+        expect(
+          find.descendant(
+            of: find.byWidget(stack.children.last),
+            matching: find.byType(SlotsStep),
+          ),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets('closes a "Cambiar" back to the read-back', (tester) async {
+        await pumpMove(
+          tester,
+          _answered.copyWith(
+            step: OnboardingStep.slots,
+            editingFromReview: true,
+          ),
+          _answered,
+        );
+
+        expect(dxOf(tester, SlotsStep), inExclusiveRange(0, 1));
+        expect(dxOf(tester, ReviewStep), inExclusiveRange(-1 / 3, 0));
+      });
+
+      testWidgets('fills the bar on from the last question', (tester) async {
+        await pumpMove(
+          tester,
+          const OnboardingState(step: OnboardingStep.brings),
+          const OnboardingState(step: OnboardingStep.slots),
+        );
+
+        expect(progressOf(tester, SlotsStep), inExclusiveRange(2 / 7, 3 / 7));
+        expect(progressOf(tester, BringsStep), closeTo(2 / 7, 1e-9));
+
+        await tester.pump(AppMotion.standardDuration);
+        expect(progressOf(tester, SlotsStep), closeTo(3 / 7, 1e-9));
+      });
+
+      testWidgets('opens a "Cambiar" with the bar where it stands', (
+        tester,
+      ) async {
+        await pumpMove(
+          tester,
+          _answered,
+          _answered.copyWith(
+            step: OnboardingStep.slots,
+            editingFromReview: true,
+          ),
+        );
+
+        expect(progressOf(tester, SlotsStep), closeTo(3 / 7, 1e-9));
+      });
+
+      testWidgets('only cross-fades with reduced motion', (tester) async {
+        await pumpMove(
+          tester,
+          const OnboardingState(step: OnboardingStep.brings),
+          const OnboardingState(step: OnboardingStep.slots),
+          reduced: true,
+        );
+
+        expect(
+          find.ancestor(
+            of: find.byType(SlotsStep),
+            matching: find.descendant(
+              of: find.byType(OnboardingView),
+              matching: find.byType(SlideTransition),
+            ),
+          ),
+          findsNothing,
+        );
+        expect(progressOf(tester, SlotsStep), closeTo(3 / 7, 1e-9));
+        await tester.pump(AppMotion.crossFade);
+        expect(find.byType(BringsStep), findsNothing);
+      });
+    });
+
     group('holds 200% text', () {
       for (final state in [
         const OnboardingState(step: OnboardingStep.slots),

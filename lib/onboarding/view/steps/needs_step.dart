@@ -47,13 +47,15 @@ class const NeedsStep({super.key}) extends StatelessWidget {
             MergeSemantics(
               child: Semantics(
                 identifier: '$identifier.${need.name}',
-                child: SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l10n.need(need)),
-                  value: needs.contains(need),
-                  onChanged: (marked) => context
-                      .read<OnboardingCubit>()
-                      .needToggled(need, marked: marked),
+                child: PressScale(
+                  child: SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.need(need)),
+                    value: needs.contains(need),
+                    onChanged: (marked) => context
+                        .read<OnboardingCubit>()
+                        .needToggled(need, marked: marked),
+                  ),
                 ),
               ),
             ),

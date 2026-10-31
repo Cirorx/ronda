@@ -218,6 +218,41 @@ void main() {
         expect(find.text('Guardame el lugar'), findsOneWidget);
       });
 
+      testWidgets('what it is doing while loading, not a bare spinner', (
+        tester,
+      ) async {
+        await pumpSubject(tester, const PayoffState());
+
+        expect(find.text('Mirando quién se anotó cerca tuyo…'), findsOneWidget);
+      });
+
+      testWidgets('"Cerca tuyo" in the top bar, with the way back', (
+        tester,
+      ) async {
+        await pumpSubject(tester, demand);
+
+        expect(
+          find.descendant(
+            of: find.byType(AppBar),
+            matching: find.text('Cerca tuyo'),
+          ),
+          findsOneWidget,
+        );
+        expect(find.byType(BackButton), findsOneWidget);
+      });
+
+      testWidgets('reads out each line of demand', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await pumpSubject(tester, demand);
+
+        expect(
+          tester.getSemantics(
+            find.text('Hay 1 anotado para truco cerca tuyo.'),
+          ),
+          isSemantics(isLiveRegion: true),
+        );
+        semantics.dispose();
+      });
       testWidgets('the button Maestro finds by its identifier', (tester) async {
         final handle = tester.ensureSemantics();
         await pumpSubject(tester, demand);
@@ -240,6 +275,61 @@ void main() {
         await pumpSubject(tester, demand);
 
         expect(tester.takeException(), isNull);
+      });
+    });
+
+    group('swaps the loading line for the demand', () {
+      Future<void> pumpArriving(
+        WidgetTester tester, {
+        bool reduced = false,
+      }) async {
+        whenListen(
+          cubit,
+          Stream.value(demand),
+          initialState: const PayoffState(),
+        );
+        await tester.pumpApp(
+          reducedMotion(
+            reduced: reduced,
+            child: InheritedGoRouter(
+              goRouter: router,
+              child: BlocProvider.value(
+                value: cubit,
+                child: const PayoffView(),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+
+      final arriving = find.text('Te avisamos cuando se arme tu ronda.');
+
+      testWidgets('settling it in', (tester) async {
+        await pumpArriving(tester);
+
+        expect(find.text('Mirando quién se anotó cerca tuyo…'), findsOneWidget);
+        expect(
+          find.ancestor(of: arriving, matching: find.byType(ScaleTransition)),
+          findsWidgets,
+        );
+        await tester.pump(AppMotion.standardDuration);
+        await tester.pump();
+        expect(find.text('Mirando quién se anotó cerca tuyo…'), findsNothing);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+      });
+
+      testWidgets('only cross-fading with reduced motion', (tester) async {
+        await pumpArriving(tester, reduced: true);
+
+        expect(
+          find.ancestor(of: arriving, matching: find.byType(ScaleTransition)),
+          findsNothing,
+        );
+        await tester.pump(AppMotion.crossFade);
+        await tester.pump();
+        expect(find.text('Mirando quién se anotó cerca tuyo…'), findsNothing);
       });
     });
 

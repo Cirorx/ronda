@@ -33,6 +33,8 @@ class const NotificationsPage({super.key}) extends StatelessWidget {
 
 /// Avisos' content. It reads the permission again whenever the app comes
 /// back to the front, so turning them on in the phone's settings shows.
+/// While it reads, it says so; what it finds swaps in and is read out.
+/// [Prender los avisos] is felt as it is tapped.
 class NotificationsView extends StatefulWidget {
   const new({super.key});
 
@@ -45,6 +47,14 @@ class NotificationsView extends StatefulWidget {
 
 class _NotificationsViewState extends State<NotificationsView> {
   late final AppLifecycleListener _lifecycle;
+
+  /// A small spinner beside the line that says what is happening.
+  static const double _spinnerSize = 24;
+  static const double _spinnerStroke = 3;
+
+  /// Each state lines up at the top while they swap.
+  static Widget _topStart(Widget? current, List<Widget> previous) =>
+      Stack(children: [...previous, ?current]);
 
   @override
   void initState() {
@@ -80,48 +90,84 @@ class _NotificationsViewState extends State<NotificationsView> {
         state.status != NotificationsStatus.blocked &&
         state.status != NotificationsStatus.unknown;
 
+    final refused = state.status == NotificationsStatus.refused;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsNotificationsRow)),
       body: ListView(
         padding: EdgeInsets.all(spacing.md),
         children: [
-          if (headline == null)
-            const Center(child: CircularProgressIndicator())
-          else ...[
-            Semantics(
-              liveRegion: true,
-              child: Text(headline, style: textTheme.titleMedium),
-            ),
-            SizedBox(height: spacing.sm),
-            if (explains)
-              for (final line in [
-                l10n.pushPromptWeekly,
-                l10n.pushPromptChanges,
-                l10n.pushPromptNever,
-              ])
-                Text(line, style: textTheme.bodyLarge),
-            if (state.status == NotificationsStatus.refused) ...[
-              SizedBox(height: spacing.sm),
-              Text(l10n.notificationsRefusedHint, style: textTheme.bodyLarge),
-            ],
-            if (state.canTurnOn) ...[
-              SizedBox(height: spacing.lg),
-              MergeSemantics(
-                child: Semantics(
-                  identifier: NotificationsView.turnOnIdentifier,
-                  child: FilledButton(
-                    onPressed: state.status == NotificationsStatus.asking
-                        ? null
-                        : context.read<NotificationsCubit>().turnOnTapped,
-                    child: Text(
-                      l10n.notificationsTurnOn,
-                      textAlign: TextAlign.center,
+          RondaSwap(
+            layoutBuilder: _topStart,
+            child: switch (headline) {
+              null => Row(
+                key: const ValueKey(NotificationsStatus.checking),
+                spacing: spacing.sm,
+                children: [
+                  const SizedBox.square(
+                    dimension: _spinnerSize,
+                    child: CircularProgressIndicator(
+                      strokeWidth: _spinnerStroke,
                     ),
                   ),
-                ),
+                  Expanded(
+                    child: Text(
+                      l10n.notificationsChecking,
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ],
+              final headline => Column(
+                // "Asking" looks like "off" until the phone answers.
+                key: ValueKey((headline, refused)),
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(headline, style: textTheme.titleMedium),
+                  ),
+                  SizedBox(height: spacing.sm),
+                  if (explains)
+                    for (final line in [
+                      l10n.pushPromptWeekly,
+                      l10n.pushPromptChanges,
+                      l10n.pushPromptNever,
+                    ])
+                      Text(line, style: textTheme.bodyLarge),
+                  if (refused) ...[
+                    SizedBox(height: spacing.sm),
+                    Text(
+                      l10n.notificationsRefusedHint,
+                      style: textTheme.bodyLarge,
+                    ),
+                  ],
+                  if (state.canTurnOn) ...[
+                    SizedBox(height: spacing.lg),
+                    MergeSemantics(
+                      child: Semantics(
+                        identifier: NotificationsView.turnOnIdentifier,
+                        child: FilledButton(
+                          onPressed: state.status == NotificationsStatus.asking
+                              ? null
+                              : RondaHaptics.onCommit(
+                                  context
+                                      .read<NotificationsCubit>()
+                                      .turnOnTapped,
+                                ),
+                          child: Text(
+                            l10n.notificationsTurnOn,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            },
+          ),
         ],
       ),
     );

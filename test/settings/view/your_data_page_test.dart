@@ -148,5 +148,24 @@ void main() {
         ),
       ).called(1);
     });
+
+    testWidgets('says under the mail button when no mail app opens', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      when(() => cubit.state).thenReturn(
+        const ContactState(email: _email, status: ContactStatus.emailFailed),
+      );
+      await pump(tester);
+
+      final note = find.text('No se abrió el correo. Escribinos a $_email.');
+      await tester.scrollUntilVisible(note, 100, scrollable: _list);
+      expect(
+        find.descendant(of: find.byType(NoteBanner), matching: note),
+        findsOneWidget,
+      );
+      expect(tester.getSemantics(note), isSemantics(isLiveRegion: true));
+      semantics.dispose();
+    });
   });
 }

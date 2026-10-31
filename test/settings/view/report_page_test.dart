@@ -163,8 +163,62 @@ void main() {
       });
     }
 
-    group('says so in a snack bar', () {
-      testWidgets('when no mail app opens', (tester) async {
+    group('says so in a banner, read out, where it happened', () {
+      Future<void> pumpFailed(WidgetTester tester, ContactState failed) async {
+        whenListen(
+          cubit,
+          Stream.value(failed),
+          initialState: const ContactState(email: _email),
+        );
+        await pump(tester);
+        await tester.pump();
+        await tester.pump(AppMotion.standardDuration);
+        await tester.pump();
+      }
+
+      testWidgets('when no mail app opens, under the mail button', (
+        tester,
+      ) async {
+        final semantics = tester.ensureSemantics();
+        await pumpFailed(
+          tester,
+          const ContactState(email: _email, status: ContactStatus.emailFailed),
+        );
+
+        final note = find.text('No se abrió el correo. Escribinos a $_email.');
+        expect(
+          find.descendant(of: find.byType(NoteBanner), matching: note),
+          findsOneWidget,
+        );
+        expect(find.byType(SnackBar), findsNothing);
+        expect(tester.getSemantics(note), isSemantics(isLiveRegion: true));
+        expect(
+          find.descendant(of: find.byType(HelplineBlock), matching: note),
+          findsNothing,
+        );
+        semantics.dispose();
+      });
+
+      testWidgets('when no dialer opens, in the helplines', (tester) async {
+        await pumpFailed(
+          tester,
+          const ContactState(
+            email: _email,
+            status: ContactStatus.callFailed,
+            helpline: Helpline.suicidePreventionMobile,
+          ),
+        );
+
+        expect(
+          find.descendant(
+            of: find.byType(HelplineBlock),
+            matching: find.text('No se abrió el teléfono. Marcá el *0767.'),
+          ),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets('settling it in as it arrives', (tester) async {
         whenListen(
           cubit,
           Stream.value(
@@ -177,35 +231,21 @@ void main() {
         );
         await pump(tester);
         await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
 
         expect(
-          find.descendant(
-            of: find.byType(SnackBar),
-            matching: find.text('No se abrió el correo. Escribinos a $_email.'),
+          find.ancestor(
+            of: find.byType(NoteBanner),
+            matching: find.byType(ScaleTransition),
           ),
-          findsOneWidget,
+          findsWidgets,
         );
       });
 
-      testWidgets('when no dialer opens', (tester) async {
-        whenListen(
-          cubit,
-          Stream.value(
-            const ContactState(
-              email: _email,
-              status: ContactStatus.callFailed,
-              helpline: Helpline.suicidePreventionMobile,
-            ),
-          ),
-          initialState: const ContactState(email: _email),
-        );
+      testWidgets('nothing before anything failed', (tester) async {
         await pump(tester);
-        await tester.pump();
 
-        expect(
-          find.text('No se abrió el teléfono. Marcá el *0767.'),
-          findsOneWidget,
-        );
+        expect(find.byType(NoteBanner), findsNothing);
       });
     });
   });

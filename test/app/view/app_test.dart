@@ -31,6 +31,8 @@ import 'package:ronda/welcome/welcome.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
+import '../../helpers/helpers.dart';
+
 class _MockAuthRepository extends Mock implements AuthRepository;
 
 class _MockContactRepository extends Mock implements ContactRepository;
@@ -310,6 +312,36 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(MyRondaPage), findsOneWidget);
         expect(find.byType(SettingsPage), findsNothing);
+      });
+
+      testWidgets('pressing a tab in on touch-down, without a haptic', (
+        tester,
+      ) async {
+        await pumpSignedIn(tester);
+        final haptics = recordHaptics(tester);
+        double scaleOf() => tester
+            .widget<AnimatedScale>(
+              find
+                  .ancestor(
+                    of: find.byType(NavigationDestination).at(1),
+                    matching: find.byType(AnimatedScale),
+                  )
+                  .first,
+            )
+            .scale;
+
+        final gesture = await tester.startGesture(
+          tester.getCenter(_tab('Nearby')),
+        );
+        await tester.pump();
+        expect(scaleOf(), AppMotion.pressedScale);
+        expect(find.byType(CercaPage), findsNothing);
+
+        await gesture.up();
+        await tester.pumpAndSettle();
+        expect(scaleOf(), 1);
+        expect(find.byType(CercaPage), findsOneWidget);
+        expect(haptics, isEmpty);
       });
 
       testWidgets('stays on the open tab when it is tapped again', (

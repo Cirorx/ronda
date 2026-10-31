@@ -2,7 +2,7 @@ import 'package:contact_repository/contact_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/settings/cubit/contact_cubit.dart';
-import 'package:ronda/settings/widgets/contact_failure_listener.dart';
+import 'package:ronda/settings/widgets/contact_failure_note.dart';
 import 'package:ronda/settings/widgets/email_button.dart';
 import 'package:ronda/settings/widgets/helpline_block.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -41,27 +41,23 @@ class const ReportView({super.key}) extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsReportRow)),
-      body: ContactFailureListener(
-        child: ListView(
-          padding: EdgeInsets.all(spacing.md),
-          children: [
-            Text(l10n.reportBody, style: textTheme.bodyLarge),
-            SizedBox(height: spacing.sm),
-            SelectableText(
-              l10n.reportWriteTo(email),
-              style: textTheme.bodyLarge,
+      body: ListView(
+        padding: EdgeInsets.all(spacing.md),
+        children: [
+          Text(l10n.reportBody, style: textTheme.bodyLarge),
+          SizedBox(height: spacing.sm),
+          SelectableText(l10n.reportWriteTo(email), style: textTheme.bodyLarge),
+          SizedBox(height: spacing.md),
+          EmailButton(
+            identifier: emailIdentifier,
+            onPressed: () => context.read<ContactCubit>().emailTapped(
+              subject: l10n.reportEmailSubject,
             ),
-            SizedBox(height: spacing.md),
-            EmailButton(
-              identifier: emailIdentifier,
-              onPressed: () => context.read<ContactCubit>().emailTapped(
-                subject: l10n.reportEmailSubject,
-              ),
-            ),
-            SizedBox(height: spacing.lg),
-            const HelplineBlock(),
-          ],
-        ),
+          ),
+          const ContactFailureNote(failure: ContactStatus.emailFailed),
+          SizedBox(height: spacing.lg),
+          const HelplineBlock(),
+        ],
       ),
     );
   }

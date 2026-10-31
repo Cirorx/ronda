@@ -1,12 +1,16 @@
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/onboarding/widgets/onboarding_step_switcher.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// {@template onboarding_step_layout}
 /// One onboarding screen: a back button and the progress through the
-/// questions, a title and a short body, the step's own [child], and the
-/// actions pinned under it.
+/// questions (or the screen's [barTitle]), a title and a short body, the
+/// step's own [child], and the actions pinned under it.
 ///
-/// The content scrolls, so the screen holds at 200% text.
+/// The content scrolls, so the screen holds at 200% text. A screen that
+/// moves through several states (the recorder, then reading) gives each its
+/// [stateKey]: a change swaps the content and the actions in place, under
+/// the same top bar.
 /// {@endtemplate}
 class const OnboardingStepLayout({
   /// The screen's title, read as a heading.
@@ -38,6 +42,18 @@ class const OnboardingStepLayout({
 
   /// An optional action under the primary one ("Saltear").
   final Widget? secondaryAction,
+
+  /// The screen's name in the top bar where there is no progress to show
+  /// ("Tus respuestas" on the read-back).
+  final String? barTitle,
+
+  /// Whether the title is read out when it appears or changes: a status
+  /// that arrives on its own, such as "Estamos leyendo tu audio".
+  final bool liveTitle = false,
+
+  /// The state this screen shows, when it moves through several; a new
+  /// value swaps the content and the actions ([RondaSwap]).
+  final Object? stateKey,
   super.key,
 }) extends StatelessWidget {
   /// {@macro onboarding_step_layout}
@@ -49,8 +65,6 @@ class const OnboardingStepLayout({
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
     final spacing = context.appSpacing;
 
     return Scaffold(
@@ -76,76 +90,110 @@ class const OnboardingStepLayout({
           ),
           null => null,
         },
-        title: switch (questionNumber) {
-          final number? => _Progress(number: number, count: questionCount),
-          null => null,
+        title: switch ((questionNumber, barTitle)) {
+          (final number?, _) => _Progress(number: number, count: questionCount),
+          (null, final barTitle?) => Text(barTitle),
+          (null, null) => null,
         },
       ),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: ListView(
-                padding: EdgeInsetsDirectional.symmetric(
-                  horizontal: spacing.lg,
-                  vertical: spacing.sm,
-                ),
-                children: [
-                  if (overline case final overline?)
-                    Text(
-                      overline,
-                      style: textTheme.titleSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  Semantics(
-                    header: true,
-                    child: Text(title, style: textTheme.headlineMedium),
-                  ),
-                  if (body case final body?) ...[
-                    SizedBox(height: spacing.xs),
-                    Text(body, style: textTheme.bodyLarge),
-                  ],
-                  SizedBox(height: spacing.lg),
-                  child,
-                ],
-              ),
+        child: switch (stateKey) {
+          final stateKey? => RondaSwap(
+            layoutBuilder: _fill,
+            child: KeyedSubtree(
+              key: ValueKey(stateKey),
+              child: _content(context),
             ),
-            Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(
-                spacing.lg,
-                spacing.sm,
-                spacing.lg,
-                spacing.md,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: spacing.xs,
-                children: [primaryAction, ?secondaryAction],
-              ),
-            ),
-          ],
-        ),
+          ),
+          null => _content(context),
+        },
       ),
     );
   }
+
+  Widget _content(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final spacing = context.appSpacing;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: ListView(
+            padding: EdgeInsetsDirectional.symmetric(
+              horizontal: spacing.lg,
+              vertical: spacing.sm,
+            ),
+            children: [
+              if (overline case final overline?)
+                Text(
+                  overline,
+                  style: textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              Semantics(
+                header: true,
+                liveRegion: liveTitle,
+                child: Text(title, style: textTheme.headlineMedium),
+              ),
+              if (body case final body?) ...[
+                SizedBox(height: spacing.xs),
+                Text(body, style: textTheme.bodyLarge),
+              ],
+              SizedBox(height: spacing.lg),
+              child,
+            ],
+          ),
+        ),
+        Padding(
+          padding: EdgeInsetsDirectional.fromSTEB(
+            spacing.lg,
+            spacing.sm,
+            spacing.lg,
+            spacing.md,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: spacing.xs,
+            children: [primaryAction, ?secondaryAction],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Both states fill the body while they swap.
+  static Widget _fill(Widget? current, List<Widget> previous) =>
+      Stack(fit: StackFit.expand, children: [...previous, ?current]);
 }
 
+/// The bar and "3 de 7". Arriving from another question, the bar moves on
+/// from where that one stood instead of jumping.
 class const _Progress({required final int number, required final int count})
     extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
+    final from = OnboardingStepSwitcher.previousQuestionOf(context) ?? number;
     return Semantics(
       label: l10n.onboardingProgressSemantics(number, count),
       excludeSemantics: true,
       child: Row(
         spacing: context.appSpacing.sm,
         children: [
-          Expanded(child: LinearProgressIndicator(value: number / count)),
+          Expanded(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: from / count, end: number / count),
+              duration: RondaMotion.of(context)
+                  .durationOr(AppMotion.standardDuration),
+              curve: AppMotion.standardCurve,
+              builder: (context, value, _) =>
+                  LinearProgressIndicator(value: value),
+            ),
+          ),
           Text(
             l10n.onboardingProgress(number, count),
             style: theme.textTheme.bodyMedium?.copyWith(

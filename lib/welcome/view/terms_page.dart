@@ -4,7 +4,8 @@ import 'package:ronda/welcome/welcome.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// "Las condiciones, en corto": the six plain points the welcome screen
-/// links, and where each thing happens.
+/// links, set apart by space rather than rules, and where each thing
+/// happens. "Condiciones" in the top bar, with the way back to the doors.
 class const TermsPage({super.key}) extends StatelessWidget {
   /// The path under [WelcomePage.path].
   static const segment = 'condiciones';
@@ -30,7 +31,7 @@ class const TermsPage({super.key}) extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(title: Text(l10n.termsBarTitle)),
       body: SafeArea(
         child: ListView(
           padding: EdgeInsetsDirectional.symmetric(
@@ -44,7 +45,7 @@ class const TermsPage({super.key}) extends StatelessWidget {
             ),
             SizedBox(height: spacing.md),
             for (final (index, point) in points.indexed) ...[
-              if (index > 0) const Divider(),
+              if (index > 0) SizedBox(height: spacing.sm),
               MergeSemantics(
                 child: Padding(
                   padding: EdgeInsetsDirectional.symmetric(

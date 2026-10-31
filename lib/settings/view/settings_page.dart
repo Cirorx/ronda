@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ronda/app/app.dart';
@@ -8,8 +10,8 @@ import 'package:ronda/settings/view/your_data_page.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// The Ajustes tab: Avisos, "Contar algo que pasó" and "Tus datos", each on
-/// its own screen under [path], and "Salir de esta cuenta" after a
-/// confirmation.
+/// its own screen under [path], and, set apart by space, "Salir de esta
+/// cuenta" after a confirmation. Every row presses in from touch-down.
 class const SettingsPage({super.key}) extends StatelessWidget {
   static const path = '/ajustes';
 
@@ -36,11 +38,13 @@ class const SettingsPage({super.key}) extends StatelessWidget {
     }) => MergeSemantics(
       child: Semantics(
         identifier: identifier,
-        child: ListTile(
-          leading: Icon(icon),
-          title: Text(label),
-          trailing: opensScreen ? const Icon(Icons.chevron_right) : null,
-          onTap: onTap,
+        child: PressScale(
+          child: ListTile(
+            leading: Icon(icon),
+            title: Text(label),
+            trailing: opensScreen ? const Icon(Icons.chevron_right) : null,
+            onTap: onTap,
+          ),
         ),
       ),
     );
@@ -67,7 +71,7 @@ class const SettingsPage({super.key}) extends StatelessWidget {
             l10n.settingsDataRow,
             () => context.go(YourDataPage.path),
           ),
-          const Divider(),
+          SizedBox(height: context.appSpacing.lg),
           row(
             signOutIdentifier,
             Icons.logout,
@@ -80,9 +84,9 @@ class const SettingsPage({super.key}) extends StatelessWidget {
     );
   }
 
-  /// "¿Salís de esta cuenta?": «Salir» signs out through the [AppBloc],
-  /// which forgets this phone's push token first; the router then shows the
-  /// welcome screen. «Mejor no» only closes the sheet.
+  /// "¿Salís de esta cuenta?": «Salir», felt as it is tapped, signs out
+  /// through the [AppBloc], which forgets this phone's push token first; the
+  /// router then shows the welcome screen. «Mejor no» only closes the sheet.
   Future<void> _confirmSignOut(BuildContext context) {
     final l10n = context.l10n;
     final appBloc = context.read<AppBloc>();
@@ -93,6 +97,7 @@ class const SettingsPage({super.key}) extends StatelessWidget {
       body: l10n.signOutBody,
       primaryLabel: l10n.signOutConfirm,
       onPrimary: () {
+        unawaited(RondaHaptics.commit());
         navigator.pop();
         appBloc.add(const AppSignOutRequested());
       },

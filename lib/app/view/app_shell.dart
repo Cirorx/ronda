@@ -1,8 +1,10 @@
 import 'package:go_router/go_router.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda_ui/ronda_ui.dart';
 
 /// The bottom navigation around the three tabs: Mi ronda, Cerca, Ajustes.
+/// Each tab presses in from touch-down; changing tabs is navigation, so it
+/// is never felt.
 class const AppShell({
   required final StatefulNavigationShell navigationShell,
   super.key,
@@ -20,21 +22,18 @@ class const AppShell({
           initialLocation: index == navigationShell.currentIndex,
         ),
         destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.groups_outlined),
-            selectedIcon: const Icon(Icons.groups),
-            label: l10n.myRondaTabLabel,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.near_me_outlined),
-            selectedIcon: const Icon(Icons.near_me),
-            label: l10n.cercaTabLabel,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.settings_outlined),
-            selectedIcon: const Icon(Icons.settings),
-            label: l10n.settingsTabLabel,
-          ),
+          for (final (icon, selectedIcon, label) in [
+            (Icons.groups_outlined, Icons.groups, l10n.myRondaTabLabel),
+            (Icons.near_me_outlined, Icons.near_me, l10n.cercaTabLabel),
+            (Icons.settings_outlined, Icons.settings, l10n.settingsTabLabel),
+          ])
+            PressScale(
+              child: NavigationDestination(
+                icon: Icon(icon),
+                selectedIcon: Icon(selectedIcon),
+                label: label,
+              ),
+            ),
         ],
       ),
     );

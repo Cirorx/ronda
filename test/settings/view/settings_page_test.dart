@@ -87,6 +87,46 @@ void main() {
       });
     });
 
+    group('feels', () {
+      double scaleOf(WidgetTester tester, String row) => tester
+          .widget<AnimatedScale>(
+            find
+                .ancestor(
+                  of: find.text(row),
+                  matching: find.byType(AnimatedScale),
+                )
+                .first,
+          )
+          .scale;
+
+      for (final row in [
+        'Avisos',
+        'Contar algo que pasó',
+        'Tus datos',
+        'Salir de esta cuenta',
+      ]) {
+        testWidgets('"$row" press in on touch-down', (tester) async {
+          await pump(tester);
+
+          final gesture = await tester.startGesture(
+            tester.getCenter(find.text(row)),
+          );
+          await tester.pump();
+          expect(scaleOf(tester, row), AppMotion.pressedScale);
+
+          await gesture.cancel();
+          await tester.pump();
+          expect(scaleOf(tester, row), 1);
+        });
+      }
+
+      testWidgets('sets sign-out apart with space, not a rule', (tester) async {
+        await pump(tester);
+
+        expect(find.byType(Divider), findsNothing);
+      });
+    });
+
     group('signs out', () {
       Future<void> openSheet(WidgetTester tester) async {
         await pump(tester);
@@ -94,8 +134,12 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      testWidgets('only after the confirmation', (tester) async {
+      testWidgets('only after the confirmation, felt on «Salir»', (
+        tester,
+      ) async {
+        final haptics = recordHaptics(tester);
         await openSheet(tester);
+        expect(haptics, isEmpty);
 
         expect(find.text('¿Salís de esta cuenta?'), findsOneWidget);
         expect(
@@ -113,9 +157,11 @@ void main() {
 
         verify(() => appBloc.add(const AppSignOutRequested())).called(1);
         expect(find.text('¿Salís de esta cuenta?'), findsNothing);
+        expect(haptics, ['HapticFeedbackType.lightImpact']);
       });
 
       testWidgets('not when the person changes their mind', (tester) async {
+        final haptics = recordHaptics(tester);
         await openSheet(tester);
 
         await tester.tap(find.text('Mejor no'));
@@ -123,6 +169,7 @@ void main() {
 
         expect(find.text('¿Salís de esta cuenta?'), findsNothing);
         verifyNever(() => appBloc.add(any()));
+        expect(haptics, isEmpty);
       });
     });
   });

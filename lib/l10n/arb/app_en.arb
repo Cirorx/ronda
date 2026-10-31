@@ -32,6 +32,14 @@
     "@loginTitle": {
         "description": "Heading of the sign-in screen when it opens to return somewhere (?from=/admin)"
     },
+    "loginBarTitle": "Sign in",
+    "@loginBarTitle": {
+        "description": "Top bar title of the sign-in screen"
+    },
+    "loginInProgress": "Signing in…",
+    "@loginInProgress": {
+        "description": "Read out on the Google button while sign-in is under way"
+    },
     "loginNoPosting": "We never post anything to your account",
     "@loginNoPosting": {
         "description": "First reassurance on the sign-in screen"
@@ -75,6 +83,14 @@
     "payoffTitle": "Here's what there is for you",
     "@payoffTitle": {
         "description": "Heading of the payoff screen, after the read-back and before sign-in"
+    },
+    "payoffBarTitle": "Near you",
+    "@payoffBarTitle": {
+        "description": "Top bar title of the payoff screen"
+    },
+    "payoffLoading": "Checking who signed up near you…",
+    "@payoffLoading": {
+        "description": "Status line on the payoff screen while the counts load"
     },
     "payoffDemandAtSlot": "{count, plural, =1{1 neighbour near you signed up} other{{count} neighbours near you signed up}} for {pretext} {slot}.",
     "@payoffDemandAtSlot": {
@@ -215,6 +231,10 @@
     "termsDone": "Got it",
     "@termsDone": {
         "description": "Button that closes the short terms screen"
+    },
+    "termsBarTitle": "Terms",
+    "@termsBarTitle": {
+        "description": "Top bar title of the terms screen"
     },
     "onboardingProgress": "{current} of {total}",
     "@onboardingProgress": {
@@ -540,6 +560,10 @@
     "@reviewTitle": {
         "description": "Heading of the onboarding read-back"
     },
+    "onboardingReviewBarTitle": "Your answers",
+    "@onboardingReviewBarTitle": {
+        "description": "Top bar title of the onboarding read-back"
+    },
     "reviewBody": "Check what you chose. If something is wrong, tap “Change”. Nothing is saved yet.",
     "@reviewBody": {
         "description": "Text under the read-back heading"
@@ -750,6 +774,10 @@
     "voiceTitle": "We're listening",
     "@voiceTitle": {
         "description": "Heading of the voice recorder"
+    },
+    "voiceBarTitle": "Your voice note",
+    "@voiceBarTitle": {
+        "description": "Top bar title of the voice recorder and its reading and error states"
     },
     "voiceBody": "Take your time, like a voice message to a friend.",
     "@voiceBody": {
@@ -1850,6 +1878,10 @@
     "notificationsOn": "Notifications are on.",
     "@notificationsOn": {
         "description": "Notifications screen: the phone lets Ronda notify"
+    },
+    "notificationsChecking": "Checking whether notifications are on…",
+    "@notificationsChecking": {
+        "description": "Status line in Settings > Notifications while the permission is read"
     },
     "notificationsOff": "Notifications are off.",
     "@notificationsOff": {

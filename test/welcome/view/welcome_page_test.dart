@@ -121,6 +121,37 @@ void main() {
       });
     });
 
+    group('the doors', () {
+      double scaleOf(WidgetTester tester) => tester
+          .widget<AnimatedScale>(
+            find
+                .ancestor(
+                  of: find.byType(Card).first,
+                  matching: find.byType(AnimatedScale),
+                )
+                .first,
+          )
+          .scale;
+
+      testWidgets('press in on touch-down, before the tap', (tester) async {
+        await pumpSubject(tester);
+
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.text('Con un audio')),
+        );
+        await tester.pump();
+
+        expect(scaleOf(tester), AppMotion.pressedScale);
+        verifyNever(
+          () => appBloc.add(const AppTermsAccepted(door: OnboardingDoor.voice)),
+        );
+
+        await gesture.up();
+        await tester.pump();
+        expect(scaleOf(tester), 1);
+      });
+    });
+
     group('accepts the terms', () {
       testWidgets('when the buttons door is tapped', (tester) async {
         await pumpSubject(tester);

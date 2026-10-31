@@ -130,21 +130,79 @@ void main() {
       });
     });
 
+    group('swaps the ask for how to turn them on', () {
+      Future<void> pumpRefused(
+        WidgetTester tester, {
+        bool reduced = false,
+      }) async {
+        whenListen(
+          cubit,
+          Stream.value(const PushState(status: PushStatus.blocked)),
+          initialState: const PushState(status: PushStatus.requesting),
+        );
+        await tester.pumpApp(
+          reducedMotion(
+            reduced: reduced,
+            child: BlocProvider.value(
+              value: cubit,
+              child: const Scaffold(body: PushPrompt()),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+
+      final hint = find.textContaining('prendelos en los ajustes');
+
+      testWidgets('settling it in under the same title', (tester) async {
+        await pumpRefused(tester);
+
+        expect(find.text('Uno por semana, el martes a las 19'), findsOneWidget);
+        expect(
+          find.ancestor(of: hint, matching: find.byType(ScaleTransition)),
+          findsWidgets,
+        );
+        expect(find.text('¿Te avisamos los martes?'), findsOneWidget);
+
+        await tester.pump(AppMotion.standardDuration);
+        await tester.pump();
+        expect(find.text('Uno por semana, el martes a las 19'), findsNothing);
+        expect(hint, findsOneWidget);
+      });
+
+      testWidgets('only cross-fading with reduced motion', (tester) async {
+        await pumpRefused(tester, reduced: true);
+
+        expect(
+          find.ancestor(of: hint, matching: find.byType(ScaleTransition)),
+          findsNothing,
+        );
+        await tester.pump(AppMotion.crossFade);
+        await tester.pump();
+        expect(find.text('Uno por semana, el martes a las 19'), findsNothing);
+      });
+    });
+
     group('calls', () {
-      testWidgets('allowTapped on "Sí, avisame"', (tester) async {
+      testWidgets('allowTapped on "Sí, avisame", felt', (tester) async {
+        final haptics = recordHaptics(tester);
         await pump(tester, PushStatus.offered);
 
         await tester.tap(find.text('Sí, avisame'));
 
         verify(() => cubit.allowTapped()).called(1);
+        expect(haptics, ['HapticFeedbackType.lightImpact']);
       });
 
-      testWidgets('dismissed on "Ahora no"', (tester) async {
+      testWidgets('dismissed on "Ahora no", not felt', (tester) async {
+        final haptics = recordHaptics(tester);
         await pump(tester, PushStatus.offered);
 
         await tester.tap(find.text('Ahora no'));
 
         verify(() => cubit.dismissed()).called(1);
+        expect(haptics, isEmpty);
       });
 
       testWidgets('dismissed on "Entendido"', (tester) async {

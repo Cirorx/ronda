@@ -193,6 +193,23 @@ void main() {
         expect: () => const [VoiceNoteState(status: VoiceNoteStatus.failure)],
       );
 
+      test('drops the answer once closed while reading (Cancelar)', () async {
+        final answer = Completer<VoiceSignup>();
+        when(() => repository.readVoiceNote(any()))
+            .thenAnswer((_) => answer.future);
+        final cubit = buildCubit();
+        await cubit.start();
+        final finishing = cubit.finish();
+        await Future<void>.delayed(Duration.zero);
+        expect(cubit.state.status, equals(VoiceNoteStatus.reading));
+
+        await cubit.close();
+        answer.complete(_signup);
+
+        await expectLater(finishing, completes);
+        expect(cubit.state.status, equals(VoiceNoteStatus.reading));
+      });
+
       blocTest<VoiceNoteCubit, VoiceNoteState>(
         'does nothing unless recording',
         build: buildCubit,
