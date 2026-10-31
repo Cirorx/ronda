@@ -142,6 +142,14 @@ void main() {
         expect(_byId(NeedsStep.skipIdentifier), findsNothing);
       });
 
+      testWidgets('answers a question from its section', (tester) async {
+        await pumpSubject(tester, const OnboardingState());
+
+        await tester.tap(_byId('${BringsStep.identifier}.termo'));
+
+        verify(() => cubit.bringsChanged({Bring.termo})).called(1);
+      });
+
       group('"Seguir"', () {
         testWidgets('waits until every question on the page is answered', (
           tester,
