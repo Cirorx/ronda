@@ -86,6 +86,10 @@ class const RondaApi({
 
   /// Uploads a WAV voice note to `audio/{uid}/{noteId}.wav` and returns
   /// that path. Logs its size and how long the upload took, never the audio.
+  ///
+  /// Throws a [VoiceNoteRefusedException] when Storage refused it (its rules,
+  /// or a missing grant behind them) and a [VoiceNoteUploadException] when
+  /// the upload failed any other way.
   Future<String> uploadVoiceNote({
     required String uid,
     required String noteId,
@@ -93,9 +97,19 @@ class const RondaApi({
   }) async {
     final path = 'audio/$uid/$noteId.wav';
     final watch = Stopwatch()..start();
-    await storage
-        .ref(path)
-        .putData(wav, SettableMetadata(contentType: 'audio/wav'));
+    try {
+      await storage
+          .ref(path)
+          .putData(wav, SettableMetadata(contentType: 'audio/wav'));
+    } on FirebaseException catch (error) {
+      // The web plugin keeps the `storage/` prefix; the phone ones drop it.
+      final code = error.code.replaceFirst('storage/', '');
+      log('voice note upload failed: $code');
+      if (code == 'unauthorized' || code == 'unauthenticated') {
+        throw VoiceNoteRefusedException(code);
+      }
+      throw VoiceNoteUploadException(code);
+    }
     log(
       'voice note uploaded: ${wav.length} bytes '
       'in ${watch.elapsedMilliseconds} ms',

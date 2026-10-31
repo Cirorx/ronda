@@ -70,14 +70,20 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   before recording because the server reads the audio: "Para escucharte necesitamos que entres
   con tu cuenta", with the same three lines. Backing out of sign-in keeps the answers on the
   phone. (Signing in at the end of the voice path with a temporary account comes later.)
-- **Voice:** "Te escuchamos", ≤ 60 s, "Ideas de qué contar" shown as a plain checklist while
+- **Voice:** "Te escuchamos", [Grabar] (nothing records before the tap), then "Grabando" with
+  the timer and a waveform of the voice (2026-10-30; "No te escuchamos. Revisá el micrófono."
+  after about 3 s of silence), ≤ 60 s, "Ideas de qué contar" shown as a plain checklist while
   recording and ticked on the read-back from what the transcript covered (live ticking would
   need live transcription; decided 2026-10-27),
   [Terminé], "Borrar y empezar de nuevo", [Cancelar], and "El audio se borra apenas lo leemos."
   Then "¿Entendimos bien?" with every field and a "Cambiar" on each; "Todavía no guardamos
   nada"; "Tu audio ya se borró."; [Está bien, guardalo] [Grabar de nuevo].
-- **Microphone blocked:** "No podemos usar el micrófono", three steps to allow it, or
-  [Prefiero tocar botones].
+- **Microphone blocked:** "No podemos usar el micrófono", three steps to allow it (the phone's
+  settings, or the browser's padlock on web), or [Prefiero tocar botones].
+- **Voice failures** say what failed, each with [Prefiero tocar botones]: "No encontramos un
+  micrófono", "No pudimos grabar", "No pudimos mandar el audio" (the connection: try again; or
+  refused by the server: "Es un problema nuestro, no tuyo", buttons only), "Falta aceptar las
+  condiciones" (buttons only), "No pudimos leer el audio".
 - **Order (buttons):** welcome (doors + terms note) → the seven questions and the read-back,
   signed out → the payoff → "Guardá tu lugar" sign-in → the profile and the terms saved → Mi
   ronda. Until sign-in the answers and the terms stay on the phone, so backing out of sign-in

@@ -26,7 +26,10 @@ void main() {
 
     final wav = Uint8List.fromList([82, 73, 70, 70]);
 
-    setUpAll(() => registerFallbackValue(const RecordConfig()));
+    setUpAll(() {
+      registerFallbackValue(const RecordConfig());
+      registerFallbackValue(Duration.zero);
+    });
 
     setUp(() {
       recorder = _MockAudioRecorder();
@@ -83,6 +86,54 @@ void main() {
           .called(1);
       expect(await defaults.stop(), equals(wav));
       expect(file.existsSync(), isFalse);
+    });
+
+    group('hasMicrophone', () {
+      test('is true on a phone by default', () async {
+        expect(await VoiceRecorder(recorder: recorder).hasMicrophone(), isTrue);
+      });
+
+      test('asks the injected check', () async {
+        final none = VoiceRecorder(
+          recorder: recorder,
+          hasMicrophone: () async => false,
+        );
+
+        expect(await none.hasMicrophone(), isFalse);
+      });
+    });
+
+    group('levelOf', () {
+      test('is 0 at or below the quietest level', () {
+        expect(VoiceRecorder.levelOf(-160), equals(0));
+        expect(VoiceRecorder.levelOf(VoiceRecorder.quietestDb), equals(0));
+      });
+
+      test('is 0 for a dead microphone on web', () {
+        expect(VoiceRecorder.levelOf(double.negativeInfinity), equals(0));
+        expect(VoiceRecorder.levelOf(double.nan), equals(0));
+      });
+
+      test('rises with the voice up to 1 at full scale', () {
+        expect(VoiceRecorder.levelOf(-30), closeTo(0.5, 1e-9));
+        expect(VoiceRecorder.levelOf(0), equals(1));
+        expect(VoiceRecorder.levelOf(3), equals(1));
+      });
+    });
+
+    test('levels reads the amplitude every 40 ms, as 0 to 1', () async {
+      when(() => recorder.onAmplitudeChanged(any())).thenAnswer(
+        (_) => Stream.fromIterable([
+          Amplitude(current: -160, max: -160),
+          Amplitude(current: -30, max: -30),
+          Amplitude(current: 0, max: 0),
+        ]),
+      );
+
+      expect(await subject().levels().toList(), equals([0, 0.5, 1]));
+      verify(
+        () => recorder.onAmplitudeChanged(const Duration(milliseconds: 40)),
+      ).called(1);
     });
 
     test('hasPermission asks the recorder', () async {

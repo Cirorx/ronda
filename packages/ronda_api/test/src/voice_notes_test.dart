@@ -33,6 +33,17 @@ class _FakeUploadTask(final TaskSnapshot _snapshot)
   }) => Future.value(_snapshot).then(onValue, onError: onError);
 }
 
+/// An upload that fails with [_error].
+class _FailingUploadTask(final FirebaseException _error)
+    extends Fake
+    implements UploadTask {
+  @override
+  Future<R> then<R>(
+    FutureOr<R> Function(TaskSnapshot) onValue, {
+    Function? onError,
+  }) => Future<TaskSnapshot>.error(_error).then(onValue, onError: onError);
+}
+
 void main() {
   group('$RondaApi voice notes', () {
     late FirebaseStorage storage;
@@ -108,6 +119,67 @@ void main() {
           expect(metadata.contentType, equals('audio/wav'));
         },
       );
+
+      Future<String> upload() =>
+          subject.uploadVoiceNote(uid: 'demo-uid', noteId: 'note-1', wav: wav);
+
+      void failWith(String code) => when(() => reference.putData(any(), any()))
+          .thenAnswer(
+            (_) => _FailingUploadTask(
+              FirebaseException(plugin: 'firebase_storage', code: code),
+            ),
+          );
+
+      for (final code in ['unauthorized', 'storage/unauthorized']) {
+        test('says Storage refused it on $code', () async {
+          failWith(code);
+
+          await expectLater(
+            upload(),
+            throwsA(
+              isA<VoiceNoteRefusedException>()
+                  .having((e) => e.code, 'code', 'unauthorized')
+                  .having(
+                    (e) => e.toString(),
+                    'toString',
+                    'VoiceNoteRefusedException(unauthorized)',
+                  ),
+            ),
+          );
+        });
+      }
+
+      test('says Storage refused it when signed out', () async {
+        failWith('unauthenticated');
+
+        await expectLater(
+          upload(),
+          throwsA(
+            isA<VoiceNoteRefusedException>().having(
+              (e) => e.code,
+              'code',
+              'unauthenticated',
+            ),
+          ),
+        );
+      });
+
+      test('says the upload failed on any other code', () async {
+        failWith('retry-limit-exceeded');
+
+        await expectLater(
+          upload(),
+          throwsA(
+            isA<VoiceNoteUploadException>()
+                .having((e) => e.code, 'code', 'retry-limit-exceeded')
+                .having(
+                  (e) => e.toString(),
+                  'toString',
+                  'VoiceNoteUploadException(retry-limit-exceeded)',
+                ),
+          ),
+        );
+      });
     });
 
     group('deleteVoiceNote', () {

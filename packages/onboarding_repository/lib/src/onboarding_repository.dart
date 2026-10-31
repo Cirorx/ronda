@@ -27,6 +27,9 @@ class OnboardingRepository {
   final RondaApi _rondaApi;
   final String Function() _newNoteId;
 
+  /// The size of a RIFF/WAVE header with no samples after it.
+  static const _wavHeaderBytes = 44;
+
   static String _randomNoteId() {
     final random = Random.secure();
     return [
@@ -37,15 +40,20 @@ class OnboardingRepository {
 
   /// Starts a new voice note, asking for the microphone the first time.
   ///
-  /// Throws a [MicrophoneDeniedFailure] when it may not be used, and a
+  /// Throws a [NoMicrophoneFailure] when there is none to use, a
+  /// [MicrophoneDeniedFailure] when it may not be used, and a
   /// [StartVoiceNoteFailure] when the recorder fails.
   Future<void> startVoiceNote() async {
     final bool allowed;
+    final bool present;
     try {
       allowed = await _voiceRecorder.hasPermission();
+      // A browser with no microphone answers like one that was refused.
+      present = allowed || await _voiceRecorder.hasMicrophone();
     } on Exception {
       throw const StartVoiceNoteFailure();
     }
+    if (!present) throw const NoMicrophoneFailure();
     if (!allowed) throw const MicrophoneDeniedFailure();
     try {
       await _voiceRecorder.start();
@@ -53,6 +61,10 @@ class OnboardingRepository {
       throw const StartVoiceNoteFailure();
     }
   }
+
+  /// How loud the microphone is while a note records, 25 times a second,
+  /// from 0 (silence) to 1. Only levels; never the audio.
+  Stream<double> voiceLevels() => _voiceRecorder.levels();
 
   /// Stops and throws away the note being recorded, if any.
   Future<void> discardVoiceNote() async {
@@ -65,21 +77,31 @@ class OnboardingRepository {
 
   /// Stops the note and returns what [uid] said in it.
   ///
-  /// Throws a [TermsNotAcceptedFailure] before any upload when
-  /// `users/{uid}.terms` is missing, a [VoiceNoteNotUnderstoodFailure] when
-  /// nothing could be understood, and a [ReadVoiceNoteFailure] for any other
-  /// failure.
+  /// Each step fails with its own failure, so the person is told what went
+  /// wrong: a [RecordVoiceNoteFailure] when the recorder gave back no note,
+  /// a [TermsNotAcceptedFailure] before any upload when `users/{uid}.terms`
+  /// is missing, an [UploadVoiceNoteFailure] when the note couldn't be sent,
+  /// a [VoiceNoteNotUnderstoodFailure] when nothing could be understood, and
+  /// a [ReadVoiceNoteFailure] when reading it failed.
   Future<VoiceSignup> readVoiceNote(String uid) async {
     final Uint8List? wav;
-    final UserDocument? user;
     try {
       wav = await _voiceRecorder.stop();
+    } on Exception {
+      throw const RecordVoiceNoteFailure();
+    }
+    // A WAV header alone (44 bytes) is a note with no sound in it.
+    if (wav == null || wav.length <= _wavHeaderBytes) {
+      throw const RecordVoiceNoteFailure();
+    }
+
+    final UserDocument? user;
+    try {
       user = await _rondaApi.readUser(uid);
     } on Exception {
-      throw const ReadVoiceNoteFailure();
+      throw const UploadVoiceNoteFailure(code: 'read-user');
     }
     if (user?.terms == null) throw const TermsNotAcceptedFailure();
-    if (wav == null || wav.isEmpty) throw const ReadVoiceNoteFailure();
 
     final String path;
     try {
@@ -88,8 +110,12 @@ class OnboardingRepository {
         noteId: _newNoteId(),
         wav: wav,
       );
+    } on VoiceNoteRefusedException catch (error) {
+      throw UploadVoiceNoteFailure(refused: true, code: error.code);
+    } on VoiceNoteUploadException catch (error) {
+      throw UploadVoiceNoteFailure(code: error.code);
     } on Exception {
-      throw const ReadVoiceNoteFailure();
+      throw const UploadVoiceNoteFailure();
     }
 
     final ExtractedFields fields;

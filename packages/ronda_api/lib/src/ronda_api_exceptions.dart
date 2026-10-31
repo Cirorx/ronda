@@ -8,6 +8,37 @@ class UnreadableVoiceNoteException implements Exception {
   const new();
 }
 
+/// {@template voice_note_refused_exception}
+/// Storage refused the voice note: its rules said no (no terms yet, not the
+/// owner, not a WAV, too big), or the project can't evaluate them. Trying
+/// again won't help.
+/// {@endtemplate}
+class const VoiceNoteRefusedException(
+  /// Storage's error code, such as `unauthorized`.
+  final String code,
+) implements Exception {
+  /// {@macro voice_note_refused_exception}
+  this;
+
+  @override
+  String toString() => 'VoiceNoteRefusedException($code)';
+}
+
+/// {@template voice_note_upload_exception}
+/// The voice note upload failed for a reason other than the rules: no
+/// connection, cancelled, or a Storage error. Trying again may work.
+/// {@endtemplate}
+class const VoiceNoteUploadException(
+  /// Storage's error code, such as `retry-limit-exceeded`.
+  final String code,
+) implements Exception {
+  /// {@macro voice_note_upload_exception}
+  this;
+
+  @override
+  String toString() => 'VoiceNoteUploadException($code)';
+}
+
 /// {@template not_a_host_exception}
 /// `make_mate_flyer` refused: the caller doesn't host that ronda (or, while
 /// it has no hosts yet, isn't one of its members), or the photo isn't

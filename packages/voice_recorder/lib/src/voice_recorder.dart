@@ -4,6 +4,7 @@ import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+import 'package:voice_recorder/src/microphones/microphones.dart' as microphones;
 
 /// {@template voice_recorder}
 /// Records one voice note at a time as the WAV Voice Transcribe takes:
@@ -22,16 +23,19 @@ class VoiceRecorder {
     Future<String> Function()? temporaryDirectory,
     Future<Uint8List> Function(String path)? readBytes,
     Future<void> Function(String path)? deleteFile,
+    Future<bool> Function()? hasMicrophone,
     this._isWeb = kIsWeb,
   }) : _recorder = recorder ?? AudioRecorder(),
        _temporaryDirectory = temporaryDirectory ?? _systemTemporaryDirectory,
        _readBytes = readBytes ?? _readXFile,
-       _deleteFile = deleteFile ?? _deleteIoFile;
+       _deleteFile = deleteFile ?? _deleteIoFile,
+       _hasMicrophone = hasMicrophone ?? microphones.hasMicrophone;
 
   final AudioRecorder _recorder;
   final Future<String> Function() _temporaryDirectory;
   final Future<Uint8List> Function(String path) _readBytes;
   final Future<void> Function(String path) _deleteFile;
+  final Future<bool> Function() _hasMicrophone;
   final bool _isWeb;
 
   /// How every note is recorded (`record` defaults to AAC 44.1 kHz stereo).
@@ -40,6 +44,21 @@ class VoiceRecorder {
     sampleRate: 16000,
     numChannels: 1,
   );
+
+  /// How often [levels] reads the microphone: 25 times a second.
+  static const levelInterval = Duration(milliseconds: 40);
+
+  /// The quietest level [levelOf] tells apart from silence, in dBFS.
+  static const quietestDb = -60.0;
+
+  /// A level from 0 (silence, or no sound at all) to 1 (full scale), from
+  /// dBFS as `record` reads it. Quieter than [quietestDb] is 0; a dead
+  /// microphone on web reads negative infinity, also 0.
+  static double levelOf(double dbfs) {
+    if (!dbfs.isFinite || dbfs <= quietestDb) return 0;
+    if (dbfs >= 0) return 1;
+    return 1 - dbfs / quietestDb;
+  }
 
   /// The note's file name; on web `record` ignores it.
   static const fileName = 'voice_note.wav';
@@ -53,6 +72,16 @@ class VoiceRecorder {
 
   /// Whether the microphone may be used, asking the person the first time.
   Future<bool> hasPermission() => _recorder.hasPermission();
+
+  /// Whether there is any microphone to ask for: a browser on a computer
+  /// may have none.
+  Future<bool> hasMicrophone() => _hasMicrophone();
+
+  /// How loud the microphone is while a note records, every
+  /// [levelInterval], from 0 to 1 ([levelOf]). Only levels; never the audio.
+  Stream<double> levels() => _recorder
+      .onAmplitudeChanged(levelInterval)
+      .map((amplitude) => levelOf(amplitude.current));
 
   /// Starts a new note.
   Future<void> start() async {

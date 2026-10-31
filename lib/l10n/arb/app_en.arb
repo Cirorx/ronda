@@ -929,6 +929,74 @@
     "@microphoneDeniedRetry": {
         "description": "Tries the microphone again"
     },
+    "voiceRecord": "Record",
+    "@voiceRecord": {
+        "description": "Starts the voice note; nothing records before this tap"
+    },
+    "voiceRecording": "Recording",
+    "@voiceRecording": {
+        "description": "Said once when recording starts, beside the timer"
+    },
+    "voiceReadyBody": "Tap Record whenever you're ready and talk as you would in a voice message to a friend.",
+    "@voiceReadyBody": {
+        "description": "Body before recording starts"
+    },
+    "voiceSilent": "We can't hear you. Check your microphone.",
+    "@voiceSilent": {
+        "description": "Shown after about 3 seconds with no sound while recording"
+    },
+    "voiceNoMicrophoneTitle": "We can't find a microphone",
+    "@voiceNoMicrophoneTitle": {
+        "description": "Title when the device has no microphone"
+    },
+    "voiceNoMicrophoneBody": "Plug one in and try again, or carry on with buttons. Nothing was saved.",
+    "@voiceNoMicrophoneBody": {
+        "description": "Body when the device has no microphone"
+    },
+    "microphoneDeniedBrowserBody": "The browser didn't let us use the microphone. That's fine: you can allow it, or carry on with buttons.",
+    "@microphoneDeniedBrowserBody": {
+        "description": "Body when the browser blocks the microphone"
+    },
+    "microphoneDeniedBrowserStepLock": "Click the padlock next to the address, at the very top.",
+    "@microphoneDeniedBrowserStepLock": {
+        "description": "Browser step 1"
+    },
+    "microphoneDeniedBrowserStepAllow": "Turn on Microphone.",
+    "@microphoneDeniedBrowserStepAllow": {
+        "description": "Browser step 2"
+    },
+    "microphoneDeniedBrowserStepReturn": "Come back here and tap I've allowed it.",
+    "@microphoneDeniedBrowserStepReturn": {
+        "description": "Browser step 3"
+    },
+    "voiceRecorderFailedTitle": "We couldn't record",
+    "@voiceRecorderFailedTitle": {
+        "description": "Title when the recorder failed or heard nothing at all"
+    },
+    "voiceRecorderFailedBody": "The microphone cut out or no sound reached us. Try again. Nothing was saved.",
+    "@voiceRecorderFailedBody": {
+        "description": "Body when the recorder failed"
+    },
+    "voiceUploadFailedTitle": "We couldn't send your recording",
+    "@voiceUploadFailedTitle": {
+        "description": "Title when the upload failed"
+    },
+    "voiceUploadFailedBody": "Check your internet connection and try again. Nothing was saved.",
+    "@voiceUploadFailedBody": {
+        "description": "Body when the upload failed on the connection"
+    },
+    "voiceUploadRefusedBody": "It's our problem, not yours. While we fix it, carry on with buttons: it's just as quick. Nothing was saved.",
+    "@voiceUploadRefusedBody": {
+        "description": "Body when the server refused the recording"
+    },
+    "voiceTermsMissingTitle": "The terms aren't accepted yet",
+    "@voiceTermsMissingTitle": {
+        "description": "Title when the terms are missing, so the recording wasn't sent"
+    },
+    "voiceTermsMissingBody": "We don't send a recording without them. Carry on with buttons: you accept them when you save. Nothing was saved.",
+    "@voiceTermsMissingBody": {
+        "description": "Body when the terms are missing"
+    },
     "reviewVoiceTitle": "Did we get it right?",
     "@reviewVoiceTitle": {
         "description": "Heading of the read-back after a recording"

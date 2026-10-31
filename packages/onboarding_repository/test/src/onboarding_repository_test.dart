@@ -19,7 +19,8 @@ void main() {
 
     const uid = 'demo-uid';
     const path = 'audio/demo-uid/note-1.wav';
-    final wav = Uint8List.fromList([82, 73, 70, 70]);
+    // A header and a little sound.
+    final wav = Uint8List(48);
     final withTerms = UserDocument(
       terms: TermsRecord(
         version: '2026-10-27',
@@ -95,11 +96,22 @@ void main() {
       test('throws $MicrophoneDeniedFailure without the microphone', () {
         when(() => voiceRecorder.hasPermission())
             .thenAnswer((_) async => false);
+        when(() => voiceRecorder.hasMicrophone()).thenAnswer((_) async => true);
 
         expect(
           subject.startVoiceNote(),
           throwsA(isA<MicrophoneDeniedFailure>()),
         );
+        verifyNever(() => voiceRecorder.start());
+      });
+
+      test('throws $NoMicrophoneFailure when there is none', () {
+        when(() => voiceRecorder.hasPermission())
+            .thenAnswer((_) async => false);
+        when(() => voiceRecorder.hasMicrophone())
+            .thenAnswer((_) async => false);
+
+        expect(subject.startVoiceNote(), throwsA(isA<NoMicrophoneFailure>()));
         verifyNever(() => voiceRecorder.start());
       });
 
@@ -115,6 +127,13 @@ void main() {
 
         expect(subject.startVoiceNote(), throwsA(isA<StartVoiceNoteFailure>()));
       });
+    });
+
+    test('voiceLevels passes the recorder levels on', () {
+      when(() => voiceRecorder.levels())
+          .thenAnswer((_) => Stream.fromIterable([0, 0.5]));
+
+      expect(subject.voiceLevels(), emitsInOrder([0, 0.5, emitsDone]));
     });
 
     group('discardVoiceNote', () {
@@ -188,54 +207,92 @@ void main() {
         );
       });
 
-      test('throws $ReadVoiceNoteFailure when nothing was recorded', () {
+      test('throws $RecordVoiceNoteFailure when nothing was recorded', () {
         when(() => voiceRecorder.stop()).thenAnswer((_) async => null);
 
         expect(
           subject.readVoiceNote(uid),
-          throwsA(isA<ReadVoiceNoteFailure>()),
+          throwsA(isA<RecordVoiceNoteFailure>()),
         );
       });
 
-      test('throws $ReadVoiceNoteFailure when the note is empty', () {
-        when(() => voiceRecorder.stop()).thenAnswer((_) async => Uint8List(0));
+      test('throws $RecordVoiceNoteFailure for a header with no sound', () {
+        when(() => voiceRecorder.stop()).thenAnswer((_) async => Uint8List(44));
 
         expect(
           subject.readVoiceNote(uid),
-          throwsA(isA<ReadVoiceNoteFailure>()),
+          throwsA(isA<RecordVoiceNoteFailure>()),
         );
+        verifyNever(() => rondaApi.readUser(any()));
       });
 
-      test('throws $ReadVoiceNoteFailure when stopping fails', () {
+      test('throws $RecordVoiceNoteFailure when stopping fails', () {
         when(() => voiceRecorder.stop()).thenThrow(Exception());
 
         expect(
           subject.readVoiceNote(uid),
-          throwsA(isA<ReadVoiceNoteFailure>()),
+          throwsA(isA<RecordVoiceNoteFailure>()),
         );
       });
 
-      test('throws $ReadVoiceNoteFailure when the terms read fails', () {
+      test('throws $UploadVoiceNoteFailure when the terms read fails', () {
         when(() => rondaApi.readUser(uid)).thenThrow(Exception());
 
         expect(
           subject.readVoiceNote(uid),
-          throwsA(isA<ReadVoiceNoteFailure>()),
+          throwsA(
+            isA<UploadVoiceNoteFailure>()
+                .having((f) => f.refused, 'refused', isFalse)
+                .having((f) => f.code, 'code', 'read-user'),
+          ),
         );
       });
 
-      test('throws $ReadVoiceNoteFailure when the upload fails', () {
-        when(
-          () => rondaApi.uploadVoiceNote(
-            uid: any(named: 'uid'),
-            noteId: any(named: 'noteId'),
-            wav: any(named: 'wav'),
-          ),
-        ).thenThrow(Exception());
+      void uploadThrows(Object error) => when(
+        () => rondaApi.uploadVoiceNote(
+          uid: any(named: 'uid'),
+          noteId: any(named: 'noteId'),
+          wav: any(named: 'wav'),
+        ),
+      ).thenThrow(error);
+
+      test('throws a refused $UploadVoiceNoteFailure when Storage says no', () {
+        uploadThrows(const VoiceNoteRefusedException('unauthorized'));
 
         expect(
           subject.readVoiceNote(uid),
-          throwsA(isA<ReadVoiceNoteFailure>()),
+          throwsA(
+            isA<UploadVoiceNoteFailure>()
+                .having((f) => f.refused, 'refused', isTrue)
+                .having((f) => f.code, 'code', 'unauthorized'),
+          ),
+        );
+        verifyNever(() => rondaApi.extract(any()));
+      });
+
+      test('throws $UploadVoiceNoteFailure when the upload fails', () {
+        uploadThrows(const VoiceNoteUploadException('retry-limit-exceeded'));
+
+        expect(
+          subject.readVoiceNote(uid),
+          throwsA(
+            isA<UploadVoiceNoteFailure>()
+                .having((f) => f.refused, 'refused', isFalse)
+                .having((f) => f.code, 'code', 'retry-limit-exceeded'),
+          ),
+        );
+      });
+
+      test('throws $UploadVoiceNoteFailure on any other upload error', () {
+        uploadThrows(Exception());
+
+        expect(
+          subject.readVoiceNote(uid),
+          throwsA(
+            isA<UploadVoiceNoteFailure>()
+                .having((f) => f.refused, 'refused', isFalse)
+                .having((f) => f.code, 'code', isNull),
+          ),
         );
       });
 

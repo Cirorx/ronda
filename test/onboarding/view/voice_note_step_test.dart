@@ -37,7 +37,7 @@ void main() {
   });
 
   group(VoiceNoteStep, () {
-    testWidgets('provides a $VoiceNoteCubit that starts recording', (
+    testWidgets('provides a $VoiceNoteCubit that records only on "Grabar"', (
       tester,
     ) async {
       final appBloc = _MockAppBloc();
@@ -50,6 +50,7 @@ void main() {
       final repository = _MockOnboardingRepository();
       when(repository.startVoiceNote).thenAnswer((_) async {});
       when(repository.discardVoiceNote).thenAnswer((_) async {});
+      when(repository.voiceLevels).thenAnswer((_) => const Stream.empty());
 
       await tester.pumpApp(
         RepositoryProvider<OnboardingRepository>.value(
@@ -66,6 +67,10 @@ void main() {
       await tester.pump();
 
       expect(find.byType(VoiceNoteView), findsOneWidget);
+      verifyNever(repository.startVoiceNote);
+
+      await tester.tap(find.text('Grabar'));
+      await tester.pump();
       verify(repository.startVoiceNote).called(1);
       await tester.pumpWidget(const SizedBox());
       verify(repository.discardVoiceNote).called(1);
@@ -88,6 +93,7 @@ void main() {
       Stream<VoiceNoteState>? states,
       Locale locale = rioplatense,
       bool reduced = false,
+      bool web = false,
     }) {
       if (states != null) {
         whenListen(cubit, states, initialState: state);
@@ -102,7 +108,7 @@ void main() {
               BlocProvider<OnboardingCubit>.value(value: onboarding),
               BlocProvider<VoiceNoteCubit>.value(value: cubit),
             ],
-            child: const VoiceNoteView(),
+            child: VoiceNoteView(web: web),
           ),
         ),
         locale: locale,
@@ -168,14 +174,63 @@ void main() {
         verify(() => onboarding.voiceCancelled()).called(1);
       });
 
-      testWidgets('disables "Terminé" until the recorder runs', (tester) async {
-        await pumpSubject(tester, const VoiceNoteState());
+      testWidgets('shows the voice as a waveform', (tester) async {
+        await pumpSubject(
+          tester,
+          const VoiceNoteState(
+            status: VoiceNoteStatus.recording,
+            levels: [0, 0.4, 0.9],
+            heard: 3,
+          ),
+        );
 
-        await tapVisible(tester, _byId(VoiceNoteView.doneIdentifier));
-        await tapVisible(tester, _byId(VoiceNoteView.restartIdentifier));
+        final waveform = tester.widget<VoiceWaveform>(
+          find.byType(VoiceWaveform),
+        );
+        expect(waveform.levels, equals([0, 0.4, 0.9]));
+        expect(waveform.heard, equals(3));
+        expect(waveform.length, equals(VoiceNoteCubit.waveformLength));
+        expect(
+          find.text('No te escuchamos. Revisá el micrófono.'),
+          findsNothing,
+        );
+      });
 
-        verifyNever(() => cubit.finish());
-        verifyNever(() => cubit.restart());
+      testWidgets('says when it hears nothing', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await pumpSubject(
+          tester,
+          const VoiceNoteState(status: VoiceNoteStatus.recording, silent: true),
+        );
+
+        final warning = find.text('No te escuchamos. Revisá el micrófono.');
+        expect(warning, findsOneWidget);
+        expect(tester.getSemantics(warning), isSemantics(isLiveRegion: true));
+        semantics.dispose();
+      });
+
+      testWidgets('reads out "Grabando" once, and the time, never the bars', (
+        tester,
+      ) async {
+        final semantics = tester.ensureSemantics();
+        await pumpSubject(tester, recording);
+
+        expect(
+          tester.getSemantics(find.text('Grabando')),
+          isSemantics(label: 'Grabando', isLiveRegion: true),
+        );
+        expect(
+          tester.getSemantics(find.text('0:23 de 1:00')),
+          isSemantics(label: '0:23 de 1:00', isLiveRegion: false),
+        );
+        expect(
+          find.descendant(
+            of: find.byType(VoiceWaveform),
+            matching: find.byType(ExcludeSemantics),
+          ),
+          findsOneWidget,
+        );
+        semantics.dispose();
       });
 
       testWidgets('holds 200% text', (tester) async {
@@ -192,6 +247,57 @@ void main() {
 
         expect(find.text("We're listening"), findsOneWidget);
         expect(find.text('0:23 of 1:00'), findsOneWidget);
+        expect(find.text('Recording'), findsOneWidget);
+      });
+    });
+
+    group('before recording', () {
+      testWidgets('waits for "Grabar" with the ideas', (tester) async {
+        await pumpSubject(tester, const VoiceNoteState());
+
+        expect(find.text('Te escuchamos'), findsOneWidget);
+        expect(
+          find.text(
+            'Tocá «Grabar» cuando quieras y hablá tranquilo, como en un '
+            'audio a un amigo.',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Ideas de qué contar'), findsOneWidget);
+        expect(find.byType(VoiceWaveform), findsNothing);
+        expect(_byId(VoiceNoteView.doneIdentifier), findsNothing);
+        verifyNever(() => cubit.start());
+      });
+
+      testWidgets('records on "Grabar"', (tester) async {
+        await pumpSubject(tester, const VoiceNoteState());
+
+        await tapVisible(tester, _byId(VoiceNoteView.recordIdentifier));
+
+        verify(() => cubit.start()).called(1);
+      });
+
+      testWidgets('disables "Grabar" while the microphone starts', (
+        tester,
+      ) async {
+        await pumpSubject(
+          tester,
+          const VoiceNoteState(status: VoiceNoteStatus.starting),
+        );
+
+        await tapVisible(tester, _byId(VoiceNoteView.recordIdentifier));
+
+        verifyNever(() => cubit.start());
+      });
+
+      testWidgets('in English', (tester) async {
+        await pumpSubject(
+          tester,
+          const VoiceNoteState(),
+          locale: const Locale('en'),
+        );
+
+        expect(find.text('Record'), findsOneWidget);
       });
     });
 
@@ -246,10 +352,15 @@ void main() {
       verify(() => onboarding.voiceCancelled()).called(1);
     });
 
-    for (final status in VoiceNoteStatus.values) {
+    for (final state in [
+      for (final status in VoiceNoteStatus.values)
+        VoiceNoteState(status: status),
+      for (final failure in VoiceNoteFailure.values)
+        VoiceNoteState(status: VoiceNoteStatus.failed, failure: failure),
+    ]) {
       testWidgets('is "Tu audio" in the top bar, with "Cancelar", when '
-          '${status.name}', (tester) async {
-        await pumpSubject(tester, VoiceNoteState(status: status));
+          '${state.status.name} ${state.failure?.name ?? ''}', (tester) async {
+        await pumpSubject(tester, state);
 
         expect(
           find.descendant(
@@ -374,31 +485,76 @@ void main() {
       verify(() => onboarding.voiceRead(_signup)).called(1);
     });
 
-    for (final (status, title, retry) in [
+    VoiceNoteState failed(VoiceNoteFailure failure) =>
+        VoiceNoteState(status: VoiceNoteStatus.failed, failure: failure);
+
+    for (final (state, title, body, retry) in [
       (
-        VoiceNoteStatus.notUnderstood,
+        const VoiceNoteState(status: VoiceNoteStatus.notUnderstood),
         'No te entendimos bien',
+        'Puede ser el ruido, o que fue muy corto. El audio ya se borró y no '
+            'guardamos nada.',
         'Grabar de nuevo',
       ),
-      (VoiceNoteStatus.failure, 'No pudimos leer el audio', 'Grabar de nuevo'),
       (
-        VoiceNoteStatus.microphoneDenied,
+        failed(VoiceNoteFailure.noMicrophone),
+        'No encontramos un micrófono',
+        'Conectá uno y probá de nuevo, o seguí tocando botones. No guardamos '
+            'nada.',
+        'Grabar de nuevo',
+      ),
+      (
+        failed(VoiceNoteFailure.microphoneDenied),
         'No podemos usar el micrófono',
+        'El teléfono no nos dejó. No pasa nada: podés darle permiso, o seguir '
+            'tocando botones.',
         'Ya le di permiso',
       ),
+      (
+        failed(VoiceNoteFailure.recorderFailed),
+        'No pudimos grabar',
+        'El micrófono se cortó o no nos llegó sonido. Probá de nuevo. No '
+            'guardamos nada.',
+        'Grabar de nuevo',
+      ),
+      (
+        failed(VoiceNoteFailure.uploadFailed),
+        'No pudimos mandar el audio',
+        'Revisá la conexión a internet y probá de nuevo. No guardamos nada.',
+        'Grabar de nuevo',
+      ),
+      (
+        failed(VoiceNoteFailure.readFailed),
+        'No pudimos leer el audio',
+        'Probá de nuevo en un rato. No guardamos nada.',
+        'Grabar de nuevo',
+      ),
+      (
+        const VoiceNoteState(status: VoiceNoteStatus.failed),
+        'No pudimos leer el audio',
+        'Probá de nuevo en un rato. No guardamos nada.',
+        'Grabar de nuevo',
+      ),
     ]) {
-      group('when ${status.name}', () {
-        testWidgets('says so and offers "$retry"', (tester) async {
-          await pumpSubject(tester, VoiceNoteState(status: status));
+      group('when ${state.failure?.name ?? state.status.name}', () {
+        testWidgets('says what failed and offers "$retry"', (tester) async {
+          final semantics = tester.ensureSemantics();
+          await pumpSubject(tester, state);
 
           expect(find.text(title), findsOneWidget);
+          expect(find.text(body), findsOneWidget);
+          expect(
+            tester.getSemantics(find.text(title)),
+            isSemantics(isHeader: true, isLiveRegion: true),
+          );
           await tapVisible(tester, find.text(retry));
 
           verify(() => cubit.start()).called(1);
+          semantics.dispose();
         });
 
         testWidgets('offers the buttons instead', (tester) async {
-          await pumpSubject(tester, VoiceNoteState(status: status));
+          await pumpSubject(tester, state);
 
           await tapVisible(tester, _byId(VoiceNoteView.buttonsIdentifier));
 
@@ -407,13 +563,74 @@ void main() {
       });
     }
 
+    for (final (failure, title, body) in [
+      (
+        VoiceNoteFailure.uploadRefused,
+        'No pudimos mandar el audio',
+        'Es un problema nuestro, no tuyo. Mientras lo arreglamos, seguí '
+            'tocando botones: es igual de rápido. No guardamos nada.',
+      ),
+      (
+        VoiceNoteFailure.termsMissing,
+        'Falta aceptar las condiciones',
+        'Sin eso no mandamos el audio. Seguí tocando botones: las aceptás al '
+            'guardar. No guardamos nada.',
+      ),
+    ]) {
+      testWidgets('when ${failure.name}, offers only the buttons', (
+        tester,
+      ) async {
+        await pumpSubject(tester, failed(failure));
+
+        expect(find.text(title), findsOneWidget);
+        expect(find.text(body), findsOneWidget);
+        expect(_byId(VoiceNoteView.retryIdentifier), findsNothing);
+        await tapVisible(tester, _byId(VoiceNoteView.buttonsIdentifier));
+
+        verify(() => onboarding.voiceCancelled()).called(1);
+      });
+    }
+
+    testWidgets('says the failure in English', (tester) async {
+      await pumpSubject(
+        tester,
+        failed(VoiceNoteFailure.uploadRefused),
+        locale: const Locale('en'),
+      );
+
+      expect(find.text("We couldn't send your recording"), findsOneWidget);
+    });
+
+    testWidgets('tells a browser how to allow the microphone', (tester) async {
+      await pumpSubject(
+        tester,
+        failed(VoiceNoteFailure.microphoneDenied),
+        web: true,
+      );
+
+      expect(
+        find.text(
+          'El navegador no nos dejó usar el micrófono. No pasa nada: podés '
+          'darle permiso, o seguir tocando botones.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          '1. Tocá el candado al lado de la dirección, arriba de todo.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text('3. Volvé acá y tocá «Ya le di permiso».'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('lists the three steps to allow the microphone', (
       tester,
     ) async {
-      await pumpSubject(
-        tester,
-        const VoiceNoteState(status: VoiceNoteStatus.microphoneDenied),
-      );
+      await pumpSubject(tester, failed(VoiceNoteFailure.microphoneDenied));
 
       expect(find.text('1. Abrí los ajustes del teléfono.'), findsOneWidget);
       expect(find.text('3. Volvé a Ronda y grabá.'), findsOneWidget);

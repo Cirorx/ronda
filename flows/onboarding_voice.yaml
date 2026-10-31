@@ -1,4 +1,4 @@
-# Onboarding by voice: "Con un audio" → Google sign-in → the recorder → "Terminé" → the read-back
+# Onboarding by voice: "Con un audio" → Google sign-in → "Grabar" → "Terminé" → the read-back
 # ("¿Entendimos bien?"), or "No te entendimos bien" when the microphone heard nothing (an
 # emulator without host audio input records silence).
 #
@@ -34,7 +34,13 @@ tags:
 - tapOn:
     id: login_google
 
-# The recorder starts on its own. Wait about 15 s while the note records.
+# Nothing records until "Grabar". Tap it, then wait about 15 s while the note records.
+- extendedWaitUntil:
+    visible:
+      id: voice.record
+    timeout: 15000
+- tapOn:
+    id: voice.record
 - extendedWaitUntil:
     visible:
       id: voice.done

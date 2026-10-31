@@ -1,5 +1,4 @@
-import 'dart:async';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:ronda/app/app.dart';
@@ -7,30 +6,37 @@ import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
-/// "Te escuchamos": records the voice note as soon as it opens, has it read,
-/// and hands what was understood to the read-back.
+/// "Te escuchamos": waits for "Grabar", records the voice note while the
+/// waveform follows the voice, has it read, and hands what was understood
+/// to the read-back. Nothing records before the tap.
 class const VoiceNoteStep({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) {
-        final cubit = VoiceNoteCubit(
-          uid: context.read<AppBloc>().state.user.id,
-          onboardingRepository: context.read<OnboardingRepository>(),
-        );
-        unawaited(cubit.start());
-        return cubit;
-      },
+      create: (context) => VoiceNoteCubit(
+        uid: context.read<AppBloc>().state.user.id,
+        onboardingRepository: context.read<OnboardingRepository>(),
+      ),
+      // The error log hooks in here once it lands: a BlocListener on
+      // `state.failure` reporting `failure.name` and `failureCode`.
       child: const VoiceNoteView(),
     );
   }
 }
 
-/// The recorder, the reading screen, and the screens for a note that
-/// couldn't be read or a microphone that can't be used: one screen under
-/// "Tu audio", whose content swaps as the note moves on, each state read
-/// out as it arrives. "Cancelar" leaves for the questions from any of them.
-class const VoiceNoteView({super.key}) extends StatelessWidget {
+/// The recorder, the reading screen, and a screen for each way it can fail:
+/// one screen under "Tu audio", whose content swaps as the note moves on,
+/// each state read out as it arrives. "Cancelar" leaves for the questions
+/// from any of them.
+class const VoiceNoteView({
+  /// Whether this runs in a browser, where the microphone is allowed from
+  /// the address bar rather than the phone's settings.
+  final bool web = kIsWeb,
+  super.key,
+}) extends StatelessWidget {
+  /// Maestro's handle on "Grabar".
+  static const recordIdentifier = 'voice.record';
+
   /// Maestro's handle on "Terminé".
   static const doneIdentifier = 'voice.done';
 
@@ -49,6 +55,9 @@ class const VoiceNoteView({super.key}) extends StatelessWidget {
     final status = context.select<VoiceNoteCubit, VoiceNoteStatus>(
       (cubit) => cubit.state.status,
     );
+    final failure = context.select<VoiceNoteCubit, VoiceNoteFailure?>(
+      (cubit) => cubit.state.failure,
+    );
     final cubit = context.read<VoiceNoteCubit>();
     final onboarding = context.read<OnboardingCubit>();
 
@@ -62,29 +71,41 @@ class const VoiceNoteView({super.key}) extends StatelessWidget {
         child: Text(l10n.voicePreferButtons),
       ),
     );
+    // The only way on, when trying again won't help.
+    final onlyButtons = action(
+      buttonsIdentifier,
+      FilledButton(
+        onPressed: onboarding.voiceCancelled,
+        child: Text(l10n.voicePreferButtons),
+      ),
+    );
     Widget retry(String label) => action(
       retryIdentifier,
       FilledButton(onPressed: cubit.start, child: Text(label)),
     );
 
-    // Starting, recording and read share the recorder's screen.
-    final shows = switch (status) {
-      VoiceNoteStatus.starting ||
+    // Starting shares the ready screen, read the recorder's, until the
+    // read-back takes over.
+    final Object shows = switch (status) {
+      VoiceNoteStatus.ready ||
+      VoiceNoteStatus.starting => VoiceNoteStatus.ready,
       VoiceNoteStatus.recording ||
       VoiceNoteStatus.read => VoiceNoteStatus.recording,
+      VoiceNoteStatus.failed => failure ?? VoiceNoteFailure.readFailed,
       _ => status,
     };
     OnboardingStepLayout layout({
       required String title,
       required String body,
       required Widget primaryAction,
-      required Widget child,
+      Widget child = const SizedBox.shrink(),
       Widget? secondaryAction,
     }) => OnboardingStepLayout(
       barTitle: l10n.voiceBarTitle,
       title: title,
       body: body,
-      liveTitle: shows != VoiceNoteStatus.recording,
+      liveTitle:
+          shows != VoiceNoteStatus.ready && shows != VoiceNoteStatus.recording,
       stateKey: shows,
       onBack: onboarding.voiceCancelled,
       backLabel: l10n.voiceCancel,
@@ -103,9 +124,20 @@ class const VoiceNoteView({super.key}) extends StatelessWidget {
         if (state.signup case final signup?) onboarding.voiceRead(signup);
       },
       child: switch (shows) {
-        VoiceNoteStatus.starting ||
-        VoiceNoteStatus.recording ||
-        VoiceNoteStatus.read => layout(
+        VoiceNoteStatus.ready => layout(
+          title: l10n.voiceTitle,
+          body: l10n.voiceReadyBody,
+          primaryAction: action(
+            recordIdentifier,
+            FilledButton.icon(
+              onPressed: status == VoiceNoteStatus.ready ? cubit.start : null,
+              icon: const Icon(Icons.mic),
+              label: Text(l10n.voiceRecord),
+            ),
+          ),
+          child: const _Ideas(),
+        ),
+        VoiceNoteStatus.recording => layout(
           title: l10n.voiceTitle,
           body: l10n.voiceBody,
           primaryAction: action(
@@ -151,30 +183,90 @@ class const VoiceNoteView({super.key}) extends StatelessWidget {
             l10n.voiceTipLength,
           ]),
         ),
-        VoiceNoteStatus.failure => layout(
+        VoiceNoteFailure.noMicrophone => layout(
+          title: l10n.voiceNoMicrophoneTitle,
+          body: l10n.voiceNoMicrophoneBody,
+          primaryAction: retry(l10n.voiceRecordAgain),
+          secondaryAction: preferButtons,
+        ),
+        VoiceNoteFailure.microphoneDenied => layout(
+          title: l10n.microphoneDeniedTitle,
+          body: web
+              ? l10n.microphoneDeniedBrowserBody
+              : l10n.microphoneDeniedBody,
+          primaryAction: retry(l10n.microphoneDeniedRetry),
+          secondaryAction: preferButtons,
+          child: _Lines(
+            heading: l10n.microphoneDeniedStepsHeading,
+            web
+                ? [
+                    l10n.microphoneDeniedBrowserStepLock,
+                    l10n.microphoneDeniedBrowserStepAllow,
+                    l10n.microphoneDeniedBrowserStepReturn,
+                  ]
+                : [
+                    l10n.microphoneDeniedStepSettings,
+                    l10n.microphoneDeniedStepPermission,
+                    l10n.microphoneDeniedStepReturn,
+                  ],
+            numbered: true,
+          ),
+        ),
+        VoiceNoteFailure.recorderFailed => layout(
+          title: l10n.voiceRecorderFailedTitle,
+          body: l10n.voiceRecorderFailedBody,
+          primaryAction: retry(l10n.voiceRecordAgain),
+          secondaryAction: preferButtons,
+        ),
+        VoiceNoteFailure.termsMissing => layout(
+          title: l10n.voiceTermsMissingTitle,
+          body: l10n.voiceTermsMissingBody,
+          primaryAction: onlyButtons,
+        ),
+        VoiceNoteFailure.uploadRefused => layout(
+          title: l10n.voiceUploadFailedTitle,
+          body: l10n.voiceUploadRefusedBody,
+          primaryAction: onlyButtons,
+        ),
+        VoiceNoteFailure.uploadFailed => layout(
+          title: l10n.voiceUploadFailedTitle,
+          body: l10n.voiceUploadFailedBody,
+          primaryAction: retry(l10n.voiceRecordAgain),
+          secondaryAction: preferButtons,
+        ),
+        _ => layout(
           title: l10n.voiceFailureTitle,
           body: l10n.voiceFailureBody,
           primaryAction: retry(l10n.voiceRecordAgain),
           secondaryAction: preferButtons,
-          child: const SizedBox.shrink(),
-        ),
-        VoiceNoteStatus.microphoneDenied => layout(
-          title: l10n.microphoneDeniedTitle,
-          body: l10n.microphoneDeniedBody,
-          primaryAction: retry(l10n.microphoneDeniedRetry),
-          secondaryAction: preferButtons,
-          child: _Lines(heading: l10n.microphoneDeniedStepsHeading, [
-            l10n.microphoneDeniedStepSettings,
-            l10n.microphoneDeniedStepPermission,
-            l10n.microphoneDeniedStepReturn,
-          ], numbered: true),
         ),
       },
     );
   }
 }
 
-/// The timer, the ideas and the line that the audio is deleted once read.
+/// The ideas to talk about and the line that the audio is deleted once
+/// read, before and while recording.
+class const _Ideas() extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: context.appSpacing.lg,
+      children: [
+        const VoiceIdeas(),
+        NoteBanner(
+          variant: NoteBannerVariant.keptOnPhone,
+          icon: Icons.delete_outline,
+          message: context.l10n.voiceDeletedOnRead,
+        ),
+      ],
+    );
+  }
+}
+
+/// "Grabando" and the timer, the waveform, the warning when nothing is
+/// heard, then the ideas.
 class const _Recording() extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -184,6 +276,15 @@ class const _Recording() extends StatelessWidget {
     final elapsed = context.select<VoiceNoteCubit, Duration>(
       (cubit) => cubit.state.elapsed,
     );
+    final levels = context.select<VoiceNoteCubit, List<double>>(
+      (cubit) => cubit.state.levels,
+    );
+    final heard = context.select<VoiceNoteCubit, int>(
+      (cubit) => cubit.state.heard,
+    );
+    final silent = context.select<VoiceNoteCubit, bool>(
+      (cubit) => cubit.state.silent,
+    );
     String clock(Duration duration) =>
         '${duration.inMinutes}:'
         '${(duration.inSeconds % 60).toString().padLeft(2, '0')}';
@@ -192,28 +293,75 @@ class const _Recording() extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: spacing.lg,
       children: [
-        Row(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: spacing.sm,
           children: [
-            Icon(Icons.mic, color: theme.colorScheme.error),
-            Text(
-              l10n.voiceElapsed(clock(elapsed), clock(VoiceNoteCubit.limit)),
-              style: theme.textTheme.headlineSmall,
+            // Wraps under the timer at large text rather than overflowing.
+            Wrap(
+              spacing: spacing.sm,
+              runSpacing: spacing.xs,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Icon(Icons.mic, color: theme.colorScheme.error),
+                // Read out once, as recording starts; the time is read when
+                // the person moves to it, not every second.
+                Semantics(
+                  container: true,
+                  liveRegion: true,
+                  child: Text(
+                    l10n.voiceRecording,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+                Semantics(
+                  container: true,
+                  child: Text(
+                    l10n.voiceElapsed(
+                      clock(elapsed),
+                      clock(VoiceNoteCubit.limit),
+                    ),
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+              ],
             ),
+            VoiceWaveform(
+              levels: levels,
+              heard: heard,
+              length: VoiceNoteCubit.waveformLength,
+            ),
+            // Each second's tick fills on, rather than stepping.
+            SpringBuilder(
+              value: elapsed.inSeconds / VoiceNoteCubit.limit.inSeconds,
+              builder: (context, value, _) =>
+                  LinearProgressIndicator(value: value.clamp(0, 1)),
+            ),
+            if (silent)
+              Semantics(
+                container: true,
+                liveRegion: true,
+                child: Row(
+                  spacing: spacing.sm,
+                  children: [
+                    Icon(
+                      Icons.mic_off_outlined,
+                      color: context.rondaPalette.danger,
+                    ),
+                    Expanded(
+                      child: Text(
+                        l10n.voiceSilent,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: context.rondaPalette.danger,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
-        // Each second's tick fills on, rather than stepping.
-        SpringBuilder(
-          value: elapsed.inSeconds / VoiceNoteCubit.limit.inSeconds,
-          builder: (context, value, _) =>
-              LinearProgressIndicator(value: value.clamp(0, 1)),
-        ),
-        const VoiceIdeas(),
-        NoteBanner(
-          variant: NoteBannerVariant.keptOnPhone,
-          icon: Icons.delete_outline,
-          message: l10n.voiceDeletedOnRead,
-        ),
+        const _Ideas(),
       ],
     );
   }
