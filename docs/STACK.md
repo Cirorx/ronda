@@ -98,9 +98,16 @@ Rules the agents apply (from `layered-architecture` and `bloc`):
   `material_ui` 1.8.0's `inputDecorationTheme` takes `InputDecorationThemeData`.
 - Motion and feel (`docs/DESIGN.md` § Motion and feel): `AppMotion` (springs and tokens),
   `RondaMotion` (reduced motion), `PressedShape` (the button themes' press) and `PressScale` (any
-  other tappable), `showRondaSheet` / `RondaSheetRoute` (every modal sheet, `StepSheet` included),
-  `RondaPageTransitionsBuilder`, `RondaSwap`, `SpringBuilder`, `RondaHaptics`. `ronda_ui` depends
-  on `cupertino_ui` for the page slide and its edge swipe back.
+  other tappable), `showRondaSheet` / `RondaSheetRoute` (every modal sheet, `StepSheet` included;
+  it brings the handle tap and the close button, so sheets add none), `RondaPageTransitionsBuilder`,
+  `RondaSwap` (with `RondaSwap.topStartLayout` for states in a column), `StepSwitcher` (the steps
+  of one page, pushed and popped in place), `SpringBuilder` (with `from:`), `RondaHaptics`.
+  `ronda_ui` depends on `cupertino_ui` for the page slide and its edge swipe back.
+- Status (`docs/DESIGN.md` § Motion and feel): `StatusLine` (a line read out as it changes),
+  `LoadingStatus` / `LoadingStatus.inline` (a ring and a line while a screen reads), `BusyLabel`
+  (a ring inside the pressed button) and `RsvpBar`'s `pending:` / `savingLabel:` (an answer on
+  its way). Screens use these rather than a bare `CircularProgressIndicator` or their own
+  live-region text.
 - `ronda_ui` maps the DESIGN.md tokens onto two `ColorScheme`s (light and dark: paper → surface,
   ink → onSurface, birome → primary, yerba → tertiary, ámbar → secondary) inside `AppTheme.light`
   / `AppTheme.dark`, passed to `MaterialApp` as `theme` / `darkTheme`. Yerba, ámbar and margen also

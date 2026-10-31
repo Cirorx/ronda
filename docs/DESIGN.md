@@ -78,21 +78,34 @@ seconds, and converted to Flutter's `SpringDescription` with a mass of 1: stiffn
 
 **Reduced motion.** `RondaMotion.of(context)` reads `MediaQuery.disableAnimationsOf` and is the
 one place a widget asks how to move: springs become jumps, slides become a cross-fade, presses
-change size at once. Feedback stays; only the travel goes.
+change size at once. Feedback stays; only the travel goes. The phone's own "remove animations"
+setting also makes Flutter run every ordinary `AnimationController` at 5% of its duration, which
+would turn the 150 ms cross-fade into a cut; `RondaSwap`, `StepSwitcher` and the sheet's route run
+theirs with `AnimationBehavior.preserve`, so the cross-fade really lasts 150 ms. Their tests turn
+the platform flag on, not only a `MediaQuery` override.
 
 **The rules.**
 - *Press on touch-down.* The theme's buttons (`FilledButton`, `OutlinedButton`, `TextButton`,
   `IconButton`) shrink to 0.97, fill, border, ink and label together (`PressedShape` plus the
   style's `foregroundBuilder`), and come back on release or when the finger drags away. Any other
   tappable (a card, a chip, a grid cell, a list row) is wrapped in `PressScale`, which listens to
-  the raw pointer and so responds before a tap is recognised. A call site that sets its own
-  `shape:` loses the shrink of its outline.
+  the raw pointer and so responds before a tap is recognised. Inside a scroll view Flutter holds
+  a tap's touch-down back up to 100 ms (`kPressTimeout`) until it knows the touch isn't a
+  scroll; the theme's buttons don't wait for it: they mark themselves pressed on the raw
+  touch-down and let go if the touch turns into a scroll, as Apple's rule asks (the ink ripple
+  still starts when the tap is recognised). A call site that sets its own `shape:` or
+  `backgroundBuilder:` loses that.
 - *Sheets are things in the hand.* `showRondaSheet` (and `StepSheet.show`) rise from the bottom
   over an ink scrim at 40%, follow a drag 1:1 from where it was grabbed, rubber-band past the top,
   carry the finger's speed on release, close when the projected landing point is past half
   their height and the finger wasn't moving up, and can be grabbed again mid-flight. They leave
   the way they came. Content that scrolls hands a pull from its top over to the sheet. With
   reduced motion they cross-fade.
+- *Every sheet closes the same way.* The handle's row is a 48 dp target: a tap or a click on it
+  closes the sheet the way a throw would, and a close button (✕, "Cerrar") sits at the end of
+  that row for keyboards and screen readers. Both come from `RondaSheetRoute`, so every sheet
+  has them, `StepSheet` included, and no sheet adds its own. A `PopScope` that refuses keeps
+  the sheet open, as it does for the scrim; a sheet that isn't dismissible has neither.
 - *Same path in and out.* A pushed screen comes in from the right and goes back out to the right,
   with the platform's edge swipe back (`RondaPageTransitionsBuilder`, set for every platform in
   `AppTheme`). Tabs swap in place. Reduced motion cross-fades.
@@ -100,11 +113,33 @@ change size at once. Feedback stays; only the travel goes.
   a soft ink shadow (elevation 3, ink at 35%; night uses `#05070C`). No divider under it. Modal
   sheets dim what is behind with the scrim.
 - *Only state changes move.* `RondaSwap` swaps one state for the next (fade plus a settle from
-  0.96) and reads out only the new one; `SpringBuilder` follows a value on a spring and retargets
-  mid-flight with its speed. A seat filling and a slot being marked use them.
+  0.96); the state on its way out takes no touches and isn't read, so there is never a second
+  copy to tap. `SpringBuilder` follows a value on a spring and retargets mid-flight with its
+  speed; given `from:`, a freshly built one springs from there (onboarding's progress bar moving
+  on from where the last question's stood). A seat filling and a slot being marked use them.
+  `StepSwitcher` moves between the steps of one page (onboarding's questions) as a pushed
+  screen moves, forward and back, without pushing a route.
+- *Waiting is said, not spun.* A screen that reads shows `LoadingStatus` (a ring and a line that
+  says what it is looking for; `LoadingStatus.inline` in a list); a pressed button whose work is
+  on its way shows `BusyLabel` (a ring inside it) and can't be pressed twice; `StatusLine` reads
+  the line out as it changes. `RsvpBar` does both for an answer on its way (`pending:`).
 - *Haptics only on commits.* `RondaHaptics.onCommit` fires a light impact in the same handler
-  that changes the screen: Voy / Esta no (in `RsvpBar`), Lo tomo, Vino / No vino, Elegir,
-  Aprobar. Never on toggles, scrolling or navigation.
+  that changes the screen, on these and nothing else (checked against the code 2026-10-30):
+  - the answers in `RsvpBar`: Voy / Esta no, Lo tomo / Esta vez no (a seat on the bench),
+    Sí / No (seguimos);
+  - Pausar 2 semanas and Me equivoqué, voy (after "Esta no"; Sigo en la ronda changes nothing,
+    so it has none);
+  - the waiting and seguimos choices: Sumarte a otro ya / Esperar dos semanas más;
+  - Sí, abro yo / Hoy no puedo (the host's handoff), Sí, puede ser / Mejor no (después at
+    home), Guardar on the después sheet (only when it will save);
+  - Vino / No vino, Algo estuvo mal, Elegir (a buddy; Ahora no has none), Mandarlo (the rain
+    move), Hacer el volante, Imprimir o compartir;
+  - Está bien, guardalo (the read-back), Sí, avisame, Prender los avisos, Salir;
+  - admin: Armar las rondas / Armarlas de nuevo, Aprobar y avisarles, Deshacer, Sumar, Pasar,
+    Mandarlo ahora, Guardar (a ronda's place and hour), the rain checks (Correr el chequeo de
+    lluvia, Probar a las 22:00).
+
+  Never on toggles, scrolling, navigation, cancels or closing a sheet.
 - *Type by size.* Tracking comes from `AppTextStyle.trackingFor`: −0.025 em at 48 sp, −0.018 at
   30, −0.01 at 22, 0 at 17–18 sp body, +0.008 at 15 and +0.015 at 13. Leading is tight on titles
   (1.05–1.2) and comfortable on body (1.45). Every style sets its tracking explicitly, so
