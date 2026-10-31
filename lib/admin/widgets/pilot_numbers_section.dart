@@ -53,16 +53,7 @@ class const PilotNumbersSection({super.key}) extends StatelessWidget {
             message: l10n.pilotLoadError,
           ),
         if (state.status == PilotNumbersStatus.loading)
-          Semantics(
-            container: true,
-            liveRegion: true,
-            child: Text(
-              l10n.pilotCounting,
-              style: textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
+          StatusLine(l10n.pilotCounting),
         if (numbers != null) ...[
           Text(
             l10n.pilotProfiles(numbers.profiles.count, numbers.profiles.of),

@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:push_repository/push_repository.dart';
 import 'package:ronda/acta/acta.dart';
 import 'package:ronda/app/app.dart';
-import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/buddy/buddy.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/bench_offer_cubit.dart';
@@ -121,7 +120,7 @@ class const MyRondaView({required final String uid, super.key})
               const BenchOfferCard(),
               const SeguimosCard(),
               RondaSwap(
-                layoutBuilder: topStartSwapLayout,
+                layoutBuilder: RondaSwap.topStartLayout,
                 child: KeyedSubtree(
                   key: ValueKey((state.status, state.week?.hasLeft ?? false)),
                   child: switch (state.status) {

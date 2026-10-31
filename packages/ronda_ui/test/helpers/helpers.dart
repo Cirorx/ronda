@@ -1,5 +1,6 @@
 import 'package:ronda_ui/ronda_ui.dart';
 
+export 'finders.dart';
 export 'haptics.dart';
 export 'pump_app.dart';
 export 'test_tag.dart';

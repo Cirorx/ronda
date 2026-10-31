@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:organiser_repository/organiser_repository.dart';
 import 'package:ronda/acta/cubit/acta_cubit.dart';
 import 'package:ronda/app/app.dart';
-import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -56,7 +55,7 @@ class const ActaView({super.key}) extends StatelessWidget {
       appBar: AppBar(title: Text(l10n.actaTitle)),
       body: SafeArea(
         child: RondaSwap(
-          layoutBuilder: topStartSwapLayout,
+          layoutBuilder: RondaSwap.topStartLayout,
           child: KeyedSubtree(
             key: ValueKey(state.status),
             child: switch (state.status) {
@@ -118,7 +117,7 @@ class const ActaView({super.key}) extends StatelessWidget {
                   Text(l10n.actaFooter, style: textTheme.bodyLarge),
                   SizedBox(height: spacing.md),
                   RondaSwap(
-                    layoutBuilder: topStartSwapLayout,
+                    layoutBuilder: RondaSwap.topStartLayout,
                     child: switch (state.report) {
                       ActaReport.sent => Semantics(
                         key: const ValueKey(ActaReport.sent),

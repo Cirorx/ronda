@@ -7,8 +7,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// Opens [builder]'s content as Ronda's modal sheet ([RondaSheetRoute]) over
 /// [context]'s navigator and resolves with what it was popped with.
 ///
-/// [isDismissible] lets a tap on the scrim close it; [enableDrag] lets the
-/// person drag or throw it down. Both close it only when the route may pop.
+/// [isDismissible] lets a tap on the scrim, the handle or the close button
+/// close it; [enableDrag] lets the person drag or throw it down. All of them
+/// close it only when the route may pop.
 Future<T?> showRondaSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -23,7 +24,7 @@ Future<T?> showRondaSheet<T>({
       builder: builder,
       barrierLabel: localizations.scrimLabel,
       sheetLabel: localizations.bottomSheetLabel,
-      dismissLabel: localizations.modalBarrierDismissLabel,
+      dismissLabel: localizations.closeButtonTooltip,
       barrierColor: Theme.of(context).bottomSheetTheme.modalBarrierColor!,
       capturedThemes: InheritedTheme.capture(
         from: context,
@@ -50,7 +51,11 @@ Future<T?> showRondaSheet<T>({
 ///   flick earns the [AppMotion.sheet] spring, a slow release the standard
 ///   one;
 /// - dragged up past its top it rubber-bands ([AppMotion.rubberBand]);
-/// - the scrim lightens as it goes down.
+/// - the scrim lightens as it goes down;
+/// - while it may be dismissed, a tap on its handle (a 48 dp target across
+///   its top) or on the close button at the end of that row closes it the
+///   way a throw would, so a mouse or a keyboard can close it too. A
+///   [PopScope] that refuses keeps it open, as it does for the scrim.
 ///
 /// With reduced motion it cross-fades in and out, and a drag still moves
 /// it, since the finger leads, but it doesn't spring.
@@ -79,7 +84,8 @@ class RondaSheetRoute<T> extends PopupRoute<T> {
   /// What a screen reader calls the sheet.
   final String sheetLabel;
 
-  /// What a screen reader says for the handle, which closes the sheet.
+  /// What the close button is called, by its tooltip and by screen
+  /// readers ("Cerrar").
   final String dismissLabel;
 
   @override
@@ -91,7 +97,8 @@ class RondaSheetRoute<T> extends PopupRoute<T> {
   /// Whether the person asked for reduced motion when it opened.
   final bool reduceMotion;
 
-  /// Whether a tap on the scrim closes the sheet.
+  /// Whether a tap on the scrim, the handle or the close button closes the
+  /// sheet; without it the sheet has no close button.
   final bool isDismissible;
 
   /// Whether the sheet can be dragged and thrown down.
@@ -108,6 +115,18 @@ class RondaSheetRoute<T> extends PopupRoute<T> {
   @override
   Duration get transitionDuration =>
       reduceMotion ? AppMotion.crossFade : AppMotion.standardDuration;
+
+  /// Keeps [transitionDuration] when the phone asks for less motion: the
+  /// framework would otherwise run the route at 5% of it, and the
+  /// reduced-motion cross-fade would be a cut.
+  @override
+  AnimationController createAnimationController() => AnimationController(
+    duration: transitionDuration,
+    reverseDuration: reverseTransitionDuration,
+    debugLabel: debugLabel,
+    vsync: navigator!,
+    animationBehavior: AnimationBehavior.preserve,
+  );
 
   @override
   Simulation? createSimulation({required bool forward}) {
@@ -388,23 +407,53 @@ class _RondaSheetState extends State<_RondaSheet>
     final paperColor = sheetTheme.modalBackgroundColor!;
     final enableDrag = _route.enableDrag;
 
-    final handle = Semantics(
-      container: true,
-      button: true,
-      label: _route.dismissLabel,
-      onTap: _route.isDismissible ? close : null,
-      child: SizedBox(
-        height: handleRowHeight,
-        child: Center(
-          child: Container(
-            width: handleSize.width,
-            height: handleSize.height,
-            decoration: BoxDecoration(
-              color: sheetTheme.dragHandleColor,
-              borderRadius: BorderRadius.circular(handleSize.height / 2),
+    final dismissible = _route.isDismissible;
+    // The handle is a 48 dp target across the top: a tap (or a click)
+    // closes the sheet. Screen readers and keyboards reach the close button
+    // at the end of the row instead, so the action is announced once.
+    final handle = SizedBox(
+      height: handleRowHeight,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: ExcludeSemantics(
+              child: MouseRegion(
+                cursor: dismissible
+                    ? SystemMouseCursors.click
+                    : MouseCursor.defer,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: dismissible ? close : null,
+                  child: Center(
+                    child: Container(
+                      width: handleSize.width,
+                      height: handleSize.height,
+                      decoration: BoxDecoration(
+                        color: sheetTheme.dragHandleColor,
+                        borderRadius: BorderRadius.circular(
+                          handleSize.height / 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+          if (dismissible)
+            PositionedDirectional(
+              top: 0,
+              bottom: 0,
+              end: context.appSpacing.xxs,
+              child: Center(
+                child: IconButton(
+                  onPressed: close,
+                  tooltip: _route.dismissLabel,
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+            ),
+        ],
       ),
     );
 
@@ -417,7 +466,7 @@ class _RondaSheetState extends State<_RondaSheet>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ExcludeSemantics(excluding: !_route.isDismissible, child: handle),
+          handle,
           Flexible(
             child: MediaQuery.removePadding(
               context: context,

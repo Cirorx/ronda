@@ -48,10 +48,6 @@ class NotificationsView extends StatefulWidget {
 class _NotificationsViewState extends State<NotificationsView> {
   late final AppLifecycleListener _lifecycle;
 
-  /// A small spinner beside the line that says what is happening.
-  static const double _spinnerSize = 24;
-  static const double _spinnerStroke = 3;
-
   /// Each state lines up at the top while they swap.
   static Widget _topStart(Widget? current, List<Widget> previous) =>
       Stack(children: [...previous, ?current]);
@@ -99,25 +95,9 @@ class _NotificationsViewState extends State<NotificationsView> {
           RondaSwap(
             layoutBuilder: _topStart,
             child: switch (headline) {
-              null => Row(
+              null => LoadingStatus.inline(
                 key: const ValueKey(NotificationsStatus.checking),
-                spacing: spacing.sm,
-                children: [
-                  const SizedBox.square(
-                    dimension: _spinnerSize,
-                    child: CircularProgressIndicator(
-                      strokeWidth: _spinnerStroke,
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      l10n.notificationsChecking,
-                      style: textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
+                l10n.notificationsChecking,
               ),
               final headline => Column(
                 // "Asking" looks like "off" until the phone answers.

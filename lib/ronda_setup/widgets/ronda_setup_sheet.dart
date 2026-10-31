@@ -122,26 +122,16 @@ class _RondaSetupSheetState extends State<RondaSetupSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: spacing.sm,
             children: [
-              // The title, and a close button for a mouse, which can't tap
-              // the sheet's handle.
-              Row(
-                spacing: spacing.xs,
-                children: [
-                  Expanded(
-                    child: Semantics(
-                      header: true,
-                      child: Text(
-                        l10n.rondaLineOf(
-                          slotDayId: ronda.slotDayId,
-                          slotBandId: ronda.slotBandId,
-                          pretextId: ronda.pretextId,
-                        ),
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
+              Semantics(
+                header: true,
+                child: Text(
+                  l10n.rondaLineOf(
+                    slotDayId: ronda.slotDayId,
+                    slotBandId: ronda.slotBandId,
+                    pretextId: ronda.pretextId,
                   ),
-                  const CloseButton(),
-                ],
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
               ),
               field(
                 RondaSetupSheet.placeIdentifier,

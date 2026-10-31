@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/waiting_cubit.dart';
 import 'package:ronda/my_ronda/widgets/bench_labels.dart';
@@ -56,7 +55,7 @@ class const WaitingCard({super.key}) extends StatelessWidget {
                 ),
                 Text(l10n.waitingLine(waiting), style: textTheme.bodyMedium),
                 RondaSwap(
-                  layoutBuilder: topStartSwapLayout,
+                  layoutBuilder: RondaSwap.topStartLayout,
                   child: Column(
                     key: ValueKey(waiting.status),
                     crossAxisAlignment: CrossAxisAlignment.stretch,

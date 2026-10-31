@@ -1,5 +1,5 @@
 import 'package:ronda/l10n/l10n.dart';
-import 'package:ronda/onboarding/widgets/onboarding_step_switcher.dart';
+import 'package:ronda/onboarding/widgets/onboarding_screen.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// {@template onboarding_step_layout}
@@ -177,7 +177,9 @@ class const _Progress({required final int number, required final int count})
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final from = OnboardingStepSwitcher.previousQuestionOf(context) ?? number;
+    final from =
+        StepSwitcher.previousOf<OnboardingScreen>(context)?.questionNumber ??
+        number;
     return Semantics(
       label: l10n.onboardingProgressSemantics(number, count),
       excludeSemantics: true,
@@ -185,11 +187,9 @@ class const _Progress({required final int number, required final int count})
         spacing: context.appSpacing.sm,
         children: [
           Expanded(
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: from / count, end: number / count),
-              duration: RondaMotion.of(context)
-                  .durationOr(AppMotion.standardDuration),
-              curve: AppMotion.standardCurve,
+            child: SpringBuilder(
+              from: from / count,
+              value: number / count,
               builder: (context, value, _) =>
                   LinearProgressIndicator(value: value),
             ),

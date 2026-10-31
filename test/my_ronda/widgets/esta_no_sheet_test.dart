@@ -62,7 +62,7 @@ void main() {
     ) async {
       await open(tester);
 
-      await tester.tap(find.byType(CloseButton));
+      await tester.tap(find.byTooltip('Cerrar'));
       await tester.pumpAndSettle();
 
       expect(find.byType(EstaNoSheet), findsNothing);

@@ -127,23 +127,9 @@ class const PayoffView({super.key}) extends StatelessWidget {
     final spacing = context.appSpacing;
     return switch (state) {
       PayoffState(status: PayoffStatus.loading || PayoffStatus.noAnswers) =>
-        Row(
+        LoadingStatus.inline(
           key: const ValueKey(PayoffStatus.loading),
-          spacing: spacing.sm,
-          children: [
-            const SizedBox.square(
-              dimension: _spinnerSize,
-              child: CircularProgressIndicator(strokeWidth: _spinnerStroke),
-            ),
-            Expanded(
-              child: Text(
-                l10n.payoffLoading,
-                style: textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ],
+          l10n.payoffLoading,
         ),
       PayoffState(status: PayoffStatus.unavailable) => NoteBanner(
         key: const ValueKey(PayoffStatus.unavailable),
@@ -173,10 +159,6 @@ class const PayoffView({super.key}) extends StatelessWidget {
       ),
     };
   }
-
-  /// A small spinner beside the line that says what is happening.
-  static const double _spinnerSize = 24;
-  static const double _spinnerStroke = 3;
 
   /// The two answers line up at the top while they swap.
   static Widget _topStart(Widget? current, List<Widget> previous) =>

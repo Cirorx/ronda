@@ -787,7 +787,8 @@ void main() {
         expect(progressOf(tester, SlotsStep), inExclusiveRange(2 / 7, 3 / 7));
         expect(progressOf(tester, BringsStep), closeTo(2 / 7, 1e-9));
 
-        await tester.pump(AppMotion.standardDuration);
+        // A spring: it settles on the value rather than at a set time.
+        await tester.pumpAndSettle();
         expect(progressOf(tester, SlotsStep), closeTo(3 / 7, 1e-9));
       });
 

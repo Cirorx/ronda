@@ -48,37 +48,22 @@ class const AddToRondaSheet({super.key}) extends StatelessWidget {
       shrinkWrap: true,
       padding: EdgeInsetsDirectional.all(spacing.lg),
       children: [
-        // The title, and a close button for a mouse, which can't tap the
-        // sheet's handle.
-        Row(
-          spacing: spacing.xs,
-          children: [
-            Expanded(
-              child: candidates == null
-                  ? const SizedBox.shrink()
-                  : Semantics(
-                      header: true,
-                      child: Text(
-                        l10n.addToRondaTitle(candidates.line),
-                        style: textTheme.titleMedium,
-                      ),
-                    ),
+        if (candidates != null)
+          Semantics(
+            header: true,
+            child: Text(
+              l10n.addToRondaTitle(candidates.line),
+              style: textTheme.titleMedium,
             ),
-            const CloseButton(),
-          ],
-        ),
+          ),
         if (candidates == null)
           switch (state.status) {
             AddToRondaStatus.failure => Column(
               spacing: spacing.sm,
               children: [
-                Semantics(
-                  container: true,
-                  liveRegion: true,
-                  child: Text(
-                    l10n.addToRondaLoadError,
-                    style: textTheme.bodyLarge,
-                  ),
+                StatusLine(
+                  l10n.addToRondaLoadError,
+                  style: textTheme.bodyLarge,
                 ),
                 OutlinedButton(
                   onPressed: context.read<AddToRondaCubit>().load,
@@ -86,15 +71,7 @@ class const AddToRondaSheet({super.key}) extends StatelessWidget {
                 ),
               ],
             ),
-            _ => Semantics(
-              container: true,
-              liveRegion: true,
-              child: Text(
-                l10n.addToRondaLoading,
-                textAlign: TextAlign.center,
-                style: textTheme.bodyLarge,
-              ),
-            ),
+            _ => LoadingStatus(l10n.addToRondaLoading),
           }
         else ...[
           Text(

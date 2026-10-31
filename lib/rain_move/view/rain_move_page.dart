@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:organiser_repository/organiser_repository.dart';
-import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/rain_move/cubit/rain_move_cubit.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -58,7 +57,7 @@ class const RainMoveView({super.key}) extends StatelessWidget {
       appBar: AppBar(title: Text(move?.title ?? l10n.rainMoveLoadingTitle)),
       body: SafeArea(
         child: RondaSwap(
-          layoutBuilder: topStartSwapLayout,
+          layoutBuilder: RondaSwap.topStartLayout,
           child: KeyedSubtree(
             key: ValueKey(state.status),
             child: switch ((state.status, move)) {
@@ -137,7 +136,7 @@ class const _Move(final RainMoveState state, final RainMove move)
         Text(move.forecast, style: textTheme.titleMedium),
         SizedBox(height: spacing.md),
         RondaSwap(
-          layoutBuilder: topStartSwapLayout,
+          layoutBuilder: RondaSwap.topStartLayout,
           child: Column(
             key: ValueKey(phase),
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -177,7 +176,7 @@ class const _Move(final RainMoveState state, final RainMove move)
                   SizedBox(height: spacing.xs),
                 ],
                 RondaSwap(
-                  layoutBuilder: topStartSwapLayout,
+                  layoutBuilder: RondaSwap.topStartLayout,
                   child: selected == null
                       ? const SizedBox.shrink(key: ValueKey('none'))
                       : Column(
@@ -261,7 +260,7 @@ class const _Option({
         identifier: RainMoveView.optionIdentifier(option.choice),
         selected: selected,
         child: RondaSwap(
-          layoutBuilder: topStartSwapLayout,
+          layoutBuilder: RondaSwap.topStartLayout,
           child: selected
               ? FilledButton(
                   key: const ValueKey(true),

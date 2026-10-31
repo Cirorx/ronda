@@ -1,8 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
-import 'package:ronda/my_ronda/widgets/answer_bar.dart';
 import 'package:ronda/my_ronda/widgets/this_week_labels.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -72,7 +70,7 @@ class const SeguimosCard({super.key}) extends StatelessWidget {
                     message: l10n.seguimosClosed,
                   ),
                 RondaSwap(
-                  layoutBuilder: topStartSwapLayout,
+                  layoutBuilder: RondaSwap.topStartLayout,
                   child: Column(
                     key: ValueKey(phase),
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -98,7 +96,7 @@ class const SeguimosCard({super.key}) extends StatelessWidget {
     final cubit = context.read<SeguimosCubit>();
     if (state.asks) {
       return [
-        AnswerBar(
+        RsvpBar(
           identifier: answerIdentifier,
           question: l10n.seguimosQuestion(
             l10n.seguimosDays(seguimos.slotDayId),
@@ -110,8 +108,8 @@ class const SeguimosCard({super.key}) extends StatelessWidget {
           onNo: cubit.noTapped,
           savingLabel: l10n.thisWeekSaving,
           pending: switch (state.saving) {
-            SeguimosPick.yes => AnswerSide.yes,
-            SeguimosPick.no => AnswerSide.no,
+            SeguimosPick.yes => RsvpBarAnswer.yes,
+            SeguimosPick.no => RsvpBarAnswer.no,
             _ => null,
           },
         ),
@@ -274,7 +272,7 @@ class const SeguimosCard({super.key}) extends StatelessWidget {
         ),
       ),
       RondaSwap(
-        layoutBuilder: topStartSwapLayout,
+        layoutBuilder: RondaSwap.topStartLayout,
         child: Column(
           key: ValueKey(chosen),
           crossAxisAlignment: CrossAxisAlignment.stretch,

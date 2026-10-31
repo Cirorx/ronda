@@ -271,7 +271,7 @@ void main() {
     testWidgets('closes from its close button without saving', (tester) async {
       await open(tester, week);
 
-      await tester.tap(find.byType(CloseButton));
+      await tester.tap(find.byTooltip('Cerrar'));
       await tester.pumpAndSettle();
 
       expect(find.byType(DespuesSheet), findsNothing);

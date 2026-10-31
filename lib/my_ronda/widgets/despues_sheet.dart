@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/despues_cubit.dart';
 import 'package:ronda_repository/ronda_repository.dart';
@@ -156,22 +155,9 @@ class _DespuesSheetState extends State<DespuesSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: spacing.sm,
             children: [
-              // The title, and a close button for a mouse, which can't tap
-              // the sheet's handle.
-              Row(
-                spacing: spacing.xs,
-                children: [
-                  Expanded(
-                    child: Semantics(
-                      header: true,
-                      child: Text(
-                        l10n.despuesSet,
-                        style: textTheme.titleMedium,
-                      ),
-                    ),
-                  ),
-                  const CloseButton(),
-                ],
+              Semantics(
+                header: true,
+                child: Text(l10n.despuesSet, style: textTheme.titleMedium),
               ),
               Text(l10n.despuesSheetBody, style: textTheme.bodyMedium),
               RadioGroup<DespuesKind>(

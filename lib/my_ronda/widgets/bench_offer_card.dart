@@ -1,8 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/bench_offer_cubit.dart';
-import 'package:ronda/my_ronda/widgets/answer_bar.dart';
 import 'package:ronda/my_ronda/widgets/bench_labels.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -54,7 +52,7 @@ class const BenchOfferCard({super.key}) extends StatelessWidget {
                     message: l10n.benchOfferOver,
                   ),
                 RondaSwap(
-                  layoutBuilder: topStartSwapLayout,
+                  layoutBuilder: RondaSwap.topStartLayout,
                   child: Column(
                     key: ValueKey(taken),
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -85,7 +83,7 @@ class const BenchOfferCard({super.key}) extends StatelessWidget {
                           style: textTheme.bodyMedium,
                         ),
                       ] else ...[
-                        AnswerBar(
+                        RsvpBar(
                           identifier: answerIdentifier,
                           question: l10n.benchOfferAsk,
                           message: l10n.offerDeadline(offer),
@@ -95,8 +93,8 @@ class const BenchOfferCard({super.key}) extends StatelessWidget {
                           onNo: cubit.passTapped,
                           savingLabel: l10n.thisWeekSaving,
                           pending: switch (state.saving) {
-                            BenchOfferAnswer.take => AnswerSide.yes,
-                            BenchOfferAnswer.pass => AnswerSide.no,
+                            BenchOfferAnswer.take => RsvpBarAnswer.yes,
+                            BenchOfferAnswer.pass => RsvpBarAnswer.no,
                             null => null,
                           },
                         ),

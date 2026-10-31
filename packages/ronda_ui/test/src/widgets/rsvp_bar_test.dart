@@ -115,6 +115,97 @@ void main() {
       });
     });
 
+    group('while an answer is on its way', () {
+      Widget pending(RsvpBarAnswer answer) => RsvpBar(
+        identifier: 'rsvp',
+        question: '¿Venís?',
+        message: 'Te toca llevar el pan.',
+        yesLabel: 'Voy',
+        noLabel: 'Esta no',
+        onYes: () => answers.add('voy'),
+        onNo: () => answers.add('esta no'),
+        pending: answer,
+        savingLabel: 'Guardando tu respuesta…',
+      );
+
+      for (final answer in RsvpBarAnswer.values) {
+        testWidgets('rings ${answer.name}, turns the other off and says so', (
+          tester,
+        ) async {
+          final semantics = tester.ensureSemantics();
+          final haptics = recordHaptics(tester);
+          await tester.pumpApp(pending(answer));
+
+          final other = RsvpBarAnswer.values.firstWhere((a) => a != answer);
+          expect(progressIn('rsvp.${answer.name}'), findsOneWidget);
+          expect(progressIn('rsvp.${other.name}'), findsNothing);
+          expect(find.text('¿Venís?'), findsOneWidget);
+          expect(find.text('Te toca llevar el pan.'), findsOneWidget);
+          expect(
+            tester.getSemantics(find.text('Guardando tu respuesta…')),
+            isSemantics(isLiveRegion: true),
+          );
+          expect(
+            tester.getSemantics(
+              find.bySemanticsIdentifier('rsvp.${other.name}'),
+            ),
+            isSemantics(
+              isButton: true,
+              hasEnabledState: true,
+              isEnabled: false,
+            ),
+          );
+
+          await tester.tap(find.text('Voy'), warnIfMissed: false);
+          await tester.tap(find.text('Esta no'), warnIfMissed: false);
+          // Even reached past its IgnorePointer, the pressed one does nothing.
+          tester
+              .widget<ButtonStyleButton>(
+                find.descendant(
+                  of: byIdentifier('rsvp.${answer.name}'),
+                  matching: find.bySubtype<ButtonStyleButton>(),
+                ),
+              )
+              .onPressed!();
+          expect(answers, isEmpty);
+          expect(haptics, isEmpty);
+          semantics.dispose();
+        });
+      }
+
+      testWidgets('stacks the buttons with large text', (tester) async {
+        await tester.pumpApp(
+          pending(RsvpBarAnswer.yes),
+          textScale: AppTheme.largeTextScale,
+        );
+
+        expect(
+          find.ancestor(of: find.text('Voy'), matching: find.byType(Expanded)),
+          findsNothing,
+        );
+        expect(progressIn('rsvp.yes'), findsOneWidget);
+      });
+
+      testWidgets('says nothing under the buttons without a saving line', (
+        tester,
+      ) async {
+        await tester.pumpApp(
+          RsvpBar(
+            identifier: 'rsvp',
+            question: '¿Venís?',
+            yesLabel: 'Voy',
+            noLabel: 'Esta no',
+            onYes: () {},
+            onNo: () {},
+            pending: RsvpBarAnswer.no,
+          ),
+        );
+
+        expect(find.byType(StatusLine), findsNothing);
+        expect(progressIn('rsvp.no'), findsOneWidget);
+      });
+    });
+
     group('commits', () {
       for (final (identifier, answer) in [
         ('rsvp.yes', 'voy'),

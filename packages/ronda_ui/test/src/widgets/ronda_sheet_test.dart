@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -119,7 +120,7 @@ void main() {
         expect(top(tester), closeTo(restTop(tester), 0.5));
       });
 
-      testWidgets('as a named route with a handle that closes it', (
+      testWidgets('as a named route with a close button read out once', (
         tester,
       ) async {
         final semantics = tester.ensureSemantics();
@@ -132,10 +133,19 @@ void main() {
           find.bySemanticsLabel(localizations.bottomSheetLabel),
           findsOneWidget,
         );
-        final handle = find.semantics.byLabel(
-          localizations.modalBarrierDismissLabel,
+        final close = find.semantics.byPredicate(
+          (node) => node.tooltip == localizations.closeButtonTooltip,
         );
-        tester.semantics.tap(handle.first);
+        expect(close, findsOne);
+        expect(
+          find.semantics.byPredicate(
+            (node) =>
+                node.label == localizations.modalBarrierDismissLabel ||
+                node.label == localizations.closeButtonTooltip,
+          ),
+          findsNothing,
+        );
+        tester.semantics.tap(close);
         await tester.pumpAndSettle();
 
         expect(find.byKey(contentKey), findsNothing);
@@ -354,6 +364,56 @@ void main() {
     });
 
     group('closes', () {
+      /// The middle of the handle's row, above the content.
+      Offset handle(WidgetTester tester) => Offset(
+        tester.getCenter(find.byKey(contentKey)).dx,
+        top(tester) - handleHeight / 2,
+      );
+
+      testWidgets('on a tap on its handle, as a mouse would', (tester) async {
+        await open(tester);
+
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        addTearDown(mouse.removePointer);
+        expect(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is MouseRegion &&
+                widget.cursor == SystemMouseCursors.click,
+          ),
+          findsOneWidget,
+        );
+        await mouse.down(handle(tester));
+        await mouse.up();
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(contentKey), findsNothing);
+        expect(await result, isNull);
+      });
+
+      testWidgets('on a tap anywhere across the handle row', (tester) async {
+        await open(tester);
+
+        await tester.tapAt(Offset(24, top(tester) - handleHeight / 2));
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(contentKey), findsNothing);
+      });
+
+      testWidgets('with the close button at the end of the handle row', (
+        tester,
+      ) async {
+        await open(tester);
+        final button = find.byType(IconButton);
+
+        expect(tester.getCenter(button).dy, closeTo(handle(tester).dy, 0.5));
+        expect(tester.getCenter(button).dx, greaterThan(handle(tester).dx));
+        await tester.tap(button);
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(contentKey), findsNothing);
+      });
+
       testWidgets('on a scrim tap, down the way it came', (tester) async {
         await open(tester);
 
@@ -408,6 +468,42 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byKey(contentKey), findsOneWidget);
+      });
+
+      testWidgets('on a handle tap, with no close button, when not '
+          'dismissible', (tester) async {
+        await open(tester, isDismissible: false);
+
+        expect(find.byType(IconButton), findsNothing);
+        await tester.tapAt(
+          Offset(
+            tester.getCenter(find.byKey(contentKey)).dx,
+            top(tester) - handleHeight / 2,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(contentKey), findsOneWidget);
+      });
+
+      testWidgets('on its close button when its content may not pop', (
+        tester,
+      ) async {
+        var refused = 0;
+        await open(
+          tester,
+          builder: (_) => PopScope(
+            canPop: false,
+            onPopInvokedWithResult: (didPop, _) => refused += didPop ? 0 : 1,
+            child: content(),
+          ),
+        );
+
+        await tester.tap(find.byType(IconButton));
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(contentKey), findsOneWidget);
+        expect(refused, 1);
       });
 
       testWidgets('still when dragging is off', (tester) async {
@@ -528,6 +624,42 @@ void main() {
         );
         expect(fade.opacity.value, inExclusiveRange(0, 1));
         await tester.pumpAndSettle();
+      });
+
+      testWidgets(
+        'cross-fades in over the full ${AppMotion.crossFade} when the phone '
+        'removes animations',
+        (tester) async {
+          removeAnimations(tester);
+          await open(tester, reduced: true, settle: false);
+          await tester.pump(AppMotion.crossFade ~/ 2);
+
+          final fade = tester.widget<FadeTransition>(
+            find
+                .ancestor(
+                  of: find.byKey(contentKey),
+                  matching: find.byType(FadeTransition),
+                )
+                .first,
+          );
+          expect(fade.opacity.value, inExclusiveRange(0, 1));
+          await tester.pump(AppMotion.crossFade ~/ 2);
+          expect(fade.opacity.value, 1);
+        },
+      );
+
+      testWidgets('closes at once on a tap on its handle', (tester) async {
+        await open(tester, reduced: true);
+
+        await tester.tapAt(
+          Offset(
+            tester.getCenter(find.byKey(contentKey)).dx,
+            top(tester) - handleHeight / 2,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(contentKey), findsNothing);
       });
 
       testWidgets('jumps back when let go near the top', (tester) async {

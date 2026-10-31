@@ -1,9 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/attendance/widgets/roll_link.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/this_week_cubit.dart';
-import 'package:ronda/my_ronda/widgets/answer_bar.dart';
 import 'package:ronda/my_ronda/widgets/despues_section.dart';
 import 'package:ronda/my_ronda/widgets/handoff_ask.dart';
 import 'package:ronda/my_ronda/widgets/this_week_labels.dart';
@@ -45,7 +43,7 @@ class const ThisWeekCard({
     final Key answerKey;
     if (state.asks) {
       answerKey = const ValueKey('asks');
-      answer = AnswerBar(
+      answer = RsvpBar(
         identifier: rsvpIdentifier,
         question: l10n.thisWeekQuestion,
         message: item == null ? null : l10n.thisWeekYourTurn(item),
@@ -55,8 +53,8 @@ class const ThisWeekCard({
         onNo: cubit.noTapped,
         savingLabel: l10n.thisWeekSaving,
         pending: switch (state.answering) {
-          RsvpAnswer.yes => AnswerSide.yes,
-          RsvpAnswer.no => AnswerSide.no,
+          RsvpAnswer.yes => RsvpBarAnswer.yes,
+          RsvpAnswer.no => RsvpBarAnswer.no,
           null => null,
         },
       );
@@ -127,7 +125,7 @@ class const ThisWeekCard({
                   message: l10n.thisWeekSaveError,
                 ),
               RondaSwap(
-                layoutBuilder: topStartSwapLayout,
+                layoutBuilder: RondaSwap.topStartLayout,
                 child: KeyedSubtree(key: answerKey, child: answer),
               ),
               if (week.week != null) ..._coming(context, week),
@@ -155,7 +153,7 @@ class const ThisWeekCard({
       ),
       if (week.going.isNotEmpty) _Going(week: week, uid: uid),
       RondaSwap(
-        layoutBuilder: topStartSwapLayout,
+        layoutBuilder: RondaSwap.topStartLayout,
         child: Text(counts, key: ValueKey(counts), style: textTheme.bodyMedium),
       ),
     ];

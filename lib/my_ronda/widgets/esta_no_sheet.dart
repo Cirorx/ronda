@@ -47,19 +47,9 @@ class const EstaNoSheet({
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: spacing.md,
         children: [
-          // The title, and a close button for a mouse, which can't tap the
-          // sheet's handle.
-          Row(
-            spacing: spacing.xs,
-            children: [
-              Expanded(
-                child: Semantics(
-                  header: true,
-                  child: Text(l10n.estaNoTitle, style: textTheme.headlineSmall),
-                ),
-              ),
-              const CloseButton(),
-            ],
+          Semantics(
+            header: true,
+            child: Text(l10n.estaNoTitle, style: textTheme.headlineSmall),
           ),
           Text(l10n.estaNoBody, style: textTheme.bodyMedium),
           Text(l10n.estaNoNextWeeks, style: textTheme.titleMedium),

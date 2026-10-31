@@ -446,7 +446,7 @@ void main() {
           ),
           isSemantics(isHeader: true),
         );
-        await tester.tap(find.byType(CloseButton));
+        await tester.tap(find.byTooltip('Cerrar'));
         await tester.pumpAndSettle();
         expect(find.byType(RondaSetupSheet), findsNothing);
         verify(cubit.sheetClosed).called(1);

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:contact_repository/contact_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/buddy/cubit/buddy_cubit.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_repository/ronda_repository.dart';
@@ -65,13 +64,13 @@ class const BuddyView({super.key}) extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         RondaSwap(
-          layoutBuilder: topStartSwapLayout,
+          layoutBuilder: RondaSwap.topStartLayout,
           child: ask == null
               ? const SizedBox.shrink(key: ValueKey('noAsk'))
               : _AskCard(ask, write: state.canWhatsApp, key: ValueKey(ask)),
         ),
         RondaSwap(
-          layoutBuilder: topStartSwapLayout,
+          layoutBuilder: RondaSwap.topStartLayout,
           child: KeyedSubtree(key: ValueKey(choice.runtimeType), child: choice),
         ),
       ],

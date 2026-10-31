@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/attendance/cubit/attendance_cubit.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_repository/ronda_repository.dart';
@@ -58,7 +57,7 @@ class const AttendanceView({super.key}) extends StatelessWidget {
       appBar: AppBar(title: Text(l10n.rollTitle)),
       body: SafeArea(
         child: RondaSwap(
-          layoutBuilder: topStartSwapLayout,
+          layoutBuilder: RondaSwap.topStartLayout,
           child: KeyedSubtree(
             key: ValueKey(state.status),
             child: switch ((state.status, state.roll)) {
@@ -168,7 +167,7 @@ class const _Person({
           identifier: AttendanceView.markIdentifier(person.uid, came: came),
           selected: selected,
           child: RondaSwap(
-            layoutBuilder: topStartSwapLayout,
+            layoutBuilder: RondaSwap.topStartLayout,
             child: selected
                 ? FilledButton(
                     key: const ValueKey(true),

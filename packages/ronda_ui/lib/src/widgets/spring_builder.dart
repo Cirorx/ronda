@@ -7,14 +7,17 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// changed.
 ///
 /// A new [value] mid-flight retargets from where the spring is, at the speed
-/// it is going, so changes never jump or stop dead. With reduced motion the
-/// value is set at once and nothing moves.
+/// it is going, so changes never jump or stop dead. Given [from], a freshly
+/// built one springs from there to [value] (a bar on a new screen moving on
+/// from where the last screen's bar stood). With reduced motion the value
+/// is set at once and nothing moves.
 /// {@endtemplate}
 class SpringBuilder extends StatefulWidget {
   /// {@macro spring_builder}
   const new({
     required this.value,
     required this.builder,
+    this.from,
     this.spring,
     this.child,
     super.key,
@@ -25,6 +28,10 @@ class SpringBuilder extends StatefulWidget {
 
   /// Builds with the spring's current value; [child] is passed through.
   final ValueWidgetBuilder<double> builder;
+
+  /// Where a freshly built one starts, springing to [value]; [value] when
+  /// `null`. Read once, when it is first built.
+  final double? from;
 
   /// The spring; [AppMotion.standard] by default.
   final SpringDescription? spring;
@@ -40,13 +47,28 @@ class _SpringBuilderState extends State<SpringBuilder>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController.unbounded(
     vsync: this,
-    value: widget.value,
+    value: widget.from ?? widget.value,
   );
+  bool _started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reduced motion lives in the MediaQuery, which initState can't read.
+    if (_started) return;
+    _started = true;
+    if (_controller.value != widget.value) _follow();
+  }
 
   @override
   void didUpdateWidget(SpringBuilder oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.value == oldWidget.value) return;
+    if (widget.value != oldWidget.value) _follow();
+  }
+
+  /// Springs from where it is, at the speed it is going, to [widget]'s
+  /// value; jumps there with reduced motion.
+  void _follow() {
     final spring = RondaMotion.of(context)
         .springOr(widget.spring ?? AppMotion.standard);
     if (spring == null) {

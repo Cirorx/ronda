@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flyer_repository/flyer_repository.dart';
-import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/mate_flyer/cubit/mate_flyer_cubit.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -73,7 +72,7 @@ class const MateFlyerView({super.key}) extends StatelessWidget {
             SizedBox(height: spacing.md),
           ],
           RondaSwap(
-            layoutBuilder: topStartSwapLayout,
+            layoutBuilder: RondaSwap.topStartLayout,
             child: Column(
               key: ValueKey(step),
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -145,19 +144,7 @@ class const MateFlyerView({super.key}) extends StatelessWidget {
   }
 
   List<Widget> _working(BuildContext context, String message) {
-    return [
-      SizedBox(height: context.appSpacing.xlg),
-      const Center(child: CircularProgressIndicator()),
-      SizedBox(height: context.appSpacing.md),
-      Semantics(
-        liveRegion: true,
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-      ),
-    ];
+    return [SizedBox(height: context.appSpacing.xs), LoadingStatus(message)];
   }
 
   List<Widget> _preview(
