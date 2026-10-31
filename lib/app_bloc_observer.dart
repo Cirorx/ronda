@@ -15,21 +15,46 @@ typedef BlocLogger = void Function(String message, {StackTrace? stackTrace});
 /// their runtime types. The development flavor logs ([logger] defaults to
 /// `dart:developer`'s `log`); production passes `logger: null`.
 ///
+/// A bloc's changes are logged at most once per [changeLogInterval]: the
+/// voice note's level stream alone changes its state about 25 times a
+/// second.
+///
 /// Bootstrap installs it in both flavors with the [errorReporter]: a
 /// cubit's `addError(failure, stackTrace)` reaches it with the cubit's type
 /// as the step, and the reporter scrubs the error before anything leaves.
-class const AppBlocObserver({
-  final BlocLogger? logger = developer.log,
-  final ErrorReporter? errorReporter,
-}) extends BlocObserver {
+class AppBlocObserver extends BlocObserver {
+  new({
+    this.logger = developer.log,
+    this.errorReporter,
+    this._now = DateTime.now,
+  });
+
+  /// Where lines go; `null` logs nothing.
+  final BlocLogger? logger;
+
+  /// Where bloc errors go.
+  final ErrorReporter? errorReporter;
+
+  final DateTime Function() _now;
+  final _lastChangeLogged = Expando<DateTime>();
+
+  /// The least time between two logged changes of one bloc.
+  static const changeLogInterval = Duration(seconds: 1);
+
   /// This observer, also sending errors to [reporter].
   AppBlocObserver reportingTo(ErrorReporter reporter) =>
-      AppBlocObserver(logger: logger, errorReporter: reporter);
+      AppBlocObserver(logger: logger, errorReporter: reporter, now: _now);
 
   @override
   void onChange(BlocBase<dynamic> bloc, Change<dynamic> change) {
     super.onChange(bloc, change);
-    logger?.call(
+    final logger = this.logger;
+    if (logger == null) return;
+    final now = _now();
+    final last = _lastChangeLogged[bloc];
+    if (last != null && now.difference(last) < changeLogInterval) return;
+    _lastChangeLogged[bloc] = now;
+    logger(
       'onChange(${bloc.runtimeType}, '
       '${change.currentState.runtimeType} -> '
       '${change.nextState.runtimeType})',

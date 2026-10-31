@@ -703,13 +703,17 @@ What feeds it:
   `PlatformDispatcher.instance.onError` (step `uncaught`), both fatal, after bootstrap's own
   debug log. Flutter's error details are never sent, only the exception and its stack.
 - **Bloc errors:** `AppBlocObserver` is installed in both flavors (the development one logs type
-  names, production's logs nothing) and sends every `addError` with the cubit's type as the step.
+  names, one change per bloc a second at most, since the voice note's levels change its state
+  about 25 times a second; production's logs nothing) and sends every `addError` with the
+  cubit's type as the step.
 - **Handled failures that matter:** `ErrorReporter.reportFailure(screen:, step:, code:)`, a typed
   code with no message or stack. The reporter is provided above the app
-  (`context.read<ErrorReporter>()`), so a page hands it to its cubit. For the voice sign-up
-  (`agent/voice-web`), when the upload fails:
-  `errorReporter.reportFailure(screen: OnboardingPage.path, step: 'voiceUpload', code: 'voice/${failure.reason.name}')`.
-  Release web builds minify type names, so a typed code reads better than the error's type.
+  (`context.read<ErrorReporter>()`). The voice sign-up reports each new `VoiceNoteState.failure`
+  from a `BlocListener` in `VoiceNoteStep`: screen `/sumarte`, step `voice`, code
+  `voice/<failure>` plus `/<failureCode>` when the server answered one
+  (`voice/uploadFailed/unauthorized`). A missing or refused microphone is not reported: it is
+  the person's choice or setup, not a bug. Release web builds minify type names, so a typed code
+  reads better than the error's type.
 - **Screen:** `AppView` tells the reporter the route pattern on every navigation
   (`/acta/:rondaId`, never the filled path with its ids).
 - The web sink batches for 2 s (a fatal report goes at once), 10 a call, sends each code and

@@ -620,6 +620,8 @@ void main() {
 
         final done = find.bySemanticsIdentifier(TermsPage.doneIdentifier);
         await tester.scrollUntilVisible(done, 200);
+        await tester.ensureVisible(done);
+        await tester.pumpAndSettle();
         await tester.tap(done);
         await tester.pumpAndSettle();
         expect(find.byType(WelcomePage), findsOneWidget);

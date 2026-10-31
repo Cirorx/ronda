@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:error_reporter/error_reporter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
@@ -9,7 +12,26 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// "Te escuchamos": waits for "Grabar", records the voice note while the
 /// waveform follows the voice, has it read, and hands what was understood
 /// to the read-back. Nothing records before the tap.
+///
+/// Each new failure goes to the error log ([ErrorReporter.reportFailure],
+/// `voice/<failure>/<server code>`), except a missing or refused
+/// microphone: that is the person's choice or setup, not a bug.
 class const VoiceNoteStep({super.key}) extends StatelessWidget {
+  /// The step every voice failure is reported under.
+  static const reportStep = 'voice';
+
+  /// The error log's code for [failure]: `voice/<failure>`, then
+  /// `/<serverCode>` when the server answered one
+  /// (`voice/uploadFailed/unauthorized`).
+  static String reportCode(VoiceNoteFailure failure, String? serverCode) =>
+      ['voice', failure.name, ?serverCode].join('/');
+
+  /// Failures that are not Ronda's to fix, so never reported.
+  static const Set<VoiceNoteFailure> unreported = {
+    VoiceNoteFailure.noMicrophone,
+    VoiceNoteFailure.microphoneDenied,
+  };
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -17,9 +39,22 @@ class const VoiceNoteStep({super.key}) extends StatelessWidget {
         uid: context.read<AppBloc>().state.user.id,
         onboardingRepository: context.read<OnboardingRepository>(),
       ),
-      // The error log hooks in here once it lands: a BlocListener on
-      // `state.failure` reporting `failure.name` and `failureCode`.
-      child: const VoiceNoteView(),
+      child: BlocListener<VoiceNoteCubit, VoiceNoteState>(
+        listenWhen: (previous, current) =>
+            current.failure != null && current.failure != previous.failure,
+        listener: (context, state) {
+          final failure = state.failure!;
+          if (unreported.contains(failure)) return;
+          unawaited(
+            context.read<ErrorReporter?>()?.reportFailure(
+              screen: OnboardingPage.path,
+              step: reportStep,
+              code: reportCode(failure, state.failureCode),
+            ),
+          );
+        },
+        child: const VoiceNoteView(),
+      ),
     );
   }
 }

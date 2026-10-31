@@ -79,7 +79,7 @@ Future<void> main() async {
     firebaseOptions: DefaultFirebaseOptions.currentPlatform,
     googleSignInFlow: _googleSignInFlow(),
     emulators: _emulators(),
-    blocObserver: const AppBlocObserver(),
+    blocObserver: AppBlocObserver(),
     onRsvpAction: answerRsvpFromNotification,
   );
 }

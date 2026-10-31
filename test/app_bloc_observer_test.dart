@@ -65,6 +65,29 @@ void main() {
       });
     });
 
+    group('onChange of a fast bloc', () {
+      test('logs one change a second at most', () {
+        var now = DateTime(2026, 10, 30, 21);
+        final lines = <String>[];
+        final throttled = AppBlocObserver(
+          logger: (message, {stackTrace}) => lines.add(message),
+          now: () => now,
+        );
+        const change = Change<Object?>(
+          currentState: _MemberLoading(),
+          nextState: _MemberLoading(),
+        );
+
+        for (var n = 0; n < 25; n++) {
+          throttled.onChange(bloc, change);
+          now = now.add(const Duration(milliseconds: 40));
+        }
+        throttled.onChange(bloc, change);
+
+        expect(lines, hasLength(2));
+      });
+    });
+
     group('onTransition', () {
       test('logs the bloc and event type names only', () {
         observer.onTransition(
@@ -144,7 +167,7 @@ void main() {
 
     test('logs through dart:developer by default', () {
       expect(
-        () => const AppBlocObserver().onChange(
+        () => AppBlocObserver().onChange(
           bloc,
           const Change<Object?>(
             currentState: _MemberLoading(),

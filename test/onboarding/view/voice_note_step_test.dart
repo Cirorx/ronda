@@ -1,5 +1,6 @@
 import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -20,6 +21,8 @@ class _MockVoiceNoteCubit extends MockCubit<VoiceNoteState>
     implements VoiceNoteCubit;
 
 class _MockOnboardingRepository extends Mock implements OnboardingRepository;
+
+class _MockErrorReporter extends Mock implements ErrorReporter;
 
 const _signup = VoiceSignup(firstName: 'Graciela', pretexts: ['mate']);
 
@@ -75,6 +78,100 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       verify(repository.discardVoiceNote).called(1);
     });
+  });
+
+  group('$VoiceNoteStep error log', () {
+    late OnboardingRepository repository;
+    late ErrorReporter reporter;
+
+    setUp(() {
+      repository = _MockOnboardingRepository();
+      reporter = _MockErrorReporter();
+      when(repository.discardVoiceNote).thenAnswer((_) async {});
+      when(repository.voiceLevels).thenAnswer((_) => const Stream.empty());
+      when(
+        () => reporter.reportFailure(
+          screen: any(named: 'screen'),
+          step: any(named: 'step'),
+          code: any(named: 'code'),
+        ),
+      ).thenAnswer((_) async {});
+    });
+
+    Future<void> pumpStep(WidgetTester tester) async {
+      final appBloc = _MockAppBloc();
+      when(() => appBloc.state).thenReturn(
+        const AppState(
+          status: AppStatus.onboarding,
+          user: User(id: 'demo-uid'),
+        ),
+      );
+      await tester.pumpApp(
+        MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider<OnboardingRepository>.value(value: repository),
+            RepositoryProvider<ErrorReporter>.value(value: reporter),
+          ],
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider<AppBloc>.value(value: appBloc),
+              BlocProvider<OnboardingCubit>.value(value: onboarding),
+            ],
+            child: const VoiceNoteStep(),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    testWidgets('reports a recorder that fails, once', (tester) async {
+      when(repository.startVoiceNote).thenThrow(Exception('no recorder'));
+      await pumpStep(tester);
+
+      await tester.tap(find.text('Grabar'));
+      await tester.pump();
+
+      verify(
+        () => reporter.reportFailure(
+          screen: OnboardingPage.path,
+          step: VoiceNoteStep.reportStep,
+          code: 'voice/recorderFailed',
+        ),
+      ).called(1);
+    });
+
+    test("codes a failure with the server's answer when there is one", () {
+      expect(
+        VoiceNoteStep.reportCode(VoiceNoteFailure.uploadFailed, 'unauthorized'),
+        equals('voice/uploadFailed/unauthorized'),
+      );
+      expect(
+        VoiceNoteStep.reportCode(VoiceNoteFailure.readFailed, null),
+        equals('voice/readFailed'),
+      );
+    });
+
+    for (final (thrown, name) in [
+      (const MicrophoneDeniedFailure(), 'a refused microphone'),
+      (const NoMicrophoneFailure(), 'a missing microphone'),
+    ]) {
+      testWidgets('does not report $name', (tester) async {
+        when(repository.startVoiceNote).thenThrow(thrown);
+        await pumpStep(tester);
+
+        await tester.tap(find.text('Grabar'));
+        await tester.pump();
+
+        expect(find.byType(VoiceNoteView), findsOneWidget);
+        verifyNever(
+          () => reporter.reportFailure(
+            screen: any(named: 'screen'),
+            step: any(named: 'step'),
+            code: any(named: 'code'),
+          ),
+        );
+      });
+    }
   });
 
   group(VoiceNoteView, () {
