@@ -694,3 +694,27 @@ def set_buddy(req: https_fn.CallableRequest) -> dict:
 
     db = _firestore()
     return _member_call(req, buddy.BuddyError, lambda: buddy.choose(db, req.auth.uid, req.data))
+
+
+# --- Monitoring: the web app's error log (Crashlytics covers Android and iOS) ---------------
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_256, invoker="public"
+)
+def report_client_error(req: https_fn.CallableRequest) -> dict:
+    """Stores the web app's scrubbed error reports, `{reports: [{platform, appVersion, build,
+    flavor, screen, step, code, message, stack, fatal}]}`, as `client_errors/{id}`. The one
+    callable that takes signed-out callers: a sign-up that fails before sign-in must still be
+    seen. Rate-limited per hashed uid or hashed IP (client_errors.py)."""
+    import client_errors
+
+    raw = getattr(req, "raw_request", None)
+    ip = client_errors.requester_ip(
+        getattr(raw, "headers", None), getattr(raw, "remote_addr", None)
+    )
+    uid = req.auth.uid if req.auth is not None else None
+    try:
+        return client_errors.report(_firestore(), req.data, uid=uid, ip=ip, now=_now())
+    except client_errors.ClientErrorRefused as e:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e

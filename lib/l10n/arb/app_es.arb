@@ -615,5 +615,20 @@
     "onboardingObjectsTitle": "Tu ronda",
     "onboardingObjectsBody": "Lo que elijas para hacer y para llevar aparece acá.",
     "onboardingObjectsDo": "Para hacer",
-    "onboardingObjectsBring": "Para llevar"
+    "onboardingObjectsBring": "Para llevar",
+    "termsErrors": "Si algo falla, la app manda un aviso anónimo, sin tus datos, para que lo arreglemos.",
+    "errorLogTitle": "Errores de la app",
+    "errorLogLink": "Errores de la app",
+    "errorLogBody": "Lo que avisó la app web en los últimos 30 días, juntado por qué falló y dónde. Los errores de Android y iPhone están en la consola de Crashlytics.",
+    "errorLogLoading": "Buscando los errores…",
+    "errorLogLoadError": "No pudimos leer los errores. Probá de nuevo.",
+    "errorLogEmpty": "No hubo errores en los últimos 30 días.",
+    "errorLogNoScreen": "sin pantalla",
+    "errorLogCount": "{count, plural, =1{una vez} other{{count} veces}}",
+    "errorLogLastSeen": "la última {when}",
+    "errorLogFatal": "cortó la app",
+    "errorLogStep": "Paso: {step}",
+    "errorLogNoMessage": "Sin mensaje: una falla que la app nombró.",
+    "errorLogBack": "Todos los errores",
+    "errorLogShown": "{shown, plural, =1{Se ve la más nueva.} other{Se ven las {shown} más nuevas.}}"
 }

@@ -41,6 +41,12 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_notification" />
+        <!-- Crashlytics sends nothing until the app turns it on: lib/bootstrap.dart does so in
+             release builds of production only, so a debug build or the development flavor
+             never reports, not even a crash before Dart starts (docs/STACK.md § Monitoring). -->
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="false" />
         <!-- The weekly push's [Voy] / [Esta no] buttons answer without opening the app:
              flutter_local_notifications receives the tap here and runs the app's handler
              in a background isolate (lib/bootstrap.dart, answerRsvpInBackground). -->

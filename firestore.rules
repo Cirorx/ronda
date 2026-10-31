@@ -306,5 +306,12 @@ service cloud.firestore {
           && request.resource.data.status == 'closed'
           && request.resource.data.closedAt == request.time;
     }
+
+    // The web app's error log (functions/client_errors.py): scrubbed reports written only by
+    // the report_client_error callable, read by the admin on /admin/errores. Its per-caller
+    // hourly quota (client_error_quota) stays closed to every client.
+    match /client_errors/{id} {
+      allow read: if isAdmin();
+    }
   }
 }

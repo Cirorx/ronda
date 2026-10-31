@@ -2,17 +2,19 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:auth_repository/auth_repository.dart';
-import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:contact_repository/contact_repository.dart';
 import 'package:device_store/device_store.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:face_blur/face_blur.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:flyer_repository/flyer_repository.dart';
@@ -23,6 +25,7 @@ import 'package:organiser_repository/organiser_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:push_client/push_client.dart';
 import 'package:push_repository/push_repository.dart';
+import 'package:ronda/app_bloc_observer.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_api/ronda_api.dart';
 import 'package:ronda_repository/ronda_repository.dart';
@@ -215,10 +218,12 @@ Future<void> answerRsvpInBackground(
 /// [firebaseOptions] come from the flavor's generated options file. When
 /// [emulators] is given (development only) every Firebase client talks to
 /// the local emulators instead of the real project. [googleSignInFlow] says
-/// how this platform reaches Google. [blocObserver] is installed only when
-/// given: the development entrypoint passes `AppBlocObserver`, production
-/// passes nothing. [onRsvpAction] answers the weekly push's buttons in the
-/// background ([answerRsvpInBackground]).
+/// how this platform reaches Google. [blocObserver] is the development
+/// entrypoint's logging `AppBlocObserver`; production passes nothing and
+/// gets a silent one. Either way it sends bloc errors to the error log
+/// ([_errorReporter]), which is also provided above the app as an
+/// [ErrorReporter], with the admin's [ClientErrorLog]. [onRsvpAction] answers
+/// the weekly push's buttons in the background ([answerRsvpInBackground]).
 Future<void> bootstrap(
   AppBuilder builder, {
   required FirebaseOptions firebaseOptions,
@@ -232,8 +237,6 @@ Future<void> bootstrap(
   FlutterError.onError = (details) {
     log(details.exceptionAsString(), stackTrace: details.stack);
   };
-
-  if (blocObserver != null) Bloc.observer = blocObserver;
 
   // Clean URLs on web (/ronda instead of /#/ronda); a no-op elsewhere.
   usePathUrlStrategy();
@@ -286,6 +289,21 @@ Future<void> bootstrap(
     await storage.useStorageEmulator(host, FirebaseEmulators.storagePort);
   }
 
+  // Monitoring: Crashlytics on phones, the report_client_error log on web.
+  final errorReporter = await _errorReporter(
+    functions: functions,
+    production: emulators == null,
+  );
+  installErrorHooks(errorReporter);
+  Bloc.observer = switch (blocObserver) {
+    final AppBlocObserver observer => observer.reportingTo(errorReporter),
+    null => AppBlocObserver(logger: null, errorReporter: errorReporter),
+    final other => other,
+  };
+  firebaseAuth.authStateChanges().listen(
+    (user) => unawaited(errorReporter.setUser(user?.uid)),
+  );
+
   // Repository layer
   final authRepository = AuthRepository(
     firebaseAuth: firebaseAuth,
@@ -321,17 +339,54 @@ Future<void> bootstrap(
     email: rondaContactEmail,
   );
 
+  final app = await builder(
+    authRepository: authRepository,
+    contactRepository: contactRepository,
+    flyerRepository: flyerRepository,
+    needsRepository: needsRepository,
+    onboardingRepository: onboardingRepository,
+    organiserRepository: organiserRepository,
+    profileRepository: profileRepository,
+    pushRepository: pushRepository,
+    rondaRepository: rondaRepository,
+  );
+  // Above the app rather than in AppBuilder, so monitoring stays out of the
+  // repositories' wiring: the voice cubit reads the ErrorReporter for
+  // reportFailure, /admin/errores reads the ClientErrorLog.
   runApp(
-    await builder(
-      authRepository: authRepository,
-      contactRepository: contactRepository,
-      flyerRepository: flyerRepository,
-      needsRepository: needsRepository,
-      onboardingRepository: onboardingRepository,
-      organiserRepository: organiserRepository,
-      profileRepository: profileRepository,
-      pushRepository: pushRepository,
-      rondaRepository: rondaRepository,
+    MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<ErrorReporter>.value(value: errorReporter),
+        RepositoryProvider.value(value: ClientErrorLog(firestore: firestore)),
+      ],
+      child: app,
     ),
   );
+}
+
+/// Where errors go (`docs/STACK.md` § Monitoring). Web reports to the
+/// `report_client_error` callable (the emulator's in development), except a
+/// debug build of production, which only logs. Phones report to Crashlytics
+/// in release builds of production only; everything else turns Crashlytics
+/// off, drops what it cached, and only logs.
+Future<ErrorReporter> _errorReporter({
+  required FirebaseFunctions functions,
+  required bool production,
+}) async {
+  final app = await AppInfo.load(
+    flavor: production ? 'production' : 'development',
+  );
+  if (kIsWeb) {
+    return production && !kReleaseMode
+        ? LocalErrorReporter(app: app)
+        : CallableErrorReporter(functions: functions, app: app);
+  }
+  final crashlytics = FirebaseCrashlytics.instance;
+  final collect = production && kReleaseMode;
+  await crashlytics.setCrashlyticsCollectionEnabled(collect);
+  if (collect) {
+    return CrashlyticsErrorReporter(crashlytics: crashlytics, app: app);
+  }
+  await crashlytics.deleteUnsentReports();
+  return LocalErrorReporter(app: app);
 }

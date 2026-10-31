@@ -37,6 +37,7 @@ jobs:
           - packages/auth_repository
           - packages/contact_repository
           - packages/device_store
+          - packages/error_reporter
           - packages/face_blur
           - packages/flyer_repository
           - packages/link_opener

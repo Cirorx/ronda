@@ -5,6 +5,9 @@ plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
     id("com.google.gms.google-services")
+    // Uploads the release build's R8 mapping, so Crashlytics reads Java and Kotlin frames
+    // (Dart symbols are uploaded by hand: docs/STACK.md § Monitoring).
+    id("com.google.firebase.crashlytics")
     // END: FlutterFire Configuration
     id("dev.flutter.flutter-gradle-plugin")
 }

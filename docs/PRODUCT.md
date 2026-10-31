@@ -40,7 +40,10 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   programa", flyer scans per spot, and "Lugar, hora y anfitriones" (each ronda's public place,
   hour and hosts, its latest "¿Quién vino?", and how the coming meeting's "¿Abrís vos?" is going:
   "Buscando quién abre el 5/11: Mirta no puede.", "El 5/11 abre Facu en lugar de Mirta." or
-  "Nadie confirmó que abre el 5/11: Mirta no puede.").
+  "Nadie confirmó que abre el 5/11: Mirta no puede."), and "Errores de la app" (`/admin/errores`:
+  what the web app reported in the last 30 days, grouped by what failed and where, with how many
+  times, the last time and the platforms; a group opens its newest reports. Android and iPhone
+  errors are in the Crashlytics console).
 - (The Bitácora tab from the planilla is not in the build.)
 
 ## Onboarding
@@ -50,9 +53,10 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   the person picks ("sesenta y pico").
 - **Terms by continuing, no consent screen.** Under the doors: "Al seguir, aceptás las
   condiciones de Ronda." Tapping either door is the acceptance; the app records the terms
-  version and the time, held on the phone until sign-in and written right after it. The link opens "Las condiciones, en corto": six plain points (free,
+  version and the time, held on the phone until sign-in and written right after it. The link opens "Las condiciones, en corto": seven plain points (free,
   public places and adults only, what is kept, audio deleted at once, see or delete your data
-  in Ajustes, reports read by a person) and one line on where things happen: "Tus datos se
+  in Ajustes, reports read by a person, and "Si algo falla, la app manda un aviso anónimo, sin
+  tus datos, para que lo arreglemos.") and one line on where things happen: "Tus datos se
   guardan en Brasil; el audio lo procesa Meta y el inicio de sesión Google, en EE. UU."
 - **Payoff** after the read-back, signed out: "Esto es lo que hay para vos", from the answers and
   Cerca tuyo's public `cerca/{barrio}` counts. It shows demand, never seats: "Hay 4 anotados para

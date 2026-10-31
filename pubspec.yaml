@@ -19,10 +19,13 @@ dependencies:
   device_store:
     path: packages/device_store
   equatable: ^2.0.7
+  error_reporter:
+    path: packages/error_reporter
   face_blur:
     path: packages/face_blur
   firebase_auth: ^7.0.1
   firebase_core: ^5.1.0
+  firebase_crashlytics: ^6.0.1
   firebase_messaging: ^17.0.1
   firebase_storage: ^14.0.1
   flutter:

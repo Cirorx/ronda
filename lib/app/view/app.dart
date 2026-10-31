@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:auth_repository/auth_repository.dart';
 import 'package:contact_repository/contact_repository.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flyer_repository/flyer_repository.dart';
 import 'package:go_router/go_router.dart';
@@ -58,7 +59,8 @@ class const App({
 
 /// Shows the router in Ronda's day and night themes, and opens the roll
 /// when "¿Quién vino hoy?" is tapped on Android, whether the tap started the
-/// app or found it running.
+/// app or found it running. Tells the [ErrorReporter] bootstrap provides, if
+/// any, which route pattern is on screen, so error reports say where.
 class AppView extends StatefulWidget {
   const new({super.key});
 
@@ -76,10 +78,14 @@ class _AppViewState extends State<AppView> {
   );
 
   StreamSubscription<OpenedRoll>? _rolls;
+  ErrorReporter? _errorReporter;
 
   @override
   void initState() {
     super.initState();
+    _errorReporter = context.read<ErrorReporter?>();
+    _router.routerDelegate.addListener(_reportScreen);
+    _reportScreen();
     final push = context.read<PushRepository>();
     _rolls = push.openedRolls.listen(_openRoll);
     unawaited(
@@ -89,12 +95,18 @@ class _AppViewState extends State<AppView> {
     );
   }
 
+  // The pattern (`/acta/:rondaId`), never the filled path with its ids.
+  void _reportScreen() => _errorReporter?.setScreen(
+    _router.routerDelegate.currentConfiguration.fullPath,
+  );
+
   void _openRoll(OpenedRoll roll) =>
       unawaited(_router.push(AttendancePage.location(roll.rondaId, roll.week)));
 
   @override
   void dispose() {
     unawaited(_rolls?.cancel());
+    _router.routerDelegate.removeListener(_reportScreen);
     _router.dispose();
     _refresh.dispose();
     super.dispose();

@@ -3252,5 +3252,85 @@
     "onboardingObjectsBring": "To bring",
     "@onboardingObjectsBring": {
         "description": "Side panel on wide onboarding screens: heading over what the person brings"
+    },
+    "termsErrors": "If something breaks, the app sends an anonymous error report, without your data, so we can fix it.",
+    "@termsErrors": {
+        "description": "Terms point 7: anonymous error reports"
+    },
+    "errorLogTitle": "App errors",
+    "@errorLogTitle": {
+        "description": "Admin: title of the client error log screen"
+    },
+    "errorLogLink": "App errors",
+    "@errorLogLink": {
+        "description": "Admin: tooltip of the icon that opens the client error log"
+    },
+    "errorLogBody": "What the web app reported in the last 30 days, grouped by what failed and where. Android and iPhone errors are in the Crashlytics console.",
+    "@errorLogBody": {
+        "description": "Admin: what the client error log shows"
+    },
+    "errorLogLoading": "Reading the errors…",
+    "@errorLogLoading": {
+        "description": "Admin: while the client error log loads"
+    },
+    "errorLogLoadError": "We couldn't read the errors. Try again.",
+    "@errorLogLoadError": {
+        "description": "Admin: the client error log couldn't be read"
+    },
+    "errorLogEmpty": "No errors in the last 30 days.",
+    "@errorLogEmpty": {
+        "description": "Admin: the client error log is empty"
+    },
+    "errorLogNoScreen": "no screen",
+    "@errorLogNoScreen": {
+        "description": "Admin: an error report with no route"
+    },
+    "errorLogCount": "{count, plural, =1{once} other{{count} times}}",
+    "@errorLogCount": {
+        "description": "Admin: how many reports a group has",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "errorLogLastSeen": "last {when}",
+    "@errorLogLastSeen": {
+        "description": "Admin: when a group was last reported",
+        "placeholders": {
+            "when": {
+                "type": "String"
+            }
+        }
+    },
+    "errorLogFatal": "stopped the app",
+    "@errorLogFatal": {
+        "description": "Admin: the error was not caught"
+    },
+    "errorLogStep": "Step: {step}",
+    "@errorLogStep": {
+        "description": "Admin: the step or action an error report names",
+        "placeholders": {
+            "step": {
+                "type": "String"
+            }
+        }
+    },
+    "errorLogNoMessage": "No message: a failure the app named.",
+    "@errorLogNoMessage": {
+        "description": "Admin: a typed failure report carries no message"
+    },
+    "errorLogBack": "All errors",
+    "@errorLogBack": {
+        "description": "Admin: back from one group to the list"
+    },
+    "errorLogShown": "{shown, plural, =1{Showing the newest one.} other{Showing the newest {shown}.}}",
+    "@errorLogShown": {
+        "description": "Admin: how many reports of a group are listed",
+        "placeholders": {
+            "shown": {
+                "type": "int"
+            }
+        }
     }
 }

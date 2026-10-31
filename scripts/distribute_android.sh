@@ -7,6 +7,7 @@
 #
 # The APK is obfuscated. Its symbols go to symbols/android/<version>-<commit>/ (git-ignored): keep
 # them to read a crash, with `flutter symbolize -i <trace> -d <dir>/app.android-arm64.symbols`.
+# An upload also sends them to Crashlytics, so its console shows Dart frames for this build.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -58,4 +59,6 @@ if $build_only; then
   exit 0
 fi
 [[ -n "$notes" ]] || notes=$(git log -1 --pretty=%s)
+firebase crashlytics:symbols:upload --app="$app_id" "$symbols" ||
+  echo "WARNING: the Dart symbols didn't reach Crashlytics; upload $symbols by hand (docs/STACK.md § Monitoring)." >&2
 firebase appdistribution:distribute "$apk" --app "$app_id" --groups pilot --release-notes "$notes"

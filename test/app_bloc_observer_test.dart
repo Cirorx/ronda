@@ -1,9 +1,12 @@
 import 'package:bloc/bloc.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ronda/app_bloc_observer.dart';
 
 class _MockBloc extends Mock implements Bloc<Object?, Object?>;
+
+class _MockErrorReporter extends Mock implements ErrorReporter;
 
 /// A state carrying personal data that must never reach the log.
 final class const _MemberLoaded(final String phoneNumber) {
@@ -90,6 +93,52 @@ void main() {
         expect(messages, equals(['onError($_MockBloc, $_LookupFailed)']));
         expect(messages.single, isNot(contains(_phoneNumber)));
         expect(stackTraces.single, same(stackTrace));
+      });
+    });
+
+    group('with an error reporter', () {
+      late ErrorReporter reporter;
+
+      setUp(() {
+        reporter = _MockErrorReporter();
+        when(() => reporter.recordError(any(), any(), step: any(named: 'step')))
+            .thenAnswer((_) async {});
+      });
+
+      test('sends a bloc error with the bloc type as the step', () {
+        final stackTrace = StackTrace.current;
+        const error = _LookupFailed(_phoneNumber);
+
+        observer.reportingTo(reporter).onError(bloc, error, stackTrace);
+
+        verify(
+          () => reporter.recordError(error, stackTrace, step: '$_MockBloc'),
+        ).called(1);
+        expect(messages, hasLength(1));
+      });
+
+      test('logs nothing without a logger', () {
+        AppBlocObserver(logger: null, errorReporter: reporter)
+          ..onChange(
+            bloc,
+            const Change<Object?>(
+              currentState: _MemberLoading(),
+              nextState: _MemberLoaded(_phoneNumber),
+            ),
+          )
+          ..onTransition(
+            bloc,
+            const Transition<Object?, Object?>(
+              currentState: _MemberLoading(),
+              event: _PhoneNumberSubmitted(_phoneNumber),
+              nextState: _MemberLoaded(_phoneNumber),
+            ),
+          )
+          ..onError(bloc, const _LookupFailed(_phoneNumber), StackTrace.empty);
+
+        verify(
+          () => reporter.recordError(any(), any(), step: any(named: 'step')),
+        ).called(1);
       });
     });
 

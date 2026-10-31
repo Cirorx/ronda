@@ -8,6 +8,7 @@ import 'package:ronda/app/bloc/app_bloc.dart';
 import 'package:ronda/app/view/app_shell.dart';
 import 'package:ronda/attendance/attendance.dart';
 import 'package:ronda/cerca/cerca.dart';
+import 'package:ronda/error_log/error_log.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda/mate_flyer/mate_flyer.dart';
 import 'package:ronda/my_ronda/my_ronda.dart';
@@ -37,7 +38,8 @@ const returnToParameter = 'from';
 ///   on the phone straight away when there are some;
 /// - signed in with a profile: the tabs, never welcome, onboarding or the
 ///   payoff;
-/// - the admin screen and its trace (`/admin/programa`): anyone signed in, with or without a profile (the
+/// - the admin screen, its trace (`/admin/programa`) and the app's errors
+///   (`/admin/errores`): anyone signed in, with or without a profile (the
 ///   owner need not onboard); the server decides who sees a proposal.
 ///   Signed-out people sent from it to the welcome screen carry
 ///   `?from=/admin`, and sign-in returns them there instead of
@@ -149,6 +151,10 @@ GoRouter createAppRouter({
           GoRoute(
             path: RondaSetupPage.segment,
             builder: (_, _) => const RondaSetupPage(),
+          ),
+          GoRoute(
+            path: ErrorLogPage.segment,
+            builder: (_, _) => const ErrorLogPage(),
           ),
           GoRoute(
             path: AttendancePage.adminSegment,

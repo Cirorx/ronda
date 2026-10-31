@@ -78,6 +78,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | `ronda_repository` | Repository | Rondas, weeks, RSVPs, proposals (proposals built in #25), Cerca tuyo's demand by barrio (#52), place, hour, hosts and attendance (#47) | #25 |
 | `organiser_repository` | Repository | The organiser agent: the admin's trace (`agent_runs`), a ronda's acta and [Algo estuvo mal], the host's rain proposal and pick, the rain check by hand (over `ronda_api`'s `OrganiserApi`) | #49 |
 | `contact_repository` | Repository | The contact address (`RONDA_CONTACT_EMAIL`) and the helplines: a mail to Ronda or a call, opened in the person's own app (over `link_opener`) | #54 |
+| `error_reporter` | Repository | Error monitoring (§ Monitoring): `ErrorReporter` with Crashlytics (`firebase_crashlytics`), the `report_client_error` callable (web) and a local log; the scrubber; the error hooks; the admin's `ClientErrorLog` over Firestore. Takes the Firebase clients from bootstrap, like `auth_repository` | error log |
 
 Rules the agents apply (from `layered-architecture` and `bloc`):
 - Bootstrap (`main_<flavor>.dart` / `bootstrap.dart`) builds every data client and repository and
@@ -201,6 +202,8 @@ pass it everywhere, so nothing lands on another attached device.
   only flags such as "onboarding seen".
 - Logs carry ids and type names: phone numbers, names, transcripts, needs and FCM tokens stay
   out of `log()`, `debugPrint()` and the BlocObserver.
+- Error reports (Crashlytics and `client_errors`, § Monitoring) are scrubbed twice, on the phone
+  and on the server, carry the route pattern rather than the path, and at most a hashed uid.
 - Form fields (first name) are validated `formz` inputs held in Cubit state; the
   submit reads state, never a `TextEditingController`.
 - Release builds use `--obfuscate --split-debug-info` (`scripts/distribute_android.sh`, § Pilot
@@ -334,7 +337,8 @@ stdlib `wave` module (`audioop` is gone in 3.13).
    `getDefaultProguardFile("proguard-android.txt")` and on a listed keep file that doesn't exist.
    Its R8 keep rules are stricter too (`-keep class A` no longer keeps the constructor), so check
    a release APK on a device after adding a rule. Flutter's "plugins that apply Kotlin Gradle
-   Plugin" warning names cloud_functions, firebase_auth, firebase_core and firebase_storage. It
+   Plugin" warning names cloud_functions, firebase_auth, firebase_core, firebase_crashlytics and
+  firebase_storage (and flutter_image_compress_common). It
    comes from a text match on FlutterFire's own `apply plugin: 'kotlin-android'` line, which only
    runs while built-in Kotlin is off. It shows with the flag on or off, and the latest FlutterFire
    still prints it, so leave it.
@@ -467,7 +471,8 @@ on every function): **Google sign-in** enabled (free and unlimited on Spark; And
 reversed client id URL scheme, web the authorised domains); Firestore in `southamerica-east1`;
 Web Push (VAPID) key; admin custom claim for the owner. Phone/SMS sign-in stays off: it needs
 Blaze and bills per SMS, so it is never enabled. Storage bucket in `southamerica-east1`. App Check
-after the hackathon (callables require `auth != null` meanwhile).
+after the hackathon (callables require `auth != null` meanwhile, except `report_client_error`,
+which is rate-limited instead: § Monitoring).
 
 **Firebase in this repo** (set up 2026-10-27, #13). Five apps are registered in `ronda-uy`: Android
 `com.ciroapps.ronda` (production) and `com.ciroapps.ronda.dev` (development), the same two
@@ -505,8 +510,8 @@ on both Android apps, and release builds are signed with that key until a releas
 - **Rules tests** (`rules/`, `@firebase/rules-unit-testing` 6.0.0 on node's test runner):
   `cd rules && npm ci && npm run test:emulator` starts a Firestore emulator for them; with one
   already running on 8088, `npm test` uses it under the tests' own project ids
-  (`demo-ronda-rules`, `demo-ronda-users`, `demo-ronda-public`: one per file, as node runs test
-  files in parallel).
+  (`demo-ronda-rules`, `demo-ronda-users`, `demo-ronda-public`, `demo-ronda-errors`: one per
+  file, as node runs test files in parallel).
 - **Admin claim:** the owner signs in once, then
   `uv run --python 3.13 scripts/set_admin.py <email>` (real project, Application Default
   Credentials) or with `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099` for the emulator; sign out
@@ -681,6 +686,55 @@ so [Quiero sumarme] signs in on the same site. Print at 100% (no "fit to page"):
 8. A test push: Console → Messaging → new notification campaign → Send test message, with a token
    from Firestore (`users/{uid}/tokens`: the document id is the token).
 
+## Monitoring
+
+Errors reach the owner two ways, chosen in `lib/bootstrap.dart` (`_errorReporter`), both through
+`packages/error_reporter`'s `ErrorReporter`, which builds every report from the same scrubbed
+fields (`docs/ARCHITECTURE.md` § Data model, `client_errors`):
+
+| Where | Sink | When it sends |
+|---|---|---|
+| Android, iOS | Firebase Crashlytics (`CrashlyticsErrorReporter`): fatal and non-fatal, custom keys `screen` and `step` only, the uid hash as the user | Release builds of production only. The manifest (`firebase_crashlytics_collection_enabled`) and `Info.plist` (`FirebaseCrashlyticsCollectionEnabled`) start it off, so nothing is sent before Dart runs; bootstrap turns it on there, and elsewhere turns it off and deletes what it cached |
+| Web | The `report_client_error` callable (`CallableErrorReporter`) → `client_errors/{id}`, 30 days | Always: the development flavor reports to the functions emulator. A debug build of production only logs |
+| Debug phones, development flavor | `LocalErrorReporter`: one `dart:developer` line, code, screen and step | Never leaves the machine |
+
+What feeds it:
+- **Uncaught errors:** `installErrorHooks` wraps `FlutterError.onError` (step `framework`) and
+  `PlatformDispatcher.instance.onError` (step `uncaught`), both fatal, after bootstrap's own
+  debug log. Flutter's error details are never sent, only the exception and its stack.
+- **Bloc errors:** `AppBlocObserver` is installed in both flavors (the development one logs type
+  names, production's logs nothing) and sends every `addError` with the cubit's type as the step.
+- **Handled failures that matter:** `ErrorReporter.reportFailure(screen:, step:, code:)`, a typed
+  code with no message or stack. The reporter is provided above the app
+  (`context.read<ErrorReporter>()`), so a page hands it to its cubit. For the voice sign-up
+  (`agent/voice-web`), when the upload fails:
+  `errorReporter.reportFailure(screen: OnboardingPage.path, step: 'voiceUpload', code: 'voice/${failure.reason.name}')`.
+  Release web builds minify type names, so a typed code reads better than the error's type.
+- **Screen:** `AppView` tells the reporter the route pattern on every navigation
+  (`/acta/:rondaId`, never the filled path with its ids).
+- The web sink batches for 2 s (a fatal report goes at once), 10 a call, sends each code and
+  screen once and at most 20 reports a session; the server keeps at most 60 per caller per hour.
+
+**How to read errors:**
+- Android and iOS: Firebase console → Crashlytics, per app (`com.ciroapps.ronda`). Dart frames
+  are readable once the build's symbols are uploaded: `scripts/distribute_android.sh` does it
+  (`firebase crashlytics:symbols:upload --app=<app id> symbols/android/<version>-<commit>`);
+  by hand, the same command.
+- Web: `/admin/errores` (admin claim), grouped by code and screen, each group opening its
+  newest reports. In the console: Firestore → `client_errors`.
+- Server side: `firebase functions:log --only <function>` (for example `extract`,
+  `report_client_error`), or Cloud Logging in the console.
+
+**Not done yet (needs Xcode or the console):**
+- iOS dSYMs: Crashlytics reads native iOS frames only with the dSYM upload run script build
+  phase (`"${PODS_ROOT}/FirebaseCrashlytics/run"`, with the build's `GoogleService-Info.plist`)
+  in `ios/Runner.xcodeproj`. The plists are written but not bundled (§ Native and project
+  checklist), so add the phase with them, in Xcode, when iOS builds ship; until then iOS Dart
+  errors still arrive, with Dart symbols uploaded by hand
+  (`firebase crashlytics:symbols:upload --app=<ios app id> <symbols dir>`).
+- CocoaPods: `firebase_crashlytics` adds its pod at `pod install`; the repo reverts
+  `ios/Flutter/*.xcconfig` and `ios/Podfile` after `pub get`, so nothing of it is committed.
+
 ## Deploying
 `scripts/deploy.sh` keeps the real project in step with main, one area at a time: Firestore
 rules, indexes, Storage rules, functions and hosting.
@@ -695,6 +749,23 @@ rules, indexes, Storage rules, functions and hosting.
   stays pending.
 - Removing a function makes a non-interactive deploy stop; check the list, then run
   `firebase deploy --only functions --force` yourself.
+
+### Monitoring
+
+What the owner does once in the console, after the deploy that brings `report_client_error`
+(the app side is § Monitoring above):
+1. **Crashlytics:** Firebase console → Crashlytics → Enable, on `com.ciroapps.ronda` (Android)
+   and on the iOS app when it ships. The first report from a release production build usually
+   enables it; if the dashboard still says it is waiting for data, enable it there.
+2. **TTL:** `firebase deploy --only firestore:indexes` (or `scripts/deploy.sh`) sets the TTL
+   policies from `firestore.indexes.json` (`client_errors.expireAt`,
+   `client_error_quota.expireAt`). Check them in Firestore → Time-to-live; if missing, add them
+   there, or `gcloud firestore fields ttls update expireAt --collection-group=client_errors
+   --enable-ttl --project=ronda-uy` (and the same for `client_error_quota`). Deletion runs within
+   about a day of `expireAt`.
+3. **Rules:** `client_errors` is admin-read only; deploy `firestore:rules` with the function.
+4. **Symbols:** every `scripts/distribute_android.sh` upload sends the Dart symbols; a build
+   uploaded another way needs `firebase crashlytics:symbols:upload` by hand.
 
 ## What doesn't work on web
 Face blur (no ML Kit): the photo flows say "Hacelo desde la app del teléfono". Push buttons

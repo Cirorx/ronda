@@ -39,3 +39,4 @@ issues, docs, code, commit messages.
 | `Gate` | (none) | A rule in code that every outgoing message passes (quiet hours, no emoji, voseo, no money, bot disclosure, one routine push a week) |
 | `Flyer` | volante | Paper growth: the tear-off flyer and "Hay un mate de más" |
 | `Cerca` | cerca tuyo | The public no-login page of open seats and waitlists by barrio |
+| `ClientError` | (admin only: "Errores de la app") | One scrubbed error report from the app: where (screen, step), what (code, first line, stack) and when, never who beyond a hashed uid. Web reports land in `client_errors`; Android and iOS go to Crashlytics |

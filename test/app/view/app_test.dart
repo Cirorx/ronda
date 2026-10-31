@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:auth_repository/auth_repository.dart';
 import 'package:contact_repository/contact_repository.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flyer_repository/flyer_repository.dart';
@@ -18,6 +19,7 @@ import 'package:ronda/agent_trace/agent_trace.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/attendance/attendance.dart';
 import 'package:ronda/cerca/cerca.dart';
+import 'package:ronda/error_log/error_log.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda/mate_flyer/mate_flyer.dart';
 import 'package:ronda/my_ronda/my_ronda.dart';
@@ -50,6 +52,10 @@ class _MockOnboardingRepository extends Mock implements OnboardingRepository;
 class _MockFlyerRepository extends Mock implements FlyerRepository;
 
 class _MockOrganiserRepository extends Mock implements OrganiserRepository;
+
+class _MockErrorReporter extends Mock implements ErrorReporter;
+
+class _MockClientErrorLog extends Mock implements ClientErrorLog;
 
 const _user = User(id: 'demo-uid');
 
@@ -765,6 +771,41 @@ void main() {
 
         expect(find.byType(AgentTracePage), findsOneWidget);
         verify(organiserRepository.watchRuns).called(1);
+      });
+
+      testWidgets('by opening the errors under $AdminPage, telling the '
+          'reporter each route pattern', (tester) async {
+        final reporter = _MockErrorReporter();
+        final log = _MockClientErrorLog();
+        when(log.watchRecent).thenAnswer((_) => Stream.value(const []));
+        await tester.pumpWidget(
+          MultiRepositoryProvider(
+            providers: [
+              RepositoryProvider<ErrorReporter>.value(value: reporter),
+              RepositoryProvider<ClientErrorLog>.value(value: log),
+            ],
+            child: buildSubject(),
+          ),
+        );
+        users.add(_user);
+        await tester.pump();
+        profiles.add(_profile);
+        await tester.pumpAndSettle();
+
+        GoRouter.of(tester.element(find.byType(MyRondaPage)))
+            .go(ActaPage.location('ronda-1'));
+        await tester.pumpAndSettle();
+        GoRouter.of(tester.element(find.byType(ActaPage)))
+            .go(ErrorLogPage.path);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(ErrorLogPage), findsOneWidget);
+        verify(() => reporter.setScreen(MyRondaPage.path))
+            .called(greaterThan(0));
+        verify(() => reporter.setScreen(ActaPage.path)).called(greaterThan(0));
+        verify(() => reporter.setScreen(ErrorLogPage.path))
+            .called(greaterThan(0));
+        verifyNever(() => reporter.setScreen('/acta/ronda-1'));
       });
 
       testWidgets('by opening the $ActaPage of a ronda', (tester) async {

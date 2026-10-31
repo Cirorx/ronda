@@ -23,7 +23,8 @@ Phone (Flutter: iOS, Android, web)
   ├─ face blur (ML Kit) → upload blurred photo
   └─ FCM pushes in; RSVP / attendance / reports out
 Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign-in off)
-  ├─ Firestore: users, rondas, weeks, waitlists, proposals, reports, acta, agent_runs
+  ├─ Firestore: users, rondas, weeks, waitlists, proposals, reports, acta, agent_runs,
+  │    client_errors
   ├─ Storage: audio + blurred photos; deleted on success, hourly sweeper, lifecycle as backstop
   ├─ Functions (Python 3.13, 2nd gen):
   │    callables  extract (Transcribe → Spark), propose_groups (CP-SAT, admin), answer_rsvp,
@@ -36,7 +37,8 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   │               answer_bench_offer ([Lo tomo] / [Esta vez no]), answer_waitlist (the
   │               pick after a waiting list didn't fill),
   │               set_despues and answer_despues (the después), answer_handoff ("¿Abrís
-  │               vos?"), buddy_options and set_buddy (the buddy)
+  │               vos?"), buddy_options and set_buddy (the buddy),
+  │               report_client_error (the web app's error log; works signed out)
   │    triggers   bench_on_answer (an RSVP answer changed) and bench_on_offer (an offer
   │               was answered) run that ronda's bench at once
   │    scheduled  one dispatcher on the hour in Montevideo (`dispatch`) → run_<job>(db, now)
@@ -49,6 +51,7 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   │    agent      functions/organiser/ (loop, tools, gates, trace) run by the `rain_check` job
   │               (functions/rain.py) inside `dispatch` and `run_job`
   ├─ Hosting: Flutter web app under /app; plain-HTML Cerca tuyo at / and /f/{id}
+  ├─ Crashlytics: Android and iOS errors, release builds of production only
   └─ FCM → APNs (iOS only with the Apple Developer Program)
 Meta Model API: Voice Transcribe, Spark 1.3, SAM 3.1, Muse Image
 Baseten: Muse Spark Open (agent)
@@ -56,7 +59,10 @@ Public data: Open-Meteo, DNT GTFS, OpenStreetMap (cached per barrio)
 ```
 
 Keys live only in Functions config; the app never holds Meta or Baseten keys. Every callable
-requires `auth != null` and is pinned to `southamerica-east1` on both sides.
+requires `auth != null` and is pinned to `southamerica-east1` on both sides, except
+`report_client_error`: a sign-up that fails before sign-in must still be seen, so it takes
+signed-out callers, rate-limited per hashed uid or hashed IP with every field capped (App Check
+isn't set up).
 
 ## Code boundaries (keep the exit cheap)
 - Flutter talks to Firestore only through repositories (`UserRepository`, `RondaRepository`, …);
@@ -461,6 +467,34 @@ requires `auth != null` and is pinned to `southamerica-east1` on both sides.
     never the label, the stop id, the ronda, the host or the image, with `Cache-Control:
     no-store`. The page posts once per tab and reads on reload; link previews run no script, so
     they count nothing.
+- `client_errors/{id}` (`functions/client_errors.py`, `packages/error_reporter`): the web app's
+  error log; Android and iOS report to Crashlytics instead. One document per report: platform
+  (`web`, `android`, `ios` or `other`), appVersion, build, flavor (`development`, `production`
+  or `other`), screen (the route pattern, `/acta/:rondaId`, never a filled path), step (a typed
+  failure's step, `voiceUpload`, or the cubit that added the error), code (a typed failure's code,
+  a Firebase error's `plugin/code`, or the error's type), message (the first line only) and stack
+  (40 frames at most), fatal, at (server time), expireAt (`at` + 30 days, deleted by Firestore's
+  TTL policy on that field), and uidHash only when the caller was signed in: the first 16 hex
+  characters of SHA-256 over `ronda-client-errors:` and the uid, the same value Crashlytics gets
+  as its user, so the two can be matched. The salt is public, so the hash is a pseudonym that
+  keeps raw uids out of error tools, not anonymity. The uid comes from the call's auth token,
+  never from the payload.
+  - **Never in a report:** names, phone numbers, emails, voice audio or transcripts, needs, a
+    barrio with an age band, free text people typed, photos. The phone scrubs, then the server
+    scrubs again with the same rules: URL queries become `?<query>`, emails `<email>`, quoted
+    text `<text>`, ids of 20+ letters and digits `<id>` (a uid in a Firestore path), numbers of
+    8+ characters `<number>`. A message keeps its first line only (a `FormatException` prints
+    the text it couldn't read after it), and Flutter's error details are never sent (their
+    context can describe widgets with what people typed). Fields are capped (screen and step 80
+    characters, code 120, message 300, stack 4000); anything else in the payload is dropped.
+  - **Limits:** `report_client_error {reports: [...]}` takes 1 to 10 reports a call and keeps at
+    most 60 per caller per clock hour (`resource-exhausted` past that), counted in
+    `client_error_quota/{key}_{hour}` (the hour as `2026103021`) `{count, expireAt}` (two
+    hours, TTL) in a transaction; the key is `u` + the uid hash, or `ip` + a salted hash of the first
+    `X-Forwarded-For` hop. The raw IP is never stored. The app itself sends at most 20 reports a
+    session, each code and screen once, batched for 2 s (a fatal one at once).
+  - Read by the admin claim only, on `/admin/errores` (the newest 300, grouped by code and
+    screen); no client writes either collection (rules test: `rules/client_errors.test.js`).
 
 ### Demo data (emulators)
 
@@ -626,4 +660,6 @@ code jobs with no model, § Data model, the weekly loop's code jobs):
 - Terms accepted (version and time recorded) before any audio or photo leaves the phone.
 - No needs, no mood, no audio, no unblurred faces in Firestore or Storage after 24 h.
 - Payers or institutions only ever see totals with cells ≥ 10 (after the hackathon).
+- Error reports (Crashlytics and `client_errors`) carry where and what failed, scrubbed, and at
+  most a hashed uid: no names, numbers, emails, transcripts, needs or typed text (§ Data model).
 - Helpline in settings: Línea de Prevención del Suicidio 0800 0767 / *0767, 911. Not in the pitch.

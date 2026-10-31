@@ -1,4 +1,27 @@
 {
   "indexes": [],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "client_errors",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "client_errors",
+      "fieldPath": "stack",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "client_errors",
+      "fieldPath": "message",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "client_error_quota",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    }
+  ]
 }

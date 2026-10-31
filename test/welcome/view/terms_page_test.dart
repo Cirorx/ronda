@@ -13,7 +13,7 @@ void main() {
       );
     });
 
-    testWidgets('renders the six points and where things happen', (
+    testWidgets('renders the seven points and where things happen', (
       tester,
     ) async {
       await tester.pumpApp(const TermsPage());
@@ -26,6 +26,7 @@ void main() {
         'Si mandás un audio, un programa lo pasa a texto',
         'Tus datos los ves y los borrás cuando quieras, desde Ajustes.',
         'Si alguien te incomoda, reportalo. Lo lee una persona.',
+        'Si algo falla, la app manda un aviso anónimo, sin tus datos',
       ]) {
         await tester.scrollUntilVisible(find.textContaining(point), 100);
         expect(find.textContaining(point), findsOneWidget);
@@ -36,6 +37,7 @@ void main() {
       );
       await tester.scrollUntilVisible(where, 100);
       expect(where, findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Entendido'), 100);
       expect(find.text('Entendido'), findsOneWidget);
     });
 

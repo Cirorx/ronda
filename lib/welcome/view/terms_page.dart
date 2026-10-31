@@ -3,7 +3,7 @@ import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/welcome/welcome.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
-/// "Las condiciones, en corto": the six plain points the welcome screen
+/// "Las condiciones, en corto": the seven plain points the welcome screen
 /// links, set apart by space rather than rules, and where each thing
 /// happens. "Condiciones" in the top bar, with the way back to the doors.
 class const TermsPage({super.key}) extends StatelessWidget {
@@ -28,6 +28,7 @@ class const TermsPage({super.key}) extends StatelessWidget {
       l10n.termsAudio,
       l10n.termsYourData,
       l10n.termsReports,
+      l10n.termsErrors,
     ];
 
     return Scaffold(
