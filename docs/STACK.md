@@ -10,7 +10,7 @@ vgv-ai-flutter-plugin skills (`layered-architecture`, `bloc`, `material-theming`
 | Tool | Version | Note |
 |---|---|---|
 | Flutter / Dart | 3.47.8 / 3.13.7 (stable 2026-10-23) | This Mac has 3.47.1: `flutter upgrade` |
-| Android | minSdk 24, compile/target 36, Gradle 9.3.1, AGP 9.1.0, Kotlin plugin 2.3.20 (`compilerOptions` DSL, not `kotlinOptions`), JDK 17+ (this Mac runs 23); core-library desugaring on (`desugar_jdk_libs` 2.1.4, the version flutter_local_notifications 22's README names; added in #27) | Gradle 9.3.1 and AGP 9.1.0 are Flutter 3.47.8's template versions (AGP 9.1 needs Gradle ≥ 9.3.1; Flutter warns below Gradle 9.1 / AGP 9.0.1 / Kotlin 2.3.20). Like the template, `gradle.properties` keeps `android.builtInKotlin=false` and `android.newDsl=false`; `org.jetbrains.kotlin.android` stays in `settings.gradle.kts` (`apply false`) and the app module does not apply it, because the Flutter Gradle plugin applies it to the app and plugins while built-in Kotlin is off. FlutterFire BoM 35 sets the floors; `firebase-auth` 25.0.0 ships Kotlin 2.4 metadata, which Kotlin 2.2 can't read (checked 2026-10-27). Upgraded 2026-10-28 |
+| Android | minSdk 24, compile/target 36, Gradle 9.3.1, AGP 9.1.0, Kotlin plugin 2.3.20 (`compilerOptions` DSL, not `kotlinOptions`), JDK 17+ (this Mac runs 23); core-library desugaring on (`desugar_jdk_libs` 2.1.4, the version flutter_local_notifications 22's README names; added in #27) | Gradle 9.3.1 and AGP 9.1.0 are Flutter 3.47.8's template versions (AGP 9.1 needs Gradle ≥ 9.3.1; Flutter warns below Gradle 9.1 / AGP 9.0.1 / Kotlin 2.3.20). `gradle.properties` sets `android.builtInKotlin=true` (the template ships `false`; switched 2026-10-31): AGP compiles the app's and every plugin's Kotlin, and no module applies `kotlin-android` any more (checked with an init script listing each project's plugins). `org.jetbrains.kotlin.android` stays in `settings.gradle.kts` (`apply false`): it puts KGP 2.3.20 on the classpath, and built-in Kotlin resolves the 2.3.20 compiler (`kotlin-build-tools-impl`) from it; it is also the version Flutter's checker reads. `android.newDsl` stays `false` although AGP calls it deprecated, because Flutter 3.47.8's Gradle plugin casts `android` to the old DSL and fails to apply under the new one. FlutterFire BoM 35 sets the floors; `firebase-auth` 25.0.0 ships Kotlin 2.4 metadata, which Kotlin 2.2 can't read (checked 2026-10-27). Upgraded 2026-10-28 |
 | iOS | deployment target 15.5 (ML Kit), in the Podfile and the project | Swift Package Manager for every plugin that ships a package (`enable-swift-package-manager` in `pubspec.yaml`); CocoaPods only for `google_mlkit_face_detection` and `google_mlkit_commons`, which have none yet (§ Monitoring, iOS build). Checked 2026-10-31 |
 | Python (functions, scripts) | 3.13 (`uv python install 3.13`) | Firebase Python functions run 3.10–3.13; this Mac's 3.14 won't deploy |
 | firebase-tools | 15.34.1 via npm | Installed under nvm's node 26. The Hosting emulator's `superstatic` 10.0.0 declares node 20, 22 and 24 only, but served the `/app` rewrite and headers correctly under node 26.5.1 (checked 2026-10-29). If it stops working: `nvm install 24`, `nvm use 24` (`.nvmrc`), reinstall firebase-tools there |
@@ -337,11 +337,12 @@ stdlib `wave` module (`audioop` is gone in 3.13).
    `getDefaultProguardFile("proguard-android.txt")` and on a listed keep file that doesn't exist.
    Its R8 keep rules are stricter too (`-keep class A` no longer keeps the constructor), so check
    a release APK on a device after adding a rule. Flutter's "plugins that apply Kotlin Gradle
-   Plugin" warning names cloud_functions, firebase_auth, firebase_core, firebase_crashlytics and
-  firebase_storage (and flutter_image_compress_common). It
-   comes from a text match on FlutterFire's own `apply plugin: 'kotlin-android'` line, which only
-   runs while built-in Kotlin is off. It shows with the flag on or off, and the latest FlutterFire
-   still prints it, so leave it.
+   Plugin" warning names cloud_functions, firebase_auth, firebase_core, firebase_crashlytics,
+   firebase_storage and flutter_image_compress_common. It is a regex over each plugin's
+   `build.gradle` text, so it matches FlutterFire's `apply plugin: 'kotlin-android'`, which sits
+   inside an `if` that skips it under built-in Kotlin. With `android.builtInKotlin=true` none of
+   the six applies KGP at build time (flutter_image_compress_common 1.1.1 included: its classes
+   compile and ship), so the warning is noise until the plugins drop the line. Leave it.
 8. On the Pixel 8 emulator, Gboard's "Try out your stylus" sheet can open over the app during
    Maestro's `inputText`, and the next tap then fails. Press Back, reset and run again; it doesn't
    come back.
