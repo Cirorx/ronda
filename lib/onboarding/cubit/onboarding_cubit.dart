@@ -133,6 +133,34 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     );
   }
 
+  /// "Seguir" on a page of several questions (a desktop window shows
+  /// related questions together): past the last of [page], or back to the
+  /// read-back after a "Cambiar". Does nothing while any of them is
+  /// unanswered, or for an empty page.
+  void nextAfter(List<OnboardingStep> page) {
+    if (page.isEmpty || !page.every(state.isAnswered)) return;
+    emit(
+      state.copyWith(
+        step: state.editingFromReview
+            ? OnboardingStep.review
+            : OnboardingStep.values[page.last.index + 1],
+        editingFromReview: false,
+      ),
+    );
+  }
+
+  /// Back to [step], an earlier question (the first of the page before, on
+  /// a desktop window), or back to the read-back after a "Cambiar". Does
+  /// nothing when [step] isn't before the open one.
+  void backTo(OnboardingStep step) {
+    if (state.editingFromReview) {
+      back();
+      return;
+    }
+    if (step.index >= state.step.index) return;
+    emit(state.copyWith(step: step));
+  }
+
   /// "Saltear" on the needs step: none marked, and on.
   void needsSkipped() {
     if (state.step != OnboardingStep.needs) return;

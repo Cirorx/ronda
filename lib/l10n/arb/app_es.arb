@@ -611,5 +611,9 @@
     "setupHandoffTaken": "El {date} abre {taken} en lugar de {name}.",
     "setupHandoffNobody": "Nadie confirmó que abre el {date}: {name} no puede.",
     "actaByRule": "Regla fija",
-    "traceNoModel": "regla en código, sin modelo"
+    "traceNoModel": "regla en código, sin modelo",
+    "onboardingObjectsTitle": "Tu ronda",
+    "onboardingObjectsBody": "Lo que elijas para hacer y para llevar aparece acá.",
+    "onboardingObjectsDo": "Para hacer",
+    "onboardingObjectsBring": "Para llevar"
 }

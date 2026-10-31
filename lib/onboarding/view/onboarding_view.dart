@@ -15,9 +15,16 @@ class const OnboardingView({
 }) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final screen = context.select<OnboardingCubit, OnboardingScreen>(
+    final pages = OnboardingPages.of(context);
+    final open = context.select<OnboardingCubit, OnboardingScreen>(
       (cubit) => OnboardingScreen.of(cubit.state),
     );
+    // On a page of several questions the screen is the page's: moving
+    // between its questions doesn't move.
+    final page = OnboardingPages.pageOf(pages, open.step);
+    final screen = page == null
+        ? open
+        : OnboardingScreen(step: page.first, editing: open.editing);
     final recording = screen.step == null;
     final onFirstQuestion =
         screen.step == OnboardingStep.values.first && !screen.editing;
@@ -30,23 +37,44 @@ class const OnboardingView({
           return;
         }
         final cubit = context.read<OnboardingCubit>();
-        recording ? cubit.voiceCancelled() : cubit.back();
+        if (recording) {
+          cubit.voiceCancelled();
+        } else if (page != null && page.length > 1) {
+          cubit.backTo(pages[pages.indexOf(page) - 1].first);
+        } else {
+          cubit.back();
+        }
       },
       child: StepSwitcher<OnboardingScreen>(
         step: screen,
         forward: (from, to) => to.isForwardFrom(from),
         child: switch (screen.step) {
+          _ when page != null && page.length > 1 => OnboardingQuestionPage(
+            page: page,
+            pages: pages,
+            child: OnboardingSectionScope(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: context.appSpacing.xlg,
+                children: [for (final step in page) _question(step)],
+              ),
+            ),
+          ),
           null => const VoiceNoteStep(),
-          OnboardingStep.pretexts => const PretextsStep(),
-          OnboardingStep.brings => const BringsStep(),
-          OnboardingStep.slots => const SlotsStep(),
-          OnboardingStep.barrio => const BarrioStep(),
-          OnboardingStep.ageBand => const AgeBandStep(),
-          OnboardingStep.needs => const NeedsStep(),
-          OnboardingStep.firstName => const FirstNameStep(),
-          OnboardingStep.review => const ReviewStep(),
+          final step => _question(step),
         },
       ),
     );
   }
+
+  static Widget _question(OnboardingStep step) => switch (step) {
+    OnboardingStep.pretexts => const PretextsStep(),
+    OnboardingStep.brings => const BringsStep(),
+    OnboardingStep.slots => const SlotsStep(),
+    OnboardingStep.barrio => const BarrioStep(),
+    OnboardingStep.ageBand => const AgeBandStep(),
+    OnboardingStep.needs => const NeedsStep(),
+    OnboardingStep.firstName => const FirstNameStep(),
+    OnboardingStep.review => const ReviewStep(),
+  };
 }

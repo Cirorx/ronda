@@ -357,6 +357,108 @@ void main() {
       );
     });
 
+    group('nextAfter', () {
+      const page = [OnboardingStep.pretexts, OnboardingStep.brings];
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'does nothing while a question of the page is unanswered',
+        build: buildCubit,
+        seed: () => const OnboardingState(pretexts: {Pretext.mate}),
+        act: (cubit) => cubit.nextAfter(page),
+        expect: () => const <OnboardingState>[],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'does nothing for an empty page',
+        build: buildCubit,
+        act: (cubit) => cubit.nextAfter(const []),
+        expect: () => const <OnboardingState>[],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'goes past the whole page once every question is answered',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          pretexts: {Pretext.mate},
+          brings: {Bring.termo},
+        ),
+        act: (cubit) => cubit.nextAfter(page),
+        expect: () => const [
+          OnboardingState(
+            step: OnboardingStep.slots,
+            pretexts: {Pretext.mate},
+            brings: {Bring.termo},
+          ),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'counts the optional needs as answered',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          step: OnboardingStep.ageBand,
+          ageBand: AgeBand.sixties,
+        ),
+        act: (cubit) => cubit.nextAfter(const [
+          OnboardingStep.ageBand,
+          OnboardingStep.needs,
+        ]),
+        expect: () => const [
+          OnboardingState(
+            step: OnboardingStep.firstName,
+            ageBand: AgeBand.sixties,
+          ),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'returns to the read-back after a "Cambiar"',
+        build: buildCubit,
+        seed: () => _answered.copyWith(
+          step: OnboardingStep.brings,
+          editingFromReview: true,
+        ),
+        act: (cubit) => cubit.nextAfter(page),
+        expect: () => [_answered],
+      );
+    });
+
+    group('backTo', () {
+      blocTest<OnboardingCubit, OnboardingState>(
+        'goes to an earlier question, keeping the answers',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          step: OnboardingStep.barrio,
+          pretexts: {Pretext.mate},
+        ),
+        act: (cubit) => cubit.backTo(OnboardingStep.pretexts),
+        expect: () => const [
+          OnboardingState(pretexts: {Pretext.mate}),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'does nothing for the open question or a later one',
+        build: buildCubit,
+        seed: () => const OnboardingState(step: OnboardingStep.slots),
+        act: (cubit) => cubit
+          ..backTo(OnboardingStep.slots)
+          ..backTo(OnboardingStep.ageBand),
+        expect: () => const <OnboardingState>[],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'returns to the read-back after a "Cambiar"',
+        build: buildCubit,
+        seed: () => _answered.copyWith(
+          step: OnboardingStep.slots,
+          editingFromReview: true,
+        ),
+        act: (cubit) => cubit.backTo(OnboardingStep.pretexts),
+        expect: () => [_answered],
+      );
+    });
+
     group('edit', () {
       blocTest<OnboardingCubit, OnboardingState>(
         'does nothing away from the read-back',

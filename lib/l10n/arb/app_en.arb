@@ -3236,5 +3236,21 @@
     "traceNoModel": "rule in code, no model",
     "@traceNoModel": {
         "description": "Admin: a run of a code job, with no model"
+    },
+    "onboardingObjectsTitle": "Your ronda",
+    "@onboardingObjectsTitle": {
+        "description": "Title of the side panel on wide onboarding screens, which draws the chosen pretexts and what the person brings as object icons"
+    },
+    "onboardingObjectsBody": "What you choose to do and to bring shows up here.",
+    "@onboardingObjectsBody": {
+        "description": "Side panel on wide onboarding screens before anything is chosen"
+    },
+    "onboardingObjectsDo": "To do",
+    "@onboardingObjectsDo": {
+        "description": "Side panel on wide onboarding screens: heading over the chosen pretexts"
+    },
+    "onboardingObjectsBring": "To bring",
+    "@onboardingObjectsBring": {
+        "description": "Side panel on wide onboarding screens: heading over what the person brings"
     }
 }

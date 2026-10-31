@@ -77,7 +77,11 @@ final class const OnboardingState({
   final bool fromVoice = false,
 }) extends Equatable {
   /// Whether the open step has what it needs for "Seguir".
-  bool get canContinue => switch (step) {
+  bool get canContinue => isAnswered(step);
+
+  /// Whether [step] has what it needs for "Seguir"; the read-back never
+  /// does, since it saves instead.
+  bool isAnswered(OnboardingStep step) => switch (step) {
     OnboardingStep.pretexts => pretexts.isNotEmpty,
     OnboardingStep.brings => brings.isNotEmpty,
     OnboardingStep.slots => slots.isNotEmpty,

@@ -1,4 +1,6 @@
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/onboarding/widgets/onboarding_objects.dart';
+import 'package:ronda/onboarding/widgets/onboarding_pages.dart';
 import 'package:ronda/onboarding/widgets/onboarding_screen.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -7,20 +9,25 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// questions (or the screen's [barTitle]), a title and a short body, the
 /// step's own [child], and the actions pinned under it.
 ///
+/// On a wide window the screen keeps to a readable column centred on the
+/// paper ([ReadableColumn]); on a desktop window the chosen things stand
+/// beside it ([OnboardingObjects], in [PaperColumns]).
+///
 /// The content scrolls, so the screen holds at 200% text. A screen that
 /// moves through several states (the recorder, then reading) gives each its
 /// [stateKey]: a change swaps the content and the actions in place, under
 /// the same top bar.
 /// {@endtemplate}
 class const OnboardingStepLayout({
-  /// The screen's title, read as a heading.
-  required final String title,
-
   /// The step's picker or field.
   required final Widget child,
 
   /// The primary action ("Seguir", "Está bien, guardalo").
   required final Widget primaryAction,
+
+  /// The screen's title, read as a heading; a page of several questions
+  /// has none, since each of them has its own.
+  final String? title,
 
   /// The text under the title.
   final String? body,
@@ -97,7 +104,7 @@ class const OnboardingStepLayout({
         },
       ),
       body: SafeArea(
-        child: switch (stateKey) {
+        child: _wide(context, switch (stateKey) {
           final stateKey? => RondaSwap(
             layoutBuilder: _fill,
             child: KeyedSubtree(
@@ -106,10 +113,22 @@ class const OnboardingStepLayout({
             ),
           ),
           null => _content(context),
-        },
+        }),
       ),
     );
   }
+
+  /// [content] as the window has room for it: alone on a phone, in a
+  /// readable column wider up, and beside the chosen things on a desktop.
+  static Widget _wide(BuildContext context, Widget content) =>
+      switch (context.windowSize) {
+        WindowSize.compact => content,
+        WindowSize.medium => ReadableColumn(child: content),
+        WindowSize.expanded => PaperColumns(
+          main: content,
+          side: const OnboardingObjects(),
+        ),
+      };
 
   Widget _content(BuildContext context) {
     final theme = Theme.of(context);
@@ -132,11 +151,12 @@ class const OnboardingStepLayout({
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-              Semantics(
-                header: true,
-                liveRegion: liveTitle,
-                child: Text(title, style: textTheme.headlineMedium),
-              ),
+              if (title case final title?)
+                Semantics(
+                  header: true,
+                  liveRegion: liveTitle,
+                  child: Text(title, style: textTheme.headlineMedium),
+                ),
               if (body case final body?) ...[
                 SizedBox(height: spacing.xs),
                 Text(body, style: textTheme.bodyLarge),
@@ -177,8 +197,9 @@ class const _Progress({required final int number, required final int count})
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
+    final previous = StepSwitcher.previousOf<OnboardingScreen>(context);
     final from =
-        StepSwitcher.previousOf<OnboardingScreen>(context)?.questionNumber ??
+        OnboardingPages.numberOf(OnboardingPages.of(context), previous?.step) ??
         number;
     return Semantics(
       label: l10n.onboardingProgressSemantics(number, count),
