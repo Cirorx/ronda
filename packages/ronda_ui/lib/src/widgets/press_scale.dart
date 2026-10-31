@@ -12,16 +12,32 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// slop (a scroll, or the finger sliding away). It listens to raw pointer
 /// events, so it never takes part in the gesture arena and the [child]'s own
 /// ink and tap work as before. With reduced motion the change is instant.
+///
+/// Focused from a keyboard, the surface gets a [FocusRing] that follows
+/// [borderRadius].
 /// {@endtemplate}
 class PressScale extends StatefulWidget {
   /// {@macro press_scale}
-  const new({required this.child, this.enabled = true, super.key});
+  const new({
+    required this.child,
+    this.enabled = true,
+    this.borderRadius = const BorderRadius.all(Radius.circular(AppRadius.lg)),
+    this.ringInset = false,
+    super.key,
+  });
 
   /// The tappable surface.
   final Widget child;
 
   /// Whether it responds; off for a disabled surface.
   final bool enabled;
+
+  /// The corners of the surface, which its [FocusRing] follows.
+  final BorderRadius borderRadius;
+
+  /// Whether the [FocusRing] sits inside the surface's edge: for a row that
+  /// runs the full width of a list, which would clip a ring outside it.
+  final bool ringInset;
 
   @override
   State<PressScale> createState() => _PressScaleState();
@@ -61,16 +77,20 @@ class _PressScaleState extends State<PressScale> {
   @override
   Widget build(BuildContext context) {
     final motion = RondaMotion.of(context);
-    return Listener(
-      onPointerDown: _down,
-      onPointerMove: _move,
-      onPointerUp: _end,
-      onPointerCancel: _end,
-      child: AnimatedScale(
-        scale: _pressed ? AppMotion.pressedScale : 1,
-        duration: motion.durationOr(AppMotion.press),
-        curve: AppMotion.pressCurve,
-        child: widget.child,
+    return FocusRing(
+      borderRadius: widget.borderRadius,
+      inset: widget.ringInset,
+      child: Listener(
+        onPointerDown: _down,
+        onPointerMove: _move,
+        onPointerUp: _end,
+        onPointerCancel: _end,
+        child: AnimatedScale(
+          scale: _pressed ? AppMotion.pressedScale : 1,
+          duration: motion.durationOr(AppMotion.press),
+          curve: AppMotion.pressCurve,
+          child: widget.child,
+        ),
       ),
     );
   }

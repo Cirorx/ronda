@@ -165,5 +165,34 @@ void main() {
       );
       await gesture.up();
     });
+
+    testWidgets('rings the surface, along its corners, when focused', (
+      tester,
+    ) async {
+      await tester.pumpApp(buildSubject());
+
+      expect(
+        tester.widget<FocusRing>(find.byType(FocusRing)).borderRadius,
+        const BorderRadius.all(Radius.circular(AppRadius.lg)),
+      );
+      expect(
+        find.descendant(
+          of: find.byType(FocusRing),
+          matching: find.byType(AnimatedScale),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('insets the ring for a full-width row', (tester) async {
+      await tester.pumpApp(
+        PressScale(
+          ringInset: true,
+          child: InkWell(onTap: () {}, child: const SizedBox(height: 48)),
+        ),
+      );
+
+      expect(tester.widget<FocusRing>(find.byType(FocusRing)).inset, isTrue);
+    });
   });
 }

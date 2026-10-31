@@ -93,8 +93,20 @@ abstract final class AppTheme {
   /// Stroke of outlined buttons, cards, chips and slot cells.
   static const double borderWidth = 1.5;
 
-  /// Width of the ring round a button focused from a keyboard.
-  static const double focusRingWidth = 3;
+  /// Width of the ring round anything focused from a keyboard: the theme's
+  /// buttons draw it as their border, every other tappable ([FocusRing])
+  /// just outside its edge.
+  static const double focusRingWidth = 2;
+
+  /// The gap between a tappable's edge and its [FocusRing].
+  static const double focusRingOffset = 2;
+
+  /// How strongly a mouse hovering over a tappable tints it: Material's
+  /// hover state layer, in [ColorScheme.onSurface].
+  static const double hoverOpacity = 0.08;
+
+  /// How strongly keyboard focus tints a tappable, under its [FocusRing].
+  static const double focusOpacity = 0.1;
 
   /// The text scale from which layouts take their large-text form (see
   /// `MainGrande` and `HorariosGrande` on the screen canvas).
@@ -167,6 +179,10 @@ abstract final class AppTheme {
       textTheme: textTheme,
       primaryTextTheme: textTheme,
       materialTapTargetSize: MaterialTapTargetSize.padded,
+      // The state layers every InkWell paints: a mouse over a chip, a cell
+      // or a card tints it; touch never hovers, so phones never see it.
+      hoverColor: scheme.onSurface.withValues(alpha: hoverOpacity),
+      focusColor: scheme.primary.withValues(alpha: focusOpacity),
       visualDensity: VisualDensity.standard,
       extensions: <ThemeExtension<dynamic>>[palette, spacing],
       pageTransitionsTheme: PageTransitionsTheme(

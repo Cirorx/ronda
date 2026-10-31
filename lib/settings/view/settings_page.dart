@@ -39,6 +39,8 @@ class const SettingsPage({super.key}) extends StatelessWidget {
       child: Semantics(
         identifier: identifier,
         child: PressScale(
+          // A full-width row: the list would clip a ring outside it.
+          ringInset: true,
           child: ListTile(
             leading: Icon(icon),
             title: Text(label),

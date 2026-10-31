@@ -75,6 +75,12 @@ abstract final class AppMotion {
   /// The curve of a press.
   static const Curve pressCurve = Easing.standard;
 
+  /// How long a mouse's hover tint takes to fade in and out on the
+  /// tappables whose [InkWell] Ronda builds (a slot cell, a door, a seat
+  /// card). Hover is never a keyboard action, so it may ease; focus never
+  /// does ([FocusRing] appears at once).
+  static const Duration hover = Durations.short3;
+
   /// How long the reduced-motion cross-fade takes: 150 ms.
   static const Duration crossFade = Durations.short3;
 

@@ -72,7 +72,8 @@ seconds, and converted to Flutter's `SpringDescription` with a mass of 1: stiffn
 | `AppMotion.sheet` | damping 0.8, response 0.3 s | a sheet settling after a flick (faster than 300 dp/s); only momentum earns the bounce |
 | `AppMotion.standardCurve` / `standardDuration` | the standard spring over 350 ms | widgets that take a curve (`RondaSwap`) |
 | `AppMotion.press` / `pressedScale` | 100 ms, 0.97 | press feedback |
-| `AppMotion.crossFade` | 150 ms, `Easing.standard` | what replaces a slide or a spring under reduced motion |
+| `AppMotion.crossFade` | 150 ms, `Easing.standard` | what replaces a slide or a spring under reduced motion; the scroll edge's fade |
+| `AppMotion.hover` | 150 ms | a mouse's hover tint on the surfaces whose ink Ronda builds (slot cell, door, seat card) |
 | `AppMotion.project` | Apple's `project()`, deceleration 0.998 | where a throw would land |
 | `AppMotion.rubberBand` | constant 0.55 | resistance past an edge |
 
@@ -116,7 +117,9 @@ the platform flag on, not only a `MediaQuery` override.
   0.96); the state on its way out takes no touches and isn't read, so there is never a second
   copy to tap. `SpringBuilder` follows a value on a spring and retargets mid-flight with its
   speed; given `from:`, a freshly built one springs from there (onboarding's progress bar moving
-  on from where the last question's stood). A seat filling and a slot being marked use them.
+  on from where the last question's stood). A seat filling uses it, growing and fading in from
+  60% of the dot, never from nothing. Marking a slot is instant (fill and check at once): it is
+  tapped many times in a row, so it never waits on a 350 ms settle.
   `StepSwitcher` moves between the steps of one page (onboarding's questions) as a pushed
   screen moves, forward and back, without pushing a route.
 - *Waiting is said, not spun.* A screen that reads shows `LoadingStatus` (a ring and a line that
@@ -158,11 +161,13 @@ edge. Phones are unchanged; every rule below is guarded by the window's width.
 
 - **Readable column.** Text, forms and cards are at most 600 wide, centred on the paper, with the
   ruled sheet's margin line (margen at the `PersonRow` line's strength) down the start side
-  (`ReadableColumn`). Cerca, Ajustes, the terms, sign-in and the payoff use it as it is; the
-  welcome screen still stretches (its doors sit at the bottom of the window, and a short window
-  would push them out of view). Sheets were already capped at 640.
+  (`ReadableColumn`). Cerca, Ajustes, the terms, sign-in, the payoff and the welcome screen use it
+  as it is. On a phone the welcome screen's doors sit at the bottom of the window; wider up they
+  sit right under the copy and the two are centred together, scrolling when the window is short.
+  Sheets were already capped at 640.
 - **Two columns, never a feed.** On expanded, `PaperColumns` puts the screen's own content in the
-  readable column and 360 of context beside it; each column scrolls on its own and keyboard focus
+  readable column and 360 of context beside it, the pair centred in the window as one group; each
+  column scrolls on its own and keyboard focus
   goes through the main one first. Wide windows use the room for context, not for bigger controls.
   - Mi ronda: the week's card in the column; "Quiénes van" (initials, and what each brings drawn),
     the buddy and the acta's link beside it.
@@ -176,12 +181,21 @@ edge. Phones are unchanged; every rule below is guarded by the window's width.
   in code on a 24-unit grid with round 1.6 strokes, in birome on paper. Pretexts and brings map to
   them in the app (a caminata and "Tengo ganas" have none). They are decoration: screen readers skip
   them and large text drops them.
-- **Keyboard and mouse.** A button focused from a keyboard gets a 3 dp ring (paper inside a filled
-  button, birome on the others); touch never focuses a button that way. Hover comes only from a
-  pointer that hovers. Escape closes a dismissible sheet, focus stays inside it, and Enter presses
+- **Keyboard and mouse.** Anything focused from a keyboard gets a 2 dp ring, birome in both
+  themes, at once and never animated. A theme button draws it as its border (paper inside a filled
+  button); every other tappable, through `PressScale`, gets `FocusRing` 2 dp outside its edge,
+  following its corners (pill for chips, 10 for slot cells, 12 for cards). Like a browser's
+  `:focus-visible`, the ring shows only while the last thing done was a key: a tap or a click
+  hides it and the next key brings it back. A mouse over a tappable tints it with the theme's
+  hover state layer (ink at 8%; `ThemeData.hoverColor`), fading over `AppMotion.hover` where
+  Ronda builds the ink and over Flutter's 50 ms inside chips and list rows; touch never hovers, so
+  phones never show it. Escape closes a dismissible sheet, focus stays inside it, and Enter presses
   the focused button. The rail keeps the bar's press feedback and comes before the content in focus
   order.
-- **Onboarding's bar.** The progress bar keeps to the column's width too.
+- **Onboarding's bar.** Wider than a phone the back button and the progress bar stand in the
+  same column as the questions, with the margin line running up through the bar. While questions
+  scroll under "Seguir", a 32 dp fade of the paper sits above it (`ScrollEdgeFade`); at the end of
+  the content, or when it all fits, there is none. Phones keep the plain bar and no fade.
 - **Tests** check the shell, onboarding, Mi ronda and the admin screens at 360, 800 and 1280, and
   each at 200% text at 1280.
 

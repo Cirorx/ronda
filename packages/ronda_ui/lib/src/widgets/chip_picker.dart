@@ -27,7 +27,8 @@ class const ChipPickerOption({
 ///
 /// It holds no state: [selected] comes in, [onChanged] reports the next set.
 /// Each chip's semantics identifier is `<identifier>.<value>`. Chips shrink
-/// on touch-down ([PressScale]).
+/// on touch-down and take a ring when focused from a keyboard
+/// ([PressScale]); a mouse over one tints it (the theme's hover colour).
 /// {@endtemplate}
 class const ChipPicker({
   /// Prefix of every chip's semantics identifier ("traes").
@@ -84,7 +85,11 @@ class const ChipPicker({
     return MergeSemantics(
       child: Semantics(
         identifier: '$identifier.${option.value}',
-        child: PressScale(enabled: option.enabled, child: chip),
+        child: PressScale(
+          enabled: option.enabled,
+          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.pill)),
+          child: chip,
+        ),
       ),
     );
   }

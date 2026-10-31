@@ -15,6 +15,19 @@ class _MockOnboardingCubit extends MockCubit<OnboardingState>
 
 Finder _byId(String identifier) => find.bySemanticsIdentifier(identifier);
 
+/// The column the questions stand in, below the top bar.
+final Finder _bodyColumn = find.byElementPredicate(
+  (element) =>
+      element.widget is RuledMargin &&
+      element.findAncestorWidgetOfExactType<AppBar>() == null,
+);
+
+/// The same column carried up through the top bar.
+final Finder _barColumn = find.descendant(
+  of: find.byType(AppBar),
+  matching: find.byType(RuledMargin),
+);
+
 final _answered = OnboardingState(
   step: OnboardingStep.review,
   pretexts: const {Pretext.mate, Pretext.caminata},
@@ -68,14 +81,8 @@ void main() {
 
         expect(find.byType(BringsStep), findsNothing);
         expect(find.text('1 de 7'), findsOneWidget);
-        expect(
-          tester.getSize(find.byType(RuledMargin)).width,
-          WindowSize.readableWidth,
-        );
-        expect(
-          tester.getCenter(find.byType(RuledMargin)).dx,
-          tabletSize.width / 2,
-        );
+        expect(tester.getSize(_bodyColumn).width, WindowSize.readableWidth);
+        expect(tester.getCenter(_bodyColumn).dx, tabletSize.width / 2);
         expect(find.byType(OnboardingObjects), findsNothing);
         expect(
           tester.getSize(find.byType(LinearProgressIndicator)).width,
@@ -338,6 +345,94 @@ void main() {
         expect(find.byType(BringsStep), findsNothing);
         expect(find.text('1 de 7'), findsOneWidget);
         expect(find.byType(OnboardingObjects), findsOneWidget);
+      });
+    });
+
+    for (final size in [tabletSize, desktopSize]) {
+      group('top bar at ${size.width} px', () {
+        testWidgets('stands over the questions column', (tester) async {
+          await pumpSubject(
+            tester,
+            const OnboardingState(step: OnboardingStep.barrio),
+            size: size,
+          );
+
+          final body = tester.getRect(_bodyColumn);
+          final bar = tester.getRect(_barColumn);
+          expect(bar.left, body.left);
+          expect(bar.width, body.width);
+          final back = tester.getRect(
+            _byId(OnboardingStepLayout.backIdentifier),
+          );
+          final progress = tester.getRect(find.byType(LinearProgressIndicator));
+          expect(back.left, greaterThanOrEqualTo(body.left));
+          // Still a button of its own inside the bar's title.
+          expect(
+            tester.getSemantics(_byId(OnboardingStepLayout.backIdentifier)),
+            isSemantics(isButton: true, hasTapAction: true, tooltip: 'Volver'),
+          );
+          expect(progress.left, greaterThan(back.right));
+          expect(progress.right, lessThan(body.right));
+        });
+      });
+    }
+
+    group('at ${desktopSize.width} px, the side panel', () {
+      testWidgets('lays the set out three to a row before anything is '
+          'chosen', (tester) async {
+        await pumpSubject(tester, const OnboardingState());
+
+        final icons = find.byType(RondaObjectIcon);
+        final rows = <double, int>{};
+        for (final element in icons.evaluate()) {
+          final top = tester.getTopLeft(find.byWidget(element.widget)).dy;
+          rows[top] = (rows[top] ?? 0) + 1;
+        }
+        expect(rows.values, [3, 3]);
+      });
+
+      testWidgets('centres the two columns together in the window', (
+        tester,
+      ) async {
+        await pumpSubject(tester, const OnboardingState());
+
+        final group = tester.getRect(find.byType(PaperColumns).last);
+        expect(group.center.dx, desktopSize.width / 2);
+      });
+    });
+
+    group('above "Seguir"', () {
+      Finder fade() => find.descendant(
+        of: find.byType(ScrollEdgeFade),
+        matching: find.byType(AnimatedOpacity),
+      );
+
+      testWidgets('fades what scrolls under it in a short window', (
+        tester,
+      ) async {
+        await pumpSubject(
+          tester,
+          const OnboardingState(),
+          size: const Size(1280, 480),
+        );
+
+        expect(tester.widget<AnimatedOpacity>(fade()).opacity, 1);
+      });
+
+      testWidgets('draws nothing once everything fits', (tester) async {
+        await pumpSubject(
+          tester,
+          const OnboardingState(),
+          size: const Size(1280, 1400),
+        );
+
+        expect(tester.widget<AnimatedOpacity>(fade()).opacity, 0);
+      });
+
+      testWidgets('keeps the phone as it was', (tester) async {
+        await pumpSubject(tester, const OnboardingState(), size: phoneSize);
+
+        expect(fade(), findsNothing);
       });
     });
   });

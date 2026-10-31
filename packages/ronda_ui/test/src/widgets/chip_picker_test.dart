@@ -158,5 +158,15 @@ void main() {
         expect(changes, isEmpty);
       });
     });
+
+    testWidgets('rings a chip along its pill when focused', (tester) async {
+      await tester.pumpApp(buildSubject());
+
+      final rings = tester.widgetList<FocusRing>(find.byType(FocusRing));
+      expect(rings, hasLength(_optionData.length));
+      expect(rings.map((ring) => ring.borderRadius).toSet(), {
+        const BorderRadius.all(Radius.circular(AppRadius.pill)),
+      });
+    });
   });
 }

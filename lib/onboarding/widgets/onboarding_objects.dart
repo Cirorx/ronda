@@ -79,8 +79,19 @@ class const OnboardingObjects({super.key}) extends StatelessWidget {
                           spacing: spacing.md,
                           runSpacing: spacing.md,
                           children: [
+                            // In the chosen things' slots, three to a row
+                            // in the side column, so the set reads as a
+                            // grid and fills in where the chosen ones will.
                             for (final object in RondaObject.values)
-                              RondaObjectIcon(object, size: objectSize),
+                              SizedBox(
+                                width: _Object.width,
+                                child: Center(
+                                  child: RondaObjectIcon(
+                                    object,
+                                    size: objectSize,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ),

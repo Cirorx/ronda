@@ -11,7 +11,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 ///
 /// On a wide window the screen keeps to a readable column centred on the
 /// paper ([ReadableColumn]); on a desktop window the chosen things stand
-/// beside it ([OnboardingObjects], in [PaperColumns]).
+/// beside it ([OnboardingObjects], in [PaperColumns]). The top bar's back
+/// button and progress keep to the same column, and while content scrolls
+/// under the actions it fades out above them ([ScrollEdgeFade]).
 ///
 /// The content scrolls, so the screen holds at 200% text. A screen that
 /// moves through several states (the recorder, then reading) gives each its
@@ -74,43 +76,65 @@ class const OnboardingStepLayout({
     final l10n = context.l10n;
     final spacing = context.appSpacing;
 
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leadingWidth: backLabel == null ? null : spacing.lg * 6,
-        leading: switch (onBack) {
-          final onBack? => MergeSemantics(
-            child: Semantics(
-              identifier: backIdentifier,
-              child: switch (backLabel) {
-                final label? => TextButton(
-                  onPressed: onBack,
-                  child: Text(label),
-                ),
-                null => IconButton(
-                  tooltip: l10n.onboardingBack,
-                  onPressed: onBack,
-                  icon: const Icon(Icons.arrow_back),
-                ),
-              },
+    final back = switch (onBack) {
+      final onBack? => MergeSemantics(
+        child: Semantics(
+          identifier: backIdentifier,
+          child: switch (backLabel) {
+            final label? => TextButton(onPressed: onBack, child: Text(label)),
+            null => IconButton(
+              tooltip: l10n.onboardingBack,
+              onPressed: onBack,
+              icon: const Icon(Icons.arrow_back),
             ),
-          ),
-          null => null,
-        },
-        title: switch ((questionNumber, barTitle)) {
-          // Wider than a phone the bar stays as wide as the column.
-          (final number?, _) => ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: context.windowSize.isWide
-                  ? WindowSize.readableWidth
-                  : double.infinity,
-            ),
-            child: _Progress(number: number, count: questionCount),
-          ),
-          (null, final barTitle?) => Text(barTitle),
-          (null, null) => null,
-        },
+          },
+        ),
       ),
+      null => null,
+    };
+    final title = switch ((questionNumber, barTitle)) {
+      (final number?, _) => _Progress(number: number, count: questionCount),
+      (null, final barTitle?) => Text(barTitle),
+      (null, null) => null,
+    };
+
+    return Scaffold(
+      appBar: context.windowSize.isWide
+          // Wider than a phone the bar keeps to the same column as the
+          // questions, so the back button and the progress stand over them
+          // and the screen reads as one group centred in the window.
+          ? AppBar(
+              automaticallyImplyLeading: false,
+              titleSpacing: 0,
+              // The bar gives its title an unbounded height; the columns need
+              // the bar's own.
+              title: SizedBox(
+                height: kToolbarHeight,
+                child: _wide(
+                  context,
+                  Padding(
+                    padding: EdgeInsetsDirectional.only(
+                      start: back == null ? spacing.lg : spacing.sm,
+                      end: spacing.lg,
+                    ),
+                    child: Row(
+                      spacing: spacing.xs,
+                      children: [
+                        ?back,
+                        if (title != null) Expanded(child: title),
+                      ],
+                    ),
+                  ),
+                  side: const SizedBox.shrink(),
+                ),
+              ),
+            )
+          : AppBar(
+              automaticallyImplyLeading: false,
+              leadingWidth: backLabel == null ? null : spacing.lg * 6,
+              leading: back,
+              title: title,
+            ),
       body: SafeArea(
         child: _wide(context, switch (stateKey) {
           final stateKey? => RondaSwap(
@@ -127,16 +151,17 @@ class const OnboardingStepLayout({
   }
 
   /// [content] as the window has room for it: alone on a phone, in a
-  /// readable column wider up, and beside the chosen things on a desktop.
-  static Widget _wide(BuildContext context, Widget content) =>
-      switch (context.windowSize) {
-        WindowSize.compact => content,
-        WindowSize.medium => ReadableColumn(child: content),
-        WindowSize.expanded => PaperColumns(
-          main: content,
-          side: const OnboardingObjects(),
-        ),
-      };
+  /// readable column wider up, and beside [side] (the chosen things) on a
+  /// desktop.
+  static Widget _wide(
+    BuildContext context,
+    Widget content, {
+    Widget side = const OnboardingObjects(),
+  }) => switch (context.windowSize) {
+    WindowSize.compact => content,
+    WindowSize.medium => ReadableColumn(child: content),
+    WindowSize.expanded => PaperColumns(main: content, side: side),
+  };
 
   Widget _content(BuildContext context) {
     final theme = Theme.of(context);
@@ -146,32 +171,37 @@ class const OnboardingStepLayout({
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
-          child: ListView(
-            padding: EdgeInsetsDirectional.symmetric(
-              horizontal: spacing.lg,
-              vertical: spacing.sm,
-            ),
-            children: [
-              if (overline case final overline?)
-                Text(
-                  overline,
-                  style: textTheme.titleSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+          // Wider than a phone, what scrolls under the actions fades out
+          // above them while there is more of it.
+          child: ScrollEdgeFade(
+            enabled: context.windowSize.isWide,
+            child: ListView(
+              padding: EdgeInsetsDirectional.symmetric(
+                horizontal: spacing.lg,
+                vertical: spacing.sm,
+              ),
+              children: [
+                if (overline case final overline?)
+                  Text(
+                    overline,
+                    style: textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
-              if (title case final title?)
-                Semantics(
-                  header: true,
-                  liveRegion: liveTitle,
-                  child: Text(title, style: textTheme.headlineMedium),
-                ),
-              if (body case final body?) ...[
-                SizedBox(height: spacing.xs),
-                Text(body, style: textTheme.bodyLarge),
+                if (title case final title?)
+                  Semantics(
+                    header: true,
+                    liveRegion: liveTitle,
+                    child: Text(title, style: textTheme.headlineMedium),
+                  ),
+                if (body case final body?) ...[
+                  SizedBox(height: spacing.xs),
+                  Text(body, style: textTheme.bodyLarge),
+                ],
+                SizedBox(height: spacing.lg),
+                child,
               ],
-              SizedBox(height: spacing.lg),
-              child,
-            ],
+            ),
           ),
         ),
         Padding(

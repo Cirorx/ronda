@@ -2,8 +2,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 
 /// {@template welcome_door}
 /// One way into Ronda on the welcome screen: an icon, what the door is and
-/// what it takes. The whole card is one button, pressed in from touch-down;
-/// its semantics identifier is [identifier].
+/// what it takes. The whole card is one button, pressed in from touch-down,
+/// tinted under a mouse over [AppMotion.hover] and ringed when focused from a
+/// keyboard; its semantics identifier is [identifier].
 /// {@endtemplate}
 class const WelcomeDoor({
   /// Maestro's handle on the door ("welcome.buttons").
@@ -32,23 +33,27 @@ class const WelcomeDoor({
     return MergeSemantics(
       child: Semantics(
         identifier: identifier,
+        button: true,
         child: PressScale(
           child: Card(
-            child: ListTile(
+            child: InkWell(
               onTap: onTap,
-              contentPadding: EdgeInsetsDirectional.symmetric(
-                horizontal: spacing.md,
-                vertical: spacing.xs,
-              ),
-              leading: ExcludeSemantics(
-                child: CircleAvatar(
-                  backgroundColor: context.rondaPalette.biromeTint,
-                  foregroundColor: scheme.primary,
-                  child: Icon(icon),
+              hoverDuration: AppMotion.hover,
+              child: ListTile(
+                contentPadding: EdgeInsetsDirectional.symmetric(
+                  horizontal: spacing.md,
+                  vertical: spacing.xs,
                 ),
+                leading: ExcludeSemantics(
+                  child: CircleAvatar(
+                    backgroundColor: context.rondaPalette.biromeTint,
+                    foregroundColor: scheme.primary,
+                    child: Icon(icon),
+                  ),
+                ),
+                title: Text(title),
+                subtitle: Text(subtitle),
               ),
-              title: Text(title),
-              subtitle: Text(subtitle),
             ),
           ),
         ),

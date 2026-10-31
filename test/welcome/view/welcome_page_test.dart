@@ -26,12 +26,14 @@ void main() {
       WidgetTester tester, {
       bool showVoiceDoor = voiceDoorEnabled,
       Locale locale = rioplatense,
+      Size size = phoneSize,
     }) => tester.pumpApp(
       BlocProvider.value(
         value: appBloc,
         child: WelcomePage(showVoiceDoor: showVoiceDoor),
       ),
       locale: locale,
+      size: size,
     );
 
     test('ships with the voice door on', () {
@@ -172,5 +174,81 @@ void main() {
         ).called(1);
       });
     });
+
+    group('lays out', () {
+      Finder title() => find.text(
+        'Cinco vecinos, a pocas cuadras, el mismo día todas las semanas.',
+      );
+      Finder doorsHeading() => find.text('¿Cómo nos querés contar?');
+      Finder termsNote() => find.byType(TermsNote);
+
+      testWidgets('the doors at the bottom of a phone', (tester) async {
+        await pumpSubject(tester);
+
+        expect(find.byType(RuledMargin), findsNothing);
+        final safeBottom = tester
+            .getBottomLeft(find.byType(SingleChildScrollView))
+            .dy;
+        // Only the scroll view's bottom padding under the terms note.
+        expect(
+          safeBottom - tester.getBottomLeft(termsNote()).dy,
+          lessThanOrEqualTo(2 * AppSpacing.unit + 1),
+        );
+      });
+
+      for (final size in [tabletSize, desktopSize]) {
+        group('at ${size.width} px', () {
+          testWidgets('in the readable column, centred on the paper', (
+            tester,
+          ) async {
+            await pumpSubject(tester, size: size);
+
+            final column = tester.getRect(find.byType(RuledMargin));
+            expect(column.width, WindowSize.readableWidth);
+            expect(column.center.dx, size.width / 2);
+            expect(
+              tester.getSize(title()).width,
+              lessThanOrEqualTo(WindowSize.readableWidth),
+            );
+          });
+
+          testWidgets('with the doors right under the copy, the two centred '
+              'together', (tester) async {
+            await pumpSubject(tester, size: size);
+
+            final copyBottom = tester
+                .getBottomLeft(find.textContaining('Contanos un poco de vos'))
+                .dy;
+            expect(
+              tester.getTopLeft(doorsHeading()).dy - copyBottom,
+              closeTo(2 * AppSpacing.unit, 1),
+            );
+            final top = tester.getTopLeft(find.text('Ronda')).dy;
+            final bottom = tester.getBottomLeft(termsNote()).dy;
+            expect((top + bottom) / 2, closeTo(size.height / 2, 2));
+          });
+        });
+      }
+    });
+
+    testWidgets(
+      'tints a door under a mouse over ${AppMotion.hover.inMilliseconds} ms',
+      (tester) async {
+        await pumpSubject(tester);
+
+        final ink = find.descendant(
+          of: find.byType(WelcomeDoor).first,
+          matching: find.byType(InkWell),
+        );
+        expect(
+          tester.widget<InkWell>(ink.first).hoverDuration,
+          AppMotion.hover,
+        );
+        expect(
+          tester.getSemantics(_byId(WelcomePage.buttonsDoorIdentifier)),
+          isSemantics(isButton: true, hasTapAction: true),
+        );
+      },
+    );
   });
 }

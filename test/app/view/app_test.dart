@@ -612,9 +612,12 @@ void main() {
       ) async {
         await pumpSignedOut(tester);
 
-        await tester.tap(
-          find.bySemanticsIdentifier(WelcomePage.termsLinkIdentifier),
+        // The test window is short: the doors and the link scroll into view.
+        final terms = find.bySemanticsIdentifier(
+          WelcomePage.termsLinkIdentifier,
         );
+        await tester.ensureVisible(terms);
+        await tester.tap(terms);
         await tester.pumpAndSettle();
         expect(find.byType(TermsPage), findsOneWidget);
 

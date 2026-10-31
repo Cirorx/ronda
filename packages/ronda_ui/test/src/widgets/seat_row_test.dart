@@ -94,5 +94,48 @@ void main() {
         expect(taps, 1);
       });
     });
+
+    testWidgets('grows a newly taken seat from part of its size, not zero', (
+      tester,
+    ) async {
+      final filled = ValueNotifier(0);
+      addTearDown(filled.dispose);
+      await tester.pumpApp(
+        ValueListenableBuilder(
+          valueListenable: filled,
+          builder: (context, value, _) =>
+              buildSubject(seats: seatsOf(filled: value, total: 1)),
+        ),
+      );
+      Finder inFill(Type type) => find.descendant(
+        of: find.byType(SpringBuilder),
+        matching: find.byType(type),
+      );
+
+      filled.value = 1;
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      // The x scale; the matrix's z stays 1.
+      final scale = tester.widget<Transform>(inFill(Transform)).transform[0];
+      expect(scale, greaterThanOrEqualTo(SeatRow.fillStartScale));
+      expect(scale, lessThan(1));
+      expect(tester.widget<Opacity>(inFill(Opacity)).opacity, lessThan(1));
+
+      await tester.pumpAndSettle();
+      expect(tester.widget<Opacity>(inFill(Opacity)).opacity, 1);
+    });
+
+    testWidgets(
+      'tints the card under a mouse over ${AppMotion.hover.inMilliseconds} ms',
+      (tester) async {
+        await tester.pumpApp(buildSubject());
+
+        expect(
+          tester.widget<InkWell>(find.byType(InkWell)).hoverDuration,
+          AppMotion.hover,
+        );
+      },
+    );
   });
 }

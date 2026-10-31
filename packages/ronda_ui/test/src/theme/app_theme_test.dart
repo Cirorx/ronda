@@ -187,6 +187,17 @@ void main() {
         expect(fill.resolve({WidgetState.selected}), AppColors.birome);
         expect(fill.resolve({}), AppColors.controlOff);
       });
+
+      test('tints what a mouse hovers and what a keyboard focuses', () {
+        expect(
+          theme.hoverColor,
+          AppColors.ink.withValues(alpha: AppTheme.hoverOpacity),
+        );
+        expect(
+          theme.focusColor,
+          AppColors.birome.withValues(alpha: AppTheme.focusOpacity),
+        );
+      });
     });
 
     group('dark', () {
@@ -210,6 +221,17 @@ void main() {
 
       test('registers the night $RondaPalette', () {
         expect(theme.extension<RondaPalette>(), RondaPalette.dark);
+      });
+
+      test('tints hover and focus in the night ink and birome', () {
+        expect(
+          theme.hoverColor,
+          AppColors.inkDark.withValues(alpha: AppTheme.hoverOpacity),
+        );
+        expect(
+          theme.focusColor,
+          AppColors.biromeDark.withValues(alpha: AppTheme.focusOpacity),
+        );
       });
 
       test('shades and dims with the night shadow colour', () {

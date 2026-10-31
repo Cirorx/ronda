@@ -12,7 +12,9 @@ typedef SlotGridCell = ({int day, int band});
 /// holds at 200% text. It holds no state: [selected] comes in, [onChanged]
 /// reports the next set. Each cell's semantics identifier is
 /// `<identifier>.<day>.<band>` in both layouts. Cells shrink on touch-down
-/// ([PressScale]) and the check settles in with [RondaSwap].
+/// and take a ring when focused from a keyboard ([PressScale]); a mouse over
+/// one tints it over [AppMotion.hover]. Marking a cell fills it and shows
+/// its check at once: it is tapped many times in a row.
 /// {@endtemplate}
 class const SlotGrid({
   /// Prefix of every cell's semantics identifier ("horarios").
@@ -36,6 +38,8 @@ class const SlotGrid({
 }) extends StatelessWidget {
   /// {@macro slot_grid}
   this;
+
+  static const _cellRadius = BorderRadius.all(Radius.circular(AppRadius.md));
 
   /// The text scale from which the grid becomes per-day chips.
   static const double chipsTextScale = AppTheme.largeTextScale;
@@ -84,9 +88,11 @@ class const SlotGrid({
                   child: _cell(
                     (day: day, band: band),
                     (cell, {required isSelected}) => PressScale(
+                      borderRadius: _cellRadius,
                       child: InkWell(
                         onTap: () => _toggle(cell),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        hoverDuration: AppMotion.hover,
+                        borderRadius: _cellRadius,
                         child: _SlotCellBox(isSelected: isSelected),
                       ),
                     ),
@@ -123,6 +129,9 @@ class const SlotGrid({
                       _cell(
                         (day: day, band: band),
                         (cell, {required isSelected}) => PressScale(
+                          borderRadius: const BorderRadius.all(
+                            Radius.circular(AppRadius.pill),
+                          ),
                           child: FilterChip(
                             label: Text(bandLabel),
                             selected: isSelected,
@@ -176,7 +185,7 @@ class const _SlotCellBox({required final bool isSelected})
       height: AppTheme.minTarget,
       decoration: BoxDecoration(
         color: isSelected ? scheme.primary : scheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: SlotGrid._cellRadius,
         border: isSelected
             ? null
             : Border.all(
@@ -185,15 +194,7 @@ class const _SlotCellBox({required final bool isSelected})
               ),
       ),
       child: Center(
-        child: RondaSwap(
-          child: isSelected
-              ? Icon(
-                  Icons.check,
-                  key: const ValueKey(true),
-                  color: scheme.onPrimary,
-                )
-              : const SizedBox.shrink(key: ValueKey(false)),
-        ),
+        child: isSelected ? Icon(Icons.check, color: scheme.onPrimary) : null,
       ),
     );
   }

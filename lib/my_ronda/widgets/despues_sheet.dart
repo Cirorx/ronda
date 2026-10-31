@@ -171,6 +171,8 @@ class _DespuesSheetState extends State<DespuesSheet> {
                       (DespuesKind.home, l10n.despuesKindHome),
                     ])
                       PressScale(
+                        // Full width: the sheet would clip a ring outside it.
+                        ringInset: true,
                         child: MergeSemantics(
                           child: Semantics(
                             identifier: DespuesSheet.kindIdentifier(kind),

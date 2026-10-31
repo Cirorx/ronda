@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -162,6 +163,99 @@ void main() {
         expect(changes, [
           {(day: 6, band: 2)},
         ]);
+      });
+    });
+
+    group('a cell', () {
+      Finder cell(int day, int band) => find.descendant(
+        of: find.bySemanticsIdentifier('horarios.$day.$band'),
+        matching: find.byType(InkWell),
+      );
+
+      Finder inkOf(Finder finder) =>
+          find.ancestor(of: finder, matching: find.byType(Material)).first;
+
+      // The ink paints the theme's hover colour, at its 8-bit alpha.
+      final hover = AppTheme.light.hoverColor;
+      final paintsHover = paints
+        ..something((method, arguments) {
+          if (method != #drawRRect) return false;
+          final color = (arguments[1] as Paint).color;
+          bool near(double a, double b) => (a - b).abs() < 1 / 255;
+          return near(color.r, hover.r) &&
+              near(color.g, hover.g) &&
+              near(color.b, hover.b) &&
+              near(color.a, hover.a);
+        });
+
+      testWidgets(
+        'tints under a mouse over ${AppMotion.hover.inMilliseconds} ms',
+        (tester) async {
+          await tester.pumpApp(buildSubject());
+
+          expect(
+            tester.widget<InkWell>(cell(2, 1)).hoverDuration,
+            AppMotion.hover,
+          );
+          final mouse = await tester.createGesture(
+            kind: PointerDeviceKind.mouse,
+          );
+          addTearDown(mouse.removePointer);
+          await mouse.addPointer(location: Offset.zero);
+          await mouse.moveTo(tester.getCenter(cell(2, 1)));
+          await tester.pumpAndSettle();
+
+          expect(inkOf(cell(2, 1)), paintsHover);
+        },
+      );
+
+      testWidgets('never keeps a hover tint after a touch', (tester) async {
+        await tester.pumpApp(buildSubject());
+
+        await tester.tap(cell(2, 1));
+        await tester.pumpAndSettle();
+
+        expect(inkOf(cell(2, 1)), isNot(paintsHover));
+      });
+
+      testWidgets('is ringed along its corners when focused', (tester) async {
+        await tester.pumpApp(buildSubject());
+
+        expect(
+          tester
+              .widget<FocusRing>(
+                find.ancestor(of: cell(0, 0), matching: find.byType(FocusRing)),
+              )
+              .borderRadius,
+          const BorderRadius.all(Radius.circular(AppRadius.md)),
+        );
+      });
+
+      testWidgets('shows its check at once when marked', (tester) async {
+        await tester.pumpApp(buildSubject());
+
+        await tester.pumpApp(buildSubject(selected: {(day: 2, band: 1)}));
+
+        expect(find.byIcon(Icons.check), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byType(SlotGrid),
+            matching: find.byType(RondaSwap),
+          ),
+          findsNothing,
+        );
+      });
+
+      testWidgets('rings a large-text chip along its pill', (tester) async {
+        await tester.pumpApp(
+          buildSubject(),
+          textScale: SlotGrid.chipsTextScale,
+        );
+
+        expect(
+          tester.widget<FocusRing>(find.byType(FocusRing).first).borderRadius,
+          const BorderRadius.all(Radius.circular(AppRadius.pill)),
+        );
       });
     });
   });

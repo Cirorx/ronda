@@ -54,6 +54,10 @@ class const SeatRow({
   /// Diameter of one seat dot.
   static const double dotSize = 14;
 
+  /// How big a seat's fill starts, as a share of the dot, when it is taken:
+  /// it grows and fades in from here.
+  static const double fillStartScale = 0.6;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -67,6 +71,7 @@ class const SeatRow({
           child: Card(
             child: InkWell(
               onTap: onTap,
+              hoverDuration: AppMotion.hover,
               child: Padding(
                 padding: EdgeInsets.all(spacing.md),
                 child: Column(
@@ -140,12 +145,19 @@ class const _SeatDots({required final SeatCount seats})
                         ),
                       ),
                     ),
-                    // The fill grows over the ring when the seat is taken.
+                    // The fill grows over the ring when the seat is taken,
+                    // from most of its size and clear, never from nothing.
                     SpringBuilder(
                       value: seat < seats.filled ? 1 : 0,
-                      builder: (context, value, child) => Transform.scale(
-                        scale: value.clamp(0.0, double.infinity),
-                        child: child,
+                      builder: (context, value, child) => Opacity(
+                        opacity: value.clamp(0.0, 1.0),
+                        child: Transform.scale(
+                          scale:
+                              SeatRow.fillStartScale +
+                              (1 - SeatRow.fillStartScale) *
+                                  value.clamp(0.0, double.infinity),
+                          child: child,
+                        ),
                       ),
                       child: DecoratedBox(
                         decoration: BoxDecoration(

@@ -41,6 +41,7 @@ class const WelcomePage({
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final spacing = context.appSpacing;
+    final wide = context.windowSize.isWide;
 
     void acceptTerms(OnboardingDoor door) =>
         context.read<AppBloc>().add(AppTermsAccepted(door: door));
@@ -60,78 +61,85 @@ class const WelcomePage({
       },
       child: Scaffold(
         body: SafeArea(
-          // The doors and the terms note sit at the bottom while they fit,
-          // and the whole screen scrolls when they don't (large text).
-          child: LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              padding: EdgeInsetsDirectional.symmetric(
-                horizontal: spacing.lg,
-                vertical: spacing.xlg,
-              ),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 2 * spacing.xlg,
+          // On a phone the doors and the terms note sit at the bottom while
+          // they fit; wider up the screen keeps to the readable column, with
+          // the doors right under the copy and the two centred together.
+          // Either way the whole screen scrolls when it doesn't fit (large
+          // text, a short window).
+          child: ReadableColumn(
+            child: LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                padding: EdgeInsetsDirectional.symmetric(
+                  horizontal: spacing.lg,
+                  vertical: spacing.xlg,
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: spacing.lg,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: spacing.md,
-                      children: [
-                        Text(
-                          l10n.appTitle,
-                          style: textTheme.headlineSmall?.copyWith(
-                            color: theme.colorScheme.primary,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight - 2 * spacing.xlg,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: wide
+                        ? MainAxisAlignment.center
+                        : MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: wide ? spacing.xlg : spacing.lg,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        spacing: spacing.md,
+                        children: [
+                          Text(
+                            l10n.appTitle,
+                            style: textTheme.headlineSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
-                        ),
-                        Semantics(
-                          header: true,
-                          child: Text(
-                            l10n.welcomeTitle,
-                            style: textTheme.headlineMedium,
+                          Semantics(
+                            header: true,
+                            child: Text(
+                              l10n.welcomeTitle,
+                              style: textTheme.headlineMedium,
+                            ),
                           ),
-                        ),
-                        Text(l10n.welcomeBody, style: textTheme.bodyLarge),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: spacing.sm,
-                      children: [
-                        Text(
-                          l10n.welcomeDoorsHeading,
-                          style: textTheme.titleSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                          Text(l10n.welcomeBody, style: textTheme.bodyLarge),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        spacing: spacing.sm,
+                        children: [
+                          Text(
+                            l10n.welcomeDoorsHeading,
+                            style: textTheme.titleSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
-                        ),
-                        if (showVoiceDoor)
+                          if (showVoiceDoor)
+                            WelcomeDoor(
+                              identifier: voiceDoorIdentifier,
+                              icon: Icons.mic_none,
+                              title: l10n.welcomeVoiceDoorTitle,
+                              subtitle: l10n.welcomeVoiceDoorSubtitle,
+                              onTap: () => acceptTerms(OnboardingDoor.voice),
+                            ),
                           WelcomeDoor(
-                            identifier: voiceDoorIdentifier,
-                            icon: Icons.mic_none,
-                            title: l10n.welcomeVoiceDoorTitle,
-                            subtitle: l10n.welcomeVoiceDoorSubtitle,
-                            onTap: () => acceptTerms(OnboardingDoor.voice),
+                            identifier: buttonsDoorIdentifier,
+                            icon: Icons.touch_app_outlined,
+                            title: l10n.welcomeButtonsDoorTitle,
+                            subtitle: l10n.welcomeButtonsDoorSubtitle,
+                            onTap: () => acceptTerms(OnboardingDoor.buttons),
                           ),
-                        WelcomeDoor(
-                          identifier: buttonsDoorIdentifier,
-                          icon: Icons.touch_app_outlined,
-                          title: l10n.welcomeButtonsDoorTitle,
-                          subtitle: l10n.welcomeButtonsDoorSubtitle,
-                          onTap: () => acceptTerms(OnboardingDoor.buttons),
-                        ),
-                        TermsNote(
-                          identifier: termsLinkIdentifier,
-                          lead: l10n.welcomeTermsLead,
-                          linkLabel: l10n.welcomeTermsLink,
-                          trailing: l10n.welcomeTermsTrailing,
-                          onLinkTap: () => context.go(TermsPage.path),
-                        ),
-                      ],
-                    ),
-                  ],
+                          TermsNote(
+                            identifier: termsLinkIdentifier,
+                            lead: l10n.welcomeTermsLead,
+                            linkLabel: l10n.welcomeTermsLink,
+                            trailing: l10n.welcomeTermsTrailing,
+                            onLinkTap: () => context.go(TermsPage.path),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
