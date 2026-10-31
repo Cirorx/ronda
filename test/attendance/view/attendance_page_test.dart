@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -120,7 +122,10 @@ void main() {
       expect(label('Mirta'), 'Mirta: sin anotar');
     });
 
-    testWidgets('a tap marks the person through the cubit', (tester) async {
+    testWidgets('a tap marks the person through the cubit, as a commit', (
+      tester,
+    ) async {
+      final haptics = recordHaptics(tester);
       await pump(tester, ready());
 
       await tester.tap(find.text('Vino').first);
@@ -128,6 +133,51 @@ void main() {
 
       verify(() => cubit.marked('demo-103', came: true)).called(1);
       verify(() => cubit.marked('demo-101', came: false)).called(1);
+      expect(haptics, [commitHaptic, commitHaptic]);
+    });
+
+    group('a mark fills its button in', () {
+      Future<void> mark(WidgetTester tester, {bool reduced = false}) async {
+        final states = StreamController<AttendanceState>();
+        addTearDown(states.close);
+        whenListen(cubit, states.stream, initialState: ready());
+        await tester.pumpApp(
+          reducedMotion(
+            reduced: reduced,
+            child: BlocProvider.value(
+              value: cubit,
+              child: const AttendanceView(),
+            ),
+          ),
+        );
+        states.add(ready(pending: const {'demo-103': true}));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 1));
+      }
+
+      Finder ana({required bool came}) =>
+          byIdentifier(AttendanceView.markIdentifier('demo-103', came: came));
+
+      testWidgets('settling it in', (tester) async {
+        await mark(tester);
+
+        expect(swapMotion(of: ana(came: true)), SwapMotion.settle);
+        expect(swapMotion(of: ana(came: false)), SwapMotion.none);
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(
+            of: ana(came: true),
+            matching: find.byType(FilledButton),
+          ),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets('cross-fading under reduced motion', (tester) async {
+        await mark(tester, reduced: true);
+
+        expect(swapMotion(of: ana(came: true)), SwapMotion.crossFade);
+      });
     });
 
     testWidgets('stacks the buttons at large text', (tester) async {
@@ -153,7 +203,32 @@ void main() {
       );
 
       await pump(tester, ready(tapFailure: HostsFailureReason.other));
-      expect(find.text('No se guardó. Probá de nuevo.'), findsOneWidget);
+      final handle = tester.ensureSemantics();
+      expect(
+        tester.getSemantics(find.text('No se guardó. Probá de nuevo.')),
+        isSemantics(isLiveRegion: true),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('is titled, and says what it looks for while it reads', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pump(tester, const AttendanceState());
+
+      expect(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text('¿Quién vino hoy?'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester.getSemantics(find.text('Trayendo la lista…')),
+        isSemantics(isLiveRegion: true),
+      );
+      handle.dispose();
     });
 
     testWidgets('waits, then says there is no list, or retries', (

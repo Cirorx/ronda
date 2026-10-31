@@ -19,8 +19,8 @@ final class const ThisWeekState({
   final ThisWeekStatus status = ThisWeekStatus.loading,
   final ThisWeek? week,
 
-  /// An answer is on its way to the server.
-  final bool answering = false,
+  /// The answer on its way to the server, if one is.
+  final RsvpAnswer? answering,
 
   /// The last answer didn't reach the server.
   final bool answerFailed = false,
@@ -44,7 +44,7 @@ final class const ThisWeekState({
       (week?.myAnswer == null && week?.pausedUntil == null) || changing;
 
   ThisWeekState copyWith({
-    bool? answering,
+    RsvpAnswer? Function()? answering,
     bool? answerFailed,
     bool? changing,
     bool? estaNoSheet,
@@ -53,7 +53,7 @@ final class const ThisWeekState({
   }) => ThisWeekState(
     status: status,
     week: week,
-    answering: answering ?? this.answering,
+    answering: answering == null ? this.answering : answering(),
     answerFailed: answerFailed ?? this.answerFailed,
     changing: changing ?? this.changing,
     estaNoSheet: estaNoSheet ?? this.estaNoSheet,

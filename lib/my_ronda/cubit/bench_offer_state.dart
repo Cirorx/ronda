@@ -15,12 +15,21 @@ enum BenchOfferCardStatus {
   failure,
 }
 
+/// An answer to the offer.
+enum BenchOfferAnswer {
+  /// "Lo tomo".
+  take,
+
+  /// "Esta vez no".
+  pass,
+}
+
 final class const BenchOfferState({
   final BenchOfferCardStatus status = BenchOfferCardStatus.loading,
   final BenchOffer? offer,
 
-  /// An answer is on its way to the server.
-  final bool saving = false,
+  /// The answer on its way to the server, if one is.
+  final BenchOfferAnswer? saving,
 
   /// The last answer didn't reach the server.
   final bool saveFailed = false,
@@ -28,14 +37,17 @@ final class const BenchOfferState({
   /// The server said the offer had already ended.
   final bool over = false,
 }) extends Equatable {
-  BenchOfferState copyWith({bool? saving, bool? saveFailed, bool? over}) =>
-      BenchOfferState(
-        status: status,
-        offer: offer,
-        saving: saving ?? this.saving,
-        saveFailed: saveFailed ?? this.saveFailed,
-        over: over ?? this.over,
-      );
+  BenchOfferState copyWith({
+    BenchOfferAnswer? Function()? saving,
+    bool? saveFailed,
+    bool? over,
+  }) => BenchOfferState(
+    status: status,
+    offer: offer,
+    saving: saving == null ? this.saving : saving(),
+    saveFailed: saveFailed ?? this.saveFailed,
+    over: over ?? this.over,
+  );
 
   @override
   List<Object?> get props => [status, offer, saving, saveFailed, over];

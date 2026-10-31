@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:contact_repository/contact_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -150,6 +152,119 @@ void main() {
       await tester.tap(find.text('Elegir'));
 
       verify(cubit.chooseTapped).called(1);
+    });
+
+    testWidgets('"Elegir" is a commit, felt on the tap', (tester) async {
+      final haptics = recordHaptics(tester);
+      await pump(tester, _ready(selected: 'demo-102'));
+
+      await tester.tap(find.text('Elegir'));
+      await tester.tap(find.text('Ahora no'));
+
+      expect(haptics, [commitHaptic]);
+    });
+
+    testWidgets('each name gives under the finger as it is pressed', (
+      tester,
+    ) async {
+      await pump(tester, _ready());
+
+      for (final name in ['Mirta', 'Jorge']) {
+        expect(
+          find.ancestor(of: find.text(name), matching: find.byType(PressScale)),
+          findsOneWidget,
+        );
+      }
+    });
+
+    testWidgets('rings «Elegir» while it saves, and says so', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pump(
+        tester,
+        _ready(selected: 'demo-102').copyWith(saving: () => BuddySaving.choose),
+      );
+
+      expect(progressIn(BuddyView.chooseIdentifier), findsOneWidget);
+      expect(progressIn(BuddyView.notNowIdentifier), findsNothing);
+      expect(
+        tester.getSemantics(find.text('Guardando lo que elegiste…')),
+        isSemantics(isLiveRegion: true),
+      );
+      await tester.tap(find.text('Elegir'), warnIfMissed: false);
+      await tester.tap(find.text('Ahora no'));
+      verifyNever(cubit.chooseTapped);
+      verifyNever(cubit.notNowTapped);
+      handle.dispose();
+    });
+
+    testWidgets('rings «Ahora no» while it saves', (tester) async {
+      await pump(tester, _ready().copyWith(saving: () => BuddySaving.notNow));
+
+      expect(progressIn(BuddyView.notNowIdentifier), findsOneWidget);
+      expect(progressIn(BuddyView.chooseIdentifier), findsNothing);
+    });
+
+    testWidgets('reads out that saving failed', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pump(tester, _ready(saveFailed: true));
+
+      expect(
+        tester.getSemantics(find.text('No se guardó. Probá de nuevo.')),
+        isSemantics(isLiveRegion: true),
+      );
+      handle.dispose();
+    });
+
+    group('once chosen', () {
+      Future<void> choose(WidgetTester tester, {bool reduced = false}) async {
+        final states = StreamController<BuddyState>();
+        addTearDown(states.close);
+        whenListen(
+          cubit,
+          states.stream,
+          initialState: _ready(selected: 'demo-102'),
+        );
+        await tester.pumpApp(
+          reducedMotion(
+            reduced: reduced,
+            child: BlocProvider.value(
+              value: cubit,
+              child: const Scaffold(
+                body: SingleChildScrollView(child: BuddyView()),
+              ),
+            ),
+          ),
+        );
+        states.add(_ready(chosen: true, buddy: _jorge));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 1));
+      }
+
+      testWidgets('settles the choice in, checked and read out', (
+        tester,
+      ) async {
+        final handle = tester.ensureSemantics();
+        await choose(tester);
+
+        expect(swapMotion(), SwapMotion.settle);
+        await tester.pumpAndSettle();
+        expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
+        expect(
+          tester.getSemantics(
+            find.text(
+              'Si faltás sin avisar, le avisamos a Jorge. Nadie más se entera.',
+            ),
+          ),
+          isSemantics(isLiveRegion: true),
+        );
+        handle.dispose();
+      });
+
+      testWidgets('cross-fades under reduced motion', (tester) async {
+        await choose(tester, reduced: true);
+
+        expect(swapMotion(), SwapMotion.crossFade);
+      });
     });
 
     testWidgets('says who was chosen, with a way to change it', (tester) async {

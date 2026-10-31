@@ -15,12 +15,27 @@ enum SeguimosCardStatus {
   failure,
 }
 
+/// An answer or a choice on the ¿seguimos? card.
+enum SeguimosPick {
+  /// "Sí".
+  yes,
+
+  /// "No".
+  no,
+
+  /// "Sumarte a otro ya".
+  join,
+
+  /// "Esperar dos semanas más".
+  wait,
+}
+
 final class const SeguimosState({
   final SeguimosCardStatus status = SeguimosCardStatus.loading,
   final Seguimos? seguimos,
 
-  /// An answer or a choice is on its way to the server.
-  final bool saving = false,
+  /// The answer or the choice on its way to the server, if one is.
+  final SeguimosPick? saving,
 
   /// The last one didn't reach the server.
   final bool saveFailed = false,
@@ -37,14 +52,14 @@ final class const SeguimosState({
       (seguimos?.open ?? false) && (seguimos?.myAnswer == null || changing);
 
   SeguimosState copyWith({
-    bool? saving,
+    SeguimosPick? Function()? saving,
     bool? saveFailed,
     bool? closed,
     bool? changing,
   }) => SeguimosState(
     status: status,
     seguimos: seguimos,
-    saving: saving ?? this.saving,
+    saving: saving == null ? this.saving : saving(),
     saveFailed: saveFailed ?? this.saveFailed,
     closed: closed ?? this.closed,
     changing: changing ?? this.changing,

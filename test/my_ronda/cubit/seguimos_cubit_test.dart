@@ -112,7 +112,7 @@ void main() {
         build: build,
         seed: () => ready,
         act: (cubit) => cubit.yesTapped(),
-        expect: () => [ready.copyWith(saving: true), ready],
+        expect: () => [ready.copyWith(saving: () => SeguimosPick.yes), ready],
         verify: (_) => verify(
           () => rondaRepository.answerSeguimos(
             rondaId: 'r1',
@@ -131,7 +131,7 @@ void main() {
         },
         expect: () => [
           ready.copyWith(changing: true),
-          ready.copyWith(changing: true, saving: true),
+          ready.copyWith(changing: true, saving: () => SeguimosPick.no),
           ready,
         ],
         verify: (_) => verify(
@@ -154,7 +154,7 @@ void main() {
         seed: () => ready,
         act: (cubit) => cubit.yesTapped(),
         expect: () => [
-          ready.copyWith(saving: true),
+          ready.copyWith(saving: () => SeguimosPick.yes),
           ready.copyWith(saveFailed: true),
         ],
         errors: () => [isA<RsvpFailure>()],
@@ -172,7 +172,7 @@ void main() {
         seed: () => ready,
         act: (cubit) => cubit.noTapped(),
         expect: () => [
-          ready.copyWith(saving: true),
+          ready.copyWith(saving: () => SeguimosPick.no),
           ready.copyWith(closed: true),
         ],
         errors: () => [isA<RsvpFailure>()],
@@ -183,10 +183,10 @@ void main() {
         build: build,
         act: (cubit) async {
           await cubit.yesTapped();
-          cubit.emit(ready.copyWith(saving: true));
+          cubit.emit(ready.copyWith(saving: () => SeguimosPick.yes));
           await cubit.noTapped();
         },
-        expect: () => [ready.copyWith(saving: true)],
+        expect: () => [ready.copyWith(saving: () => SeguimosPick.yes)],
         verify: (_) => verifyNever(
           () => rondaRepository.answerSeguimos(
             rondaId: any(named: 'rondaId'),
@@ -222,8 +222,8 @@ void main() {
         await yes;
         await no;
 
-        expect(first.state.saving, isTrue);
-        expect(second.state.saving, isTrue);
+        expect(first.state.saving, SeguimosPick.yes);
+        expect(second.state.saving, SeguimosPick.no);
       });
     });
 
@@ -241,7 +241,10 @@ void main() {
         build: build,
         seed: () => closed,
         act: (cubit) => cubit.joinTapped(),
-        expect: () => [closed.copyWith(saving: true), closed],
+        expect: () => [
+          closed.copyWith(saving: () => SeguimosPick.join),
+          closed,
+        ],
         verify: (_) => verify(
           () => rondaRepository.chooseAfterSeguimos(
             rondaId: 'r1',
@@ -255,7 +258,10 @@ void main() {
         build: build,
         seed: () => closed,
         act: (cubit) => cubit.waitTapped(),
-        expect: () => [closed.copyWith(saving: true), closed],
+        expect: () => [
+          closed.copyWith(saving: () => SeguimosPick.wait),
+          closed,
+        ],
         verify: (_) => verify(
           () => rondaRepository.chooseAfterSeguimos(
             rondaId: 'r1',

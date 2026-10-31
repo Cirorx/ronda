@@ -81,7 +81,9 @@ void main() {
         act: (cubit) async {
           cubit
             ..subscribe()
-            ..emit(ready.copyWith(answering: true, estaNoSheet: true));
+            ..emit(
+              ready.copyWith(answering: () => RsvpAnswer.no, estaNoSheet: true),
+            );
           weeks.add(MyRondaFixtures.week(myAnswer: RsvpAnswer.no));
         },
         skip: 2,
@@ -89,7 +91,7 @@ void main() {
           ThisWeekState(
             status: ThisWeekStatus.ready,
             week: MyRondaFixtures.week(myAnswer: RsvpAnswer.no),
-            answering: true,
+            answering: RsvpAnswer.no,
             estaNoSheet: true,
           ),
         ],
@@ -102,7 +104,7 @@ void main() {
         build: build,
         seed: () => ready,
         act: (cubit) => cubit.yesTapped(),
-        expect: () => [ready.copyWith(answering: true), ready],
+        expect: () => [ready.copyWith(answering: () => RsvpAnswer.yes), ready],
         verify: (_) => verify(
           () =>
               rondaRepository.answerRsvp(rondaId: 'r1', answer: RsvpAnswer.yes),
@@ -115,7 +117,7 @@ void main() {
         seed: () => ready,
         act: (cubit) => cubit.noTapped(),
         expect: () => [
-          ready.copyWith(answering: true),
+          ready.copyWith(answering: () => RsvpAnswer.no),
           ready.copyWith(estaNoSheet: true),
         ],
         verify: (_) => verify(
@@ -129,7 +131,7 @@ void main() {
         build: build,
         seed: () => ready,
         act: (cubit) => cubit.pauseTapped(),
-        expect: () => [ready.copyWith(answering: true), ready],
+        expect: () => [ready.copyWith(answering: () => RsvpAnswer.no), ready],
         verify: (_) => verify(
           () => rondaRepository.answerRsvp(
             rondaId: 'r1',
@@ -144,7 +146,10 @@ void main() {
         build: build,
         seed: () => ready.copyWith(changing: true),
         act: (cubit) => cubit.yesTapped(),
-        expect: () => [ready.copyWith(changing: true, answering: true), ready],
+        expect: () => [
+          ready.copyWith(changing: true, answering: () => RsvpAnswer.yes),
+          ready,
+        ],
       );
 
       blocTest<ThisWeekCubit, ThisWeekState>(
@@ -160,7 +165,7 @@ void main() {
         seed: () => ready,
         act: (cubit) => cubit.noTapped(),
         expect: () => [
-          ready.copyWith(answering: true),
+          ready.copyWith(answering: () => RsvpAnswer.no),
           ready.copyWith(answerFailed: true),
         ],
         errors: () => [isA<RsvpFailure>()],
@@ -171,10 +176,10 @@ void main() {
         build: build,
         act: (cubit) async {
           await cubit.yesTapped();
-          cubit.emit(ready.copyWith(answering: true));
+          cubit.emit(ready.copyWith(answering: () => RsvpAnswer.yes));
           await cubit.noTapped();
         },
-        expect: () => [ready.copyWith(answering: true)],
+        expect: () => [ready.copyWith(answering: () => RsvpAnswer.yes)],
         verify: (_) => verifyNever(
           () => rondaRepository.answerRsvp(
             rondaId: any(named: 'rondaId'),
@@ -203,7 +208,7 @@ void main() {
           unawaited(cubit.yesTapped());
           return cubit.close();
         },
-        expect: () => [ready.copyWith(answering: true)],
+        expect: () => [ready.copyWith(answering: () => RsvpAnswer.yes)],
       );
 
       blocTest<ThisWeekCubit, ThisWeekState>(
@@ -230,7 +235,7 @@ void main() {
           unawaited(cubit.yesTapped());
           return cubit.close();
         },
-        expect: () => [ready.copyWith(answering: true)],
+        expect: () => [ready.copyWith(answering: () => RsvpAnswer.yes)],
       );
     });
 

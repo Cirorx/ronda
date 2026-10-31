@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:organiser_repository/organiser_repository.dart';
 import 'package:ronda/acta/cubit/acta_cubit.dart';
 import 'package:ronda/app/app.dart';
+import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -34,7 +35,9 @@ class const ActaPage({
 }
 
 /// The week's lines in the order they happened, each with its time, the
-/// ones the host decided marked; the closing line; and [Algo estuvo mal].
+/// ones the host decided marked; the closing line; and [Algo estuvo mal],
+/// a commit felt on the tap, with a progress ring on it while it goes and
+/// the thanks swapped in once it is recorded.
 class const ActaView({super.key}) extends StatelessWidget {
   /// Maestro's handle on [Algo estuvo mal].
   static const reportIdentifier = 'acta.report';
@@ -47,103 +50,125 @@ class const ActaView({super.key}) extends StatelessWidget {
     final state = context.watch<ActaCubit>().state;
     final cubit = context.read<ActaCubit>();
     final localizations = MaterialLocalizations.of(context);
+    final sending = state.report == ActaReport.sending;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.actaTitle)),
       body: SafeArea(
-        child: switch (state.status) {
-          ActaStatus.loading => const Center(
-            child: CircularProgressIndicator(),
-          ),
-          ActaStatus.failure => Center(
-            child: Padding(
-              padding: EdgeInsetsDirectional.all(spacing.lg),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                spacing: spacing.md,
-                children: [
-                  Text(
-                    l10n.organiserLoadError,
-                    textAlign: TextAlign.center,
-                    style: textTheme.bodyLarge,
+        child: RondaSwap(
+          layoutBuilder: topStartSwapLayout,
+          child: KeyedSubtree(
+            key: ValueKey(state.status),
+            child: switch (state.status) {
+              ActaStatus.loading => LoadingStatus(l10n.actaLoading),
+              ActaStatus.failure => Center(
+                child: Padding(
+                  padding: EdgeInsetsDirectional.all(spacing.lg),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: spacing.md,
+                    children: [
+                      Text(
+                        l10n.organiserLoadError,
+                        textAlign: TextAlign.center,
+                        style: textTheme.bodyLarge,
+                      ),
+                      OutlinedButton(
+                        onPressed: cubit.subscribe,
+                        child: Text(l10n.adminRetry),
+                      ),
+                    ],
                   ),
-                  OutlinedButton(
-                    onPressed: cubit.subscribe,
-                    child: Text(l10n.adminRetry),
+                ),
+              ),
+              ActaStatus.ready => ListView(
+                padding: EdgeInsetsDirectional.all(spacing.md),
+                children: [
+                  Text(l10n.actaIntro, style: textTheme.bodyLarge),
+                  SizedBox(height: spacing.md),
+                  if (state.acta.lines.isEmpty)
+                    Text(l10n.actaEmpty, style: textTheme.bodyLarge)
+                  else
+                    for (final line in state.acta.lines)
+                      Padding(
+                        padding: EdgeInsetsDirectional.only(bottom: spacing.sm),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              [
+                                localizations.formatShortMonthDay(
+                                  line.at.toLocal(),
+                                ),
+                                localizations.formatTimeOfDay(
+                                  TimeOfDay.fromDateTime(line.at.toLocal()),
+                                  alwaysUse24HourFormat: true,
+                                ),
+                                if (line.byHost) l10n.actaByHost,
+                                if (line.byRule) l10n.actaByRule,
+                              ].join(' · '),
+                              style: textTheme.labelMedium,
+                            ),
+                            // The server's es-419, like the pushes.
+                            Text(line.summary, style: textTheme.bodyLarge),
+                          ],
+                        ),
+                      ),
+                  SizedBox(height: spacing.lg),
+                  Text(l10n.actaFooter, style: textTheme.bodyLarge),
+                  SizedBox(height: spacing.md),
+                  RondaSwap(
+                    layoutBuilder: topStartSwapLayout,
+                    child: switch (state.report) {
+                      ActaReport.sent => Semantics(
+                        key: const ValueKey(ActaReport.sent),
+                        liveRegion: true,
+                        child: Text(
+                          l10n.actaReported,
+                          style: textTheme.bodyLarge,
+                        ),
+                      ),
+                      _ => Column(
+                        key: const ValueKey(ActaReport.none),
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        spacing: spacing.sm,
+                        children: [
+                          if (state.report == ActaReport.failed)
+                            NoteBanner(
+                              variant: NoteBannerVariant.warning,
+                              message: l10n.actaReportFailed,
+                            ),
+                          MergeSemantics(
+                            child: Semantics(
+                              identifier: reportIdentifier,
+                              child: IgnorePointer(
+                                ignoring: sending,
+                                child: OutlinedButton(
+                                  onPressed: switch (state.acta.week) {
+                                    null => null,
+                                    _ when sending => () {},
+                                    _ => RondaHaptics.onCommit(
+                                      cubit.reportTapped,
+                                    ),
+                                  },
+                                  child: BusyLabel(
+                                    l10n.actaReport,
+                                    busy: sending,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (sending) StatusLine(l10n.actaReportSending),
+                        ],
+                      ),
+                    },
                   ),
                 ],
               ),
-            ),
+            },
           ),
-          ActaStatus.ready => ListView(
-            padding: EdgeInsetsDirectional.all(spacing.md),
-            children: [
-              Text(l10n.actaIntro, style: textTheme.bodyLarge),
-              SizedBox(height: spacing.md),
-              if (state.acta.lines.isEmpty)
-                Text(l10n.actaEmpty, style: textTheme.bodyLarge)
-              else
-                for (final line in state.acta.lines)
-                  Padding(
-                    padding: EdgeInsetsDirectional.only(bottom: spacing.sm),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          [
-                            localizations.formatShortMonthDay(
-                              line.at.toLocal(),
-                            ),
-                            localizations.formatTimeOfDay(
-                              TimeOfDay.fromDateTime(line.at.toLocal()),
-                              alwaysUse24HourFormat: true,
-                            ),
-                            if (line.byHost) l10n.actaByHost,
-                            if (line.byRule) l10n.actaByRule,
-                          ].join(' · '),
-                          style: textTheme.labelMedium,
-                        ),
-                        // The server's es-419, like the pushes.
-                        Text(line.summary, style: textTheme.bodyLarge),
-                      ],
-                    ),
-                  ),
-              Divider(height: spacing.xlg),
-              Text(l10n.actaFooter, style: textTheme.bodyLarge),
-              SizedBox(height: spacing.md),
-              switch (state.report) {
-                ActaReport.sent => Semantics(
-                  liveRegion: true,
-                  child: Text(l10n.actaReported, style: textTheme.bodyLarge),
-                ),
-                _ => Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: spacing.sm,
-                  children: [
-                    if (state.report == ActaReport.failed)
-                      NoteBanner(
-                        variant: NoteBannerVariant.warning,
-                        message: l10n.actaReportFailed,
-                      ),
-                    MergeSemantics(
-                      child: Semantics(
-                        identifier: reportIdentifier,
-                        child: OutlinedButton(
-                          onPressed:
-                              state.acta.week == null ||
-                                  state.report == ActaReport.sending
-                              ? null
-                              : cubit.reportTapped,
-                          child: Text(l10n.actaReport),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              },
-            ],
-          ),
-        },
+        ),
       ),
     );
   }

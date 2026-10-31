@@ -48,16 +48,18 @@ class WaitingCubit extends Cubit<WaitingState> {
   Future<void> waitTapped() => _choose(WaitlistChoice.wait);
 
   Future<void> _choose(WaitlistChoice choice) async {
-    if (state.waiting == null || state.saving) return;
-    emit(state.copyWith(saving: true, saveFailed: false));
+    if (state.waiting == null || state.saving != null) return;
+    emit(state.copyWith(saving: () => choice, saveFailed: false));
     try {
       await _rondaRepository.chooseAfterWaitlist(choice);
     } on RsvpFailure catch (error, stackTrace) {
       addError(error, stackTrace);
-      if (!isClosed) emit(state.copyWith(saving: false, saveFailed: true));
+      if (!isClosed) {
+        emit(state.copyWith(saving: () => null, saveFailed: true));
+      }
       return;
     }
-    if (!isClosed) emit(state.copyWith(saving: false));
+    if (!isClosed) emit(state.copyWith(saving: () => null));
   }
 
   @override

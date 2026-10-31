@@ -2,11 +2,14 @@ import 'dart:typed_data';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flyer_repository/flyer_repository.dart';
+import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/mate_flyer/cubit/mate_flyer_cubit.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
-/// The flyer's steps: the photo, the blurred preview, the wait, the flyer.
+/// The flyer's steps: the photo, the blurred preview, the wait, the flyer,
+/// each swapped in for the last on a [RondaSwap]. Making the flyer and
+/// sharing it are commits, felt on the tap.
 class const MateFlyerView({super.key}) extends StatelessWidget {
   /// Maestro's handles.
   static const takePhotoIdentifier = 'mateFlyer.takePhoto';
@@ -22,6 +25,38 @@ class const MateFlyerView({super.key}) extends StatelessWidget {
     final l10n = context.l10n;
     final state = context.watch<MateFlyerCubit>().state;
     final spacing = context.appSpacing;
+    final (step, children) = switch ((state.status, state.photo, state.flyer)) {
+      (MateFlyerStatus.unsupported, _, _) => (
+        MateFlyerStatus.unsupported,
+        _webOnly(context),
+      ),
+      (MateFlyerStatus.choosing, _, _) => (
+        MateFlyerStatus.choosing,
+        _choosing(context),
+      ),
+      (MateFlyerStatus.blurring || MateFlyerStatus.preview, final photo?, _) =>
+        (
+          MateFlyerStatus.preview,
+          _preview(
+            context,
+            photo,
+            busy: state.status != MateFlyerStatus.preview,
+          ),
+        ),
+      (MateFlyerStatus.blurring, null, _) => (
+        MateFlyerStatus.blurring,
+        _working(context, l10n.mateFlyerBlurring),
+      ),
+      (MateFlyerStatus.making, _, _) => (
+        MateFlyerStatus.making,
+        _working(context, l10n.mateFlyerMaking),
+      ),
+      (MateFlyerStatus.ready, _, final flyer?) => (
+        MateFlyerStatus.ready,
+        _ready(context, flyer),
+      ),
+      _ => (MateFlyerStatus.choosing, _choosing(context)),
+    };
     return Scaffold(
       appBar: AppBar(title: Text(l10n.mateFlyerTitle)),
       body: ListView(
@@ -37,30 +72,14 @@ class const MateFlyerView({super.key}) extends StatelessWidget {
             ),
             SizedBox(height: spacing.md),
           ],
-          ...switch ((state.status, state.photo, state.flyer)) {
-            (MateFlyerStatus.unsupported, _, _) => _webOnly(context),
-            (MateFlyerStatus.choosing, _, _) => _choosing(context),
-            (
-              MateFlyerStatus.blurring || MateFlyerStatus.preview,
-              final photo?,
-              _,
-            ) =>
-              _preview(
-                context,
-                photo,
-                busy: state.status != MateFlyerStatus.preview,
-              ),
-            (MateFlyerStatus.blurring, null, _) => _working(
-              context,
-              l10n.mateFlyerBlurring,
+          RondaSwap(
+            layoutBuilder: topStartSwapLayout,
+            child: Column(
+              key: ValueKey(step),
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: children,
             ),
-            (MateFlyerStatus.making, _, _) => _working(
-              context,
-              l10n.mateFlyerMaking,
-            ),
-            (MateFlyerStatus.ready, _, final flyer?) => _ready(context, flyer),
-            _ => _choosing(context),
-          },
+          ),
         ],
       ),
     );
@@ -166,31 +185,22 @@ class const MateFlyerView({super.key}) extends StatelessWidget {
         image: true,
         child: AspectRatio(
           aspectRatio: photo.width / photo.height,
-          child: LayoutBuilder(
-            builder: (context, constraints) => GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTapUp: busy
-                  ? null
-                  : (details) => cubit.faceTapped(
-                      x: details.localPosition.dx / constraints.maxWidth,
-                      y: details.localPosition.dy / constraints.maxHeight,
-                    ),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  _bytesImage(photo.jpeg),
-                  if (busy) const Center(child: CircularProgressIndicator()),
-                ],
-              ),
-            ),
+          child: _TapToBlur(
+            image: _bytesImage(photo.jpeg),
+            busy: busy,
+            onTapped: (x, y) => cubit.faceTapped(x: x, y: y),
           ),
         ),
       ),
+      if (busy) ...[
+        SizedBox(height: spacing.xs),
+        StatusLine(l10n.mateFlyerBlurringTapped),
+      ],
       SizedBox(height: spacing.lg),
       _action(
         makeIdentifier,
         FilledButton(
-          onPressed: busy ? null : cubit.flyerRequested,
+          onPressed: busy ? null : RondaHaptics.onCommit(cubit.flyerRequested),
           child: Text(l10n.mateFlyerMake),
         ),
       ),
@@ -225,7 +235,9 @@ class const MateFlyerView({super.key}) extends StatelessWidget {
       _action(
         shareIdentifier,
         FilledButton.icon(
-          onPressed: () => cubit.shareRequested(title: l10n.mateFlyerTitle),
+          onPressed: RondaHaptics.onCommit(
+            () => cubit.shareRequested(title: l10n.mateFlyerTitle),
+          ),
           icon: const Icon(Icons.ios_share),
           label: Text(l10n.mateFlyerShare),
         ),
@@ -250,4 +262,85 @@ class const MateFlyerView({super.key}) extends StatelessWidget {
     excludeFromSemantics: true,
     errorBuilder: (_, _, _) => const SizedBox.shrink(),
   );
+}
+
+/// {@template tap_to_blur}
+/// The blurred photo, where a tap on a face the detector missed blurs it
+/// too. The ink spreads from where the finger lands, the moment it lands,
+/// and while that face is blurred a progress ring sits on the same spot.
+/// {@endtemplate}
+class const _TapToBlur({
+  required final Widget image,
+  required final bool busy,
+  required final void Function(double x, double y) onTapped,
+}) extends StatefulWidget {
+  /// The mark's diameter on the tapped spot.
+  static const double markSize = 40;
+
+  @override
+  State<_TapToBlur> createState() => _TapToBlurState();
+}
+
+class _TapToBlurState extends State<_TapToBlur> {
+  /// Where the last tap landed, in the photo's own pixels on screen.
+  Offset? _tapped;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final spacing = context.appSpacing;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Where the ring sits: the tapped spot, or the middle when the
+        // photo came back busy without a tap seen here.
+        final mark =
+            _tapped ??
+            Offset(constraints.maxWidth / 2, constraints.maxHeight / 2);
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            widget.image,
+            if (widget.busy)
+              Positioned(
+                left: mark.dx - _TapToBlur.markSize / 2,
+                top: mark.dy - _TapToBlur.markSize / 2,
+                width: _TapToBlur.markSize,
+                height: _TapToBlur.markSize,
+                child: ExcludeSemantics(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: scheme.surface,
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(spacing.xs),
+                      child: const CircularProgressIndicator(
+                        strokeWidth: BusyLabel.strokeWidth,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            Positioned.fill(
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  excludeFromSemantics: true,
+                  onTapUp: widget.busy
+                      ? null
+                      : (details) {
+                          setState(() => _tapped = details.localPosition);
+                          widget.onTapped(
+                            details.localPosition.dx / constraints.maxWidth,
+                            details.localPosition.dy / constraints.maxHeight,
+                          );
+                        },
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:contact_repository/contact_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/buddy/cubit/buddy_cubit.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_repository/ronda_repository.dart';
@@ -37,7 +38,9 @@ class const BuddySection({
   }
 }
 
-/// The buddy card and the choice, from the [BuddyCubit] above.
+/// The buddy card and the choice, from the [BuddyCubit] above. The card
+/// and the choice each swap in on a [RondaSwap]; «Elegir» is a commit, felt
+/// on the tap, and the choice it saved is shown and read out.
 class const BuddyView({super.key}) extends StatelessWidget {
   /// Maestro's handles.
   static const writeIdentifier = 'buddy.write';
@@ -51,21 +54,32 @@ class const BuddyView({super.key}) extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<BuddyCubit>().state;
     final options = state.options;
+    final ask = state.ask;
+    final choice = switch (options) {
+      BuddyOptions(due: true, chosen: false) => _Choose(state),
+      BuddyOptions(due: true) when state.changing => _Choose(state),
+      BuddyOptions(due: true, :final buddy) => _Chosen(buddy),
+      _ => const SizedBox.shrink(),
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (state.ask case final ask?) _AskCard(ask, write: state.canWhatsApp),
-        if (options != null && options.due)
-          if (!options.chosen || state.changing)
-            _Choose(state)
-          else
-            _Chosen(options.buddy),
+        RondaSwap(
+          layoutBuilder: topStartSwapLayout,
+          child: ask == null
+              ? const SizedBox.shrink(key: ValueKey('noAsk'))
+              : _AskCard(ask, write: state.canWhatsApp, key: ValueKey(ask)),
+        ),
+        RondaSwap(
+          layoutBuilder: topStartSwapLayout,
+          child: KeyedSubtree(key: ValueKey(choice.runtimeType), child: choice),
+        ),
       ],
     );
   }
 }
 
-class const _AskCard(final BuddyAsk ask, {required final bool write})
+class const _AskCard(final BuddyAsk ask, {required final bool write, super.key})
     extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -124,6 +138,8 @@ class const _Choose(final BuddyState state) extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final cubit = context.read<BuddyCubit>();
     final choices = state.options!.choices;
+    final choosing = state.saving == BuddySaving.choose;
+    final passing = state.saving == BuddySaving.notNow;
     return Card(
       child: Padding(
         padding: EdgeInsetsDirectional.all(spacing.md),
@@ -142,12 +158,15 @@ class const _Choose(final BuddyState state) extends StatelessWidget {
               child: Column(
                 children: [
                   for (final choice in choices)
-                    MergeSemantics(
-                      child: Semantics(
-                        identifier: BuddyView.choiceIdentifier(choice.uid),
-                        child: RadioListTile<String>(
-                          value: choice.uid,
-                          title: Text(choice.firstName),
+                    PressScale(
+                      enabled: state.saving == null,
+                      child: MergeSemantics(
+                        child: Semantics(
+                          identifier: BuddyView.choiceIdentifier(choice.uid),
+                          child: RadioListTile<String>(
+                            value: choice.uid,
+                            title: Text(choice.firstName),
+                          ),
                         ),
                       ),
                     ),
@@ -166,25 +185,39 @@ class const _Choose(final BuddyState state) extends StatelessWidget {
                 MergeSemantics(
                   child: Semantics(
                     identifier: BuddyView.chooseIdentifier,
-                    child: FilledButton(
-                      onPressed: state.saving || state.selected == null
-                          ? null
-                          : cubit.chooseTapped,
-                      child: Text(l10n.buddyChoose),
+                    child: IgnorePointer(
+                      ignoring: choosing,
+                      child: FilledButton(
+                        onPressed: switch (state.saving) {
+                          null when state.selected != null =>
+                            RondaHaptics.onCommit(cubit.chooseTapped),
+                          BuddySaving.choose => () {},
+                          _ => null,
+                        },
+                        child: BusyLabel(l10n.buddyChoose, busy: choosing),
+                      ),
                     ),
                   ),
                 ),
                 MergeSemantics(
                   child: Semantics(
                     identifier: BuddyView.notNowIdentifier,
-                    child: TextButton(
-                      onPressed: state.saving ? null : cubit.notNowTapped,
-                      child: Text(l10n.buddyNotNow),
+                    child: IgnorePointer(
+                      ignoring: passing,
+                      child: TextButton(
+                        onPressed: switch (state.saving) {
+                          null => cubit.notNowTapped,
+                          BuddySaving.notNow => () {},
+                          _ => null,
+                        },
+                        child: BusyLabel(l10n.buddyNotNow, busy: passing),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
+            if (state.saving != null) StatusLine(l10n.myRondaChoiceSaving),
           ],
         ),
       ),
@@ -197,12 +230,23 @@ class const _Chosen(final SetupMember? buddy) extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Row(
+      spacing: context.appSpacing.xs,
       children: [
+        if (buddy != null)
+          ExcludeSemantics(
+            child: Icon(
+              Icons.check_circle_outline,
+              color: context.rondaPalette.yerba,
+            ),
+          ),
         Expanded(
-          child: Text(switch (buddy) {
-            final buddy? => l10n.buddyChosen(buddy.firstName),
-            null => l10n.buddyNobody,
-          }, style: Theme.of(context).textTheme.bodyMedium),
+          child: Semantics(
+            liveRegion: true,
+            child: Text(switch (buddy) {
+              final buddy? => l10n.buddyChosen(buddy.firstName),
+              null => l10n.buddyNobody,
+            }, style: Theme.of(context).textTheme.bodyMedium),
+          ),
         ),
         MergeSemantics(
           child: Semantics(

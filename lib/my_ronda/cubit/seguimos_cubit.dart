@@ -47,6 +47,7 @@ class SeguimosCubit extends Cubit<SeguimosState> {
 
   /// "Sí".
   Future<void> yesTapped() => _save(
+    SeguimosPick.yes,
     (rondaId) => _rondaRepository.answerSeguimos(
       rondaId: rondaId,
       answer: SeguimosAnswer.yes,
@@ -55,6 +56,7 @@ class SeguimosCubit extends Cubit<SeguimosState> {
 
   /// "No".
   Future<void> noTapped() => _save(
+    SeguimosPick.no,
     (rondaId) => _rondaRepository.answerSeguimos(
       rondaId: rondaId,
       answer: SeguimosAnswer.no,
@@ -66,6 +68,7 @@ class SeguimosCubit extends Cubit<SeguimosState> {
 
   /// "Sumarte a otro ya".
   Future<void> joinTapped() => _save(
+    SeguimosPick.join,
     (rondaId) => _rondaRepository.chooseAfterSeguimos(
       rondaId: rondaId,
       choice: SeguimosChoice.join,
@@ -74,26 +77,34 @@ class SeguimosCubit extends Cubit<SeguimosState> {
 
   /// "Esperar dos semanas más".
   Future<void> waitTapped() => _save(
+    SeguimosPick.wait,
     (rondaId) => _rondaRepository.chooseAfterSeguimos(
       rondaId: rondaId,
       choice: SeguimosChoice.wait,
     ),
   );
 
-  Future<void> _save(Future<void> Function(String rondaId) call) async {
+  Future<void> _save(
+    SeguimosPick pick,
+    Future<void> Function(String rondaId) call,
+  ) async {
     final seguimos = state.seguimos;
-    if (seguimos == null || state.saving) return;
-    emit(state.copyWith(saving: true, saveFailed: false, closed: false));
+    if (seguimos == null || state.saving != null) return;
+    emit(state.copyWith(saving: () => pick, saveFailed: false, closed: false));
     try {
       await call(seguimos.rondaId);
     } on RsvpFailure catch (error, stackTrace) {
       addError(error, stackTrace);
       if (isClosed) return;
       final passed = error.reason == RsvpFailureReason.passed;
-      emit(state.copyWith(saving: false, saveFailed: !passed, closed: passed));
+      emit(
+        state.copyWith(saving: () => null, saveFailed: !passed, closed: passed),
+      );
       return;
     }
-    if (!isClosed) emit(state.copyWith(saving: false, changing: false));
+    if (!isClosed) {
+      emit(state.copyWith(saving: () => null, changing: false));
+    }
   }
 
   @override

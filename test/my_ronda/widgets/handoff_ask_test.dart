@@ -52,11 +52,16 @@ void main() {
       );
     });
 
-    testWidgets('both answers go through the cubit', (tester) async {
+    testWidgets('both answers go through the cubit, felt as commits', (
+      tester,
+    ) async {
+      final haptics = recordHaptics(tester);
       await pump(tester, const ThisWeekState());
 
       await tester.tap(find.text('Sí, abro yo'));
       await tester.tap(find.text('Hoy no puedo'));
+
+      expect(haptics, [commitHaptic, commitHaptic]);
 
       verify(() => cubit.handoffAnswered(yes: true)).called(1);
       verify(() => cubit.handoffAnswered(yes: false)).called(1);
@@ -86,6 +91,20 @@ void main() {
       );
 
       expect(find.text('No se guardó. Probá de nuevo.'), findsOneWidget);
+    });
+
+    testWidgets('reads out why an answer was not saved', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pump(
+        tester,
+        const ThisWeekState(actionFailure: HostsFailureReason.passed),
+      );
+
+      expect(
+        tester.getSemantics(find.text('Ya no hace falta: alguien más abre.')),
+        isSemantics(isLiveRegion: true),
+      );
+      handle.dispose();
     });
   });
 }

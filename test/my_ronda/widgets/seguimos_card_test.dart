@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -107,21 +109,81 @@ void main() {
         expect(find.text('Dijiste que no.'), findsOneWidget);
       });
 
-      testWidgets('says when saving failed or the question had closed', (
+      testWidgets('says out loud when saving failed or it had closed', (
+        tester,
+      ) async {
+        final handle = tester.ensureSemantics();
+        await pump(
+          tester,
+          ready(MyRondaFixtures.seguimos())
+              .copyWith(saveFailed: true, closed: true),
+        );
+
+        for (final text in [
+          'No pudimos guardar tu respuesta. Probá de nuevo.',
+          'La pregunta ya se cerró.',
+        ]) {
+          expect(
+            tester.getSemantics(find.text(text)),
+            isSemantics(isLiveRegion: true),
+          );
+        }
+        handle.dispose();
+      });
+
+      testWidgets('rings the pressed answer while it saves, and says so', (
         tester,
       ) async {
         await pump(
           tester,
           ready(MyRondaFixtures.seguimos())
-              .copyWith(saving: true, saveFailed: true, closed: true),
+              .copyWith(saving: () => SeguimosPick.yes),
         );
 
-        expect(find.byType(LinearProgressIndicator), findsOneWidget);
-        expect(
-          find.text('No pudimos guardar tu respuesta. Probá de nuevo.'),
-          findsOneWidget,
-        );
-        expect(find.text('La pregunta ya se cerró.'), findsOneWidget);
+        expect(progressIn('seguimos.yes'), findsOneWidget);
+        expect(progressIn('seguimos.no'), findsNothing);
+        expect(find.byType(LinearProgressIndicator), findsNothing);
+        expect(find.text('Guardando tu respuesta…'), findsOneWidget);
+      });
+
+      group('swaps the question for the answer', () {
+        Future<void> answer(WidgetTester tester, {bool reduced = false}) async {
+          final states = StreamController<SeguimosState>();
+          addTearDown(states.close);
+          whenListen(
+            cubit,
+            states.stream,
+            initialState: ready(MyRondaFixtures.seguimos()),
+          );
+          await tester.pumpApp(
+            reducedMotion(
+              reduced: reduced,
+              child: BlocProvider.value(
+                value: cubit,
+                child: const SingleChildScrollView(child: SeguimosCard()),
+              ),
+            ),
+          );
+          states.add(
+            ready(MyRondaFixtures.seguimos(myAnswer: SeguimosAnswer.yes)),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 1));
+        }
+
+        testWidgets('settling it in', (tester) async {
+          await answer(tester);
+
+          expect(swapMotion(), SwapMotion.settle);
+          await tester.pumpAndSettle();
+          expect(find.text('Sí'), findsNothing);
+        });
+
+        testWidgets('with a cross-fade under reduced motion', (tester) async {
+          await answer(tester, reduced: true);
+
+          expect(swapMotion(), SwapMotion.crossFade);
+        });
       });
     });
 
@@ -228,6 +290,47 @@ void main() {
 
         expect(find.text('Sumarte a otro ya'), findsNothing);
         expect(find.text('Esperar dos semanas más'), findsOneWidget);
+      });
+
+      testWidgets('each choice is a commit, felt on the tap', (tester) async {
+        final haptics = recordHaptics(tester);
+        await pump(tester, ready(didntFill()));
+
+        await tester.tap(find.text('Sumarte a otro ya'));
+
+        expect(haptics, [commitHaptic]);
+        verify(cubit.joinTapped).called(1);
+      });
+
+      testWidgets('rings the pressed choice while it saves, and says so', (
+        tester,
+      ) async {
+        await pump(
+          tester,
+          ready(didntFill()).copyWith(saving: () => SeguimosPick.wait),
+        );
+
+        expect(progressIn(SeguimosCard.waitIdentifier), findsOneWidget);
+        expect(progressIn(SeguimosCard.joinIdentifier), findsNothing);
+        expect(find.text('Guardando lo que elegiste…'), findsOneWidget);
+
+        await tester.tap(find.text('Sumarte a otro ya'));
+        verifyNever(cubit.joinTapped);
+      });
+
+      testWidgets('reads out the choice once it is in', (tester) async {
+        final handle = tester.ensureSemantics();
+        await pump(tester, ready(didntFill(choice: SeguimosChoice.wait)));
+
+        expect(
+          tester.getSemantics(
+            find.text(
+              'Listo, esperamos hasta el 16/11. Si se suman, arranca el 17/11.',
+            ),
+          ),
+          isSemantics(isLiveRegion: true),
+        );
+        handle.dispose();
       });
 
       testWidgets('ends each choice with its date', (tester) async {

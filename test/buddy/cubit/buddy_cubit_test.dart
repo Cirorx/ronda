@@ -99,7 +99,10 @@ void main() {
       },
       expect: () => [
         ready.copyWith(selected: () => 'demo-102'),
-        ready.copyWith(selected: () => 'demo-102', saving: true),
+        ready.copyWith(
+          selected: () => 'demo-102',
+          saving: () => BuddySaving.choose,
+        ),
         ready.copyWith(
           selected: () => 'demo-102',
           options: const BuddyOptions(
@@ -165,13 +168,13 @@ void main() {
       seed: () => ready,
       act: (cubit) async {
         await cubit.notNowTapped();
-        cubit.emit(ready.copyWith(saving: true));
+        cubit.emit(ready.copyWith(saving: () => BuddySaving.notNow));
         await cubit.notNowTapped();
       },
       expect: () => [
-        ready.copyWith(saving: true),
+        ready.copyWith(saving: () => BuddySaving.notNow),
         ready.copyWith(saveFailed: true),
-        ready.copyWith(saving: true),
+        ready.copyWith(saving: () => BuddySaving.notNow),
       ],
       errors: () => [isA<HostsFailure>()],
     );
@@ -234,7 +237,7 @@ void main() {
       await chosen;
 
       expect(loading.state, const BuddyState());
-      expect(choosing.state.saving, isTrue);
+      expect(choosing.state.saving, BuddySaving.notNow);
 
       when(() => rondaRepository.buddyOptions('r1'))
           .thenAnswer((_) => failing.future);
@@ -258,7 +261,7 @@ void main() {
       await refused.close();
       failingSave.completeError(const HostsFailure(HostsFailureReason.other));
       await refusedSave;
-      expect(refused.state.saving, isTrue);
+      expect(refused.state.saving, BuddySaving.notNow);
     });
   });
 }

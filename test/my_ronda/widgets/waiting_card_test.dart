@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -193,15 +195,111 @@ void main() {
       );
     });
 
-    testWidgets('says when a pick is saving or failed', (tester) async {
-      await pump(
-        tester,
-        ready(MyRondaFixtures.waiting(status: WaitingStatus.didntFill))
-            .copyWith(saving: true, saveFailed: true),
+    group('a pick', () {
+      WaitingState didntFill() => ready(
+        MyRondaFixtures.waiting(
+          status: WaitingStatus.didntFill,
+          nearby: _nearby,
+        ),
       );
 
-      expect(find.byType(LinearProgressIndicator), findsOneWidget);
-      expect(find.byType(NoteBanner), findsOneWidget);
+      testWidgets('is a commit, felt on the tap', (tester) async {
+        final haptics = recordHaptics(tester);
+        await pump(tester, didntFill());
+
+        await tester.tap(find.text('Esperar dos semanas más'));
+
+        expect(haptics, [commitHaptic]);
+        verify(cubit.waitTapped).called(1);
+      });
+
+      testWidgets('rings the pressed choice while it saves, and says so', (
+        tester,
+      ) async {
+        final handle = tester.ensureSemantics();
+        await pump(
+          tester,
+          didntFill().copyWith(saving: () => WaitlistChoice.join),
+        );
+
+        expect(progressIn(WaitingCard.joinIdentifier), findsOneWidget);
+        expect(progressIn(WaitingCard.waitIdentifier), findsNothing);
+        expect(find.byType(LinearProgressIndicator), findsNothing);
+        expect(
+          tester.getSemantics(find.text('Guardando lo que elegiste…')),
+          isSemantics(isLiveRegion: true),
+        );
+
+        await tester.tap(find.text('Sumarte a otro ya'), warnIfMissed: false);
+        await tester.tap(find.text('Esperar dos semanas más'));
+        verifyNever(cubit.joinTapped);
+        verifyNever(cubit.waitTapped);
+        handle.dispose();
+      });
+
+      testWidgets('that failed says so out loud', (tester) async {
+        final handle = tester.ensureSemantics();
+        await pump(tester, didntFill().copyWith(saveFailed: true));
+
+        expect(
+          tester.getSemantics(
+            find.text('No pudimos guardar tu respuesta. Probá de nuevo.'),
+          ),
+          isSemantics(isLiveRegion: true),
+        );
+        handle.dispose();
+      });
+
+      group('swaps in what it led to', () {
+        Future<void> join(WidgetTester tester, {bool reduced = false}) async {
+          final states = StreamController<WaitingState>();
+          addTearDown(states.close);
+          whenListen(cubit, states.stream, initialState: didntFill());
+          await tester.pumpApp(
+            reducedMotion(
+              reduced: reduced,
+              child: BlocProvider.value(
+                value: cubit,
+                child: const SingleChildScrollView(child: WaitingCard()),
+              ),
+            ),
+          );
+          states.add(
+            ready(
+              MyRondaFixtures.waiting(
+                status: WaitingStatus.joined,
+                nearby: _nearby,
+              ),
+            ),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 1));
+        }
+
+        testWidgets('settling it in, then reading it out', (tester) async {
+          final handle = tester.ensureSemantics();
+          await join(tester);
+
+          expect(swapMotion(), SwapMotion.settle);
+          await tester.pumpAndSettle();
+          expect(
+            tester.getSemantics(
+              find.text(
+                'Listo, lo anotamos. Te confirmamos el lugar antes del jueves '
+                '5/11.',
+              ),
+            ),
+            isSemantics(isLiveRegion: true),
+          );
+          handle.dispose();
+        });
+
+        testWidgets('with a cross-fade under reduced motion', (tester) async {
+          await join(tester, reduced: true);
+
+          expect(swapMotion(), SwapMotion.crossFade);
+        });
+      });
     });
 
     testWidgets('reads in English', (tester) async {

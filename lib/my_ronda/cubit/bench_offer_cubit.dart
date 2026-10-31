@@ -72,28 +72,28 @@ class BenchOfferCubit extends Cubit<BenchOfferState> {
   }
 
   /// "Lo tomo".
-  Future<void> takeTapped() => _answer(take: true);
+  Future<void> takeTapped() => _answer(BenchOfferAnswer.take);
 
   /// "Esta vez no".
-  Future<void> passTapped() => _answer(take: false);
+  Future<void> passTapped() => _answer(BenchOfferAnswer.pass);
 
-  Future<void> _answer({required bool take}) async {
+  Future<void> _answer(BenchOfferAnswer answer) async {
     final offer = state.offer;
-    if (offer == null || state.saving) return;
-    emit(state.copyWith(saving: true, saveFailed: false, over: false));
+    if (offer == null || state.saving != null) return;
+    emit(state.copyWith(saving: () => answer, saveFailed: false, over: false));
     try {
       await _rondaRepository.answerBenchOffer(
         offerId: offer.offerId,
-        take: take,
+        take: answer == BenchOfferAnswer.take,
       );
     } on RsvpFailure catch (error, stackTrace) {
       addError(error, stackTrace);
       if (isClosed) return;
       final over = error.reason == RsvpFailureReason.passed;
-      emit(state.copyWith(saving: false, saveFailed: !over, over: over));
+      emit(state.copyWith(saving: () => null, saveFailed: !over, over: over));
       return;
     }
-    if (!isClosed) emit(state.copyWith(saving: false));
+    if (!isClosed) emit(state.copyWith(saving: () => null));
   }
 
   @override

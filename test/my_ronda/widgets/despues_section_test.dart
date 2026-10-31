@@ -141,6 +141,7 @@ void main() {
     });
 
     testWidgets('whose home it would be is asked first', (tester) async {
+      final haptics = recordHaptics(tester);
       await pump(
         tester,
         MyRondaFixtures.week(
@@ -164,6 +165,7 @@ void main() {
 
       verify(() => cubit.homeAnswered(yes: true)).called(1);
       verify(() => cubit.homeAnswered(yes: false)).called(1);
+      expect(haptics, [commitHaptic, commitHaptic]);
     });
 
     testWidgets('the question waits while an answer is on its way, and says '
@@ -185,7 +187,12 @@ void main() {
         ),
       );
 
-      expect(find.text('No se guardó. Probá de nuevo.'), findsOneWidget);
+      final handle = tester.ensureSemantics();
+      expect(
+        tester.getSemantics(find.text('No se guardó. Probá de nuevo.')),
+        isSemantics(isLiveRegion: true),
+      );
+      handle.dispose();
       await tester.tap(find.text('Sí, puede ser'));
       await tester.tap(find.text('Mejor no'));
       verifyNever(() => cubit.homeAnswered(yes: any(named: 'yes')));

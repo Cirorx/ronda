@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/waiting_cubit.dart';
 import 'package:ronda/my_ronda/widgets/bench_labels.dart';
@@ -11,6 +12,10 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// doesn't fill; once a round didn't fill, "Esta vez no llegamos a 6" with
 /// "Sumarte a otro ya" and "Esperar dos semanas más", each with its date.
 /// Counts only, never a name. Reads the [WaitingCubit] above.
+///
+/// Each pick is a commit: felt on the tap, a progress ring on the pressed
+/// choice while it saves, and the list's new state swapped in
+/// ([RondaSwap]) and read out.
 class const WaitingCard({super.key}) extends StatelessWidget {
   /// Maestro's handles: the card and the two choices.
   static const identifier = 'waiting';
@@ -40,7 +45,6 @@ class const WaitingCard({super.key}) extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: spacing.sm,
               children: [
-                if (state.saving) const LinearProgressIndicator(),
                 if (state.saveFailed)
                   NoteBanner(
                     variant: NoteBannerVariant.warning,
@@ -51,27 +55,47 @@ class const WaitingCard({super.key}) extends StatelessWidget {
                   child: Text(l10n.waitingTitle, style: textTheme.titleMedium),
                 ),
                 Text(l10n.waitingLine(waiting), style: textTheme.bodyMedium),
-                ...switch (waiting.status) {
-                  WaitingStatus.didntFill => _didntFill(context, waiting),
-                  WaitingStatus.joined => [
-                    Text(
-                      l10n.seguimosJoinDone(
-                        l10n.dayDate(waiting.nearby?.next ?? waiting.start),
+                RondaSwap(
+                  layoutBuilder: topStartSwapLayout,
+                  child: Column(
+                    key: ValueKey(waiting.status),
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: spacing.sm,
+                    children: switch (waiting.status) {
+                      WaitingStatus.didntFill => _didntFill(
+                        context,
+                        state,
+                        waiting,
                       ),
-                      style: textTheme.bodyLarge,
-                    ),
-                  ],
-                  WaitingStatus.full => [
-                    Text(
-                      l10n.waitingFull(
-                        waiting.threshold,
-                        l10n.dayDate(waiting.start),
-                      ),
-                      style: textTheme.bodyLarge,
-                    ),
-                  ],
-                  WaitingStatus.open => _open(context, waiting),
-                },
+                      WaitingStatus.joined => [
+                        Semantics(
+                          liveRegion: true,
+                          child: Text(
+                            l10n.seguimosJoinDone(
+                              l10n.dayDate(
+                                waiting.nearby?.next ?? waiting.start,
+                              ),
+                            ),
+                            style: textTheme.bodyLarge,
+                          ),
+                        ),
+                      ],
+                      WaitingStatus.full => [
+                        Semantics(
+                          liveRegion: true,
+                          child: Text(
+                            l10n.waitingFull(
+                              waiting.threshold,
+                              l10n.dayDate(waiting.start),
+                            ),
+                            style: textTheme.bodyLarge,
+                          ),
+                        ),
+                      ],
+                      WaitingStatus.open => _open(context, waiting),
+                    },
+                  ),
+                ),
               ],
             ),
           ),
@@ -103,37 +127,52 @@ class const WaitingCard({super.key}) extends StatelessWidget {
     ];
   }
 
-  List<Widget> _didntFill(BuildContext context, Waiting waiting) {
+  List<Widget> _didntFill(
+    BuildContext context,
+    WaitingState state,
+    Waiting waiting,
+  ) {
     final l10n = context.l10n;
     final textTheme = Theme.of(context).textTheme;
     final cubit = context.read<WaitingCubit>();
 
     Widget choice(
+      WaitlistChoice pick,
       String identifier,
       String label,
       String detail,
       VoidCallback onPressed,
-    ) => MergeSemantics(
-      child: Semantics(
-        identifier: identifier,
-        child: OutlinedButton(
-          onPressed: onPressed,
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: context.appSpacing.xs),
-            child: Column(
-              children: [
-                Text(label, textAlign: TextAlign.center),
-                Text(
-                  detail,
-                  textAlign: TextAlign.center,
-                  style: textTheme.bodySmall,
+    ) {
+      final pressed = state.saving == pick;
+      return MergeSemantics(
+        child: Semantics(
+          identifier: identifier,
+          child: IgnorePointer(
+            ignoring: pressed,
+            child: OutlinedButton(
+              onPressed: switch (state.saving) {
+                null => RondaHaptics.onCommit(onPressed),
+                _ when pressed => () {},
+                _ => null,
+              },
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: context.appSpacing.xs),
+                child: Column(
+                  children: [
+                    BusyLabel(label, busy: pressed),
+                    Text(
+                      detail,
+                      textAlign: TextAlign.center,
+                      style: textTheme.bodySmall,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    }
 
     return [
       Text(
@@ -143,6 +182,7 @@ class const WaitingCard({super.key}) extends StatelessWidget {
       Text(l10n.seguimosDidntFillAsk, style: textTheme.bodyMedium),
       if (waiting.nearby case final nearby?)
         choice(
+          WaitlistChoice.join,
           joinIdentifier,
           l10n.seguimosJoin,
           l10n.seguimosJoinDetail(
@@ -156,6 +196,7 @@ class const WaitingCard({super.key}) extends StatelessWidget {
           cubit.joinTapped,
         ),
       choice(
+        WaitlistChoice.wait,
         waitIdentifier,
         l10n.seguimosWait,
         l10n.seguimosWaitDetail(
@@ -164,6 +205,7 @@ class const WaitingCard({super.key}) extends StatelessWidget {
         ),
         cubit.waitTapped,
       ),
+      if (state.saving != null) StatusLine(l10n.myRondaChoiceSaving),
     ];
   }
 }

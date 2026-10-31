@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/attendance/cubit/attendance_cubit.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_repository/ronda_repository.dart';
@@ -42,7 +43,8 @@ class const AttendancePage({
 }
 
 /// The meeting, "Nadie más ve esta lista.", how many are marked, and one
-/// row per person with «Vino» and «No vino».
+/// row per person with «Vino» and «No vino». Each mark is a commit, felt on
+/// the tap, and the marked button fills in on a [RondaSwap].
 class const AttendanceView({super.key}) extends StatelessWidget {
   /// Maestro's handle on a person's «Vino» ([came]) or «No vino» button.
   static String markIdentifier(String uid, {required bool came}) =>
@@ -55,20 +57,24 @@ class const AttendanceView({super.key}) extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.rollTitle)),
       body: SafeArea(
-        child: switch ((state.status, state.roll)) {
-          (AttendanceStatus.ready, final roll?) => _Roll(state, roll),
-          (AttendanceStatus.loading, _) => const Center(
-            child: CircularProgressIndicator(),
+        child: RondaSwap(
+          layoutBuilder: topStartSwapLayout,
+          child: KeyedSubtree(
+            key: ValueKey(state.status),
+            child: switch ((state.status, state.roll)) {
+              (AttendanceStatus.ready, final roll?) => _Roll(state, roll),
+              (AttendanceStatus.loading, _) => LoadingStatus(l10n.rollLoading),
+              (AttendanceStatus.failure, _) => _Message(
+                l10n.rollLoadError,
+                action: OutlinedButton(
+                  onPressed: context.read<AttendanceCubit>().subscribe,
+                  child: Text(l10n.adminRetry),
+                ),
+              ),
+              _ => _Message(l10n.rollNone),
+            },
           ),
-          (AttendanceStatus.failure, _) => _Message(
-            l10n.rollLoadError,
-            action: OutlinedButton(
-              onPressed: context.read<AttendanceCubit>().subscribe,
-              child: Text(l10n.adminRetry),
-            ),
-          ),
-          _ => _Message(l10n.rollNone),
-        },
+        ),
       ),
     );
   }
@@ -154,14 +160,27 @@ class const _Person({
     Widget button({required bool came}) {
       final selected = mark == came;
       final label = Text(came ? l10n.rollCame : l10n.rollDidntCome);
-      void onPressed() => cubit.marked(person.uid, came: came);
+      final onPressed = RondaHaptics.onCommit(
+        () => cubit.marked(person.uid, came: came),
+      );
       return MergeSemantics(
         child: Semantics(
           identifier: AttendanceView.markIdentifier(person.uid, came: came),
           selected: selected,
-          child: selected
-              ? FilledButton(onPressed: onPressed, child: label)
-              : OutlinedButton(onPressed: onPressed, child: label),
+          child: RondaSwap(
+            layoutBuilder: topStartSwapLayout,
+            child: selected
+                ? FilledButton(
+                    key: const ValueKey(true),
+                    onPressed: onPressed,
+                    child: label,
+                  )
+                : OutlinedButton(
+                    key: const ValueKey(false),
+                    onPressed: onPressed,
+                    child: label,
+                  ),
+          ),
         ),
       );
     }

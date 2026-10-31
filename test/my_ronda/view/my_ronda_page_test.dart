@@ -153,24 +153,28 @@ void main() {
       when(thisWeekCubit.yesTapped).thenAnswer((_) async {});
     });
 
-    Future<void> pump(WidgetTester tester) => tester.pumpApp(
-      MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider.value(value: rondaRepository),
-          RepositoryProvider.value(value: contactRepository),
-        ],
-        child: MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: pushCubit),
-            BlocProvider.value(value: thisWeekCubit),
-            BlocProvider.value(value: seguimosCubit),
-            BlocProvider.value(value: benchOfferCubit),
-            BlocProvider.value(value: waitingCubit),
-          ],
-          child: const MyRondaView(uid: MyRondaFixtures.uid),
-        ),
-      ),
-    );
+    Future<void> pump(WidgetTester tester, {bool reduced = false}) =>
+        tester.pumpApp(
+          reducedMotion(
+            reduced: reduced,
+            child: MultiRepositoryProvider(
+              providers: [
+                RepositoryProvider.value(value: rondaRepository),
+                RepositoryProvider.value(value: contactRepository),
+              ],
+              child: MultiBlocProvider(
+                providers: [
+                  BlocProvider.value(value: pushCubit),
+                  BlocProvider.value(value: thisWeekCubit),
+                  BlocProvider.value(value: seguimosCubit),
+                  BlocProvider.value(value: benchOfferCubit),
+                  BlocProvider.value(value: waitingCubit),
+                ],
+                child: const MyRondaView(uid: MyRondaFixtures.uid),
+              ),
+            ),
+          ),
+        );
 
     group('renders', () {
       testWidgets('its title in the app bar', (tester) async {
@@ -223,11 +227,55 @@ void main() {
         );
       });
 
-      testWidgets('a spinner while it reads', (tester) async {
+      testWidgets('a spinner and what it looks for while it reads', (
+        tester,
+      ) async {
+        final handle = tester.ensureSemantics();
         when(() => thisWeekCubit.state).thenReturn(const ThisWeekState());
         await pump(tester);
 
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(
+          tester.getSemantics(find.text('Buscando tu ronda…')),
+          isSemantics(isLiveRegion: true),
+        );
+        handle.dispose();
+      });
+
+      group('the ronda in place of the wait', () {
+        Future<void> arrive(WidgetTester tester, {bool reduced = false}) async {
+          final states = StreamController<ThisWeekState>();
+          addTearDown(states.close);
+          whenListen(
+            thisWeekCubit,
+            states.stream,
+            initialState: const ThisWeekState(),
+          );
+          await pump(tester, reduced: reduced);
+          states.add(
+            ThisWeekState(
+              status: ThisWeekStatus.ready,
+              week: MyRondaFixtures.week(),
+            ),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 1));
+        }
+
+        testWidgets('settling it in', (tester) async {
+          await arrive(tester);
+
+          expect(swapMotion(), SwapMotion.settle);
+          await tester.pump(AppMotion.standardDuration);
+          expect(find.byType(ThisWeekCard), findsOneWidget);
+          expect(find.text('Buscando tu ronda…'), findsNothing);
+        });
+
+        testWidgets('with a cross-fade under reduced motion', (tester) async {
+          await arrive(tester, reduced: true);
+
+          expect(swapMotion(), SwapMotion.crossFade);
+        });
       });
 
       testWidgets("this week's card once there is a ronda", (tester) async {

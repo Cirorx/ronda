@@ -39,21 +39,35 @@ void main() {
       expect(find.text('¿Y las próximas semanas?'), findsOneWidget);
     });
 
-    for (final (label, call) in [
-      ('Sigo en la ronda', 'stay'),
-      ('Pausar 2 semanas', 'pause'),
-      ('Me equivoqué, voy', 'mistake'),
+    for (final (label, call, commits) in [
+      ('Sigo en la ronda', 'stay', false),
+      ('Pausar 2 semanas', 'pause', true),
+      ('Me equivoqué, voy', 'mistake', true),
     ]) {
       testWidgets('$label closes it and calls back', (tester) async {
         await open(tester);
+        final haptics = recordHaptics(tester);
 
         await tester.tap(find.text(label));
         await tester.pumpAndSettle();
 
         expect(find.byType(EstaNoSheet), findsNothing);
         expect(calls, [call]);
+        expect(haptics, commits ? [commitHaptic] : isEmpty);
       });
     }
+
+    testWidgets('closes from its close button, recording nothing more', (
+      tester,
+    ) async {
+      await open(tester);
+
+      await tester.tap(find.byType(CloseButton));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(EstaNoSheet), findsNothing);
+      expect(calls, isEmpty);
+    });
 
     testWidgets('reads in English', (tester) async {
       await open(tester, locale: const Locale('en'));

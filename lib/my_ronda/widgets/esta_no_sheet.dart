@@ -3,7 +3,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 
 /// "Listo, esta no. Nadie pregunta por qué." — and the next weeks: "Sigo en
 /// la ronda" or "Pausar 2 semanas", or "Me equivoqué, voy". Each choice
-/// closes the sheet; the callbacks decide what it records.
+/// closes the sheet; the callbacks decide what it records. Pausing and
+/// taking it back change the answer, so they are commits, felt on the tap;
+/// staying in changes nothing.
 class const EstaNoSheet({
   required final VoidCallback onStay,
   required final VoidCallback onPause,
@@ -45,9 +47,19 @@ class const EstaNoSheet({
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: spacing.md,
         children: [
-          Semantics(
-            header: true,
-            child: Text(l10n.estaNoTitle, style: textTheme.headlineSmall),
+          // The title, and a close button for a mouse, which can't tap the
+          // sheet's handle.
+          Row(
+            spacing: spacing.xs,
+            children: [
+              Expanded(
+                child: Semantics(
+                  header: true,
+                  child: Text(l10n.estaNoTitle, style: textTheme.headlineSmall),
+                ),
+              ),
+              const CloseButton(),
+            ],
           ),
           Text(l10n.estaNoBody, style: textTheme.bodyMedium),
           Text(l10n.estaNoNextWeeks, style: textTheme.titleMedium),
@@ -61,14 +73,14 @@ class const EstaNoSheet({
           choice(
             pauseIdentifier,
             OutlinedButton(
-              onPressed: () => close(onPause),
+              onPressed: RondaHaptics.onCommit(() => close(onPause)),
               child: Text(l10n.estaNoPause, textAlign: TextAlign.center),
             ),
           ),
           choice(
             mistakeIdentifier,
             TextButton(
-              onPressed: () => close(onMistake),
+              onPressed: RondaHaptics.onCommit(() => close(onMistake)),
               child: Text(l10n.estaNoMistake, textAlign: TextAlign.center),
             ),
           ),

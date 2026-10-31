@@ -62,27 +62,29 @@ class BuddyCubit extends Cubit<BuddyState> {
 
   /// "Elegir": saves who was picked.
   Future<void> chooseTapped() async {
-    if (state.selected case final uid?) await _save(uid);
+    if (state.selected case final uid?) await _save(uid, BuddySaving.choose);
   }
 
   /// "Ahora no": saves nobody, so the question stops.
-  Future<void> notNowTapped() => _save(null);
+  Future<void> notNowTapped() => _save(null, BuddySaving.notNow);
 
-  Future<void> _save(String? buddyUid) async {
-    if (state.saving) return;
-    emit(state.copyWith(saving: true, saveFailed: false));
+  Future<void> _save(String? buddyUid, BuddySaving saving) async {
+    if (state.saving != null) return;
+    emit(state.copyWith(saving: () => saving, saveFailed: false));
     try {
       await _rondaRepository.setBuddy(rondaId: _rondaId, buddyUid: buddyUid);
     } on HostsFailure catch (failure, stackTrace) {
       addError(failure, stackTrace);
-      if (!isClosed) emit(state.copyWith(saving: false, saveFailed: true));
+      if (!isClosed) {
+        emit(state.copyWith(saving: () => null, saveFailed: true));
+      }
       return;
     }
     if (isClosed) return;
     final options = state.options!;
     emit(
       state.copyWith(
-        saving: false,
+        saving: () => null,
         changing: false,
         options: BuddyOptions(
           due: options.due,

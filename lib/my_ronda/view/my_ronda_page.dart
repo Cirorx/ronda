@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:push_repository/push_repository.dart';
 import 'package:ronda/acta/acta.dart';
 import 'package:ronda/app/app.dart';
+import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/buddy/buddy.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/bench_offer_cubit.dart';
@@ -24,7 +25,8 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// card while there is one, then this week's card and the buddy, or
 /// "Todavía no tenés grupo" with the waiting list's card before a group
 /// exists. A member who left at the ¿seguimos? close sees only that card
-/// ("Gracias por venir.").
+/// ("Gracias por venir."). While it reads it says so; each state swaps in
+/// for the last on a [RondaSwap].
 ///
 /// It is where everyone with a profile lands, right after onboarding saves,
 /// so the [PushCubit] it provides also keeps this phone's token saved.
@@ -118,39 +120,48 @@ class const MyRondaView({required final String uid, super.key})
               SizedBox(height: spacing.lg),
               const BenchOfferCard(),
               const SeguimosCard(),
-              switch (state.status) {
-                ThisWeekStatus.loading => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-                ThisWeekStatus.noGroup => Column(
-                  spacing: spacing.xs,
-                  children: [
-                    Semantics(
-                      header: true,
-                      child: Text(
-                        l10n.myRondaNoGroupTitle,
-                        textAlign: TextAlign.center,
-                        style: textTheme.titleMedium,
-                      ),
+              RondaSwap(
+                layoutBuilder: topStartSwapLayout,
+                child: KeyedSubtree(
+                  key: ValueKey((state.status, state.week?.hasLeft ?? false)),
+                  child: switch (state.status) {
+                    ThisWeekStatus.loading => LoadingStatus(
+                      l10n.myRondaLoading,
                     ),
-                    line(l10n.myRondaNoGroupBody),
-                    const WaitingCard(),
-                  ],
-                ),
-                ThisWeekStatus.failure => Column(
-                  spacing: spacing.sm,
-                  children: [
-                    line(l10n.thisWeekLoadError),
-                    OutlinedButton(
-                      onPressed: context.read<ThisWeekCubit>().subscribe,
-                      child: Text(l10n.thisWeekRetry),
+                    ThisWeekStatus.noGroup => Column(
+                      spacing: spacing.xs,
+                      children: [
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            l10n.myRondaNoGroupTitle,
+                            textAlign: TextAlign.center,
+                            style: textTheme.titleMedium,
+                          ),
+                        ),
+                        line(l10n.myRondaNoGroupBody),
+                        const WaitingCard(),
+                      ],
                     ),
-                  ],
+                    ThisWeekStatus.failure => Column(
+                      spacing: spacing.sm,
+                      children: [
+                        line(l10n.thisWeekLoadError),
+                        OutlinedButton(
+                          onPressed: context.read<ThisWeekCubit>().subscribe,
+                          child: Text(l10n.thisWeekRetry),
+                        ),
+                      ],
+                    ),
+                    ThisWeekStatus.ready when state.week!.hasLeft =>
+                      const SizedBox.shrink(),
+                    ThisWeekStatus.ready => ThisWeekCard(
+                      state: state,
+                      uid: uid,
+                    ),
+                  },
                 ),
-                ThisWeekStatus.ready when state.week!.hasLeft =>
-                  const SizedBox.shrink(),
-                ThisWeekStatus.ready => ThisWeekCard(state: state, uid: uid),
-              },
+              ),
               if (state.week case final week? when !week.hasLeft) ...[
                 BuddySection(rondaId: week.rondaId, uid: uid),
                 ActaLink(rondaId: week.rondaId),

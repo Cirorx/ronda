@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -83,10 +85,23 @@ void main() {
       );
     }
 
-    testWidgets('waits while it reads', (tester) async {
+    testWidgets('waits while it reads, titled and saying so', (tester) async {
+      final handle = tester.ensureSemantics();
       await pump(tester, const RainMoveState());
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text('Si llueve'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester.getSemantics(find.text('Trayendo la propuesta…')),
+        isSemantics(isLiveRegion: true),
+      );
+      handle.dispose();
     });
 
     for (final status in [
@@ -160,14 +175,35 @@ void main() {
         findsOneWidget,
       );
       await tester.tap(find.text('Al Salón Comunal de El Pinar'));
-      await tester.scrollUntilVisible(find.text('Mandarlo'), 200);
+      await tester.ensureVisible(find.text('Mandarlo'));
+      await tester.pump();
       await tester.tap(find.text('Mandarlo'));
 
       verify(() => cubit.optionTapped(MoveChoice.covered)).called(1);
       verify(cubit.sendTapped).called(1);
     });
 
-    testWidgets('waits while it sends', (tester) async {
+    testWidgets('Mandarlo is a commit, felt on the tap', (tester) async {
+      final haptics = recordHaptics(tester);
+      await pump(
+        tester,
+        RainMoveState(
+          status: RainMoveViewStatus.ready,
+          move: _move(),
+          selected: MoveChoice.asIs,
+        ),
+      );
+      await tester.ensureVisible(find.text('Mandarlo'));
+      await tester.pump();
+
+      await tester.tap(find.text('Mandarlo'));
+
+      expect(haptics, [commitHaptic]);
+      verify(cubit.sendTapped).called(1);
+    });
+
+    testWidgets('rings Mandarlo while it sends, and says so', (tester) async {
+      final handle = tester.ensureSemantics();
       await pump(
         tester,
         RainMoveState(
@@ -177,19 +213,21 @@ void main() {
           sending: RainMoveSending.sending,
         ),
       );
-      await tester.scrollUntilVisible(find.text('Mandando…'), 200);
+      await tester.ensureVisible(find.text('Mandando…'));
+      await tester.pump();
 
+      expect(progressIn(RainMoveView.sendIdentifier), findsOneWidget);
       expect(
-        tester
-            .widget<FilledButton>(
-              find.widgetWithText(FilledButton, 'Mandando…'),
-            )
-            .onPressed,
-        isNull,
+        tester.getSemantics(find.text('Mandando…')),
+        isSemantics(label: 'Mandando…', isLiveRegion: true),
       );
+      await tester.tap(find.text('Mandando…'), warnIfMissed: false);
+      verifyNever(cubit.sendTapped);
+      handle.dispose();
     });
 
-    testWidgets('says when it was not sent', (tester) async {
+    testWidgets('says out loud when it was not sent', (tester) async {
+      final handle = tester.ensureSemantics();
       await pump(
         tester,
         RainMoveState(
@@ -199,9 +237,67 @@ void main() {
           sending: RainMoveSending.failed,
         ),
       );
-      await tester.scrollUntilVisible(find.text('Mandarlo'), 200);
+      await tester.ensureVisible(find.text('Mandarlo'));
+      await tester.pump();
 
-      expect(find.text('No se mandó. Probá de nuevo.'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.text('No se mandó. Probá de nuevo.')),
+        isSemantics(isLiveRegion: true),
+      );
+      handle.dispose();
+    });
+
+    group('a tapped option', () {
+      Future<void> tap(WidgetTester tester, {bool reduced = false}) async {
+        final states = StreamController<RainMoveState>();
+        addTearDown(states.close);
+        whenListen(
+          cubit,
+          states.stream,
+          initialState: RainMoveState(
+            status: RainMoveViewStatus.ready,
+            move: _move(),
+          ),
+        );
+        await tester.pumpApp(
+          reducedMotion(
+            reduced: reduced,
+            child: BlocProvider.value(
+              value: cubit,
+              child: const RainMoveView(),
+            ),
+          ),
+        );
+        states.add(
+          RainMoveState(
+            status: RainMoveViewStatus.ready,
+            move: _move(),
+            selected: MoveChoice.covered,
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 1));
+      }
+
+      testWidgets('fills in and brings its message in, settling', (
+        tester,
+      ) async {
+        await tap(tester);
+
+        expect(swapMotion(), SwapMotion.settle);
+        await tester.pumpAndSettle();
+        expect(
+          find.widgetWithText(FilledButton, 'Al Salón Comunal de El Pinar'),
+          findsOneWidget,
+        );
+        expect(find.text(_covered.message), findsOneWidget);
+      });
+
+      testWidgets('cross-fades under reduced motion', (tester) async {
+        await tap(tester, reduced: true);
+
+        expect(swapMotion(), SwapMotion.crossFade);
+      });
     });
 
     testWidgets('a stand-in host is told why they are asked', (tester) async {

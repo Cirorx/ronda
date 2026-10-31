@@ -8,7 +8,8 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// "¿Abrís vos?" on the Mi ronda card, while it is open to this member: the
 /// cola is told who can't come, the others that nobody opens yet, then what
 /// opening is, with [Sí, abro yo] [Hoy no puedo]. A rule in code asks it
-/// (`functions/handoff.py`), never the model.
+/// (`functions/handoff.py`), never the model. Either answer is a commit,
+/// felt on the tap.
 class const HandoffAskSection({
   /// The question.
   required final HandoffAsk ask,
@@ -53,7 +54,9 @@ class const HandoffAskSection({
                 child: FilledButton(
                   onPressed: state.acting
                       ? null
-                      : () => cubit.handoffAnswered(yes: true),
+                      : RondaHaptics.onCommit(
+                          () => cubit.handoffAnswered(yes: true),
+                        ),
                   child: Text(l10n.handoffYes),
                 ),
               ),
@@ -64,7 +67,9 @@ class const HandoffAskSection({
                 child: OutlinedButton(
                   onPressed: state.acting
                       ? null
-                      : () => cubit.handoffAnswered(yes: false),
+                      : RondaHaptics.onCommit(
+                          () => cubit.handoffAnswered(yes: false),
+                        ),
                   child: Text(l10n.handoffNo),
                 ),
               ),

@@ -120,7 +120,10 @@ void main() {
         build: build,
         seed: () => ready,
         act: (cubit) => cubit.takeTapped(),
-        expect: () => [ready.copyWith(saving: true), ready],
+        expect: () => [
+          ready.copyWith(saving: () => BenchOfferAnswer.take),
+          ready,
+        ],
         verify: (_) => verify(
           () => rondaRepository.answerBenchOffer(
             offerId: 'r1_2026-W45_01',
@@ -134,6 +137,10 @@ void main() {
         build: build,
         seed: () => ready,
         act: (cubit) => cubit.passTapped(),
+        expect: () => [
+          ready.copyWith(saving: () => BenchOfferAnswer.pass),
+          ready,
+        ],
         verify: (_) => verify(
           () => rondaRepository.answerBenchOffer(
             offerId: 'r1_2026-W45_01',
@@ -145,7 +152,7 @@ void main() {
       blocTest<BenchOfferCubit, BenchOfferState>(
         'does nothing without an offer or while one answer is on its way',
         build: build,
-        seed: () => ready.copyWith(saving: true),
+        seed: () => ready.copyWith(saving: () => BenchOfferAnswer.take),
         act: (cubit) async {
           await cubit.takeTapped();
           cubit.emit(const BenchOfferState());
@@ -172,7 +179,7 @@ void main() {
         seed: () => ready,
         act: (cubit) => cubit.takeTapped(),
         expect: () => [
-          ready.copyWith(saving: true),
+          ready.copyWith(saving: () => BenchOfferAnswer.take),
           ready.copyWith(over: true),
         ],
         errors: () => [isA<RsvpFailure>()],
@@ -190,7 +197,7 @@ void main() {
         seed: () => ready,
         act: (cubit) => cubit.passTapped(),
         expect: () => [
-          ready.copyWith(saving: true),
+          ready.copyWith(saving: () => BenchOfferAnswer.pass),
           ready.copyWith(saveFailed: true),
         ],
         errors: () => [isA<RsvpFailure>()],
@@ -225,7 +232,7 @@ void main() {
         final failed = failing.passTapped();
         await failing.close();
         await failed;
-        expect(failing.state.saving, isTrue);
+        expect(failing.state.saving, BenchOfferAnswer.pass);
       });
     });
   });

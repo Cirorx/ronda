@@ -8,8 +8,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 
 /// The después on the Mi ronda card: "Después, si querés: …" once it is
 /// set; for this week's host, where it stands and "¿Hay después esta
-/// semana?"; for the member whose home it would be, the question first.
-/// Nothing for a member while there is none.
+/// semana?"; for the member whose home it would be, the question first,
+/// whose answers are commits felt on the tap. Nothing for a member while
+/// there is none.
 class const DespuesSection({
   /// The week it belongs to.
   required final ThisWeek week,
@@ -85,7 +86,9 @@ class const DespuesSection({
                 child: FilledButton(
                   onPressed: state.acting
                       ? null
-                      : () => cubit.homeAnswered(yes: true),
+                      : RondaHaptics.onCommit(
+                          () => cubit.homeAnswered(yes: true),
+                        ),
                   child: Text(l10n.despuesHomeYes),
                 ),
               ),
@@ -96,7 +99,9 @@ class const DespuesSection({
                 child: OutlinedButton(
                   onPressed: state.acting
                       ? null
-                      : () => cubit.homeAnswered(yes: false),
+                      : RondaHaptics.onCommit(
+                          () => cubit.homeAnswered(yes: false),
+                        ),
                   child: Text(l10n.despuesHomeNo),
                 ),
               ),

@@ -3050,6 +3050,46 @@
     "@buddyAskNotNow": {
         "description": "Mi ronda: close the buddy card"
     },
+    "myRondaLoading": "Looking for your ronda…",
+    "@myRondaLoading": {
+        "description": "Mi ronda: the status line while the card loads"
+    },
+    "thisWeekSaving": "Saving your answer…",
+    "@thisWeekSaving": {
+        "description": "Mi ronda: the status line while an answer to a card's question is on its way"
+    },
+    "myRondaChoiceSaving": "Saving your choice…",
+    "@myRondaChoiceSaving": {
+        "description": "Mi ronda: the status line while a choice (another ronda, waiting, a buddy) is on its way"
+    },
+    "despuesFieldMissing": "Fill this in.",
+    "@despuesFieldMissing": {
+        "description": "Después sheet: the error under a field it needs that is empty"
+    },
+    "rollLoading": "Getting the list…",
+    "@rollLoading": {
+        "description": "Who came today: the status line while the roll loads"
+    },
+    "actaLoading": "Getting what the program did…",
+    "@actaLoading": {
+        "description": "Acta: the status line while it loads"
+    },
+    "actaReportSending": "Sending your report…",
+    "@actaReportSending": {
+        "description": "Acta: the status line while «Algo estuvo mal» is on its way"
+    },
+    "rainMoveLoading": "Getting the proposal…",
+    "@rainMoveLoading": {
+        "description": "Rain move: the status line while the proposal loads"
+    },
+    "rainMoveLoadingTitle": "If it rains",
+    "@rainMoveLoadingTitle": {
+        "description": "Rain move: the screen's title before the proposal's own title has loaded"
+    },
+    "mateFlyerBlurringTapped": "Blurring that face…",
+    "@mateFlyerBlurringTapped": {
+        "description": "Flyer: the status line while a tapped face is blurred"
+    },
     "setupHandoffAsking": "Looking for someone to open on {date}: {name} can't.",
     "@setupHandoffAsking": {
         "description": "Admin: the handoff is asking",

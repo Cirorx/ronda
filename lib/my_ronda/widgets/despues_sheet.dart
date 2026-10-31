@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/despues_cubit.dart';
 import 'package:ronda_repository/ronda_repository.dart';
@@ -8,6 +11,10 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// host: [Esta semana no], a public place nearby, or someone's home (whose,
 /// and the address). Someone else's home is asked first. The sheet closes
 /// once it is saved and says why when it isn't.
+///
+/// A field it needs says so under itself once the person leaves it empty
+/// or tries to save, and stops saying so as soon as it is filled in. Saving
+/// is a commit, felt on the tap, with a progress ring on «Guardar».
 class DespuesSheet extends StatefulWidget {
   const new({required this.uid, required this.week, super.key});
 
@@ -58,6 +65,12 @@ class _DespuesSheetState extends State<DespuesSheet> {
   );
   late String _whose = _known(widget.week.despues?.homeOf?.uid);
 
+  /// The fields the person has been in and left.
+  final _left = <DespuesField>{};
+
+  /// Whether «Guardar» was tapped: every empty field it needs says so.
+  bool _tried = false;
+
   @override
   void dispose() {
     _what.dispose();
@@ -76,13 +89,26 @@ class _DespuesSheetState extends State<DespuesSheet> {
   String _known(String? uid) =>
       _others.any((person) => person.uid == uid) ? uid! : widget.uid;
 
-  Future<void> _save() => context.read<DespuesCubit>().save(
+  Set<DespuesField> get _missing => DespuesCubit.missingFields(
     kind: _kind,
     what: _what.text,
     where: _where.text,
-    homeOfUid: _whose,
     address: _address.text,
   );
+
+  void _save() {
+    setState(() => _tried = true);
+    if (_missing.isEmpty) unawaited(RondaHaptics.commit());
+    unawaited(
+      context.read<DespuesCubit>().save(
+        kind: _kind,
+        what: _what.text,
+        where: _where.text,
+        homeOfUid: _whose,
+        address: _address.text,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +119,28 @@ class _DespuesSheetState extends State<DespuesSheet> {
 
     Widget field(String identifier, Widget child) =>
         Semantics(identifier: identifier, child: child);
+
+    final missing = _missing;
+    final tried = _tried || state.missing;
+
+    /// What shows under [field]: that it is needed, once the person left it
+    /// empty or tried to save, until it is filled in.
+    String? errorFor(DespuesField field) =>
+        missing.contains(field) && (tried || _left.contains(field))
+        ? l10n.despuesFieldMissing
+        : null;
+
+    /// [child], noting when the person leaves [field].
+    Widget leaving(DespuesField field, Widget child) => Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onFocusChange: (focused) {
+        if (!focused) setState(() => _left.add(field));
+      },
+      child: child,
+    );
+
+    void edited(String _) => setState(() {});
 
     return BlocListener<DespuesCubit, DespuesState>(
       listenWhen: (previous, current) => !previous.saved && current.saved,
@@ -108,9 +156,22 @@ class _DespuesSheetState extends State<DespuesSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: spacing.sm,
             children: [
-              Semantics(
-                header: true,
-                child: Text(l10n.despuesSet, style: textTheme.titleMedium),
+              // The title, and a close button for a mouse, which can't tap
+              // the sheet's handle.
+              Row(
+                spacing: spacing.xs,
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        l10n.despuesSet,
+                        style: textTheme.titleMedium,
+                      ),
+                    ),
+                  ),
+                  const CloseButton(),
+                ],
               ),
               Text(l10n.despuesSheetBody, style: textTheme.bodyMedium),
               RadioGroup<DespuesKind>(
@@ -123,12 +184,14 @@ class _DespuesSheetState extends State<DespuesSheet> {
                       (DespuesKind.place, l10n.despuesKindPlace),
                       (DespuesKind.home, l10n.despuesKindHome),
                     ])
-                      MergeSemantics(
-                        child: Semantics(
-                          identifier: DespuesSheet.kindIdentifier(kind),
-                          child: RadioListTile<DespuesKind>(
-                            value: kind,
-                            title: Text(label),
+                      PressScale(
+                        child: MergeSemantics(
+                          child: Semantics(
+                            identifier: DespuesSheet.kindIdentifier(kind),
+                            child: RadioListTile<DespuesKind>(
+                              value: kind,
+                              title: Text(label),
+                            ),
                           ),
                         ),
                       ),
@@ -138,25 +201,35 @@ class _DespuesSheetState extends State<DespuesSheet> {
               if (_kind != DespuesKind.none)
                 field(
                   DespuesSheet.whatIdentifier,
-                  TextField(
-                    controller: _what,
-                    maxLength: 60,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: InputDecoration(
-                      labelText: l10n.despuesWhat,
-                      hintText: l10n.despuesWhatHint,
+                  leaving(
+                    DespuesField.what,
+                    TextField(
+                      controller: _what,
+                      maxLength: 60,
+                      textCapitalization: TextCapitalization.sentences,
+                      onChanged: edited,
+                      decoration: InputDecoration(
+                        labelText: l10n.despuesWhat,
+                        hintText: l10n.despuesWhatHint,
+                        errorText: errorFor(DespuesField.what),
+                      ),
                     ),
                   ),
                 ),
               if (_kind == DespuesKind.place)
                 field(
                   DespuesSheet.whereIdentifier,
-                  TextField(
-                    controller: _where,
-                    maxLength: 60,
-                    decoration: InputDecoration(
-                      labelText: l10n.despuesWhere,
-                      hintText: l10n.despuesWhereHint,
+                  leaving(
+                    DespuesField.where,
+                    TextField(
+                      controller: _where,
+                      maxLength: 60,
+                      onChanged: edited,
+                      decoration: InputDecoration(
+                        labelText: l10n.despuesWhere,
+                        hintText: l10n.despuesWhereHint,
+                        errorText: errorFor(DespuesField.where),
+                      ),
                     ),
                   ),
                 ),
@@ -187,24 +260,25 @@ class _DespuesSheetState extends State<DespuesSheet> {
                 ),
                 field(
                   DespuesSheet.addressIdentifier,
-                  TextField(
-                    controller: _address,
-                    maxLength: 80,
-                    decoration: InputDecoration(
-                      labelText: l10n.despuesAddress,
-                      hintText: l10n.despuesAddressHint,
-                      helperText: l10n.despuesAddressNote,
-                      helperMaxLines: 3,
+                  leaving(
+                    DespuesField.address,
+                    TextField(
+                      controller: _address,
+                      maxLength: 80,
+                      onChanged: edited,
+                      decoration: InputDecoration(
+                        labelText: l10n.despuesAddress,
+                        hintText: l10n.despuesAddressHint,
+                        helperText: l10n.despuesAddressNote,
+                        helperMaxLines: 3,
+                        errorText: errorFor(DespuesField.address),
+                        errorMaxLines: 3,
+                      ),
                     ),
                   ),
                 ),
               ],
-              if (state.missing)
-                NoteBanner(
-                  variant: NoteBannerVariant.warning,
-                  message: l10n.despuesMissing,
-                )
-              else if (state.failure case final reason?)
+              if (state.failure case final reason?)
                 NoteBanner(
                   variant: NoteBannerVariant.warning,
                   message: reason == HostsFailureReason.notPublic
@@ -214,10 +288,15 @@ class _DespuesSheetState extends State<DespuesSheet> {
               MergeSemantics(
                 child: Semantics(
                   identifier: DespuesSheet.saveIdentifier,
-                  child: FilledButton(
-                    onPressed: state.saving ? null : _save,
-                    child: Text(
-                      state.saving ? l10n.despuesSaving : l10n.despuesSave,
+                  liveRegion: state.saving,
+                  child: IgnorePointer(
+                    ignoring: state.saving,
+                    child: FilledButton(
+                      onPressed: state.saving ? () {} : _save,
+                      child: BusyLabel(
+                        state.saving ? l10n.despuesSaving : l10n.despuesSave,
+                        busy: state.saving,
+                      ),
                     ),
                   ),
                 ),

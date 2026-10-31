@@ -17,6 +17,21 @@ class DespuesCubit extends Cubit<DespuesState> {
   final String _week;
   final RondaRepository _rondaRepository;
 
+  /// The fields [kind] needs that are still empty: [what] for a place or a
+  /// home, with [where] for a public place or [address] for a home. The
+  /// sheet shows the same answer under each field as it is filled in.
+  static Set<DespuesField> missingFields({
+    required DespuesKind kind,
+    String what = '',
+    String where = '',
+    String address = '',
+  }) => {
+    if (kind != DespuesKind.none && what.trim().isEmpty) DespuesField.what,
+    if (kind == DespuesKind.place && where.trim().isEmpty) DespuesField.where,
+    if (kind == DespuesKind.home && address.trim().isEmpty)
+      DespuesField.address,
+  };
+
   /// Saves the después: [kind] with [what], and [where] for a public place
   /// or [homeOfUid] and [address] for a home. Empty fields it needs stop it
   /// before it is sent ([DespuesState.missing]).
@@ -29,11 +44,12 @@ class DespuesCubit extends Cubit<DespuesState> {
   }) async {
     if (state.saving) return;
     String? text(String value) => value.trim().isEmpty ? null : value.trim();
-    final missing = switch (kind) {
-      DespuesKind.none => false,
-      DespuesKind.place => text(what) == null || text(where) == null,
-      DespuesKind.home => text(what) == null || text(address) == null,
-    };
+    final missing = missingFields(
+      kind: kind,
+      what: what,
+      where: where,
+      address: address,
+    ).isNotEmpty;
     if (missing) {
       emit(const DespuesState(missing: true));
       return;

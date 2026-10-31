@@ -33,16 +33,20 @@ void main() {
       WidgetTester tester,
       ThisWeekState state, {
       Locale locale = rioplatense,
+      bool reduced = false,
     }) {
       when(() => cubit.state).thenReturn(state);
       return tester.pumpApp(
-        RepositoryProvider.value(
-          value: repository,
-          child: BlocProvider.value(
-            value: cubit,
-            child: Scaffold(
-              body: SingleChildScrollView(
-                child: ThisWeekCard(state: state, uid: MyRondaFixtures.uid),
+        reducedMotion(
+          reduced: reduced,
+          child: RepositoryProvider.value(
+            value: repository,
+            child: BlocProvider.value(
+              value: cubit,
+              child: Scaffold(
+                body: SingleChildScrollView(
+                  child: ThisWeekCard(state: state, uid: MyRondaFixtures.uid),
+                ),
               ),
             ),
           ),
@@ -292,18 +296,168 @@ void main() {
       expect(find.text('Todavía no anotaste a nadie, de 1.'), findsOneWidget);
     });
 
-    testWidgets('shows progress and a failed answer', (tester) async {
-      await pump(
+    group('while an answer is on its way', () {
+      testWidgets('rings the pressed button and says so under it', (
         tester,
-        ready(MyRondaFixtures.week())
-            .copyWith(answering: true, answerFailed: true),
+      ) async {
+        final handle = tester.ensureSemantics();
+        await pump(
+          tester,
+          ready(MyRondaFixtures.week())
+              .copyWith(answering: () => RsvpAnswer.no, answerFailed: true),
+        );
+
+        expect(progressIn('rsvp.no'), findsOneWidget);
+        expect(progressIn('rsvp.yes'), findsNothing);
+        expect(find.byType(LinearProgressIndicator), findsNothing);
+        expect(
+          tester.getSemantics(find.text('Guardando tu respuesta…')),
+          isSemantics(isLiveRegion: true),
+        );
+        expect(
+          find.text('No pudimos guardar tu respuesta. Probá de nuevo.'),
+          findsOneWidget,
+        );
+        handle.dispose();
+      });
+
+      testWidgets('takes no second tap', (tester) async {
+        await pump(
+          tester,
+          ready(MyRondaFixtures.week())
+              .copyWith(answering: () => RsvpAnswer.yes),
+        );
+
+        await tester.tap(find.text('Voy'), warnIfMissed: false);
+        await tester.tap(find.text('Esta no'), warnIfMissed: false);
+
+        verifyNever(cubit.yesTapped);
+        verifyNever(cubit.noTapped);
+      });
+
+      testWidgets('says so under an answer given from the sheet', (
+        tester,
+      ) async {
+        await pump(
+          tester,
+          ready(MyRondaFixtures.week(myAnswer: RsvpAnswer.no))
+              .copyWith(answering: () => RsvpAnswer.yes),
+        );
+
+        expect(find.text('Esta no vas.'), findsOneWidget);
+        expect(find.text('Guardando tu respuesta…'), findsOneWidget);
+      });
+    });
+
+    group('swaps the question for the answer', () {
+      Future<void> answer(WidgetTester tester, {bool reduced = false}) async {
+        await pump(tester, ready(MyRondaFixtures.week()), reduced: reduced);
+        await pump(
+          tester,
+          ready(MyRondaFixtures.week(myAnswer: RsvpAnswer.yes)),
+          reduced: reduced,
+        );
+        await tester.pump(AppMotion.crossFade ~/ 2);
+      }
+
+      testWidgets('settling the answer in', (tester) async {
+        await answer(tester);
+
+        expect(swapMotion(), SwapMotion.settle);
+        await tester.pumpAndSettle();
+        expect(swapMotion(), SwapMotion.none);
+        expect(find.text('Vas. Llevá el pan.'), findsOneWidget);
+        expect(find.text('¿Venís?'), findsNothing);
+      });
+
+      testWidgets('with a cross-fade under reduced motion', (tester) async {
+        await answer(tester, reduced: true);
+
+        expect(swapMotion(), SwapMotion.crossFade);
+        await tester.pumpAndSettle();
+        expect(find.text('Vas. Llevá el pan.'), findsOneWidget);
+      });
+
+      testWidgets('reading out only the answer', (tester) async {
+        final handle = tester.ensureSemantics();
+        await answer(tester);
+        expect(find.semantics.byLabel('¿Venís?'), findsNothing);
+        await tester.pumpAndSettle();
+
+        expect(find.semantics.byLabel('¿Venís?'), findsNothing);
+        expect(
+          tester.getSemantics(find.text('Vas. Llevá el pan.')),
+          isSemantics(isLiveRegion: true),
+        );
+        handle.dispose();
+      });
+    });
+
+    group('a seat filling', () {
+      const vos = GoingNeighbour(
+        uid: MyRondaFixtures.uid,
+        firstName: 'Ana',
+        brings: ['pan'],
+      );
+      const raul = GoingNeighbour(
+        uid: 'demo-002',
+        firstName: 'Raúl',
+        brings: ['termo'],
       );
 
-      expect(find.byType(LinearProgressIndicator), findsOneWidget);
-      expect(
-        find.text('No pudimos guardar tu respuesta. Probá de nuevo.'),
-        findsOneWidget,
-      );
+      double? heightOf(String name) => find
+          .ancestor(
+            of: find.text(name),
+            matching: find.byWidgetPredicate(
+              (widget) => widget is Align && widget.heightFactor != null,
+            ),
+          )
+          .evaluate()
+          .map((element) => (element.widget as Align).heightFactor)
+          .first;
+
+      testWidgets('grows a new row in and leaves the others still', (
+        tester,
+      ) async {
+        await pump(tester, ready(MyRondaFixtures.week()));
+        expect(heightOf('Raúl'), 1);
+
+        await pump(
+          tester,
+          ready(
+            MyRondaFixtures.week(
+              myAnswer: RsvpAnswer.yes,
+              going: const [raul, vos],
+            ),
+          ),
+        );
+        expect(heightOf('Vos'), 0);
+        await tester.pump();
+        await tester.pump(AppMotion.standardDuration ~/ 4);
+        expect(heightOf('Vos'), allOf(greaterThan(0), lessThan(1)));
+        expect(heightOf('Raúl'), 1);
+        await tester.pumpAndSettle();
+        expect(heightOf('Vos'), 1);
+        expect(find.text('Van 2 · 1 no puede · 2 sin contestar'), findsOne);
+      });
+
+      testWidgets('is there at once under reduced motion', (tester) async {
+        await pump(tester, ready(MyRondaFixtures.week()), reduced: true);
+        await pump(
+          tester,
+          ready(
+            MyRondaFixtures.week(
+              myAnswer: RsvpAnswer.yes,
+              going: const [raul, vos],
+            ),
+          ),
+          reduced: true,
+        );
+        await tester.pump();
+        await tester.pump();
+
+        expect(heightOf('Vos'), 1);
+      });
     });
 
     testWidgets('carries the identifiers Maestro taps', (tester) async {

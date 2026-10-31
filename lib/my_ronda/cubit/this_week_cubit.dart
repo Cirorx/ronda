@@ -118,8 +118,8 @@ class ThisWeekCubit extends Cubit<ThisWeekState> {
     bool openSheet = false,
   }) async {
     final week = state.week;
-    if (week == null || state.answering) return;
-    emit(state.copyWith(answering: true, answerFailed: false));
+    if (week == null || state.answering != null) return;
+    emit(state.copyWith(answering: () => answer, answerFailed: false));
     try {
       await _rondaRepository.answerRsvp(
         rondaId: week.rondaId,
@@ -128,13 +128,15 @@ class ThisWeekCubit extends Cubit<ThisWeekState> {
       );
     } on RsvpFailure catch (error, stackTrace) {
       addError(error, stackTrace);
-      if (!isClosed) emit(state.copyWith(answering: false, answerFailed: true));
+      if (!isClosed) {
+        emit(state.copyWith(answering: () => null, answerFailed: true));
+      }
       return;
     }
     if (isClosed) return;
     emit(
       state.copyWith(
-        answering: false,
+        answering: () => null,
         changing: false,
         estaNoSheet: openSheet || state.estaNoSheet,
       ),

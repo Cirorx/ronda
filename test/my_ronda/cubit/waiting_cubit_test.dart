@@ -82,7 +82,10 @@ void main() {
         build: build,
         seed: () => didntFill,
         act: (cubit) => cubit.joinTapped(),
-        expect: () => [didntFill.copyWith(saving: true), didntFill],
+        expect: () => [
+          didntFill.copyWith(saving: () => WaitlistChoice.join),
+          didntFill,
+        ],
         verify: (_) => verify(
           () => rondaRepository.chooseAfterWaitlist(WaitlistChoice.join),
         ).called(1),
@@ -93,6 +96,10 @@ void main() {
         build: build,
         seed: () => didntFill,
         act: (cubit) => cubit.waitTapped(),
+        expect: () => [
+          didntFill.copyWith(saving: () => WaitlistChoice.wait),
+          didntFill,
+        ],
         verify: (_) => verify(
           () => rondaRepository.chooseAfterWaitlist(WaitlistChoice.wait),
         ).called(1),
@@ -101,7 +108,7 @@ void main() {
       blocTest<WaitingCubit, WaitingState>(
         'does nothing without a list or while a pick is on its way',
         build: build,
-        seed: () => didntFill.copyWith(saving: true),
+        seed: () => didntFill.copyWith(saving: () => WaitlistChoice.join),
         act: (cubit) async {
           await cubit.joinTapped();
           cubit.emit(const WaitingState());
@@ -121,7 +128,7 @@ void main() {
         seed: () => didntFill,
         act: (cubit) => cubit.waitTapped(),
         expect: () => [
-          didntFill.copyWith(saving: true),
+          didntFill.copyWith(saving: () => WaitlistChoice.wait),
           didntFill.copyWith(saveFailed: true),
         ],
         errors: () => [isA<RsvpFailure>()],
@@ -147,7 +154,7 @@ void main() {
         final failed = failing.waitTapped();
         await failing.close();
         await failed;
-        expect(failing.state.saving, isTrue);
+        expect(failing.state.saving, WaitlistChoice.wait);
       });
     });
   });

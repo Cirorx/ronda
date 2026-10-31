@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ronda/app/widgets/feedback.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
+import 'package:ronda/my_ronda/widgets/answer_bar.dart';
 import 'package:ronda/my_ronda/widgets/this_week_labels.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -10,6 +12,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// closed what came of it for this member: the season, "Gracias por
 /// venir." with nearby rondas, or the "didn't fill" choices. Never a count
 /// or anyone else's answer. Reads the [SeguimosCubit] above.
+///
+/// Each answer and choice is a commit, with a progress ring on the pressed
+/// button while it saves; what it leads to swaps in on a [RondaSwap].
 class const SeguimosCard({super.key}) extends StatelessWidget {
   /// Maestro's handles: the card, the question's prefix (`seguimos.yes`,
   /// `seguimos.no`), "Cambiar" and the two choices.
@@ -29,13 +34,16 @@ class const SeguimosCard({super.key}) extends StatelessWidget {
     final l10n = context.l10n;
     final spacing = context.appSpacing;
     final List<Widget> body;
+    final Object phase;
     if (seguimos.open) {
       body = _question(context, state, seguimos);
+      phase = state.asks ? 'asks' : seguimos.myAnswer!;
     } else {
+      phase = seguimos.outcome ?? 'none';
       body = switch (seguimos.outcome) {
         SeguimosOutcome.season => _season(context, seguimos),
         SeguimosOutcome.gracias => _gracias(context, seguimos),
-        SeguimosOutcome.didntFill => _didntFill(context, seguimos),
+        SeguimosOutcome.didntFill => _didntFill(context, state, seguimos),
         null => const [],
       };
     }
@@ -53,7 +61,6 @@ class const SeguimosCard({super.key}) extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: spacing.sm,
               children: [
-                if (state.saving) const LinearProgressIndicator(),
                 if (state.saveFailed)
                   NoteBanner(
                     variant: NoteBannerVariant.warning,
@@ -64,7 +71,15 @@ class const SeguimosCard({super.key}) extends StatelessWidget {
                     variant: NoteBannerVariant.warning,
                     message: l10n.seguimosClosed,
                   ),
-                ...body,
+                RondaSwap(
+                  layoutBuilder: topStartSwapLayout,
+                  child: Column(
+                    key: ValueKey(phase),
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: spacing.sm,
+                    children: body,
+                  ),
+                ),
               ],
             ),
           ),
@@ -83,7 +98,7 @@ class const SeguimosCard({super.key}) extends StatelessWidget {
     final cubit = context.read<SeguimosCubit>();
     if (state.asks) {
       return [
-        RsvpBar(
+        AnswerBar(
           identifier: answerIdentifier,
           question: l10n.seguimosQuestion(
             l10n.seguimosDays(seguimos.slotDayId),
@@ -93,6 +108,12 @@ class const SeguimosCard({super.key}) extends StatelessWidget {
           noLabel: l10n.seguimosNo,
           onYes: cubit.yesTapped,
           onNo: cubit.noTapped,
+          savingLabel: l10n.thisWeekSaving,
+          pending: switch (state.saving) {
+            SeguimosPick.yes => AnswerSide.yes,
+            SeguimosPick.no => AnswerSide.no,
+            _ => null,
+          },
         ),
         Text(l10n.seguimosSilence, style: textTheme.bodyMedium),
       ];
@@ -180,7 +201,11 @@ class const SeguimosCard({super.key}) extends StatelessWidget {
     ];
   }
 
-  List<Widget> _didntFill(BuildContext context, Seguimos seguimos) {
+  List<Widget> _didntFill(
+    BuildContext context,
+    SeguimosState state,
+    Seguimos seguimos,
+  ) {
     final l10n = context.l10n;
     final textTheme = Theme.of(context).textTheme;
     final cubit = context.read<SeguimosCubit>();
@@ -192,32 +217,50 @@ class const SeguimosCard({super.key}) extends StatelessWidget {
         : l10n.seguimosWaitDetail(l10n.shortDate(until), l10n.shortDate(start));
 
     Widget choice(
+      SeguimosPick pick,
       String identifier,
       String label,
       String? detail,
       VoidCallback onPressed,
-    ) => MergeSemantics(
-      child: Semantics(
-        identifier: identifier,
-        child: OutlinedButton(
-          onPressed: onPressed,
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: context.appSpacing.xs),
-            child: Column(
-              children: [
-                Text(label, textAlign: TextAlign.center),
-                if (detail != null)
-                  Text(
-                    detail,
-                    textAlign: TextAlign.center,
-                    style: textTheme.bodySmall,
-                  ),
-              ],
+    ) {
+      final pressed = state.saving == pick;
+      return MergeSemantics(
+        child: Semantics(
+          identifier: identifier,
+          child: IgnorePointer(
+            ignoring: pressed,
+            child: OutlinedButton(
+              onPressed: switch (state.saving) {
+                null => RondaHaptics.onCommit(onPressed),
+                _ when pressed => () {},
+                _ => null,
+              },
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: context.appSpacing.xs),
+                child: Column(
+                  children: [
+                    BusyLabel(label, busy: pressed),
+                    if (detail != null)
+                      Text(
+                        detail,
+                        textAlign: TextAlign.center,
+                        style: textTheme.bodySmall,
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    }
+
+    final chosen = switch (seguimos.choice) {
+      SeguimosChoice.join when nearby != null => SeguimosChoice.join,
+      SeguimosChoice.wait when until != null && start != null =>
+        SeguimosChoice.wait,
+      _ => null,
+    };
 
     return [
       Semantics(
@@ -230,39 +273,59 @@ class const SeguimosCard({super.key}) extends StatelessWidget {
           style: textTheme.titleMedium,
         ),
       ),
-      ...switch (seguimos.choice) {
-        SeguimosChoice.join when nearby != null => [
-          Text(
-            l10n.seguimosJoinDone(l10n.shortDate(nearby.next)),
-            style: textTheme.bodyLarge,
-          ),
-        ],
-        SeguimosChoice.wait when until != null && start != null => [
-          Text(
-            l10n.seguimosWaitDone(l10n.shortDate(until), l10n.shortDate(start)),
-            style: textTheme.bodyLarge,
-          ),
-        ],
-        _ => [
-          Text(l10n.seguimosDidntFillAsk, style: textTheme.bodyMedium),
-          if (nearby != null)
-            choice(
-              joinIdentifier,
-              l10n.seguimosJoin,
-              l10n.seguimosJoinDetail(
-                _line(l10n, nearby),
-                l10n.shortDate(nearby.next),
+      RondaSwap(
+        layoutBuilder: topStartSwapLayout,
+        child: Column(
+          key: ValueKey(chosen),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: context.appSpacing.sm,
+          children: switch (chosen) {
+            SeguimosChoice.join => [
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  l10n.seguimosJoinDone(l10n.shortDate(nearby!.next)),
+                  style: textTheme.bodyLarge,
+                ),
               ),
-              cubit.joinTapped,
-            ),
-          choice(
-            waitIdentifier,
-            l10n.seguimosWait,
-            waitDetail,
-            cubit.waitTapped,
-          ),
-        ],
-      },
+            ],
+            SeguimosChoice.wait => [
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  l10n.seguimosWaitDone(
+                    l10n.shortDate(until!),
+                    l10n.shortDate(start!),
+                  ),
+                  style: textTheme.bodyLarge,
+                ),
+              ),
+            ],
+            null => [
+              Text(l10n.seguimosDidntFillAsk, style: textTheme.bodyMedium),
+              if (nearby != null)
+                choice(
+                  SeguimosPick.join,
+                  joinIdentifier,
+                  l10n.seguimosJoin,
+                  l10n.seguimosJoinDetail(
+                    _line(l10n, nearby),
+                    l10n.shortDate(nearby.next),
+                  ),
+                  cubit.joinTapped,
+                ),
+              choice(
+                SeguimosPick.wait,
+                waitIdentifier,
+                l10n.seguimosWait,
+                waitDetail,
+                cubit.waitTapped,
+              ),
+              if (state.saving != null) StatusLine(l10n.myRondaChoiceSaving),
+            ],
+          },
+        ),
+      ),
     ];
   }
 
