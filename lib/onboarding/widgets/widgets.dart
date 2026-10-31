@@ -1,4 +1,5 @@
 export 'onboarding_labels.dart';
+export 'onboarding_leave_scope.dart';
 export 'onboarding_next_button.dart';
 export 'onboarding_objects.dart';
 export 'onboarding_pages.dart';

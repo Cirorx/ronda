@@ -17,6 +17,7 @@ import 'package:ronda/payoff/payoff.dart';
 import 'package:ronda/rain_move/rain_move.dart';
 import 'package:ronda/ronda_setup/ronda_setup.dart';
 import 'package:ronda/settings/settings.dart';
+import 'package:ronda/walkthrough/walkthrough.dart';
 import 'package:ronda/welcome/welcome.dart';
 
 /// The welcome screen's query parameter that says where sign-in started,
@@ -24,13 +25,19 @@ import 'package:ronda/welcome/welcome.dart';
 /// honoured.
 const returnToParameter = 'from';
 
-/// Builds the app's router: the welcome screen with sign-in and the terms
-/// under it, onboarding, the payoff with its sign-in under it, and one shell
-/// with a branch per tab.
+/// Builds the app's router: "¿Cómo funciona?", the welcome screen with
+/// sign-in and the terms under it, onboarding, the payoff with its sign-in
+/// under it, and one shell with a branch per tab.
 ///
 /// Where people may be follows [appBloc]'s state, and [refreshListenable]
 /// fires when it changes, so the redirect runs again on every change:
-/// - signed out: the welcome screen and the terms; once a welcome door
+/// - signed out, the first time on this phone: "¿Cómo funciona?"
+///   (`/como-funciona`) before the welcome doors, but only from the app's
+///   own entrance (`/`, Mi ronda); a link to a screen, the welcome screen
+///   itself (the flyers' "Quiero sumarme") or `?from=/admin` goes on as
+///   below;
+/// - signed out: the welcome screen, the terms and "¿Cómo funciona?" (the
+///   welcome screen's link opens it again); once a welcome door
 ///   accepted the terms, also the questions, the payoff and either sign-in
 ///   (the answers stay on the phone until then);
 /// - signed in, profile not read yet: wherever they are;
@@ -74,6 +81,9 @@ GoRouter createAppRouter({
       final onWelcome =
           location == WelcomePage.path ||
           location.startsWith('${WelcomePage.path}/');
+      final onWalkthrough = location == WalkthroughPage.path;
+      // The app's own entrance, not a link to one of its screens.
+      final onEntrance = location == '/' || location == MyRondaPage.path;
       final onOnboarding = location == OnboardingPage.path;
       final onPayoff =
           location == PayoffPage.path ||
@@ -93,6 +103,9 @@ GoRouter createAppRouter({
       // Past a welcome door: the terms are accepted, on this phone.
       final pastDoor = location == LoginPage.path || onOnboarding || onPayoff;
       return switch (app.status) {
+        AppStatus.unauthenticated when onEntrance && !app.walkthroughSeen =>
+          WalkthroughPage.path,
+        AppStatus.unauthenticated when onWalkthrough => null,
         AppStatus.unauthenticated when !onWelcome && !pastDoor => welcome,
         AppStatus.unauthenticated when pastDoor && app.pendingTerms == null =>
           welcome,
@@ -100,7 +113,7 @@ GoRouter createAppRouter({
         AppStatus.onboarding =>
           onOnboarding || onAdmin ? null : returnTo ?? OnboardingPage.path,
         AppStatus.authenticated =>
-          onWelcome || onOnboarding || onPayoff
+          onWelcome || onWalkthrough || onOnboarding || onPayoff
               ? returnTo ?? MyRondaPage.path
               : null,
       };
@@ -125,6 +138,10 @@ GoRouter createAppRouter({
             builder: (_, _) => const TermsPage(),
           ),
         ],
+      ),
+      GoRoute(
+        path: WalkthroughPage.path,
+        builder: (_, _) => const WalkthroughPage(),
       ),
       GoRoute(
         path: OnboardingPage.path,

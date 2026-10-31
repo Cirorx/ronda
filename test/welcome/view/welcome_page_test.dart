@@ -76,6 +76,15 @@ void main() {
         );
       });
 
+      testWidgets('"¿Cómo funciona?" beside the name', (tester) async {
+        final handle = tester.ensureSemantics();
+        await pumpSubject(tester);
+
+        expect(find.text('¿Cómo funciona?'), findsOneWidget);
+        expect(_byId(WelcomePage.howItWorksIdentifier), findsOneWidget);
+        handle.dispose();
+      });
+
       testWidgets('doors Maestro finds by their identifiers', (tester) async {
         final handle = tester.ensureSemantics();
         await pumpSubject(tester);
@@ -223,7 +232,17 @@ void main() {
               tester.getTopLeft(doorsHeading()).dy - copyBottom,
               closeTo(2 * AppSpacing.unit, 1),
             );
-            final top = tester.getTopLeft(find.text('Ronda')).dy;
+            // The name's line, which "¿Cómo funciona?" shares.
+            final top = tester
+                .getTopLeft(
+                  find
+                      .ancestor(
+                        of: find.text('Ronda'),
+                        matching: find.byType(Row),
+                      )
+                      .first,
+                )
+                .dy;
             final bottom = tester.getBottomLeft(termsNote()).dy;
             expect((top + bottom) / 2, closeTo(size.height / 2, 2));
           });

@@ -197,6 +197,28 @@ void main() {
       });
     });
 
+    group('walkthroughSeen', () {
+      test('is false before "¿Cómo funciona?" was shown', () async {
+        expect(await subject.walkthroughSeen(), isFalse);
+      });
+
+      test('is true once markWalkthroughSeen ran', () async {
+        await subject.markWalkthroughSeen();
+
+        expect(await subject.walkthroughSeen(), isTrue);
+        expect(
+          deviceStore.values[ProfileRepository.walkthroughSeenKey],
+          equals('true'),
+        );
+      });
+
+      test('is false for anything else under its key', () async {
+        deviceStore.values[ProfileRepository.walkthroughSeenKey] = '"yes"';
+
+        expect(await subject.walkthroughSeen(), isFalse);
+      });
+    });
+
     group('when the device store fails', () {
       late DeviceStore failing;
 
@@ -229,6 +251,17 @@ void main() {
 
       test('clearHeldAnswers throws $HoldOnPhoneFailure', () {
         expect(subject.clearHeldAnswers(), throwsA(isA<HoldOnPhoneFailure>()));
+      });
+
+      test('markWalkthroughSeen throws $HoldOnPhoneFailure', () {
+        expect(
+          subject.markWalkthroughSeen(),
+          throwsA(isA<HoldOnPhoneFailure>()),
+        );
+      });
+
+      test('walkthroughSeen is false', () async {
+        expect(await subject.walkthroughSeen(), isFalse);
       });
 
       test('heldTerms and heldAnswers return null', () async {

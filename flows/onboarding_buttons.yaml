@@ -22,12 +22,21 @@ tags:
 - launchApp:
     clearState: true
 
+# A cleared phone opens on "¿Cómo funciona?" first; "Saltear" goes to the welcome doors. A debug
+# build takes a few seconds to draw its first frame.
+- extendedWaitUntil:
+    visible:
+      id: walkthrough.skip
+    timeout: 30000
+- tapOn:
+    id: walkthrough.skip
+
 # Welcome: tapping a door accepts the terms (held on the phone) and opens the questions, signed
-# out. A debug build takes a few seconds to draw its first frame.
+# out.
 - extendedWaitUntil:
     visible:
       id: welcome.buttons
-    timeout: 30000
+    timeout: 10000
 - tapOn:
     id: welcome.buttons
 

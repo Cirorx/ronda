@@ -15,7 +15,8 @@ import 'package:ronda_api/ronda_api.dart';
 /// Before anyone signs in, it holds the accepted conditions and the
 /// onboarding answers on this phone, in [DeviceStore], so they survive
 /// backing out of sign-in or the app being closed; once written to
-/// `users/{uid}`, they are cleared.
+/// `users/{uid}`, they are cleared. It also remembers whether this phone
+/// has shown "¿Cómo funciona?", the cards before the welcome doors.
 /// {@endtemplate}
 class ProfileRepository {
   /// {@macro profile_repository}
@@ -29,6 +30,9 @@ class ProfileRepository {
 
   /// The device-store key that holds the onboarding answers until sign-in.
   static const heldAnswersKey = 'held.answers';
+
+  /// The device-store key that says this phone has shown "¿Cómo funciona?".
+  static const walkthroughSeenKey = 'walkthrough.seen';
 
   /// The profile of [uid] now and on every change; `null` until onboarding
   /// has saved one (the document may already hold the accepted terms).
@@ -145,7 +149,17 @@ class ProfileRepository {
   /// Throws a [HoldOnPhoneFailure] when they can't be deleted.
   Future<void> clearHeldAnswers() => _clear(heldAnswersKey);
 
-  Future<void> _hold(String key, Map<String, Object?> json) async {
+  /// Whether this phone has shown "¿Cómo funciona?"; `false` when it
+  /// hasn't or that can't be read.
+  Future<bool> walkthroughSeen() async =>
+      await _held(walkthroughSeenKey) == true;
+
+  /// Remembers on this phone that "¿Cómo funciona?" was shown.
+  ///
+  /// Throws a [HoldOnPhoneFailure] when the phone can't keep it.
+  Future<void> markWalkthroughSeen() => _hold(walkthroughSeenKey, true);
+
+  Future<void> _hold(String key, Object json) async {
     try {
       await _deviceStore.write(key, jsonEncode(json));
     } on Exception {

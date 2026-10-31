@@ -25,6 +25,7 @@ Future<void> main() async {
       required profileRepository,
       required pushRepository,
       required rondaRepository,
+      required walkthroughSeen,
     }) => App(
       authRepository: authRepository,
       contactRepository: contactRepository,
@@ -35,6 +36,7 @@ Future<void> main() async {
       profileRepository: profileRepository,
       pushRepository: pushRepository,
       rondaRepository: rondaRepository,
+      walkthroughSeen: walkthroughSeen,
     ),
     firebaseOptions: DefaultFirebaseOptions.currentPlatform,
     // Production never takes GoogleSignInFlow.emulatorCredential.

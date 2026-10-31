@@ -100,7 +100,28 @@ void main() {
     });
 
     group('back', () {
-      testWidgets('is hidden on the first question', (tester) async {
+      testWidgets('leaves when tapped on the first question, with a way out', (
+        tester,
+      ) async {
+        var left = 0;
+        when(() => cubit.state).thenReturn(const OnboardingState());
+        await tester.pumpApp(
+          BlocProvider.value(
+            value: cubit,
+            child: OnboardingView(onLeave: () => left++),
+          ),
+        );
+
+        await tester.tap(_byId(OnboardingStepLayout.backIdentifier));
+        await tester.pump();
+
+        expect(left, equals(1));
+        verifyNever(() => cubit.back());
+      });
+
+      testWidgets('is hidden on the first question with no way out', (
+        tester,
+      ) async {
         await pumpSubject(tester, const OnboardingState());
 
         expect(_byId(OnboardingStepLayout.backIdentifier), findsNothing);

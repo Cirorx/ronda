@@ -47,6 +47,22 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 - (The Bitácora tab from the planilla is not in the build.)
 
 ## Onboarding
+- **¿Cómo funciona?** (`/como-funciona`, 2026-10-31): three cards before the welcome doors, the
+  first time a signed-out person opens the app on a phone; once they leave it for the doors the
+  phone remembers, and the welcome screen's "¿Cómo funciona?" link opens it again. A link to a screen, the welcome
+  screen itself (the flyers' and Cerca tuyo's [Quiero sumarme] open it) and `?from=/admin` go
+  straight on.
+  1. "Los mismos 5 o 6, cada semana" — "A pocas cuadras, con una excusa: mate en la rambla,
+     truco, fútbol 5." Drawn as the mate, the mazo and the pelota.
+  2. "Un aviso por semana, nada más" — a sample of the weekly card, "Jueves 16:00 · Rambla y
+     Gestido" with "¿Venís?" [Voy] [Esta no] as a picture (nothing to tap), then "No hay nada
+     que revisar todos los días. Si no podés, tocás «Esta no» y nadie pregunta por qué."
+  3. "Un programa se encarga del resto" — "Avisa si llueve, busca quién abre y quién toma tu
+     lugar si no vas. Las decisiones las toman ustedes." Drawn as objects (umbrella, key,
+     chair), never people.
+  Page dots, "Saltear" on every card, [Seguir] and on the last card [Empezar], both to the
+  doors. The cards swipe on the app's spring and follow the arrow keys; wide windows keep them to
+  the readable column.
 - Welcome: "Cinco vecinos, a pocas cuadras, el mismo día todas las semanas." Two doors: "Con un
   audio" ("Hablás un minuto, como en WhatsApp.") / "Tocando botones" ("Siete preguntas
   cortas."). Never asks address, cédula, birth date, or whether you live alone. Age is a band
@@ -88,8 +104,8 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   micrófono", "No pudimos grabar", "No pudimos mandar el audio" (the connection: try again; or
   refused by the server: "Es un problema nuestro, no tuyo", buttons only), "Falta aceptar las
   condiciones" (buttons only), "No pudimos leer el audio".
-- **Order (buttons):** welcome (doors + terms note) → the seven questions and the read-back,
-  signed out → the payoff → "Guardá tu lugar" sign-in → the profile and the terms saved → Mi
+- **Order (buttons):** (on a first open, "¿Cómo funciona?") → welcome (doors + terms note) →
+  the seven questions and the read-back, signed out → the payoff → "Guardá tu lugar" sign-in → the profile and the terms saved → Mi
   ronda. Until sign-in the answers and the terms stay on the phone, so backing out of sign-in
   or closing the app doesn't mean answering again. **Order (voice):** welcome → sign-in → the
   recording → "¿Entendimos bien?" → saved. Signed-in people without a profile land on the steps
@@ -109,6 +125,8 @@ dates in the examples are demo data. Everything not listed here is out of the bu
      noche", "No tengo auto"), marked "Queda guardado solo en este teléfono". These become
      filters; the server gets seat ids. [Seguir] [Saltear].
   7. "¿Cómo te llamás?" ("Solo el nombre de pila. Así te conocen en la ronda.").
+  Back from the first question (the arrow, the phone's back, the browser's back) returns to the
+  welcome doors, signed out; a door opens the questions again from the first.
   Then the read-back "¿Está todo bien?" with every answer and a "Cambiar" on each, "Todavía no
   guardamos nada", and [Está bien, guardalo] (signed out, it keeps the answers on the phone and
   opens the payoff).

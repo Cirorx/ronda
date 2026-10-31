@@ -29,6 +29,7 @@ import 'package:ronda/payoff/payoff.dart';
 import 'package:ronda/rain_move/rain_move.dart';
 import 'package:ronda/ronda_setup/ronda_setup.dart';
 import 'package:ronda/settings/settings.dart';
+import 'package:ronda/walkthrough/walkthrough.dart';
 import 'package:ronda/welcome/welcome.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -148,6 +149,7 @@ void main() {
       when(() => profileRepository.holdTerms(any())).thenAnswer((_) async {});
       when(profileRepository.heldTerms).thenAnswer((_) async => null);
       when(profileRepository.clearHeldTerms).thenAnswer((_) async {});
+      when(profileRepository.markWalkthroughSeen).thenAnswer((_) async {});
       when(() => profileRepository.holdAnswers(any())).thenAnswer(
         (invocation) async =>
             held = invocation.positionalArguments.single as Profile,
@@ -181,7 +183,7 @@ void main() {
       );
     });
 
-    Widget buildSubject() => App(
+    Widget buildSubject({bool walkthroughSeen = true}) => App(
       authRepository: authRepository,
       contactRepository: contactRepository,
       flyerRepository: flyerRepository,
@@ -191,6 +193,7 @@ void main() {
       profileRepository: profileRepository,
       pushRepository: pushRepository,
       rondaRepository: rondaRepository,
+      walkthroughSeen: walkthroughSeen,
     );
 
     /// Pumps the app with [_user] signed in and [profile] read, `_profile`
@@ -203,10 +206,14 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    /// Pumps the app with nobody signed in.
-    Future<void> pumpSignedOut(WidgetTester tester) async {
+    /// Pumps the app with nobody signed in, on a phone that has shown
+    /// "¿Cómo funciona?" unless [firstTime].
+    Future<void> pumpSignedOut(
+      WidgetTester tester, {
+      bool firstTime = false,
+    }) async {
       when(() => authRepository.currentUser).thenReturn(User.empty);
-      await tester.pumpWidget(buildSubject());
+      await tester.pumpWidget(buildSubject(walkthroughSeen: !firstTime));
       await tester.pumpAndSettle();
     }
 
@@ -593,6 +600,124 @@ void main() {
         expect(find.byType(ReviewStep), findsOneWidget);
         expect(find.text('Marta'), findsOneWidget);
         expect(held, equals(_profile));
+      });
+
+      group('the first time on this phone', () {
+        GoRouter routerOf(WidgetTester tester, Type page) =>
+            GoRouter.of(tester.element(find.byType(page)));
+
+        testWidgets('by showing $WalkthroughPage before the doors', (
+          tester,
+        ) async {
+          await pumpSignedOut(tester, firstTime: true);
+
+          expect(find.byType(WalkthroughPage), findsOneWidget);
+          expect(find.byType(WelcomePage), findsNothing);
+          verifyNever(profileRepository.markWalkthroughSeen);
+
+          await tester.tap(
+            find.bySemanticsIdentifier(WalkthroughPage.skipIdentifier),
+          );
+          await tester.pumpAndSettle();
+          expect(find.byType(WelcomePage), findsOneWidget);
+          verify(profileRepository.markWalkthroughSeen).called(1);
+        });
+
+        testWidgets('by showing it only once', (tester) async {
+          await pumpSignedOut(tester, firstTime: true);
+          await tester.tap(
+            find.bySemanticsIdentifier(WalkthroughPage.skipIdentifier),
+          );
+          await tester.pumpAndSettle();
+          // The app's entrance again.
+          routerOf(tester, WelcomePage).go(MyRondaPage.path);
+          await tester.pumpAndSettle();
+
+          expect(find.byType(WelcomePage), findsOneWidget);
+          expect(find.byType(WalkthroughPage), findsNothing);
+        });
+
+        for (final (link, landing) in [
+          (WelcomePage.path, WelcomePage.path),
+          (ActaPage.location('r1'), WelcomePage.path),
+          (
+            '${WelcomePage.path}?$returnToParameter=${AdminPage.path}',
+            '${WelcomePage.path}?$returnToParameter=${AdminPage.path}',
+          ),
+          (
+            AdminPage.path,
+            '${WelcomePage.path}?$returnToParameter=${AdminPage.path}',
+          ),
+        ]) {
+          testWidgets('but not when the app opens on $link', (tester) async {
+            tester.binding.platformDispatcher.defaultRouteNameTestValue = link;
+            addTearDown(
+              tester.binding.platformDispatcher.clearDefaultRouteNameTestValue,
+            );
+            await pumpSignedOut(tester, firstTime: true);
+
+            expect(find.byType(WalkthroughPage), findsNothing);
+            expect(find.byType(WelcomePage), findsOneWidget);
+            expect(
+              routerOf(
+                tester,
+                WelcomePage,
+              ).routeInformationProvider.value.uri.toString(),
+              equals(landing),
+            );
+            verifyNever(profileRepository.markWalkthroughSeen);
+          });
+        }
+
+        testWidgets('by sending signed-in people from it to $MyRondaPage', (
+          tester,
+        ) async {
+          await pumpSignedIn(tester);
+          GoRouter.of(tester.element(find.byType(MyRondaPage)))
+              .go(WalkthroughPage.path);
+          await tester.pumpAndSettle();
+
+          expect(find.byType(WalkthroughPage), findsNothing);
+          expect(find.byType(MyRondaPage), findsOneWidget);
+        });
+      });
+
+      testWidgets('by opening $WalkthroughPage again from $WelcomePage and '
+          'coming back', (tester) async {
+        await pumpSignedOut(tester);
+
+        await tester.tap(
+          find.bySemanticsIdentifier(WelcomePage.howItWorksIdentifier),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(WalkthroughPage), findsOneWidget);
+
+        for (var i = 0; i < WalkthroughPage.cardCount; i++) {
+          await tester.tap(
+            find.bySemanticsIdentifier(WalkthroughPage.nextIdentifier),
+          );
+          await tester.pumpAndSettle();
+        }
+        expect(find.byType(WalkthroughPage), findsNothing);
+        expect(find.byType(WelcomePage), findsOneWidget);
+      });
+
+      testWidgets('by going back from the first question to the doors, '
+          'answering again from the start', (tester) async {
+        await pumpSignedOut(tester);
+        await tester.tap(buttonsDoor());
+        await tester.pumpAndSettle();
+        expect(find.byType(PretextsStep), findsOneWidget);
+
+        await tester.tap(
+          find.bySemanticsIdentifier(OnboardingStepLayout.backIdentifier),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(WelcomePage), findsOneWidget);
+
+        await tester.tap(buttonsDoor());
+        await tester.pumpAndSettle();
+        expect(find.byType(PretextsStep), findsOneWidget);
       });
 
       testWidgets('by going back from $LoginPage to the doors', (tester) async {

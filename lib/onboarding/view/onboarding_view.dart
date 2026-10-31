@@ -7,7 +7,8 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// next as pushed screens do ([StepSwitcher]). The system back
 /// button leaves the recorder for the questions, and steps back through the
 /// questions instead of leaving; on the first question it calls [onLeave],
-/// or leaves when there is none.
+/// or leaves when there is none. The first question's back button calls
+/// [onLeave] too ([OnboardingLeaveScope]).
 class const OnboardingView({
   /// Back from the first question (to the welcome doors, signed out).
   final VoidCallback? onLeave,
@@ -45,24 +46,27 @@ class const OnboardingView({
           cubit.back();
         }
       },
-      child: StepSwitcher<OnboardingScreen>(
-        step: screen,
-        forward: (from, to) => to.isForwardFrom(from),
-        child: switch (screen.step) {
-          _ when page != null && page.length > 1 => OnboardingQuestionPage(
-            page: page,
-            pages: pages,
-            child: OnboardingSectionScope(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: context.appSpacing.xlg,
-                children: [for (final step in page) _question(step)],
+      child: OnboardingLeaveScope(
+        onLeave: onLeave,
+        child: StepSwitcher<OnboardingScreen>(
+          step: screen,
+          forward: (from, to) => to.isForwardFrom(from),
+          child: switch (screen.step) {
+            _ when page != null && page.length > 1 => OnboardingQuestionPage(
+              page: page,
+              pages: pages,
+              child: OnboardingSectionScope(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: context.appSpacing.xlg,
+                  children: [for (final step in page) _question(step)],
+                ),
               ),
             ),
-          ),
-          null => const VoiceNoteStep(),
-          final step => _question(step),
-        },
+            null => const VoiceNoteStep(),
+            final step => _question(step),
+          },
+        ),
       ),
     );
   }

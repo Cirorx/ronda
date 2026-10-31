@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ronda/onboarding/cubit/onboarding_cubit.dart';
+import 'package:ronda/onboarding/widgets/onboarding_leave_scope.dart';
 import 'package:ronda/onboarding/widgets/onboarding_next_button.dart';
 import 'package:ronda/onboarding/widgets/onboarding_pages.dart';
 import 'package:ronda/onboarding/widgets/onboarding_step_layout.dart';
@@ -7,8 +8,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 
 /// {@template onboarding_question}
 /// One question of onboarding: its page's number among the pages
-/// ([OnboardingPages]), the back button (except on the first page, unless
-/// it was opened from the read-back) and "Seguir".
+/// ([OnboardingPages]), the back button (on the first page only when it was
+/// opened from the read-back, or when [OnboardingLeaveScope] gives a way
+/// out) and "Seguir".
 ///
 /// On a page of several questions ([OnboardingSectionScope]) it is only a
 /// section: its title, text and picker, without the bar or the actions,
@@ -63,7 +65,9 @@ class const OnboardingQuestion({
 
 /// {@template onboarding_question_page}
 /// A page of onboarding questions: the [page]'s number among the [pages],
-/// back to the page before, and "Seguir" past the whole page. A page of
+/// back to the page before (on the first page, out of onboarding through
+/// [OnboardingLeaveScope], when it gives a way), and "Seguir" past the
+/// whole page. A page of
 /// one question has its [title]; a page of several lays out each one's
 /// widget as a section ([OnboardingSectionScope]).
 /// {@endtemplate}
@@ -107,7 +111,10 @@ class const OnboardingQuestionPage({
       overline: overline,
       questionNumber: number + 1,
       questionCount: pages.length,
-      onBack: canGoBack ? () => _back(context, number) : null,
+      // The first page leaves onboarding, when there is somewhere to go.
+      onBack: canGoBack
+          ? () => _back(context, number)
+          : OnboardingLeaveScope.of(context),
       primaryAction: OnboardingNextButton(page: page),
       secondaryAction: secondaryAction,
       child: child,

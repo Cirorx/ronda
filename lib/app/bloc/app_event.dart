@@ -21,6 +21,12 @@ final class const AppTermsAccepted({
   List<Object> get props => [door];
 }
 
+/// The person left "¿Cómo funciona?" for the welcome doors: this phone has
+/// shown it.
+final class AppWalkthroughSeen extends AppEvent {
+  const new();
+}
+
 /// The member asked to sign out of this phone.
 final class AppSignOutRequested extends AppEvent {
   const new();

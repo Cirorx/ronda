@@ -4,6 +4,7 @@ import 'package:ronda/app/app.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda/onboarding/onboarding.dart';
+import 'package:ronda/walkthrough/walkthrough.dart';
 import 'package:ronda/welcome/welcome.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -18,7 +19,7 @@ const voiceDoorEnabled = true;
 /// signed out (sign-in comes after the payoff); "Con un audio" to sign-in,
 /// because the server reads the audio. Someone sent here to sign in and
 /// return (`?from=/admin`) goes to sign-in through either door, keeping
-/// that query.
+/// that query. "¿Cómo funciona?" opens the walkthrough again over it.
 class const WelcomePage({
   /// Whether "Con un audio" is shown; [voiceDoorEnabled] in the app.
   final bool showVoiceDoor = voiceDoorEnabled,
@@ -31,6 +32,9 @@ class const WelcomePage({
 
   /// Maestro's handle on "Tocando botones".
   static const buttonsDoorIdentifier = 'welcome.buttons';
+
+  /// Maestro's handle on "¿Cómo funciona?".
+  static const howItWorksIdentifier = 'welcome.howItWorks';
 
   /// Maestro's handle on the conditions link.
   static const termsLinkIdentifier = 'welcome.terms';
@@ -88,11 +92,20 @@ class const WelcomePage({
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         spacing: spacing.md,
                         children: [
-                          Text(
-                            l10n.appTitle,
-                            style: textTheme.headlineSmall?.copyWith(
-                              color: theme.colorScheme.primary,
-                            ),
+                          // The link shares the name's line, so the doors
+                          // don't move down for it.
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  l10n.appTitle,
+                                  style: textTheme.headlineSmall?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                              const Flexible(child: _HowItWorksLink()),
+                            ],
                           ),
                           Semantics(
                             header: true,
@@ -143,6 +156,25 @@ class const WelcomePage({
                 ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "¿Cómo funciona?": the walkthrough again, over the welcome screen.
+class const _HowItWorksLink() extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: AlignmentDirectional.centerEnd,
+      child: MergeSemantics(
+        child: Semantics(
+          identifier: WelcomePage.howItWorksIdentifier,
+          child: TextButton(
+            onPressed: () => context.push(WalkthroughPage.path),
+            child: Text(context.l10n.welcomeHowItWorks),
           ),
         ),
       ),

@@ -196,6 +196,66 @@
     "@welcomeTermsTrailing": {
         "description": "Text after the terms link, usually the full stop"
     },
+    "welcomeHowItWorks": "How does it work?",
+    "@welcomeHowItWorks": {
+        "description": "Link on the welcome screen that opens the walkthrough again"
+    },
+    "walkthroughSkip": "Skip",
+    "@walkthroughSkip": {
+        "description": "Button on every walkthrough card that goes straight to the welcome doors"
+    },
+    "walkthroughNext": "Continue",
+    "@walkthroughNext": {
+        "description": "The walkthrough's primary button, to the next card"
+    },
+    "walkthroughStart": "Get started",
+    "@walkthroughStart": {
+        "description": "The walkthrough's primary button on its last card, to the welcome doors"
+    },
+    "walkthroughProgressSemantics": "Card {current} of {total}",
+    "@walkthroughProgressSemantics": {
+        "description": "What a screen reader says for the walkthrough's page dots",
+        "placeholders": {
+            "current": {
+                "type": "int"
+            },
+            "total": {
+                "type": "int"
+            }
+        }
+    },
+    "walkthroughGroupTitle": "The same 5 or 6, every week",
+    "@walkthroughGroupTitle": {
+        "description": "Heading of the walkthrough's first card"
+    },
+    "walkthroughGroupBody": "A few blocks from home, with an excuse: mate on the rambla, truco, five-a-side football.",
+    "@walkthroughGroupBody": {
+        "description": "Text of the walkthrough's first card"
+    },
+    "walkthroughWeekTitle": "One message a week, that's it",
+    "@walkthroughWeekTitle": {
+        "description": "Heading of the walkthrough's second card"
+    },
+    "walkthroughWeekPreviewWhen": "Thursday 16:00 · Rambla y Gestido",
+    "@walkthroughWeekPreviewWhen": {
+        "description": "Day, hour and place on the walkthrough's sample weekly card (demo data)"
+    },
+    "walkthroughWeekPreviewSemantics": "This is how the message arrives: Thursday 16:00, Rambla y Gestido. Are you coming? I'm in, or Not this one.",
+    "@walkthroughWeekPreviewSemantics": {
+        "description": "What a screen reader says for the sample weekly card, whose buttons do nothing"
+    },
+    "walkthroughWeekBody": "Nothing to check every day. If you can't make it, tap “Not this one” and nobody asks why.",
+    "@walkthroughWeekBody": {
+        "description": "Text of the walkthrough's second card"
+    },
+    "walkthroughProgramTitle": "A program takes care of the rest",
+    "@walkthroughProgramTitle": {
+        "description": "Heading of the walkthrough's third card"
+    },
+    "walkthroughProgramBody": "It tells you if it rains, finds who opens and who takes your place if you can't go. You all make the decisions.",
+    "@walkthroughProgramBody": {
+        "description": "Text of the walkthrough's third card"
+    },
     "termsTitle": "The terms, in short",
     "@termsTitle": {
         "description": "Heading of the short terms screen"

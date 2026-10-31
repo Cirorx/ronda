@@ -44,6 +44,7 @@ typedef AppBuilder = FutureOr<Widget> Function({
   required ProfileRepository profileRepository,
   required PushRepository pushRepository,
   required RondaRepository rondaRepository,
+  required bool walkthroughSeen,
 });
 
 /// Where every Ronda function and callable runs (`docs/STACK.md` gotcha 3).
@@ -339,6 +340,10 @@ Future<void> bootstrap(
     email: rondaContactEmail,
   );
 
+  // Read before the first frame, so the router knows whether a first-time
+  // visitor sees "¿Cómo funciona?" before the welcome doors.
+  final walkthroughSeen = await profileRepository.walkthroughSeen();
+
   final app = await builder(
     authRepository: authRepository,
     contactRepository: contactRepository,
@@ -349,6 +354,7 @@ Future<void> bootstrap(
     profileRepository: profileRepository,
     pushRepository: pushRepository,
     rondaRepository: rondaRepository,
+    walkthroughSeen: walkthroughSeen,
   );
   // Above the app rather than in AppBuilder, so monitoring stays out of the
   // repositories' wiring: the voice cubit reads the ErrorReporter for

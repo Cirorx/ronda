@@ -34,12 +34,23 @@ final class const AppState({
   /// The welcome door tapped last, so onboarding opens on its path after
   /// sign-in.
   final OnboardingDoor door = OnboardingDoor.buttons,
+
+  /// Whether this phone has shown "¿Cómo funciona?"; until it has, a
+  /// signed-out person opening the app sees it before the welcome doors.
+  final bool walkthroughSeen = false,
 }) extends Equatable {
   /// [AppStatus.unauthenticated] for [User.empty]; otherwise
   /// [AppStatus.loadingProfile] for [user], until the profile is read.
-  factory fromUser(User user) => user.isEmpty
-      ? const AppState(status: AppStatus.unauthenticated)
-      : AppState(status: AppStatus.loadingProfile, user: user);
+  factory fromUser(User user, {bool walkthroughSeen = false}) => user.isEmpty
+      ? AppState(
+          status: AppStatus.unauthenticated,
+          walkthroughSeen: walkthroughSeen,
+        )
+      : AppState(
+          status: AppStatus.loadingProfile,
+          user: user,
+          walkthroughSeen: walkthroughSeen,
+        );
 
   /// This state with [status].
   AppState withStatus(AppStatus status) => AppState(
@@ -47,6 +58,7 @@ final class const AppState({
     user: user,
     pendingTerms: pendingTerms,
     door: door,
+    walkthroughSeen: walkthroughSeen,
   );
 
   /// This state with [pendingTerms], or none when `null`.
@@ -55,6 +67,7 @@ final class const AppState({
     user: user,
     pendingTerms: pendingTerms,
     door: door,
+    walkthroughSeen: walkthroughSeen,
   );
 
   /// This state with [door].
@@ -63,8 +76,24 @@ final class const AppState({
     user: user,
     pendingTerms: pendingTerms,
     door: door,
+    walkthroughSeen: walkthroughSeen,
+  );
+
+  /// This state once "¿Cómo funciona?" was shown.
+  AppState withWalkthroughSeen() => AppState(
+    status: status,
+    user: user,
+    pendingTerms: pendingTerms,
+    door: door,
+    walkthroughSeen: true,
   );
 
   @override
-  List<Object?> get props => [status, user, pendingTerms, door];
+  List<Object?> get props => [
+    status,
+    user,
+    pendingTerms,
+    door,
+    walkthroughSeen,
+  ];
 }

@@ -17,10 +17,18 @@ tags:
     permissions:
       microphone: allow
 
+# A cleared phone opens on "¿Cómo funciona?" first; "Saltear" goes to the welcome doors.
+- extendedWaitUntil:
+    visible:
+      id: walkthrough.skip
+    timeout: 30000
+- tapOn:
+    id: walkthrough.skip
+
 - extendedWaitUntil:
     visible:
       id: welcome.buttons
-    timeout: 30000
+    timeout: 10000
 - scrollUntilVisible:
     element:
       id: welcome.voice

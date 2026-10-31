@@ -28,12 +28,19 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     required this._profileRepository,
     required this._pushRepository,
     this._now = DateTime.now,
+    bool walkthroughSeen = false,
   }) : _authRepository = authRepository,
-       super(AppState.fromUser(authRepository.currentUser)) {
+       super(
+         AppState.fromUser(
+           authRepository.currentUser,
+           walkthroughSeen: walkthroughSeen,
+         ),
+       ) {
     on<AppUserSubscriptionRequested>(_onUserSubscriptionRequested);
     // A new user cancels the previous user's profile subscription.
     on<_AppUserChanged>(_onUserChanged, transformer: restartable());
     on<AppTermsAccepted>(_onTermsAccepted);
+    on<AppWalkthroughSeen>(_onWalkthroughSeen);
     // A second tap while the first sign-out runs does nothing.
     on<AppSignOutRequested>(_onSignOutRequested, transformer: droppable());
   }
@@ -69,6 +76,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
           status: AppStatus.unauthenticated,
           pendingTerms: state.pendingTerms,
           door: state.door,
+          walkthroughSeen: state.walkthroughSeen,
         ),
       );
       return;
@@ -80,6 +88,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
         user: user,
         pendingTerms: state.pendingTerms,
         door: state.door,
+        walkthroughSeen: state.walkthroughSeen,
       ),
     );
     // Held on the phone too, for a sign-in that outlived the app.
@@ -140,6 +149,21 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     try {
       await _authRepository.signOut();
     } on SignOutFailure catch (error, stackTrace) {
+      addError(error, stackTrace);
+    }
+  }
+
+  /// Remembers "¿Cómo funciona?" as shown, in memory first so the router
+  /// stops sending people to it, then on this phone.
+  Future<void> _onWalkthroughSeen(
+    AppWalkthroughSeen event,
+    Emitter<AppState> emit,
+  ) async {
+    if (!state.walkthroughSeen) emit(state.withWalkthroughSeen());
+    try {
+      await _profileRepository.markWalkthroughSeen();
+    } on HoldOnPhoneFailure catch (error, stackTrace) {
+      // Shown again on the next open, which is all it costs.
       addError(error, stackTrace);
     }
   }

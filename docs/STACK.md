@@ -63,7 +63,7 @@ Target package map (create each when its first feature needs it, with the Very G
 |---|---|---|---|
 | `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
 | `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`, `answer_bench_offer`, `answer_waitlist`) | #13 |
-| `device_store` | Data | flutter_secure_storage (needs, and the terms and answers held until sign-in); a flags API over shared_preferences is added when a feature needs one | #18 |
+| `device_store` | Data | flutter_secure_storage (needs, the terms and answers held until sign-in, and whether "¿Cómo funciona?" was shown); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
 | `push_repository` | Repository | The notification permission, the "Ahora no" snooze, and the FCM token under `users/{uid}/tokens` (over `push_client` + `ronda_api` + `device_store`); the token never leaves it | #27 |
@@ -72,7 +72,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | `link_opener` | Data | url_launcher: a `mailto:`, `tel:` or `https:` link to the phone's mail app, dialer or browser; the app opens links only through it | #54 |
 | `flyer_repository` | Repository | The "Un mate de más" flyer: blurred photo → `make_mate_flyer` → share (over `face_blur`, `ronda_api`, `share_sheet`); its upload takes only a `BlurredPhoto` | #44 |
 | `auth_repository` | Repository | `FirebaseAuth` passed in from bootstrap; Google's page to make an account, over `link_opener` | #13 |
-| `profile_repository` | Repository | Profile, eligible seat ids (over `ronda_api`); the terms and answers held on the phone until sign-in (over `device_store`) | #18 |
+| `profile_repository` | Repository | Profile, eligible seat ids (over `ronda_api`); the terms and answers held on the phone until sign-in, and whether "¿Cómo funciona?" was shown (over `device_store`) | #18 |
 | `needs_repository` | Repository | Needs and the seat filter, over `device_store` only: this repository has no network path | #18 |
 | `onboarding_repository` | Repository | Voice note → upload → `extract` → fields (over `voice_recorder` + `ronda_api`) | #19 |
 | `ronda_repository` | Repository | Rondas, weeks, RSVPs, proposals (proposals built in #25), Cerca tuyo's demand by barrio (#52), place, hour, hosts and attendance (#47) | #25 |

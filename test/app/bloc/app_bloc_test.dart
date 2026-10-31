@@ -93,6 +93,65 @@ void main() {
       );
     });
 
+    test('starts with "¿Cómo funciona?" seen when this phone showed it', () {
+      expect(
+        AppBloc(
+          authRepository: authRepository,
+          profileRepository: profileRepository,
+          pushRepository: pushRepository,
+          walkthroughSeen: true,
+        ).state,
+        equals(
+          const AppState(
+            status: AppStatus.unauthenticated,
+            walkthroughSeen: true,
+          ),
+        ),
+      );
+    });
+
+    group(AppWalkthroughSeen, () {
+      blocTest<AppBloc, AppState>(
+        'marks it seen, in memory and on this phone',
+        setUp: () =>
+            when(profileRepository.markWalkthroughSeen)
+                .thenAnswer((_) async {}),
+        build: buildBloc,
+        act: (bloc) => bloc.add(const AppWalkthroughSeen()),
+        expect: () => const [
+          AppState(status: AppStatus.unauthenticated, walkthroughSeen: true),
+        ],
+        verify: (_) => verify(profileRepository.markWalkthroughSeen).called(1),
+      );
+
+      blocTest<AppBloc, AppState>(
+        'emits nothing new when it was already seen',
+        setUp: () =>
+            when(profileRepository.markWalkthroughSeen)
+                .thenAnswer((_) async {}),
+        build: buildBloc,
+        seed: () => const AppState(
+          status: AppStatus.unauthenticated,
+          walkthroughSeen: true,
+        ),
+        act: (bloc) => bloc.add(const AppWalkthroughSeen()),
+        expect: () => const <AppState>[],
+      );
+
+      blocTest<AppBloc, AppState>(
+        'keeps it seen in memory and reports a phone that cannot hold it',
+        setUp: () =>
+            when(profileRepository.markWalkthroughSeen)
+                .thenThrow(const HoldOnPhoneFailure()),
+        build: buildBloc,
+        act: (bloc) => bloc.add(const AppWalkthroughSeen()),
+        expect: () => const [
+          AppState(status: AppStatus.unauthenticated, walkthroughSeen: true),
+        ],
+        errors: () => [isA<HoldOnPhoneFailure>()],
+      );
+    });
+
     group(AppSignOutRequested, () {
       setUp(() {
         when(() => authRepository.currentUser).thenReturn(_user);
@@ -547,10 +606,33 @@ void main() {
     });
   });
 
+  group('AppState.withWalkthroughSeen', () {
+    test('keeps everything else', () {
+      expect(
+        AppState(
+          status: AppStatus.onboarding,
+          user: _user,
+          pendingTerms: _terms,
+          door: OnboardingDoor.voice,
+        ).withWalkthroughSeen(),
+        equals(
+          AppState(
+            status: AppStatus.onboarding,
+            user: _user,
+            pendingTerms: _terms,
+            door: OnboardingDoor.voice,
+            walkthroughSeen: true,
+          ),
+        ),
+      );
+    });
+  });
+
   group(AppEvent, () {
     test('carries the door as its only prop', () {
       expect(const AppUserSubscriptionRequested().props, isEmpty);
       expect(const AppSignOutRequested().props, isEmpty);
+      expect(const AppWalkthroughSeen().props, isEmpty);
       expect(
         const AppTermsAccepted(door: OnboardingDoor.voice).props,
         equals([OnboardingDoor.voice]),

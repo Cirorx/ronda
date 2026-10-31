@@ -29,6 +29,10 @@ class const App({
   required final ProfileRepository profileRepository,
   required final PushRepository pushRepository,
   required final RondaRepository rondaRepository,
+
+  /// Whether this phone has shown "¿Cómo funciona?", read before the app
+  /// starts so the first screen is already the right one.
+  required final bool walkthroughSeen,
   super.key,
 }) extends StatelessWidget {
   @override
@@ -50,6 +54,7 @@ class const App({
           authRepository: authRepository,
           profileRepository: profileRepository,
           pushRepository: pushRepository,
+          walkthroughSeen: walkthroughSeen,
         )..add(const AppUserSubscriptionRequested()),
         child: const AppView(),
       ),
