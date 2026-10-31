@@ -229,7 +229,7 @@ service cloud.firestore {
     }
 
     // A rain proposal for one meeting, opened by its host from the push: `get` only, so
-    // nobody lists a ronda's proposals. places/{id} and users/{uid}/private/agent stay closed.
+    // nobody lists a ronda's proposals. places/{id}, osm_places/{id} and users/{uid}/private/agent stay closed.
     match /rondas/{rondaId}/moves/{week} {
       allow get: if request.auth != null && resource.data.hostUid == request.auth.uid;
     }

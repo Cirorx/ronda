@@ -95,10 +95,11 @@ class ChatModel:
         import openai
 
         try:
+            # An empty `tools` list is a 400; a plain question sends none.
             stream = self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,
-                tools=tools,
+                **({"tools": tools} if tools else {}),
                 stream=True,
                 extra_body={"reasoning_effort": self._effort},
             )

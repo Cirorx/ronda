@@ -12,6 +12,8 @@ dependencies:
     path: packages/auth_repository
   bloc: ^9.2.1
   bloc_concurrency: ^0.3.0
+  calendar_client:
+    path: packages/calendar_client
   cloud_firestore: ^7.1.0
   cloud_functions: ^7.0.1
   contact_repository:
@@ -68,6 +70,8 @@ dependencies:
     path: packages/ronda_ui
   share_sheet:
     path: packages/share_sheet
+  small_plan_repository:
+    path: packages/small_plan_repository
   voice_recorder:
     path: packages/voice_recorder
 

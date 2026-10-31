@@ -24,7 +24,7 @@ Phone (Flutter: iOS, Android, web)
   └─ FCM pushes in; RSVP / attendance / reports out
 Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign-in off)
   ├─ Firestore: users, rondas, weeks, waitlists, proposals, reports, acta, agent_runs,
-  │    client_errors
+  │    client_errors, osm_places
   ├─ Storage: audio + blurred photos; deleted on success, hourly sweeper, lifecycle as backstop
   ├─ Functions (Python 3.13, 2nd gen):
   │    callables  extract (Transcribe → Spark), read_line (Transcribe only, the cuaderno's voice
@@ -39,6 +39,8 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   │               pick after a waiting list didn't fill),
   │               set_despues and answer_despues (the después), answer_handoff ("¿Abrís
   │               vos?"), buddy_options and set_buddy (the buddy),
+  │               suggest_small_plans and shape_small_plan (Algo chico esta semana: they
+  │               write nothing),
   │               report_client_error (the web app's error log; works signed out),
   │               post_donde_queda, pass_donde_queda and guess_donde_queda (¿Dónde queda?)
   │    triggers   bench_on_answer (an RSVP answer changed) and bench_on_offer (an offer
@@ -417,6 +419,17 @@ isn't set up).
   article, "el Salón Comunal de El Pinar"), barrios[], covered, kind (`public`). Read by the
   server only. The demo set is `data/demo/invented_places.json`; the real project has none until
   the owner adds them.
+- `osm_places/{id}` (Algo chico esta semana, #56; `functions/free_places.py`): the OpenStreetMap
+  cache, written by `scripts/osm_places.py` (one Overpass query for Ciudad de la Costa with a
+  User-Agent, never from a phone) and read by the server only: name (with its article, "la
+  Plaza de los Aromos"), kind (`park` | `promenade` | `library` | `marketplace`), lat, lng,
+  openingHours? (OSM's syntax, read by `functions/opening_hours.py`), source and fetchedAt (the
+  ODbL credit). Distance is blocks from the member's barrio centroid, as the solver measures a
+  walk, within ten for everyone: the phone sends nothing about its needs. `demo-*` ids are the
+  invented set of `data/demo/invented_osm_places.json` and count only on the emulators and
+  `demo-*` projects (`demo_users.demo_counts_here`). Algo chico itself stores nothing on the
+  server: the plan is on the phone (`device_store`), and `suggest_small_plans` and
+  `shape_small_plan` write no document and log only ids, sizes and timings.
 - `users/{uid}/private/agent`: what the gates remember of a person: introducedAt (their first
   organiser message, which carries "Soy un programa") and routine {isoWeek: at}. No client
   reads it.
@@ -702,7 +715,7 @@ code jobs with no model, § Data model, the weekly loop's code jobs):
 |---|---|---|
 | Open-Meteo | CC BY 4.0 data; free tier non-commercial | Hourly rain, gusts, sunset |
 | DNT metropolitan GTFS (catalogodatos.gub.uy; Canelones ↔ Montevideo lines, not urban STM) | DAG UY | Last bus ("horario publicado") |
-| OpenStreetMap via Overpass | ODbL, attribution | Places (plazas, clubs, canchas) |
+| OpenStreetMap via Overpass | ODbL, attribution | Places (plazas, clubs, canchas); the free places Algo chico suggests (`osm_places`) |
 | Meta HDX population maps | CC BY | After the hackathon: flyer placement |
 | INUMET forecast JSON | No licence granted | **Not used** until permission |
 

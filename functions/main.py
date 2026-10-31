@@ -868,3 +868,96 @@ def guess_donde_queda(req: https_fn.CallableRequest) -> dict:
     return _donde_queda_call(
         req, lambda: donde_queda.guess(_firestore(), req.auth.uid, req.data, _now())
     )
+
+
+# --- Algo chico esta semana (#56): nothing here writes a document ---------------------------
+
+
+@https_fn.on_call(
+    region=REGION,
+    max_instances=3,
+    timeout_sec=120,
+    memory=options.MemoryOption.MB_512,
+    secrets=[MODEL_API_KEY],
+    invoker="public",
+)
+def shape_small_plan(req: https_fn.CallableRequest) -> dict:
+    """Turns what the caller said into one small dated plan: `{text}` they typed or `{path}` of
+    a voice note at `audio/{uid}/{id}.wav` (Voice Transcribe, deleted once read), then Spark
+    1.3 and the filter, with the day from Open-Meteo. Answers `{plan}` or `{rejected}`; keeps
+    nothing (`small_plans.py`)."""
+    import httpx
+    from google.api_core.exceptions import NotFound
+    from openai import OpenAI
+
+    import small_plans
+    import voice_signup as voice
+    from organiser.weather import OpenMeteo
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "Sign in first.")
+    uid = req.auth.uid
+    user = _firestore().collection("users").document(uid).get().to_dict()
+    key = MODEL_API_KEY.value
+    error = https_fn.FunctionsErrorCode
+    try:
+        with httpx.Client() as http:
+            return small_plans.shape_request(
+                uid=uid,
+                data=req.data,
+                user=user,
+                now=_now(),
+                blob=_bucket().blob,
+                api_key=key,
+                http=http,
+                client=OpenAI(base_url=voice.META_BASE, api_key=key, timeout=60, max_retries=2),
+                weather=OpenMeteo(http),
+            )
+    except voice.TermsMissing as e:
+        raise https_fn.HttpsError(error.FAILED_PRECONDITION, "Accept the terms first.") from e
+    except (voice.BadVoiceNote, small_plans.BadWords) as e:
+        raise https_fn.HttpsError(error.INVALID_ARGUMENT, "We couldn't read that.") from e
+    except PermissionError as e:
+        raise https_fn.HttpsError(error.PERMISSION_DENIED, "Not your note.") from e
+    except NotFound as e:
+        raise https_fn.HttpsError(error.NOT_FOUND, "No note at that path.") from e
+    except voice.ModelUnavailable as e:
+        raise https_fn.HttpsError(error.UNAVAILABLE, "Try again in a moment.") from e
+
+
+@https_fn.on_call(
+    region=REGION,
+    max_instances=3,
+    timeout_sec=90,
+    memory=options.MemoryOption.MB_512,
+    secrets=[MODEL_API_KEY, BASETEN_API_KEY],
+    invoker="public",
+)
+def suggest_small_plans(req: https_fn.CallableRequest) -> dict:
+    """Three suggestions for the caller's small plan this week: free places near their barrio
+    from the OSM cache, a dry day from Open-Meteo, and Muse Spark Open's pick of three that fit
+    what they like to do (the rules pick when it, and Spark 1.3 behind it, can't). Keeps
+    nothing (`plan_suggestions.py`)."""
+    import httpx
+
+    import free_places
+    import plan_suggestions
+    from organiser.model import ModelUnavailable, from_environment
+    from organiser.weather import OpenMeteo
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "Sign in first.")
+    db = _firestore()
+    user = db.collection("users").document(req.auth.uid).get().to_dict()
+    try:
+        model = from_environment()
+    except ModelUnavailable:
+        model = None
+    with httpx.Client() as http:
+        return plan_suggestions.suggest(
+            user=user,
+            places=free_places.nearby(db, (user or {}).get("barrio")),
+            now=_now(),
+            weather=OpenMeteo(http),
+            model=model,
+        )

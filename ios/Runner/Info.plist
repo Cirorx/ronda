@@ -5,7 +5,11 @@
 	<key>FirebaseCrashlyticsCollectionEnabled</key>
 	<false/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Ronda uses the microphone only while you record your introduction. The recording is deleted as soon as we read it.</string>
+	<string>Ronda uses the microphone only while you record your introduction or your plan for the week. The recording is deleted as soon as we read it.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Ronda adds your plan for the week to your calendar when you ask it to. It never reads your events.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Your calendar may suggest places from your contacts when you save a plan. Ronda never reads them.</string>
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>en</string>

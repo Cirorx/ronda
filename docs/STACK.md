@@ -62,7 +62,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | Package | Layer | Wraps / owns | First issue |
 |---|---|---|---|
 | `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
-| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`, `answer_bench_offer`, `answer_waitlist`, `post_donde_queda`, `pass_donde_queda`, `guess_donde_queda`, and `read_line` and `make_postcard` through `CuadernoApi`, which has no Firestore or Storage client) | #13 |
+| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`, `answer_bench_offer`, `answer_waitlist`, `suggest_small_plans`, `shape_small_plan`, `post_donde_queda`, `pass_donde_queda`, `guess_donde_queda`, and `read_line` and `make_postcard` through `CuadernoApi`, which has no Firestore or Storage client) | #13 |
 | `device_store` | Data | flutter_secure_storage (needs, the terms and answers held until sign-in, and whether "¿Cómo funciona?" was shown); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
@@ -70,6 +70,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | `face_blur` | Data | `image_picker`, ML Kit face detection + `image` pixelation (native only); only it makes a `BlurredPhoto` | #44 |
 | `donde_queda_repository` | Repository | ¿Dónde queda?: the game and last week's answer, the photo over the same `face_blur` pipeline as the flyer (its post takes only a `BlurredPhoto`), "Esta semana no" and the one pin (over `face_blur` + `ronda_api`'s `DondeQuedaApi`) | #58 |
 | `share_sheet` | Data | share_plus: one file to the phone's share sheet | #44 |
+| `calendar_client` | Data | add_2_calendar: one event into the phone's own calendar (the calendar app opens with it filled in); on web an `.ics` file through `package:web` | #56 |
 | `link_opener` | Data | url_launcher: a `mailto:`, `tel:` or `https:` link to the phone's mail app, dialer or browser; the app opens links only through it | #54 |
 | `cuaderno_repository` | Repository | El cuaderno del barrio (#59): lines, the line to bring and deleting it all, over `device_store` only (`cuaderno.{uid}`, no network path); a short voice note → `audio/{uid}/…` → `read_line` (Voice Transcribe, deleted once read) → words; `make_postcard` (the week's lines in the payload, the JPEG in the answer, stored nowhere); the share sheet (over `device_store`, `voice_recorder`, `ronda_api`, `share_sheet`) | #59 |
 | `flyer_repository` | Repository | The "Un mate de más" flyer: blurred photo → `make_mate_flyer` → share (over `face_blur`, `ronda_api`, `share_sheet`); its upload takes only a `BlurredPhoto` | #44 |
@@ -79,6 +80,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | `onboarding_repository` | Repository | Voice note → upload → `extract` → fields (over `voice_recorder` + `ronda_api`) | #19 |
 | `ronda_repository` | Repository | Rondas, weeks, RSVPs, proposals (proposals built in #25), Cerca tuyo's demand by barrio (#52), place, hour, hosts and attendance (#47) | #25 |
 | `organiser_repository` | Repository | The organiser agent: the admin's trace (`agent_runs`), a ronda's acta and [Algo estuvo mal], the host's rain proposal and pick, the rain check by hand (over `ronda_api`'s `OrganiserApi`) | #49 |
+| `small_plan_repository` | Repository | Algo chico esta semana: the three suggestions and a plan said or typed (over `ronda_api`'s `SmallPlansApi` and the voice note path), the plan kept on the phone under the uid (`device_store`), the calendar (`calendar_client`) and the follow-up (over `voice_recorder` too: it repeats `OnboardingRepository`'s few lines rather than import it) | #56 |
 | `contact_repository` | Repository | The contact address (`RONDA_CONTACT_EMAIL`) and the helplines: a mail to Ronda or a call, opened in the person's own app (over `link_opener`) | #54 |
 | `error_reporter` | Repository | Error monitoring (§ Monitoring): `ErrorReporter` with Crashlytics (`firebase_crashlytics`), the `report_client_error` callable (web) and a local log; the scrubber; the error hooks; the admin's `ClientErrorLog` over Firestore. Takes the Firebase clients from bootstrap, like `auth_repository` | error log |
 
@@ -269,6 +271,7 @@ dependencies:
   flutter_secure_storage: ^11.2.0        # needs, device-only
   shared_preferences: ^2.5.6     # non-sensitive flags only (it is backed up)
   url_launcher: ^6.3.3
+  add_2_calendar: ^3.1.1         # "Agregar al calendario": the phone's calendar app, prefilled
   formz: ^0.8.1                  # validated form inputs (VGV static-security)
   qr_flutter: ^4.1.0             # only for an in-app QR; flyer QRs are made server-side
 
@@ -300,6 +303,31 @@ Python functions (`functions/requirements.txt`): `firebase-functions`, `firebase
 `functions/fonts` links to `packages/ronda_ui/assets/fonts` (OFL 1.1), as `functions/ronda_solver`
 links to the solver. Check WAV headers with the
 stdlib `wave` module (`audioop` is gone in 3.13).
+
+## Algo chico esta semana (#56)
+
+- **Calendar:** `add_2_calendar` 3.1.1 (pub.dev, 160/160 points, the most used of its kind, maintained
+  for Flutter 3.41+), inside `packages/calendar_client`. It hands the event to the phone's own
+  calendar app, so Ronda needs no calendar permission to read or write and sends no reminder. It
+  ships a Swift Package, so the iOS build stays on Swift Package Manager (the only CocoaPods are
+  still the two ML Kit pods). Android needs the `INSERT` event intent in the manifest's
+  `<queries>` (§ Native and project checklist); iOS 17 and later opens the system's event editor
+  with no prompt, 15.5 to 16 asks for the calendar (`NSCalendarsUsageDescription`, with its
+  `es.lproj` text), and the plugin asks for `NSContactsUsageDescription` because the editor's
+  place field can suggest from contacts. Web builds the `.ics` itself (`buildIcs`, floating times
+  so a calendar shows the wall-clock time written) and downloads it through `package:web`, behind
+  a conditional import so the VM tests never load it.
+- **Plan on the phone:** `device_store` under `smallPlan.<uid>` (the plan) and
+  `smallPlan.<uid>.skipped` (the Monday of the week the offer was put off), so a second account
+  on the same phone sees nothing of the first's. Nothing older than last week is kept.
+- **Server:** `functions/small_plans.py` (the filter, test-first: `tests/test_small_plan_filter.py`),
+  `plan_suggestions.py`, `free_places.py`, `opening_hours.py`; Open-Meteo's range in
+  `OpenMeteo.days` (one request for the week). `scripts/osm_places.py` fills `osm_places` from
+  Overpass (23 places for Ciudad de la Costa on 2026-10-31, mostly parks: few ramblas are tagged
+  the way the query reads them).
+- **Widget tests:** stopping a recording awaits the periodic timer's cancel, which completes in
+  the root zone and so never under the fake clock; tests that press "Terminé" or "Cancelar" let
+  the real loop turn once (`tester.runAsync`), as `small_plan_sheet_test.dart` does.
 
 ## Choices
 

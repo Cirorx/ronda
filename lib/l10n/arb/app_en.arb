@@ -3210,6 +3210,314 @@
     "@buddyAskNotNow": {
         "description": "Mi ronda: close the buddy card"
     },
+    "smallPlanOfferTitle": "Want to set yourself something small this week?",
+    "@smallPlanOfferTitle": {
+        "description": "Mi ronda, under the week's card: the offer, once a week"
+    },
+    "smallPlanOfferBody": "One small thing, with a day, a time and a place. It stays on this phone.",
+    "@smallPlanOfferBody": {
+        "description": "Mi ronda: what the small plan is, under its offer"
+    },
+    "smallPlanOfferChoose": "Pick something",
+    "@smallPlanOfferChoose": {
+        "description": "Mi ronda: opens the choice of a small plan"
+    },
+    "smallPlanOfferNotThisWeek": "Not this week",
+    "@smallPlanOfferNotThisWeek": {
+        "description": "Mi ronda: puts the offer off until next week"
+    },
+    "smallPlanSetTitle": "Your small thing this week",
+    "@smallPlanSetTitle": {
+        "description": "Mi ronda: the title of this week's small plan"
+    },
+    "smallPlanAddToCalendar": "Add to calendar",
+    "@smallPlanAddToCalendar": {
+        "description": "Mi ronda: opens the phone's calendar with the plan"
+    },
+    "smallPlanChange": "Change",
+    "@smallPlanChange": {
+        "description": "Mi ronda: opens the choice of a small plan again"
+    },
+    "smallPlanCalendarOpened": "Your calendar opened with the plan. Save it there.",
+    "@smallPlanCalendarOpened": {
+        "description": "Mi ronda: said after the phone's calendar opened"
+    },
+    "smallPlanCalendarDownloaded": "We downloaded a file for your calendar. Open it to add the plan.",
+    "@smallPlanCalendarDownloaded": {
+        "description": "Mi ronda, web: said after the .ics file downloaded"
+    },
+    "smallPlanCalendarFailed": "We couldn't open your calendar.",
+    "@smallPlanCalendarFailed": {
+        "description": "Mi ronda: said when the calendar could not be opened"
+    },
+    "smallPlanFollowUpYes": "Yes",
+    "@smallPlanFollowUpYes": {
+        "description": "Mi ronda: answers last week's small plan question"
+    },
+    "smallPlanFollowUpNo": "Not this time",
+    "@smallPlanFollowUpNo": {
+        "description": "Mi ronda: answers last week's small plan question"
+    },
+    "smallPlanFollowUpReply": "Noted. Thanks for telling us.",
+    "@smallPlanFollowUpReply": {
+        "description": "Mi ronda: the same plain reply to either answer about last week's plan"
+    },
+    "smallPlanLoadError": "We couldn't read your plan on this phone.",
+    "@smallPlanLoadError": {
+        "description": "Mi ronda: the small plan could not be read from the phone"
+    },
+    "smallPlanSaveError": "We couldn't keep your plan on this phone.",
+    "@smallPlanSaveError": {
+        "description": "Mi ronda: the small plan could not be kept on the phone"
+    },
+    "smallPlanWhen": "{day} at {time}",
+    "@smallPlanWhen": {
+        "description": "A small plan's day and time, inside a sentence",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            },
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "smallPlanLine": "{what}, {when}{placeTail}.",
+    "@smallPlanLine": {
+        "description": "A small plan as a sentence: what, when, and the place the member said, with its comma, or empty",
+        "placeholders": {
+            "what": {
+                "type": "String"
+            },
+            "when": {
+                "type": "String"
+            },
+            "placeTail": {
+                "type": "String"
+            }
+        }
+    },
+    "smallPlanWhatWalk": "Walk 30 minutes around {place}",
+    "@smallPlanWhatWalk": {
+        "description": "Small plan suggestion: a walk, with a place's name and its article",
+        "placeholders": {
+            "place": {
+                "type": "String"
+            }
+        }
+    },
+    "smallPlanWhatWalkNearHome": "Walk 30 minutes near home",
+    "@smallPlanWhatWalkNearHome": {
+        "description": "Small plan suggestion: a walk, when no place is known"
+    },
+    "smallPlanWhatFeria": "Go to {place}",
+    "@smallPlanWhatFeria": {
+        "description": "Small plan suggestion: the feria, with its name and article",
+        "placeholders": {
+            "place": {
+                "type": "String"
+            }
+        }
+    },
+    "smallPlanWhatFeriaAny": "Go to the feria",
+    "@smallPlanWhatFeriaAny": {
+        "description": "Small plan suggestion: the feria, when no place is known"
+    },
+    "smallPlanWhatLibrary": "Stop by {place}",
+    "@smallPlanWhatLibrary": {
+        "description": "Small plan suggestion: the branch library, with its name and article",
+        "placeholders": {
+            "place": {
+                "type": "String"
+            }
+        }
+    },
+    "smallPlanWhatLibraryAny": "Stop by the library",
+    "@smallPlanWhatLibraryAny": {
+        "description": "Small plan suggestion: the library, when no place is known"
+    },
+    "smallPlanWhatCall": "Call someone you haven't talked to in a while",
+    "@smallPlanWhatCall": {
+        "description": "Small plan suggestion: a call"
+    },
+    "smallPlanWhatNoPhone": "An afternoon without your phone",
+    "@smallPlanWhatNoPhone": {
+        "description": "Small plan suggestion: an afternoon without the phone"
+    },
+    "smallPlanFollowUpWalk": "Did you go for a walk on {day}?",
+    "@smallPlanFollowUpWalk": {
+        "description": "Mi ronda: the question about last week's walk",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "smallPlanFollowUpFeria": "Did you go to the feria on {day}?",
+    "@smallPlanFollowUpFeria": {
+        "description": "Mi ronda: the question about last week's feria",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "smallPlanFollowUpLibrary": "Did you stop by the library on {day}?",
+    "@smallPlanFollowUpLibrary": {
+        "description": "Mi ronda: the question about last week's library",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "smallPlanFollowUpCall": "Were you able to make that call on {day}?",
+    "@smallPlanFollowUpCall": {
+        "description": "Mi ronda: the question about last week's call",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "smallPlanFollowUpNoPhone": "Did you get your afternoon without the phone on {day}?",
+    "@smallPlanFollowUpNoPhone": {
+        "description": "Mi ronda: the question about last week's afternoon without the phone",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "smallPlanFollowUpOther": "Were you able to do what you set out to on {day}?",
+    "@smallPlanFollowUpOther": {
+        "description": "Mi ronda: the question about last week's plan, whatever it was",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "smallPlanDryYes": "No rain is expected that day.",
+    "@smallPlanDryYes": {
+        "description": "Small plan: the forecast for an outdoor plan's day is dry"
+    },
+    "smallPlanDryNo": "Rain is expected that day. You can change it.",
+    "@smallPlanDryNo": {
+        "description": "Small plan: the forecast for an outdoor plan's day is wet and no other day is dry"
+    },
+    "smallPlanMoved": "It rains on the day you said, so we moved it.",
+    "@smallPlanMoved": {
+        "description": "Small plan: the day was moved because of rain"
+    },
+    "smallPlanSheetTitle": "Pick something small",
+    "@smallPlanSheetTitle": {
+        "description": "Small plan sheet: the title"
+    },
+    "smallPlanSheetBody": "Choose one, or tell us yours. Ronda keeps the plan on this phone only.",
+    "@smallPlanSheetBody": {
+        "description": "Small plan sheet: under the title"
+    },
+    "smallPlanSuggestionsLoading": "Looking for ideas near you…",
+    "@smallPlanSuggestionsLoading": {
+        "description": "Small plan sheet: the status line while the ideas load"
+    },
+    "smallPlanSuggestionsError": "We couldn't bring ideas right now. You can tell us yours.",
+    "@smallPlanSuggestionsError": {
+        "description": "Small plan sheet: the ideas could not be had"
+    },
+    "smallPlanSuggestionsRetry": "Try again",
+    "@smallPlanSuggestionsRetry": {
+        "description": "Small plan sheet: asks for the ideas again"
+    },
+    "smallPlanSayYours": "Say yours",
+    "@smallPlanSayYours": {
+        "description": "Small plan sheet: opens the member's own plan, by voice or typed"
+    },
+    "smallPlanSayTitle": "Tell us what you'd like to do",
+    "@smallPlanSayTitle": {
+        "description": "Small plan sheet, own plan: the title"
+    },
+    "smallPlanSayBody": "Speak or type: what, which day, what time and where. If you speak, the audio is deleted as soon as we read it.",
+    "@smallPlanSayBody": {
+        "description": "Small plan sheet, own plan: under the title"
+    },
+    "smallPlanSayRecord": "Record",
+    "@smallPlanSayRecord": {
+        "description": "Small plan sheet, own plan: starts the recording"
+    },
+    "smallPlanSayTypeLabel": "Or type it",
+    "@smallPlanSayTypeLabel": {
+        "description": "Small plan sheet, own plan: the typing field's label"
+    },
+    "smallPlanSayTypeHint": "A walk on the rambla on Tuesday",
+    "@smallPlanSayTypeHint": {
+        "description": "Small plan sheet, own plan: the typing field's hint"
+    },
+    "smallPlanSayDone": "Done",
+    "@smallPlanSayDone": {
+        "description": "Small plan sheet, own plan: sends what was typed"
+    },
+    "smallPlanSayBack": "Back to the ideas",
+    "@smallPlanSayBack": {
+        "description": "Small plan sheet, own plan: back to the three ideas"
+    },
+    "smallPlanTextEmpty": "Write something first.",
+    "@smallPlanTextEmpty": {
+        "description": "Small plan sheet: the typing field is empty"
+    },
+    "smallPlanTextTooLong": "That's too long. Keep it short.",
+    "@smallPlanTextTooLong": {
+        "description": "Small plan sheet: the typed text is too long"
+    },
+    "smallPlanRecordingBody": "We're listening. Say what, which day, what time and where.",
+    "@smallPlanRecordingBody": {
+        "description": "Small plan sheet: while recording"
+    },
+    "smallPlanRecordingDone": "I'm done",
+    "@smallPlanRecordingDone": {
+        "description": "Small plan sheet: stops the recording and reads it"
+    },
+    "smallPlanRecordingCancel": "Cancel",
+    "@smallPlanRecordingCancel": {
+        "description": "Small plan sheet: throws the recording away"
+    },
+    "smallPlanReadingTitle": "Putting your plan together…",
+    "@smallPlanReadingTitle": {
+        "description": "Small plan sheet: the status line while the words are read"
+    },
+    "smallPlanReviewTitle": "Is this it?",
+    "@smallPlanReviewTitle": {
+        "description": "Small plan sheet: the title over the plan we made"
+    },
+    "smallPlanReviewYes": "Yes, that's it",
+    "@smallPlanReviewYes": {
+        "description": "Small plan sheet: keeps the plan we made"
+    },
+    "smallPlanReviewAgain": "Try again",
+    "@smallPlanReviewAgain": {
+        "description": "Small plan sheet: back to saying it"
+    },
+    "smallPlanDropped": "We couldn't make a plan out of that. Ronda makes small plans: going out, walking, going somewhere. Try something else.",
+    "@smallPlanDropped": {
+        "description": "Small plan sheet: what was said or typed was left out, whatever the reason"
+    },
+    "smallPlanNotUnderstood": "We didn't understand that. Try again, or type it.",
+    "@smallPlanNotUnderstood": {
+        "description": "Small plan sheet: nothing could be read"
+    },
+    "smallPlanNoMicrophone": "We couldn't find a microphone. You can type it.",
+    "@smallPlanNoMicrophone": {
+        "description": "Small plan sheet: no microphone"
+    },
+    "smallPlanMicrophoneDenied": "Ronda can't use the microphone. You can type it, or allow it in the phone's settings.",
+    "@smallPlanMicrophoneDenied": {
+        "description": "Small plan sheet: the microphone was refused"
+    },
+    "smallPlanReadFailed": "We couldn't read that. Try again in a moment, or type it. We kept nothing.",
+    "@smallPlanReadFailed": {
+        "description": "Small plan sheet: a step of reading the plan failed"
+    },
     "myRondaLoading": "Looking for your ronda…",
     "@myRondaLoading": {
         "description": "Mi ronda: the status line while the card loads"

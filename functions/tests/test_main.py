@@ -880,3 +880,123 @@ class TestMakePostcard:
         with pytest.raises(https_fn.HttpsError) as excinfo:
             call(main.make_postcard, MEMBER, {})
         assert error_code(excinfo) == https_fn.FunctionsErrorCode.FAILED_PRECONDITION
+
+
+class TestShapeSmallPlan:
+    @pytest.fixture
+    def shapes(self, monkeypatch):
+        """Stands in for the Admin clients and `shape_request`; returns what it was given."""
+        import small_plans
+
+        db = FakeFirestore({"users/demo-001": {"terms": {"version": "2026-10-27"}}})
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setattr(main, "_bucket", lambda: SimpleNamespace(blob=lambda path: path))
+        monkeypatch.setenv("MODEL_API_KEY", "test-key")
+        seen: dict = {}
+
+        def shape(**kwargs):
+            seen.update(kwargs)
+            if error := seen.get("raise"):
+                raise error
+            return {"plan": {"kind": "walk"}}
+
+        monkeypatch.setattr(small_plans, "shape_request", shape)
+        return seen
+
+    def test_refuses_a_signed_out_caller(self, shapes):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.shape_small_plan, None, {"text": "caminar"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+
+    def test_shapes_what_the_caller_said_with_their_user_document(self, shapes):
+        assert call(main.shape_small_plan, MEMBER, {"text": "caminar"}) == {
+            "plan": {"kind": "walk"}
+        }
+        assert shapes["uid"] == "demo-001"
+        assert shapes["data"] == {"text": "caminar"}
+        assert shapes["user"] == {"terms": {"version": "2026-10-27"}}
+        assert shapes["blob"]("audio/x") == "audio/x"
+        assert shapes["api_key"] == "test-key"
+
+    @pytest.mark.parametrize(
+        ("error", "code"),
+        [
+            ("TermsMissing", https_fn.FunctionsErrorCode.FAILED_PRECONDITION),
+            ("BadVoiceNote", https_fn.FunctionsErrorCode.INVALID_ARGUMENT),
+            ("BadWords", https_fn.FunctionsErrorCode.INVALID_ARGUMENT),
+            ("PermissionError", https_fn.FunctionsErrorCode.PERMISSION_DENIED),
+            ("NotFound", https_fn.FunctionsErrorCode.NOT_FOUND),
+            ("ModelUnavailable", https_fn.FunctionsErrorCode.UNAVAILABLE),
+        ],
+    )
+    def test_maps_each_failure_to_its_code(self, shapes, error, code):
+        from google.api_core.exceptions import NotFound
+
+        import small_plans
+        import voice_signup
+
+        shapes["raise"] = {
+            "TermsMissing": voice_signup.TermsMissing("demo-001"),
+            "BadVoiceNote": voice_signup.BadVoiceNote("x"),
+            "BadWords": small_plans.BadWords("x"),
+            "PermissionError": PermissionError("x"),
+            "NotFound": NotFound("x"),
+            "ModelUnavailable": voice_signup.ModelUnavailable("x"),
+        }[error]
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.shape_small_plan, MEMBER, {"text": "caminar"})
+        assert error_code(excinfo) == code
+
+
+class TestSuggestSmallPlans:
+    @pytest.fixture
+    def suggests(self, monkeypatch):
+        import plan_suggestions
+
+        db = FakeFirestore(
+            {
+                "users/demo-001": {"barrio": "solymar-norte"},
+                "osm_places/a": {
+                    "name": "la Plaza",
+                    "kind": "park",
+                    "lat": -34.8255,
+                    "lng": -55.942,
+                },
+            }
+        )
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setenv("MODEL_API_KEY", "test-key")
+        monkeypatch.setenv("BASETEN_API_KEY", "test-key")
+        seen: dict = {}
+
+        def suggest(**kwargs):
+            seen.update(kwargs)
+            return {"suggestions": [], "pickedBy": "rules"}
+
+        monkeypatch.setattr(plan_suggestions, "suggest", suggest)
+        return seen
+
+    def test_refuses_a_signed_out_caller(self, suggests):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.suggest_small_plans, None)
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+
+    def test_suggests_from_the_callers_barrio_and_the_places_near_it(self, suggests):
+        assert call(main.suggest_small_plans, MEMBER) == {"suggestions": [], "pickedBy": "rules"}
+        assert suggests["user"] == {"barrio": "solymar-norte"}
+        assert [p.name for p in suggests["places"]] == ["la Plaza"]
+        assert suggests["model"] is not None
+
+    def test_without_the_model_keys_the_rules_pick(self, suggests, monkeypatch):
+        monkeypatch.delenv("BASETEN_API_KEY")
+
+        call(main.suggest_small_plans, MEMBER)
+
+        assert suggests["model"] is None
+
+    def test_a_member_with_no_user_document_still_gets_suggestions(self, suggests):
+        call(main.suggest_small_plans, SimpleNamespace(uid="demo-404", token={}))
+
+        assert suggests["user"] is None
+        assert suggests["places"] == []

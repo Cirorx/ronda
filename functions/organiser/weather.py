@@ -72,6 +72,27 @@ class OpenMeteo:
             self._days[key] = self._fetch(*key)
         return self._days[key]
 
+    def days(self, lat: float, lng: float, first: date, last: date) -> dict[date, Day]:
+        """Each day from `first` to `last` in one request (Algo chico's week), by date."""
+        try:
+            response = self._http.get(
+                OPEN_METEO,
+                params={
+                    "latitude": lat,
+                    "longitude": lng,
+                    "hourly": HOURLY,
+                    "daily": "sunset",
+                    "timezone": "America/Montevideo",
+                    "start_date": first.isoformat(),
+                    "end_date": last.isoformat(),
+                },
+                timeout=10,
+            )
+            response.raise_for_status()
+            return parse_range(response.json())
+        except (httpx.HTTPError, ValueError, KeyError, TypeError, IndexError) as error:
+            raise WeatherUnavailable(type(error).__name__) from error
+
     def _fetch(self, lat: float, lng: float, on: date) -> Day:
         try:
             response = self._http.get(
@@ -107,3 +128,24 @@ def parse(body: dict) -> Day:
         )
     }
     return Day(hours=hours, sunset=body["daily"]["sunset"][0][11:16])
+
+
+def parse_range(body: dict) -> dict[date, Day]:
+    """A `Day` for each date in Open-Meteo's JSON for several days: the hourly rows grouped by
+    date, and each date's own sunset."""
+    hourly = body["hourly"]
+    by_date: dict[date, dict[int, tuple[int, float, int]]] = {}
+    for at, p, mm, g in zip(
+        hourly["time"],
+        hourly["precipitation_probability"],
+        hourly["precipitation"],
+        hourly["wind_gusts_10m"],
+        strict=True,
+    ):
+        by_date.setdefault(date.fromisoformat(at[:10]), {})[int(at[11:13])] = (
+            int(p or 0),
+            float(mm or 0),
+            round(g or 0),
+        )
+    sunsets = {date.fromisoformat(s[:10]): s[11:16] for s in body["daily"]["sunset"]}
+    return {on: Day(hours=hours, sunset=sunsets[on]) for on, hours in by_date.items()}

@@ -20,8 +20,10 @@ import 'package:ronda/my_ronda/widgets/this_week_card.dart';
 import 'package:ronda/my_ronda/widgets/waiting_card.dart';
 import 'package:ronda/my_ronda/widgets/who_is_going.dart';
 import 'package:ronda/push/push.dart';
+import 'package:ronda/small_plan/small_plan.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
+import 'package:small_plan_repository/small_plan_repository.dart';
 
 /// The Mi ronda tab: the notifications ask on top while it's pending, then
 /// an offer of a freed seat from a bench while one matters, the ¿seguimos?
@@ -85,6 +87,16 @@ class const MyRondaPage({super.key}) extends StatelessWidget {
               cuadernoRepository: context.read<CuadernoRepository>(),
             );
             unawaited(cubit.started());
+            return cubit;
+          },
+        ),
+        BlocProvider(
+          create: (context) {
+            final cubit = SmallPlanCubit(
+              uid: uid,
+              smallPlanRepository: context.read<SmallPlanRepository>(),
+            );
+            unawaited(cubit.load());
             return cubit;
           },
         ),
@@ -167,6 +179,9 @@ class const MyRondaView({required final String uid, super.key})
           },
         ),
       ),
+      // Algo chico esta semana: under the week's card, once a week.
+      if (state.status == ThisWeekStatus.ready && !state.week!.hasLeft)
+        SmallPlanSection(uid: uid),
       SizedBox(height: spacing.md),
       const CuadernoEntryCard(),
     ];

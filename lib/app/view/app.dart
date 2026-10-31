@@ -18,6 +18,7 @@ import 'package:ronda/attendance/attendance.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
+import 'package:small_plan_repository/small_plan_repository.dart';
 
 /// The app's root: provides the repositories bootstrap built and the
 /// [AppBloc] that follows who is signed in and whether they have a profile.
@@ -33,6 +34,7 @@ class const App({
   required final ProfileRepository profileRepository,
   required final PushRepository pushRepository,
   required final RondaRepository rondaRepository,
+  required final SmallPlanRepository smallPlanRepository,
 
   /// Whether this phone has shown "¿Cómo funciona?", read before the app
   /// starts so the first screen is already the right one.
@@ -54,6 +56,7 @@ class const App({
         RepositoryProvider.value(value: profileRepository),
         RepositoryProvider.value(value: pushRepository),
         RepositoryProvider.value(value: rondaRepository),
+        RepositoryProvider.value(value: smallPlanRepository),
       ],
       child: BlocProvider(
         create: (_) => AppBloc(

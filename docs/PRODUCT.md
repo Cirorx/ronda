@@ -7,7 +7,8 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 
 ## Screens
 - **Mi ronda** (tab): this week's card (day and time, place and distance, después), "¿Venís?"
-  with [Voy] [Esta no], who's coming. Before a group exists: "Todavía no tenés grupo" and what
+  with [Voy] [Esta no], who's coming, and under it "Algo chico esta semana" (§ Algo chico esta
+  semana). Before a group exists: "Todavía no tenés grupo" and what
   happens next, without promising a seat: "Armamos cada grupo con vecinos que viven cerca y buscan
   lo mismo que vos. Puede tardar, según cuántos se anoten. Cuando haya uno para vos, te avisamos y
   lo vas a ver acá."
@@ -334,6 +335,58 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 - **Pause:** "Tomarte unas semanas" — 2 semanas / Un mes / Hasta que yo vuelva, each with its
   return date. "Nadie pregunta por qué." Longer than two weeks, the seat is held two weeks and
   then offered to the bench.
+
+## Algo chico esta semana
+One small plan a week for a member, with a day, a time and a place, between meetings. Choosing
+an activity and fixing when and where is what makes people do it, and the suggestions lean
+outward, toward places with people in them. Built in #56.
+- **Where:** Mi ronda, under the week's card (only for a member whose ronda has a card), once
+  per ISO week: "¿Querés proponerte algo chico para esta semana?" — "Una cosa chica, con día,
+  hora y lugar. Se queda solo en este teléfono." [Elegir algo] [Esta semana no]. "Esta semana
+  no" keeps the offer away until Monday. A member with no group sees nothing of it.
+- **Choosing ("Elegí algo chico"):** a sheet with three ideas and "Decilo vos". Each idea has
+  its sentence, its day and time and, outdoors, the forecast: "No se espera lluvia ese día."
+  The five kinds are a walk on a route nearby ("Caminar 30 minutos por la Rambla de Solymar"),
+  the feria ("Ir a la Feria de Solymar"), the branch library ("Pasar por la Biblioteca Barrial
+  de Solymar"), "Llamar a alguien con quien hace tiempo no hablás" and "Una tarde sin el
+  celular".
+  - The places come from the OSM cache (`osm_places`): plazas, parks, ramblas, libraries and
+    `amenity=marketplace` within ten blocks of the member's barrio, checked against
+    `opening_hours` where present. A place whose hours the server can't read is not offered, and
+    a marketplace with no hours isn't either (nothing says which day the feria is). The distance
+    is the same for everyone: sending a shorter one would tell the server about "caminar mucho".
+  - Muse Spark Open (Baseten, Spark 1.3 behind it) picks three that fit what the member does in
+    their ronda and the week's weather; code builds the candidates and validates the ids, and
+    when the model fails the rules pick one of each kind (walk, feria, library, call, no phone).
+    The day is Open-Meteo's: a dry day for anything outdoors, within the next seven days.
+- **Decilo vos:** by voice or typed. "Contanos qué te gustaría hacer — Hablá o escribí: qué, qué
+  día, a qué hora y dónde. Si hablás, el audio se borra apenas lo leemos." [Grabar] (the waveform
+  and "Terminé" as in onboarding), a text field ("O escribilo") and [Listo]. Voice Transcribe,
+  then Muse Spark 1.3 into a strict `{activity, day, time, place}` (plus its kind), then the
+  filter in code, then the day from the forecast: the day the member named if it is dry, else
+  the nearest dry day ("El día que dijiste se espera lluvia, así que lo pasamos."), and with
+  none the least wet, "Se espera lluvia ese día. Si querés, cambialo." The sheet reads the plan
+  back, "¿Es esto?" [Sí, es esto] [Probar de nuevo].
+- **The filter** drops the whole plan when it is about a health or medical goal, a diet or
+  weight, money, or another person (by name or relationship), or has an emoji, a tú form or a
+  home or address in it: "No pudimos armar un plan con eso. Ronda arma planes chicos: salir,
+  caminar, ir a algún lugar. Probá con otra cosa." One message whatever the reason, so it never
+  names a topic.
+- **The plan:** "Caminar 30 minutos por la rambla, el martes a las 19:00, desde la parada
+  23." [Agregar al calendario] [Cambiar]. The calendar is the phone's own: on Android and iOS
+  the calendar app opens with the event filled in (no calendar permission on Android); on web an
+  `.ics` file downloads. Ronda sends no extra push, so the one-routine-push rule holds.
+- **Follow-up:** the next week's card asks once, by kind: "¿Saliste a caminar el martes?",
+  "¿Fuiste a la feria el martes?", "¿Pasaste por la biblioteca el martes?", "¿Pudiste hacer esa
+  llamada el martes?", "¿Pudiste tener tu tarde sin el celular el martes?", or "¿Pudiste hacer lo
+  que te propusiste el martes?" [Sí] [Esta vez no]. Both answers get the same reply: "Anotado.
+  Gracias por contarnos." No streak, no tally; the plan is deleted when answered.
+- **Privacy:** the plan lives in the phone's secure storage under the member's uid, like needs,
+  and nothing older than last week is kept. The server never stores who set a plan or who did
+  it: the two callables (`suggest_small_plans`, `shape_small_plan`) write no document and log
+  only ids, sizes and timings. Voice is sent only after the terms and deleted once read. The
+  words go to Meta's models (the same transfer as the voice sign-up).
+- **Not built:** telling the ronda ("Avisarle a la ronda", #57), a streak or a history.
 
 ## First visit
 - **Así va a ser** (two days before): "Te espera Jorge — tiene el termo verde", how to get there

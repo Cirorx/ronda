@@ -36,6 +36,7 @@ import 'package:ronda/walkthrough/walkthrough.dart';
 import 'package:ronda/welcome/welcome.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
+import 'package:small_plan_repository/small_plan_repository.dart';
 
 import '../../helpers/helpers.dart';
 
@@ -59,6 +60,8 @@ class _MockOnboardingRepository extends Mock implements OnboardingRepository;
 class _MockFlyerRepository extends Mock implements FlyerRepository;
 
 class _MockOrganiserRepository extends Mock implements OrganiserRepository;
+
+class _MockSmallPlanRepository extends Mock implements SmallPlanRepository;
 
 class _MockErrorReporter extends Mock implements ErrorReporter;
 
@@ -87,6 +90,7 @@ void main() {
     late NeedsRepository needsRepository;
     late ProfileRepository profileRepository;
     late RondaRepository rondaRepository;
+    late SmallPlanRepository smallPlanRepository;
     late PushRepository pushRepository;
     late FlyerRepository flyerRepository;
     late OrganiserRepository organiserRepository;
@@ -125,6 +129,9 @@ void main() {
       needsRepository = _MockNeedsRepository();
       profileRepository = _MockProfileRepository();
       rondaRepository = _MockRondaRepository();
+      smallPlanRepository = _MockSmallPlanRepository();
+      when(() => smallPlanRepository.current(any()))
+          .thenAnswer((_) async => const SmallPlanNothing());
       pushRepository = _MockPushRepository();
       flyerRepository = _MockFlyerRepository();
       organiserRepository = _MockOrganiserRepository();
@@ -215,6 +222,7 @@ void main() {
       profileRepository: profileRepository,
       pushRepository: pushRepository,
       rondaRepository: rondaRepository,
+      smallPlanRepository: smallPlanRepository,
       walkthroughSeen: walkthroughSeen,
     );
 

@@ -7,8 +7,8 @@ Prices per million tokens unless noted.
 
 | Model | Id | Use in Ronda | Price |
 |---|---|---|---|
-| Muse Voice Transcribe | `muse-voice-transcribe-1.0` (`POST /v1/asr/transcribe`, real-time `wss://api.meta.ai/v1/asr/realtime`) | Voice onboarding, voice RSVP, host recap | $0.18 / hour |
-| Muse Spark 1.3 | `muse-spark-1.3` | Structured fields from transcripts; ¿Dónde queda?'s answer line and hint; fallback for the agent | $1.25 in · $0.15 cached · $4.25 out |
+| Muse Voice Transcribe | `muse-voice-transcribe-1.0` (`POST /v1/asr/transcribe`, real-time `wss://api.meta.ai/v1/asr/realtime`) | Voice onboarding, voice RSVP, host recap, "Decilo vos" in Algo chico esta semana | $0.18 / hour |
+| Muse Spark 1.3 | `muse-spark-1.3` | Structured fields from transcripts, and a member's own small plan (`{activity, day, time, place}` plus kind and a topic flag, `functions/small_plans.py`); ¿Dónde queda?'s answer line and hint; fallback for the agent | $1.25 in · $0.15 cached · $4.25 out |
 | SAM 3.1 | `sam-3.1` (Responses API, Files API) | Cut objects out of a ronda photo for the flyer; ¿Dónde queda?: find people, number plates and house numbers; spot photo outline | $2.50 / 1,000 images; video $0.20 / 1,000 frames |
 | Muse Image 1.0 | `muse-image-1.0` (`/v1/images/generations`, `/v1/images/edits`) | "Mate de más" and tear-off flyer layouts | $0.01 / image |
 
@@ -45,7 +45,7 @@ Notes:
 
 | Model | Where | Use |
 |---|---|---|
-| Muse Spark Open (816B MoE, 42B active; text, image, audio, video in; released 2026-10-15; Muse Model License) | Baseten: OpenAI-compatible `https://inference.baseten.co/v1/chat/completions`, hackathon id `meta-models/muse-spark-open-1026`. Modal: shared per-token endpoint. | The organiser agent (targets the open-weights and agentic bonuses) |
+| Muse Spark Open (816B MoE, 42B active; text, image, audio, video in; released 2026-10-15; Muse Model License) | Baseten: OpenAI-compatible `https://inference.baseten.co/v1/chat/completions`, hackathon id `meta-models/muse-spark-open-1026`. Modal: shared per-token endpoint. | The organiser agent (targets the open-weights and agentic bonuses); picks three of the small-plan ideas code built (`functions/plan_suggestions.py`) |
 | Muse Glimmer (30B, Apache 2.0, single GPU, 17–20 GB quantised) | Self-host only (not on Baseten or Modal); Fireworks serverless fine-tuning | Not in the build. After: a rioplatense-register judge |
 | Llama 3.2 1B | Phone (ExecuTorch / llama.cpp) | Stretch only: not on the hackathon's model list |
 

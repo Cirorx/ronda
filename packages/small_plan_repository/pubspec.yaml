@@ -1,0 +1,28 @@
+name: small_plan_repository
+description: Algo chico esta semana, from the three suggestions and the spoken plan to the calendar and the follow-up, kept on the phone only.
+version: 0.1.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ^3.47.0
+
+dependencies:
+  calendar_client:
+    path: ../calendar_client
+  device_store:
+    path: ../device_store
+  equatable: ^2.0.7
+  flutter:
+    sdk: flutter
+  ronda_api:
+    path: ../ronda_api
+  voice_recorder:
+    path: ../voice_recorder
+
+dev_dependencies:
+  cloud_functions: ^7.0.1
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+  very_good_analysis: ^11.0.0

@@ -96,8 +96,9 @@ def test_resetting_twice_with_the_documented_command_leaves_identical_state():
     first, second = states
     assert first == second
     assert first == demo_data.documents(30)
-    # 144 seat facts, 30 profiles, 30 eligible documents, 1 avoid pair, 5 covered places
-    assert len(first) == 210
+    # 144 seat facts, 30 profiles, 30 eligible documents, 1 avoid pair, 5 covered places and
+    # 18 free ones
+    assert len(first) == 228
 
 
 def test_reset_after_the_two_hundred_set_leaves_only_the_thirty():
@@ -237,6 +238,7 @@ def test_a_project_reset_deletes_the_proposals_and_rondas_built_from_demo_uids_a
         "acta/real/entries/run-001": {"week": "2026-W45", "summary": "Miró el pronóstico."},
         "agent_runs/real-run": {"rondaId": "real", "status": "done"},
         "places/club-real": {"name": "el Club", "covered": True, "kind": "public"},
+        "osm_places/node-1": {"name": "la Plaza Real", "kind": "park", "lat": -34.8, "lng": -55.9},
     }
     mixed = a_ronda("mixed", ["demo-004", "member-1"]) | {
         "proposals/mixed": a_proposal(["demo-004"], ["member-1"], ["mixed"]),

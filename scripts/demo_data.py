@@ -22,6 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 INVENTED_SEAT_FACTS = ROOT / "data" / "demo" / "invented_seat_facts.json"
 INVENTED_PLACES = ROOT / "data" / "demo" / "invented_places.json"
+INVENTED_OSM_PLACES = ROOT / "data" / "demo" / "invented_osm_places.json"
 
 # ronda_solver is not an installable package (solver/pyproject.toml: package = false), so the
 # generator is imported from its folder.
@@ -158,12 +159,21 @@ def place_documents(problem: dict) -> Documents:
     return {f"places/{place_id}": fields for place_id, fields in sorted(places.items())}
 
 
+def osm_place_documents(problem: dict) -> Documents:
+    """`osm_places/{id}`: stand-ins for the OpenStreetMap cache (free public places Algo chico
+    esta semana offers), as data/demo/invented_osm_places.json writes them. Every id starts
+    with `demo-`, and the functions ignore them off the emulators and `demo-*` projects."""
+    places = json.loads(INVENTED_OSM_PLACES.read_text())["places"]
+    return {f"osm_places/{place_id}": fields for place_id, fields in sorted(places.items())}
+
+
 BUILDERS: tuple[Builder, ...] = (
     seat_facts_documents,
     user_documents,
     eligible_documents,
     avoid_documents,
     place_documents,
+    osm_place_documents,
 )
 
 _SLOT_ORDER = tuple(f"{day}-{band}" for day in SLOT_DAYS for band in SLOT_BANDS)

@@ -1,0 +1,123 @@
+{
+  "_note": "Invented demo data: no real places. Stand-ins for the OpenStreetMap cache (osm_places, written by scripts/osm_places.py), so Algo chico esta semana has free public places to offer on the emulators. Barrio names are real places in Ciudad de la Costa; every place and its hours are invented, and their coordinates sit within ten blocks of the demo centroids (functions/ronda_solver/demo.py). Each name carries its article, as the sentences need it. opening_hours use OpenStreetMap's syntax.",
+  "places": {
+    "demo-osm-plaza-aromos": {
+      "name": "la Plaza de los Aromos",
+      "kind": "park",
+      "lat": -34.829,
+      "lng": -55.94
+    },
+    "demo-osm-rambla-solymar": {
+      "name": "la Rambla de Solymar",
+      "kind": "promenade",
+      "lat": -34.831,
+      "lng": -55.9345
+    },
+    "demo-osm-biblioteca-solymar": {
+      "name": "la Biblioteca Barrial de Solymar",
+      "kind": "library",
+      "lat": -34.83,
+      "lng": -55.9385,
+      "openingHours": "Mo-Fr 10:00-18:00; Sa 09:00-13:00"
+    },
+    "demo-osm-feria-solymar": {
+      "name": "la Feria de Solymar",
+      "kind": "marketplace",
+      "lat": -34.8268,
+      "lng": -55.9405,
+      "openingHours": "Sa 08:00-14:00"
+    },
+    "demo-osm-parque-lomas": {
+      "name": "el Parque de las Lomas",
+      "kind": "park",
+      "lat": -34.8165,
+      "lng": -55.944,
+      "openingHours": "sunrise-sunset"
+    },
+    "demo-osm-plaza-lagomar": {
+      "name": "la Plaza Central de Lagomar",
+      "kind": "park",
+      "lat": -34.839,
+      "lng": -55.964
+    },
+    "demo-osm-rambla-lagomar": {
+      "name": "la Rambla de Lagomar",
+      "kind": "promenade",
+      "lat": -34.844,
+      "lng": -55.96
+    },
+    "demo-osm-biblioteca-lagomar": {
+      "name": "la Biblioteca de Lagomar",
+      "kind": "library",
+      "lat": -34.837,
+      "lng": -55.965,
+      "openingHours": "Mo-Fr 09:00-17:00"
+    },
+    "demo-osm-feria-lagomar": {
+      "name": "la Feria de Lagomar",
+      "kind": "marketplace",
+      "lat": -34.835,
+      "lng": -55.966,
+      "openingHours": "We 08:00-13:00; Su 08:00-13:00"
+    },
+    "demo-osm-plaza-shangrila": {
+      "name": "la Plaza de Shangrilá",
+      "kind": "park",
+      "lat": -34.865,
+      "lng": -55.992
+    },
+    "demo-osm-rambla-shangrila": {
+      "name": "la Rambla de Shangrilá",
+      "kind": "promenade",
+      "lat": -34.8672,
+      "lng": -55.9905
+    },
+    "demo-osm-biblioteca-san-jose": {
+      "name": "la Biblioteca de San José",
+      "kind": "library",
+      "lat": -34.8555,
+      "lng": -55.977,
+      "openingHours": "Tu-Sa 10:00-17:00"
+    },
+    "demo-osm-feria-san-jose": {
+      "name": "la Feria de San José",
+      "kind": "marketplace",
+      "lat": -34.8565,
+      "lng": -55.9755,
+      "openingHours": "Su 08:00-13:00"
+    },
+    "demo-osm-plaza-pinar": {
+      "name": "la Plaza de El Pinar",
+      "kind": "park",
+      "lat": -34.7975,
+      "lng": -55.887
+    },
+    "demo-osm-rambla-pinar": {
+      "name": "la Rambla de El Pinar",
+      "kind": "promenade",
+      "lat": -34.801,
+      "lng": -55.883
+    },
+    "demo-osm-biblioteca-pinar": {
+      "name": "la Biblioteca de El Pinar",
+      "kind": "library",
+      "lat": -34.794,
+      "lng": -55.888,
+      "openingHours": "Mo-Fr 10:00-18:00"
+    },
+    "demo-osm-feria-pinar": {
+      "name": "la Feria de El Pinar",
+      "kind": "marketplace",
+      "lat": -34.796,
+      "lng": -55.887,
+      "openingHours": "Sa 08:00-13:00"
+    },
+    "demo-osm-parque-pinar-norte": {
+      "name": "el Parque de El Pinar Norte",
+      "kind": "park",
+      "lat": -34.793,
+      "lng": -55.89,
+      "openingHours": "sunrise-sunset"
+    }
+  }
+}

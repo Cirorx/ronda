@@ -27,6 +27,7 @@ Future<void> main() async {
       required profileRepository,
       required pushRepository,
       required rondaRepository,
+      required smallPlanRepository,
       required walkthroughSeen,
     }) => App(
       authRepository: authRepository,
@@ -40,6 +41,7 @@ Future<void> main() async {
       profileRepository: profileRepository,
       pushRepository: pushRepository,
       rondaRepository: rondaRepository,
+      smallPlanRepository: smallPlanRepository,
       walkthroughSeen: walkthroughSeen,
     ),
     firebaseOptions: DefaultFirebaseOptions.currentPlatform,

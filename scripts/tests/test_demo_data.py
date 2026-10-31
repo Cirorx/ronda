@@ -217,6 +217,19 @@ def test_every_timestamp_is_the_one_demo_moment(state):
     assert demo_data.DEMO_TIME.utcoffset() is not None
 
 
+def test_the_free_places_are_invented_and_every_barrio_has_one_of_each_kind_near(state):
+    places = _collection(state, r"osm_places/.+")
+
+    assert len(places) == 18
+    for path, place in places.items():
+        assert path.startswith("osm_places/demo-"), path
+        assert place["kind"] in {"park", "promenade", "library", "marketplace"}
+        assert place["name"].startswith(("el ", "la ")), path
+        assert set(place) <= {"name", "kind", "lat", "lng", "openingHours"}
+    assert {p["kind"] for p in places.values()} == {"park", "promenade", "library", "marketplace"}
+    assert all("openingHours" in p for p in places.values() if p["kind"] == "marketplace")
+
+
 def test_the_covered_places_are_invented_public_and_near_demo_barrios(state):
     places = _collection(state, r"places/.+")
 

@@ -296,6 +296,48 @@ class TestWeather:
         with pytest.raises(weather.WeatherUnavailable):
             weather.parse(self.BODY).forecast(date(2026, 11, 5), 20)
 
+    RANGE: ClassVar = {
+        "hourly": {
+            "time": ["2026-11-05T16:00", "2026-11-06T16:00"],
+            "precipitation_probability": [80, None],
+            "precipitation": [2.4, None],
+            "wind_gusts_10m": [50.6, 12],
+        },
+        "daily": {
+            "time": ["2026-11-05", "2026-11-06"],
+            "sunset": ["2026-11-05T19:52", "2026-11-06T19:53"],
+        },
+    }
+
+    def test_reads_several_days_in_one_request(self):
+        requests = []
+
+        def handler(request):
+            requests.append(request)
+            return httpx.Response(200, json=self.RANGE)
+
+        days = weather.OpenMeteo(self.client(handler)).days(
+            -34.8, -55.885, date(2026, 11, 5), date(2026, 11, 6)
+        )
+
+        params = dict(requests[0].url.params)
+        assert (params["start_date"], params["end_date"]) == ("2026-11-05", "2026-11-06")
+        assert len(requests) == 1
+        assert days[date(2026, 11, 5)].sunset == "19:52"
+        assert days[date(2026, 11, 6)].sunset == "19:53"
+        assert days[date(2026, 11, 6)].hours == {16: (0, 0.0, 12)}
+        assert days[date(2026, 11, 5)].hours == {16: (80, 2.4, 51)}
+
+    @pytest.mark.parametrize(
+        "response",
+        [httpx.Response(500), httpx.Response(200, text="nope"), httpx.Response(200, json={})],
+    )
+    def test_a_failed_range_is_unavailable(self, response):
+        meteo = weather.OpenMeteo(self.client(lambda _: response))
+
+        with pytest.raises(weather.WeatherUnavailable):
+            meteo.days(-34.8, -55.885, date(2026, 11, 5), date(2026, 11, 6))
+
 
 ANSWER = Turn(
     content="",
@@ -323,6 +365,13 @@ class TestChatModel:
                 "extra_body": {"reasoning_effort": "low"},
             }
         ]
+
+    def test_a_plain_question_sends_no_tools_at_all(self):
+        client = FakeOpenAI([ANSWER])
+
+        ChatModel(client, model.SPARK_OPEN).complete([{"role": "user"}], [])
+
+        assert "tools" not in client.requests[0]
 
     def test_gathers_words_and_calls_without_ids(self):
         chunks = [

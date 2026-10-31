@@ -84,5 +84,11 @@
             <action android:name="android.intent.action.VIEW"/>
             <data android:scheme="whatsapp"/>
         </intent>
+        <!-- "Agregar al calendario" opens the phone's calendar with the plan filled in
+             (packages/calendar_client, add_2_calendar): no calendar permission. -->
+        <intent>
+            <action android:name="android.intent.action.INSERT"/>
+            <data android:mimeType="vnd.android.cursor.item/event"/>
+        </intent>
     </queries>
 </manifest>

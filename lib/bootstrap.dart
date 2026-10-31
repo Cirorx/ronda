@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:auth_repository/auth_repository.dart';
+import 'package:calendar_client/calendar_client.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:contact_repository/contact_repository.dart';
@@ -33,6 +34,7 @@ import 'package:ronda_api/ronda_api.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 import 'package:share_sheet/share_sheet.dart';
+import 'package:small_plan_repository/small_plan_repository.dart';
 import 'package:voice_recorder/voice_recorder.dart';
 
 /// Builds the root widget from the repositories bootstrap constructs.
@@ -48,6 +50,7 @@ typedef AppBuilder = FutureOr<Widget> Function({
   required ProfileRepository profileRepository,
   required PushRepository pushRepository,
   required RondaRepository rondaRepository,
+  required SmallPlanRepository smallPlanRepository,
   required bool walkthroughSeen,
 });
 
@@ -276,6 +279,8 @@ Future<void> bootstrap(
   );
   final shareSheet = ShareSheet();
   final cuadernoApi = CuadernoApi(functions: functions);
+  final smallPlansApi = SmallPlansApi(functions: functions);
+  final calendarClient = CalendarClient();
   final linkOpener = LinkOpener();
   // The channel's name shows in the phone's settings, and the push's
   // buttons, in the phone's language.
@@ -357,6 +362,13 @@ Future<void> bootstrap(
     shareSheet: shareSheet,
   );
   final organiserRepository = OrganiserRepository(organiserApi: organiserApi);
+  final smallPlanRepository = SmallPlanRepository(
+    deviceStore: deviceStore,
+    voiceRecorder: voiceRecorder,
+    rondaApi: rondaApi,
+    smallPlansApi: smallPlansApi,
+    calendarClient: calendarClient,
+  );
   final contactRepository = ContactRepository(
     linkOpener: linkOpener,
     email: rondaContactEmail,
@@ -378,6 +390,7 @@ Future<void> bootstrap(
     profileRepository: profileRepository,
     pushRepository: pushRepository,
     rondaRepository: rondaRepository,
+    smallPlanRepository: smallPlanRepository,
     walkthroughSeen: walkthroughSeen,
   );
   // Above the app rather than in AppBuilder, so monitoring stays out of the

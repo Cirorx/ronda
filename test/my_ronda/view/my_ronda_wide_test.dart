@@ -15,6 +15,7 @@ import 'package:ronda/my_ronda/my_ronda.dart';
 import 'package:ronda/my_ronda/widgets/this_week_card.dart';
 import 'package:ronda/my_ronda/widgets/who_is_going.dart';
 import 'package:ronda/push/push.dart';
+import 'package:ronda/small_plan/small_plan.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -42,6 +43,8 @@ class _MockWaitingCubit extends MockCubit<WaitingState> implements WaitingCubit;
 
 class _MockCuadernoCardCubit extends MockCubit<String?>
     implements CuadernoCardCubit;
+class _MockSmallPlanCubit extends MockCubit<SmallPlanState>
+    implements SmallPlanCubit;
 
 void main() {
   group('$MyRondaView on wide windows', () {
@@ -51,6 +54,7 @@ void main() {
     late BenchOfferCubit benchOfferCubit;
     late WaitingCubit waitingCubit;
     late CuadernoCardCubit cuadernoCardCubit;
+    late SmallPlanCubit smallPlanCubit;
     late RondaRepository rondaRepository;
     late ContactRepository contactRepository;
     late DondeQuedaRepository dondeQuedaRepository;
@@ -83,6 +87,9 @@ void main() {
       waitingCubit = _MockWaitingCubit();
       cuadernoCardCubit = _MockCuadernoCardCubit();
       when(() => cuadernoCardCubit.state).thenReturn(null);
+      smallPlanCubit = _MockSmallPlanCubit();
+      when(() => smallPlanCubit.state)
+          .thenReturn(const SmallPlanState(status: SmallPlanStatus.ready));
       when(() => benchOfferCubit.state)
           .thenReturn(const BenchOfferState(status: BenchOfferCardStatus.none));
       when(() => waitingCubit.state)
@@ -114,6 +121,7 @@ void main() {
               BlocProvider.value(value: benchOfferCubit),
               BlocProvider.value(value: waitingCubit),
               BlocProvider.value(value: cuadernoCardCubit),
+              BlocProvider.value(value: smallPlanCubit),
             ],
             child: const MyRondaView(uid: MyRondaFixtures.uid),
           ),

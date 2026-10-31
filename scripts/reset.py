@@ -95,7 +95,8 @@ def clear_demo(client: firestore.Client) -> int:
     people alone: each `proposals/{id}` whose groups and unseated name only demo uids, and each
     `rondas/{id}` whose members are all demo uids, with everything under it (members, weeks,
     views, answers, private, moves) and the organiser's acta and runs about it, and the
-    `places/demo-*` the organiser offers when it rains. A proposal or ronda that names any other
+    `places/demo-*` the organiser offers when it rains and the `osm_places/demo-*` Algo chico
+    offers. A proposal or ronda that names any other
     uid, or a ronda with no members, is kept and listed. A seat fact at a demo path that isn't
     the invented one raises NotDemoData before anything is deleted. Returns the documents
     deleted.
@@ -134,6 +135,10 @@ def clear_demo(client: firestore.Client) -> int:
         if run.to_dict().get("rondaId") in demo_rondas:
             deleted += client.recursive_delete(run.reference)
     for place in client.collection("places").list_documents():
+        if place.id.startswith(DEMO_UID_PREFIX):
+            place.delete()
+            deleted += 1
+    for place in client.collection("osm_places").list_documents():
         if place.id.startswith(DEMO_UID_PREFIX):
             place.delete()
             deleted += 1

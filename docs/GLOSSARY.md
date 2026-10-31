@@ -37,6 +37,8 @@ issues, docs, code, commit messages.
 | `DondeQueda` | ¿Dónde queda? | The ronda's weekly barrio photo game: one member, by turn, photographs something of the barrio and pins where it is; the others drop one pin each; the next week's card says what it was and how many came close ("Cerca: 3 de 5"). No names, points or history |
 | `Acta` | lo que hizo el programa | The members' log of every organiser-agent action, with "Algo estuvo mal" |
 | `AgentRun` | (admin only) | One run of the organiser agent; its steps are the trace, each labelled with who decided it (`by`: code, model or person) |
+| `SmallPlan` | algo chico | One small plan a member sets for the week (a kind of thing, a day and time, a place), kept on the phone only; asked about once the next week, never counted. Kinds (`SmallPlanKind`): `walk`, `feria`, `library`, `call`, `noPhone`, `other` |
+| `FreePlace` | lugar libre | A free public place from the OpenStreetMap cache (`osm_places`: plaza, park, rambla, library, marketplace) that a suggestion can send someone to |
 | `Gate` | (none) | A rule in code that every outgoing message passes (quiet hours, no emoji, voseo, no money, bot disclosure, one routine push a week) |
 | `Walkthrough` | ¿Cómo funciona? | The three cards a signed-out person sees before the welcome doors on a phone's first open (`/como-funciona`); `walkthroughSeen` is whether this phone has shown them |
 | `Cuaderno` | el cuaderno del barrio | The member's private noticing log: one line a day about what they saw in the barrio, kept only on the phone (`device_store`, `cuaderno.{uid}`); never a mood log, a streak or a count |

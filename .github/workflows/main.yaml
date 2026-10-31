@@ -35,6 +35,7 @@ jobs:
       matrix:
         package:
           - packages/auth_repository
+          - packages/calendar_client
           - packages/contact_repository
           - packages/cuaderno_repository
           - packages/device_store
@@ -52,6 +53,7 @@ jobs:
           - packages/ronda_api
           - packages/ronda_repository
           - packages/share_sheet
+          - packages/small_plan_repository
           - packages/voice_recorder
     uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v2
     with:

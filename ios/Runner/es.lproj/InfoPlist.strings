@@ -1,2 +1,4 @@
 /* What iOS shows when Ronda first asks for the microphone (Info.plist has the English). */
-"NSMicrophoneUsageDescription" = "Ronda usa el micrófono solo mientras grabás tu presentación. El audio se borra apenas lo leemos.";
+"NSMicrophoneUsageDescription" = "Ronda usa el micrófono solo mientras grabás tu presentación o tu plan de la semana. El audio se borra apenas lo leemos.";
+"NSCalendarsUsageDescription" = "Ronda agrega tu plan de la semana a tu calendario cuando se lo pedís. Nunca lee tus eventos.";
+"NSContactsUsageDescription" = "Tu calendario puede sugerir lugares de tus contactos cuando guardás un plan. Ronda nunca los lee.";
