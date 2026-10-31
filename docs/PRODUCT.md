@@ -301,6 +301,36 @@ dates in the examples are demo data. Everything not listed here is out of the bu
     from 10:00, a member marked [No vino] at a meeting in the past week, who hadn't said "esta
     no" and wasn't paused, is mentioned once to their buddy only: a push, and the card on the
     buddy's Mi ronda. A fixed rule in code; it is in the admin's trace and never in the acta.
+- **¿Dónde queda?** (#58, built): a weekly barrio photo game on Mi ronda, between meetings. People
+  open it themselves: it sends no notification, ends each week and keeps no points.
+  - **The turn:** each week one member is asked on the card, in a rotation that is code (by when
+    they joined, one on from last week's first; someone paused over the meeting is skipped):
+    "Esta semana te toca a vos." "Sacale una foto a algo del barrio: una puerta, un mural, un
+    árbol." "Los demás adivinan dónde queda en un mapa. La respuesta sale en la tarjeta de la
+    semana que viene." [Sacar la foto] [Esta semana no]. "Esta semana no", or two days without a
+    photo, passes the turn to the next member and says why to nobody; once everyone passed there
+    is no game that week. A ronda of fewer than three active members has none.
+  - **The photo** (phone app only; the web says "Hacelo desde la app del teléfono"): "Mejor sin
+    gente: si sale alguien, lo borroneamos antes de subir. Que no se vea el número de ninguna
+    casa." Faces are pixelated on the phone with the flyer's preview and "Tocá una cara para
+    borronearla". Then "¿Qué es y dónde queda?" (one line, shown only at the reveal: "la puerta
+    verde de Gestido y Rivera") and "Una pista, si querés" (one line, shown to everyone now), then
+    "Marcá dónde queda": the photographer's pin on the map is the answer. [Mandar la foto] →
+    "Revisando la foto. Tarda como medio minuto." → "Listo, tu foto ya está."
+  - **Refused, in plain words:** "Se ve el número de una casa. Sacala desde otro lado, sin el
+    número.", "La foto es de una persona. Buscá algo del barrio: una puerta, un mural, un árbol.",
+    "La foto salió vacía o muy oscura. Probá de nuevo." (each back to the camera) and "Lo que
+    escribiste no puede ir: sin direcciones con número ni nombres de personas." (back to the
+    words). People passing by and number plates are blurred, not refused.
+  - **Guessing:** "Hay una foto del barrio. ¿Sabés dónde queda?" [Poner mi pin] opens the photo,
+    "Pista: …", and a small OpenStreetMap map of the barrio ("© colaboradores de OpenStreetMap")
+    with "Tocá el mapa donde creés que queda. Tenés un solo pin." [Es acá]. One pin each, during
+    the week, until the meeting's day ends; the photographer doesn't guess. Works on web too.
+    After: "Ya pusiste tu pin. La respuesta sale en la tarjeta de la semana que viene."
+  - **The reveal,** on the next week's card: "La de la semana pasada", "Era la puerta verde de
+    Gestido y Rivera." and "Cerca: 3 de 5" (within two and a half blocks of the photographer's
+    pin, of those who guessed; "Nadie puso su pin." with none). No names, no points, no ranking,
+    no history: the week after, it is gone.
 - **Pause:** "Tomarte unas semanas" — 2 semanas / Un mes / Hasta que yo vuelva, each with its
   return date. "Nadie pregunta por qué." Longer than two weeks, the seat is held two weeks and
   then offered to the bench.

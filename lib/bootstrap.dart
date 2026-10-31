@@ -7,6 +7,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:contact_repository/contact_repository.dart';
 import 'package:cuaderno_repository/cuaderno_repository.dart';
 import 'package:device_store/device_store.dart';
+import 'package:donde_queda_repository/donde_queda_repository.dart';
 import 'package:error_reporter/error_reporter.dart';
 import 'package:face_blur/face_blur.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -39,6 +40,7 @@ typedef AppBuilder = FutureOr<Widget> Function({
   required AuthRepository authRepository,
   required ContactRepository contactRepository,
   required CuadernoRepository cuadernoRepository,
+  required DondeQuedaRepository dondeQuedaRepository,
   required FlyerRepository flyerRepository,
   required NeedsRepository needsRepository,
   required OnboardingRepository onboardingRepository,
@@ -267,6 +269,11 @@ Future<void> bootstrap(
   // ML Kit is built on the first detection, which never happens on web.
   final faceBlur = FaceBlur();
   final flyersApi = FlyersApi(storage: storage, functions: functions);
+  final dondeQuedaApi = DondeQuedaApi(
+    firestore: firestore,
+    storage: storage,
+    functions: functions,
+  );
   final shareSheet = ShareSheet();
   final cuadernoApi = CuadernoApi(functions: functions);
   final linkOpener = LinkOpener();
@@ -333,6 +340,11 @@ Future<void> bootstrap(
     flyersApi: flyersApi,
     shareSheet: shareSheet,
   );
+  // The same face_blur as the flyer: one photo pipeline.
+  final dondeQuedaRepository = DondeQuedaRepository(
+    faceBlur: faceBlur,
+    dondeQuedaApi: dondeQuedaApi,
+  );
   final onboardingRepository = OnboardingRepository(
     voiceRecorder: voiceRecorder,
     rondaApi: rondaApi,
@@ -358,6 +370,7 @@ Future<void> bootstrap(
     authRepository: authRepository,
     contactRepository: contactRepository,
     cuadernoRepository: cuadernoRepository,
+    dondeQuedaRepository: dondeQuedaRepository,
     flyerRepository: flyerRepository,
     needsRepository: needsRepository,
     onboardingRepository: onboardingRepository,

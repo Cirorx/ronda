@@ -9,6 +9,7 @@ import 'package:ronda/app/view/app_shell.dart';
 import 'package:ronda/attendance/attendance.dart';
 import 'package:ronda/cerca/cerca.dart';
 import 'package:ronda/cuaderno/cuaderno.dart';
+import 'package:ronda/donde_queda/donde_queda.dart';
 import 'package:ronda/error_log/error_log.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda/mate_flyer/mate_flyer.dart';
@@ -52,8 +53,9 @@ const returnToParameter = 'from';
 ///   Signed-out people sent from it to the welcome screen carry
 ///   `?from=/admin`, and sign-in returns them there instead of
 ///   to Mi ronda or onboarding.
-/// - a ronda's flyer (`/volante/{rondaId}`): like the tabs; the server
-///   decides who may make it.
+/// - a ronda's flyer (`/volante/{rondaId}`) and its ¿Dónde queda? screens
+///   (`/donde-queda/{rondaId}` to guess, `/donde-queda/{rondaId}/foto` for
+///   the photo): like the tabs; the server decides who may.
 /// - Ajustes' screens (`/ajustes/avisos`, `/ajustes/contar`,
 ///   `/ajustes/datos`): like the tabs, inside the Ajustes tab.
 /// - el cuaderno (`/ronda/cuaderno`): like the tabs, inside the Mi ronda
@@ -203,6 +205,16 @@ GoRouter createAppRouter({
           rondaId: state.pathParameters['rondaId']!,
           week: state.pathParameters['week']!,
         ),
+      ),
+      GoRoute(
+        path: DondeQuedaPhotoPage.path,
+        builder: (_, state) =>
+            DondeQuedaPhotoPage(rondaId: state.pathParameters['rondaId']!),
+      ),
+      GoRoute(
+        path: DondeQuedaGuessPage.path,
+        builder: (_, state) =>
+            DondeQuedaGuessPage(rondaId: state.pathParameters['rondaId']!),
       ),
       GoRoute(
         path: MateFlyerPage.path,

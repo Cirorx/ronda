@@ -5,6 +5,7 @@ library;
 
 export 'src/cuaderno/cuaderno.dart';
 export 'src/device_tokens/device_tokens.dart';
+export 'src/donde_queda/donde_queda.dart';
 export 'src/flyers/flyers.dart';
 export 'src/models/models.dart';
 export 'src/organiser/organiser.dart';

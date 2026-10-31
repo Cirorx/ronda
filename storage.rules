@@ -36,6 +36,29 @@ service firebase.storage {
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
+    // ¿Dónde queda? (#58): the photo of the week, every face already pixelated on
+    // the phone (packages/face_blur). Only the owner writes it, a JPEG of at most
+    // 3 MB; the post_donde_queda callable checks that it is their turn, deletes it
+    // once read, and the owner may delete it after a failed call. Nobody reads it
+    // back from a client.
+    match /donde_queda_photos/{uid}/{photoId} {
+      allow create: if request.auth != null && request.auth.uid == uid
+          && photoId.matches('[A-Za-z0-9_-]{1,64}[.]jpg')
+          && request.resource.contentType == 'image/jpeg'
+          && request.resource.size <= 3 * 1024 * 1024;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // The published photo, with people and number plates blurred on the server:
+    // read by the ronda's members (not one who left), written and deleted only by
+    // the functions. It goes at the reveal.
+    match /donde_queda/{rondaId}/{fileName} {
+      allow get: if request.auth != null
+          && firestore.exists(/databases/(default)/documents/rondas/$(rondaId)/members/$(request.auth.uid))
+          && firestore.get(/databases/(default)/documents/rondas/$(rondaId)/members/$(request.auth.uid))
+              .data.get('state', 'active') != 'left';
+    }
+
     // The flyer make_mate_flyer drew, read by the host who made it. Only the
     // callable writes it.
     match /flyers/{uid}/{fileName} {

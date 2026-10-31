@@ -150,7 +150,12 @@
     "webpush",
     "Widgetbook",
     "worktrees",
-    "xhigh"
+    "xhigh",
+    "Buscá",
+    "Probá",
+    "Sabés",
+    "creés",
+    "openstreetmap"
   ],
   "ignoreWords": [
     "realtime"

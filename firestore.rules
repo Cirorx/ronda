@@ -307,6 +307,16 @@ service cloud.firestore {
           && request.resource.data.closedAt == request.time;
     }
 
+    // ¿Dónde queda? (#58, functions/donde_queda.py). Members read the game through
+    // rondas/{id}/views/donde_queda (the views block above): the status, the map, the photo's
+    // path and the hint, then the reveal's line and counts. Who was asked, who passed, the
+    // photographer's pin and every guess live in rondas/{id}/donde_queda/{week}, which no client
+    // reads (nothing matches it). Each member gets only their own card: asked, posted, guessed.
+    // The job and the callables write everything with the admin SDK; no client does.
+    match /rondas/{rondaId}/donde_queda_players/{uid} {
+      allow get: if isOwner(uid) && isMemberOf(rondaId);
+    }
+
     // The web app's error log (functions/client_errors.py): scrubbed reports written only by
     // the report_client_error callable, read by the admin on /admin/errores. Its per-caller
     // hourly quota (client_error_quota) stays closed to every client.

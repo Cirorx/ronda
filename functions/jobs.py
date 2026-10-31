@@ -15,6 +15,7 @@ import attendance
 import bench
 import buddy
 import despues
+import donde_queda
 import fcm
 import handoff
 import rain
@@ -71,6 +72,8 @@ JOBS: dict[str, Callable[[object, datetime, Context], dict]] = {
         db, now, send=context.send, app_url=context.app_url, force=context.force
     ),
     "despues_sweep": lambda db, now, context: despues.run_despues_sweep(db, now),
+    # ¿Dónde queda? (#58): the weekly photo game's turns and reveal; sends nothing.
+    "donde_queda": lambda db, now, context: donde_queda.run_donde_queda(db, now),
 }
 
 

@@ -66,3 +66,36 @@ class NothingToDrawException implements Exception {
   /// {@macro nothing_to_draw_exception}
   const new();
 }
+
+/// {@template donde_queda_refused_exception}
+/// `post_donde_queda` refused the photo or its words, and says why:
+/// `houseNumber`, `person`, `empty` or `words`. The upload is already
+/// deleted.
+/// {@endtemplate}
+class const DondeQuedaRefusedException(
+  /// Why: `houseNumber`, `person`, `empty` or `words`.
+  final String reason,
+) implements Exception {
+  /// {@macro donde_queda_refused_exception}
+  this;
+
+  @override
+  String toString() => 'DondeQuedaRefusedException($reason)';
+}
+
+/// {@template not_your_turn_exception}
+/// A ¿Dónde queda? call came too late or from the wrong person: the turn
+/// passed on, the game closed, or the photo is the caller's own.
+/// {@endtemplate}
+class NotYourTurnException implements Exception {
+  /// {@macro not_your_turn_exception}
+  const new();
+}
+
+/// {@template already_guessed_exception}
+/// The member already dropped their one pin on this week's photo.
+/// {@endtemplate}
+class AlreadyGuessedException implements Exception {
+  /// {@macro already_guessed_exception}
+  const new();
+}

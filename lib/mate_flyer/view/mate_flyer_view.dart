@@ -172,7 +172,7 @@ class const MateFlyerView({super.key}) extends StatelessWidget {
         image: true,
         child: AspectRatio(
           aspectRatio: photo.width / photo.height,
-          child: _TapToBlur(
+          child: TapToBlurPhoto(
             image: _bytesImage(photo.jpeg),
             busy: busy,
             onTapped: (x, y) => cubit.faceTapped(x: x, y: y),
@@ -249,85 +249,4 @@ class const MateFlyerView({super.key}) extends StatelessWidget {
     excludeFromSemantics: true,
     errorBuilder: (_, _, _) => const SizedBox.shrink(),
   );
-}
-
-/// {@template tap_to_blur}
-/// The blurred photo, where a tap on a face the detector missed blurs it
-/// too. The ink spreads from where the finger lands, the moment it lands,
-/// and while that face is blurred a progress ring sits on the same spot.
-/// {@endtemplate}
-class const _TapToBlur({
-  required final Widget image,
-  required final bool busy,
-  required final void Function(double x, double y) onTapped,
-}) extends StatefulWidget {
-  /// The mark's diameter on the tapped spot.
-  static const double markSize = 40;
-
-  @override
-  State<_TapToBlur> createState() => _TapToBlurState();
-}
-
-class _TapToBlurState extends State<_TapToBlur> {
-  /// Where the last tap landed, in the photo's own pixels on screen.
-  Offset? _tapped;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final spacing = context.appSpacing;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Where the ring sits: the tapped spot, or the middle when the
-        // photo came back busy without a tap seen here.
-        final mark =
-            _tapped ??
-            Offset(constraints.maxWidth / 2, constraints.maxHeight / 2);
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            widget.image,
-            if (widget.busy)
-              Positioned(
-                left: mark.dx - _TapToBlur.markSize / 2,
-                top: mark.dy - _TapToBlur.markSize / 2,
-                width: _TapToBlur.markSize,
-                height: _TapToBlur.markSize,
-                child: ExcludeSemantics(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: scheme.surface,
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(spacing.xs),
-                      child: const CircularProgressIndicator(
-                        strokeWidth: BusyLabel.strokeWidth,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            Positioned.fill(
-              child: Material(
-                type: MaterialType.transparency,
-                child: InkWell(
-                  excludeFromSemantics: true,
-                  onTapUp: widget.busy
-                      ? null
-                      : (details) {
-                          setState(() => _tapped = details.localPosition);
-                          widget.onTapped(
-                            details.localPosition.dx / constraints.maxWidth,
-                            details.localPosition.dy / constraints.maxHeight,
-                          );
-                        },
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }

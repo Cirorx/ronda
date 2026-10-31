@@ -39,13 +39,14 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   │               pick after a waiting list didn't fill),
   │               set_despues and answer_despues (the después), answer_handoff ("¿Abrís
   │               vos?"), buddy_options and set_buddy (the buddy),
-  │               report_client_error (the web app's error log; works signed out)
+  │               report_client_error (the web app's error log; works signed out),
+  │               post_donde_queda, pass_donde_queda and guess_donde_queda (¿Dónde queda?)
   │    triggers   bench_on_answer (an RSVP answer changed) and bench_on_offer (an offer
   │               was answered) run that ronda's bench at once
   │    scheduled  one dispatcher on the hour in Montevideo (`dispatch`) → run_<job>(db, now)
   │               for every job in `jobs.JOBS` (rsvp_push, seguimos_ask, rain_check,
   │               attendance_ask, bench, waitlists, and the code jobs assign_hosts, handoff,
-  │               prompt_buddy, despues_sweep); hourly audio sweeper (`sweep_audio`
+  │               prompt_buddy, despues_sweep, donde_queda); hourly audio sweeper (`sweep_audio`
   │               deletes `audio/` objects older than 1 h); hourly Cerca counts (`refresh_cerca`,
   │               until the dispatcher adopts `run_refresh_cerca`)
   │    http       flyer_landing (public: counts a flyer's scan, answers /f/{id})
@@ -335,6 +336,53 @@ isn't set up).
     [{firstName, day, week, at}]}, which only they read and only they close (`status: closed`,
     `closedAt == request.time`; `rules/buddy.test.js`). The admin's trace has it; the acta
     doesn't.
+- ¿Dónde queda? (#58, `functions/donde_queda.py`): the weekly barrio photo game. Fixed rules in
+  code; SAM 3.1 and Spark 1.3 only check the photo and the words; nothing is pushed.
+  - **When:** the game of week W (the ISO week of the slot's next day, `rsvp.next_meeting`) runs
+    from the day after the last meeting to the end of meeting W's day. The `donde_queda` job
+    (hourly in `dispatch`, and by `run_job`) asks, passes stale asks, reveals the game once its
+    week is past, and deletes what is older.
+  - `rondas/{id}/donde_queda/{isoWeek}` (no client reads it): week, meeting, status (asking | open
+    | nobody | revealed), asked, askedAt, passed [uids], starter; once posted photographer,
+    photoPath, line, hint, pin {lat, lng}, guesses {uid: {lat, lng}}, postedAt. The reveal
+    rewrites it to week, status, revealedFor (the week whose card shows it), reveal {line, close,
+    guessed}, revealedAt, so the pin and every guess are gone; the week after, the document goes
+    too. A week nobody posted in is deleted the day after its meeting.
+  - `rondas/{id}/views/donde_queda` (the ronda's members, through the `views/{view}` rule):
+    current {week, status, area {lat, lng, zoom}, closesOn, photoPath? and hint? once open} |
+    null, reveal {week, line, close, guessed} | null, updatedAt. Never who was asked, who passed,
+    the pin or a guess.
+  - `rondas/{id}/donde_queda_players/{uid}` (that member only, `get`): week, asked, posted,
+    guessed, updatedAt. `rondas/{id}/private/donde_queda` (no client): lastStarter, week.
+  - **The turn** (`turn_order`, `starter`, `next_asked`): active members by `joinedAt` (paused
+    over the meeting skipped), starting one after last week's first; "Esta semana no"
+    (`pass_donde_queda {rondaId, week}`, the member asked only) or 48 h without a photo moves to
+    the next not yet asked; when everyone was asked, `nobody`. Fewer than three playing: no game.
+  - **The photo:** the phone pixelates faces (`packages/face_blur`, the flyer's pipeline: only a
+    `BlurredPhoto` can be uploaded) and uploads `donde_queda_photos/{uid}/{photoId}.jpg`
+    (owner-only create, `image/jpeg`, ≤ 3 MB, no client read). `post_donde_queda {rondaId, week,
+    photoPath, line, hint?, lat, lng}` (the member asked, while asking): the line (1–80) and hint
+    (0–80) pass the organiser's word gates (`gates.check_words`: no emoji, voseo, no money, no
+    home or address), then Spark 1.3's strict `WordsVerdict`; the pin must lie within 1.5 km of
+    the barrio's centroid; the photo is re-saved without EXIF at 1280 px; an empty one (grey
+    levels barely changing) is refused before SAM; SAM 3.1 looks for "person", "license plate" and
+    "house number" side by side. A house number, or a person whose box covers 12% of the photo or
+    more, is refused (`failed-precondition`, `details.reason`: houseNumber | person | empty |
+    words); smaller people and plates are pixelated. The published photo is
+    `donde_queda/{rondaId}/{isoWeek}.jpg`, which storage.rules lets only the ronda's members (not
+    one who left) `get`. The upload is deleted whatever happens.
+  - **The location** is never read from the photo (no EXIF reaches the server): the answer is the
+    photographer's pin.
+  - `guess_donde_queda {rondaId, week, lat, lng}`: a member (not left), not the photographer, once
+    (`already-exists` after), while open, within the area; in a transaction.
+  - **The reveal:** the count of guesses within 250 m (two and a half blocks) of the pin, of all
+    guesses. Then the photo, the pin, the guesses and the players' cards are deleted.
+  - **Deletion backstop:** Storage lifecycle rules, set on the bucket by the owner (not in this
+    repo, as for `flyer_photos/`): `donde_queda_photos/` 1 day, `donde_queda/` 10 days (a game
+    lasts at most eight). Faces reach Storage only pixelated, so the 24 h rule holds whatever
+    the lifecycle does.
+  - Rules tests: `rules/donde_queda.test.js`; a whole round with three members on the emulators:
+    `functions/tests/test_donde_queda_emulators.py`.
 - `avoid/{pairId}`: uidA, uidB (report-apart; read by the solver only).
 - `reports/{id}`: reporter, reported, rondaId, tag, text (minimal), status.
 - `acta/{rondaId}/entries/{runId}-{k}` (built in #49, `functions/organiser/trace.py`): week, ts,

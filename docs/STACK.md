@@ -62,12 +62,13 @@ Target package map (create each when its first feature needs it, with the Very G
 | Package | Layer | Wraps / owns | First issue |
 |---|---|---|---|
 | `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
-| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`, `answer_bench_offer`, `answer_waitlist`, and `read_line` and `make_postcard` through `CuadernoApi`, which has no Firestore or Storage client) | #13 |
+| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`, `answer_bench_offer`, `answer_waitlist`, `post_donde_queda`, `pass_donde_queda`, `guess_donde_queda`, and `read_line` and `make_postcard` through `CuadernoApi`, which has no Firestore or Storage client) | #13 |
 | `device_store` | Data | flutter_secure_storage (needs, the terms and answers held until sign-in, and whether "¿Cómo funciona?" was shown); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
 | `push_repository` | Repository | The notification permission, the "Ahora no" snooze, and the FCM token under `users/{uid}/tokens` (over `push_client` + `ronda_api` + `device_store`); the token never leaves it | #27 |
 | `face_blur` | Data | `image_picker`, ML Kit face detection + `image` pixelation (native only); only it makes a `BlurredPhoto` | #44 |
+| `donde_queda_repository` | Repository | ¿Dónde queda?: the game and last week's answer, the photo over the same `face_blur` pipeline as the flyer (its post takes only a `BlurredPhoto`), "Esta semana no" and the one pin (over `face_blur` + `ronda_api`'s `DondeQuedaApi`) | #58 |
 | `share_sheet` | Data | share_plus: one file to the phone's share sheet | #44 |
 | `link_opener` | Data | url_launcher: a `mailto:`, `tel:` or `https:` link to the phone's mail app, dialer or browser; the app opens links only through it | #54 |
 | `cuaderno_repository` | Repository | El cuaderno del barrio (#59): lines, the line to bring and deleting it all, over `device_store` only (`cuaderno.{uid}`, no network path); a short voice note → `audio/{uid}/…` → `read_line` (Voice Transcribe, deleted once read) → words; `make_postcard` (the week's lines in the payload, the JPEG in the answer, stored nowhere); the share sheet (over `device_store`, `voice_recorder`, `ronda_api`, `share_sheet`) | #59 |
@@ -105,6 +106,11 @@ Rules the agents apply (from `layered-architecture` and `bloc`):
   `RondaSwap` (with `RondaSwap.topStartLayout` for states in a column), `StepSwitcher` (the steps
   of one page, pushed and popped in place), `SpringBuilder` (with `from:`), `RondaHaptics`.
   `ronda_ui` depends on `cupertino_ui` for the page slide and its edge swipe back.
+- Photos and maps: `TapToBlurPhoto` (a blurred photo where a tap blurs a missed face; the flyer and
+  ¿Dónde queda? share it) and `BarrioMap` (a small OpenStreetMap map of one barrio, tap to drop
+  a pin, pinch to zoom; no map package: web Mercator tiles from `tile.openstreetmap.org` as plain
+  images, the ODbL attribution always drawn, and a `Ronda/1.0` user agent on phones as OSM's tile
+  policy asks; tests pass `tileImage` so nothing reaches the network).
 - Status (`docs/DESIGN.md` § Motion and feel): `StatusLine` (a line read out as it changes),
   `LoadingStatus` / `LoadingStatus.inline` (a ring and a line while a screen reads), `BusyLabel`
   (a ring inside the pressed button) and `RsvpBar`'s `pending:` / `savingLabel:` (an answer on

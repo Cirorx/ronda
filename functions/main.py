@@ -800,3 +800,71 @@ def report_client_error(req: https_fn.CallableRequest) -> dict:
         return client_errors.report(_firestore(), req.data, uid=uid, ip=ip, now=_now())
     except client_errors.ClientErrorRefused as e:
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e
+
+
+# --- ¿Dónde queda? (#58): the weekly barrio photo game ----------------------------------------
+
+
+def _donde_queda_call(req: https_fn.CallableRequest, run):
+    """Runs `run()` for a signed-in caller; a refusal keeps its code, and a refused photo says
+    why in `details.reason` (houseNumber, person, empty, words)."""
+    import donde_queda
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "sign in first")
+    try:
+        return run()
+    except donde_queda.DondeQuedaError as e:
+        details = {"reason": e.reason} if e.reason else None
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e), details) from e
+
+
+@https_fn.on_call(
+    region=REGION,
+    max_instances=2,
+    timeout_sec=120,
+    memory=options.MemoryOption.GB_1,
+    secrets=[MODEL_API_KEY],
+    invoker="public",
+)
+def post_donde_queda(req: https_fn.CallableRequest) -> dict:
+    """The member asked posts this week's photo, `{rondaId, week, photoPath, line, hint?, lat,
+    lng}`: checked by SAM 3.1 and Spark 1.3, blurred and published under the ronda
+    (donde_queda.py). The upload is deleted whatever happens."""
+    import donde_queda
+
+    return _donde_queda_call(
+        req,
+        lambda: donde_queda.post_photo(
+            uid=req.auth.uid,
+            data=req.data,
+            db=_firestore(),
+            bucket=_bucket(),
+            api_key=MODEL_API_KEY.value,
+            now=_now(),
+        ),
+    )
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def pass_donde_queda(req: https_fn.CallableRequest) -> dict:
+    """ "Esta semana no", `{rondaId, week}`: the turn passes on without saying why."""
+    import donde_queda
+
+    return _donde_queda_call(
+        req, lambda: donde_queda.pass_turn(_firestore(), req.auth.uid, req.data, _now())
+    )
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def guess_donde_queda(req: https_fn.CallableRequest) -> dict:
+    """One pin per member on this week's photo, `{rondaId, week, lat, lng}`."""
+    import donde_queda
+
+    return _donde_queda_call(
+        req, lambda: donde_queda.guess(_firestore(), req.auth.uid, req.data, _now())
+    )

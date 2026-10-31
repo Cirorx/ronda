@@ -20,6 +20,8 @@ dependencies:
     path: packages/cuaderno_repository
   device_store:
     path: packages/device_store
+  donde_queda_repository:
+    path: packages/donde_queda_repository
   equatable: ^2.0.7
   error_reporter:
     path: packages/error_reporter

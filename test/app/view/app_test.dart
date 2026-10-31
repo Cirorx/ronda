@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:auth_repository/auth_repository.dart';
 import 'package:contact_repository/contact_repository.dart';
 import 'package:cuaderno_repository/cuaderno_repository.dart';
+import 'package:donde_queda_repository/donde_queda_repository.dart';
 import 'package:error_reporter/error_reporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,6 +21,7 @@ import 'package:ronda/agent_trace/agent_trace.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/attendance/attendance.dart';
 import 'package:ronda/cerca/cerca.dart';
+import 'package:ronda/donde_queda/donde_queda.dart';
 import 'package:ronda/error_log/error_log.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda/mate_flyer/mate_flyer.dart';
@@ -42,6 +44,7 @@ class _MockAuthRepository extends Mock implements AuthRepository;
 class _MockContactRepository extends Mock implements ContactRepository;
 
 class _MockCuadernoRepository extends Mock implements CuadernoRepository;
+class _MockDondeQuedaRepository extends Mock implements DondeQuedaRepository;
 
 class _MockNeedsRepository extends Mock implements NeedsRepository;
 
@@ -80,6 +83,7 @@ void main() {
     late AuthRepository authRepository;
     late ContactRepository contactRepository;
     late CuadernoRepository cuadernoRepository;
+    late DondeQuedaRepository dondeQuedaRepository;
     late NeedsRepository needsRepository;
     late ProfileRepository profileRepository;
     late RondaRepository rondaRepository;
@@ -105,6 +109,13 @@ void main() {
     setUp(() {
       authRepository = _MockAuthRepository();
       contactRepository = _MockContactRepository();
+      dondeQuedaRepository = _MockDondeQuedaRepository();
+      when(
+        () => dondeQuedaRepository.watch(
+          rondaId: any(named: 'rondaId'),
+          uid: any(named: 'uid'),
+        ),
+      ).thenAnswer((_) => Stream.value(const DondeQuedaWeek()));
       when(() => contactRepository.email).thenReturn('hola@example.com');
       cuadernoRepository = _MockCuadernoRepository();
       when(() => cuadernoRepository.changes)
@@ -196,6 +207,7 @@ void main() {
       authRepository: authRepository,
       contactRepository: contactRepository,
       cuadernoRepository: cuadernoRepository,
+      dondeQuedaRepository: dondeQuedaRepository,
       flyerRepository: flyerRepository,
       needsRepository: needsRepository,
       onboardingRepository: onboardingRepository,
@@ -895,6 +907,21 @@ void main() {
           same(flyerRepository),
         );
       });
+
+      for (final (name, location, type) in [
+        ('photo', DondeQuedaPhotoPage.location('ronda-1'), DondeQuedaPhotoPage),
+        ('guess', DondeQuedaGuessPage.location('ronda-1'), DondeQuedaGuessPage),
+      ]) {
+        testWidgets('by opening the ¿Dónde queda? $name screen of a '
+            'ronda', (tester) async {
+          await pumpSignedIn(tester);
+
+          GoRouter.of(tester.element(find.byType(MyRondaPage))).go(location);
+          await tester.pumpAndSettle();
+
+          expect(find.byType(type), findsOneWidget);
+        });
+      }
 
       testWidgets('by opening the trace under $AdminPage without a profile', (
         tester,

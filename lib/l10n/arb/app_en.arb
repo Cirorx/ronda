@@ -3622,5 +3622,211 @@
     "dataNotKeptCuaderno": "Your notebook: it stays on this phone only.",
     "@dataNotKeptCuaderno": {
         "description": "Your data screen: not kept item"
+    },
+    "dondeQuedaTitle": "Where is it?",
+    "@dondeQuedaTitle": {
+        "description": "Title of the weekly barrio photo game"
+    },
+    "dondeQuedaYourTurn": "This week it's your turn.",
+    "@dondeQuedaYourTurn": {
+        "description": "Card: the member is asked for the photo"
+    },
+    "dondeQuedaPrompt": "Take a photo of something in the barrio: a door, a mural, a tree.",
+    "@dondeQuedaPrompt": {
+        "description": "What to photograph"
+    },
+    "dondeQuedaHowItWorks": "The others guess on a map where it is. The answer shows on next week's card.",
+    "@dondeQuedaHowItWorks": {
+        "description": "How the game works, under the prompt"
+    },
+    "dondeQuedaTakePhoto": "Take the photo",
+    "@dondeQuedaTakePhoto": {
+        "description": "Button: opens the photo screen"
+    },
+    "dondeQuedaSkip": "Not this week",
+    "@dondeQuedaSkip": {
+        "description": "Button: passes the turn without saying why"
+    },
+    "dondeQuedaSkipError": "We couldn't pass the turn. Try again.",
+    "@dondeQuedaSkipError": {
+        "description": "Passing the turn failed"
+    },
+    "dondeQuedaPosted": "Your photo is up. The answer shows on next week's card.",
+    "@dondeQuedaPosted": {
+        "description": "Card: the photographer posted"
+    },
+    "dondeQuedaNew": "There's a photo of the barrio. Do you know where it is?",
+    "@dondeQuedaNew": {
+        "description": "Card: a photo to guess"
+    },
+    "dondeQuedaGuess": "Drop my pin",
+    "@dondeQuedaGuess": {
+        "description": "Button: opens the map to guess"
+    },
+    "dondeQuedaGuessed": "You dropped your pin. The answer shows on next week's card.",
+    "@dondeQuedaGuessed": {
+        "description": "Card: the member already guessed"
+    },
+    "dondeQuedaRevealLead": "Last week's",
+    "@dondeQuedaRevealLead": {
+        "description": "Card: introduces last week's answer"
+    },
+    "dondeQuedaReveal": "It was {line}.",
+    "@dondeQuedaReveal": {
+        "description": "The answer, with what the photographer wrote",
+        "placeholders": {
+            "line": {
+                "type": "String"
+            }
+        }
+    },
+    "dondeQuedaClose": "Close: {close} of {guessed}",
+    "@dondeQuedaClose": {
+        "description": "How many guesses came close, of how many",
+        "placeholders": {
+            "close": {
+                "type": "int"
+            },
+            "guessed": {
+                "type": "int"
+            }
+        }
+    },
+    "dondeQuedaNobodyGuessed": "Nobody dropped a pin.",
+    "@dondeQuedaNobodyGuessed": {
+        "description": "The answer when nobody guessed"
+    },
+    "dondeQuedaLineLabel": "What is it, and where?",
+    "@dondeQuedaLineLabel": {
+        "description": "Field: what the photo is"
+    },
+    "dondeQuedaLineHelper": "We show it only next week. For example: the green door on the corner of Gestido and Rivera.",
+    "@dondeQuedaLineHelper": {
+        "description": "Under the line field"
+    },
+    "dondeQuedaLineEmpty": "Say what it is, in one line.",
+    "@dondeQuedaLineEmpty": {
+        "description": "The line field is empty"
+    },
+    "dondeQuedaTooLong": "Up to 80 characters.",
+    "@dondeQuedaTooLong": {
+        "description": "A field is too long"
+    },
+    "dondeQuedaHintLabel": "A hint, if you like",
+    "@dondeQuedaHintLabel": {
+        "description": "Field: optional hint"
+    },
+    "dondeQuedaHintHelper": "Everyone sees it right away. No street numbers or people's names.",
+    "@dondeQuedaHintHelper": {
+        "description": "Under the hint field"
+    },
+    "dondeQuedaNext": "Next",
+    "@dondeQuedaNext": {
+        "description": "Button: from the words to the map"
+    },
+    "dondeQuedaPinTitle": "Mark where it is",
+    "@dondeQuedaPinTitle": {
+        "description": "Map step title for the photographer"
+    },
+    "dondeQuedaPinBody": "Tap the map where you took the photo. It's the answer: nobody sees it until next week.",
+    "@dondeQuedaPinBody": {
+        "description": "Map step body for the photographer"
+    },
+    "dondeQuedaBack": "Back to the photo",
+    "@dondeQuedaBack": {
+        "description": "Button: from the map back to the photo"
+    },
+    "dondeQuedaSend": "Send the photo",
+    "@dondeQuedaSend": {
+        "description": "Button: posts the photo"
+    },
+    "dondeQuedaSending": "Checking the photo. It takes about half a minute.",
+    "@dondeQuedaSending": {
+        "description": "While the server checks the photo"
+    },
+    "dondeQuedaDone": "Done, your photo is up. The others see it on My ronda.",
+    "@dondeQuedaDone": {
+        "description": "The photo was posted"
+    },
+    "dondeQuedaBackToRonda": "Back to My ronda",
+    "@dondeQuedaBackToRonda": {
+        "description": "Button: closes the screen"
+    },
+    "dondeQuedaClosed": "It's not your turn this week any more: someone else takes the photo, or it has closed.",
+    "@dondeQuedaClosed": {
+        "description": "Photo screen when it isn't the member's turn"
+    },
+    "dondeQuedaRefusedHouseNumber": "A house number shows. Take it from another side, without the number.",
+    "@dondeQuedaRefusedHouseNumber": {
+        "description": "Refused: a house number"
+    },
+    "dondeQuedaRefusedPerson": "The photo is of a person. Look for something of the barrio: a door, a mural, a tree.",
+    "@dondeQuedaRefusedPerson": {
+        "description": "Refused: a person as the subject"
+    },
+    "dondeQuedaRefusedEmpty": "The photo came out empty or too dark. Try again.",
+    "@dondeQuedaRefusedEmpty": {
+        "description": "Refused: an empty photo"
+    },
+    "dondeQuedaRefusedWords": "What you wrote can't go: no street numbers or people's names.",
+    "@dondeQuedaRefusedWords": {
+        "description": "Refused: the words"
+    },
+    "dondeQuedaSendError": "We couldn't send the photo. Try again in a while.",
+    "@dondeQuedaSendError": {
+        "description": "Sending failed"
+    },
+    "dondeQuedaGuessBody": "Tap the map where you think it is. You have one pin.",
+    "@dondeQuedaGuessBody": {
+        "description": "Guess screen body"
+    },
+    "dondeQuedaHint": "Hint: {hint}",
+    "@dondeQuedaHint": {
+        "description": "The photographer's hint",
+        "placeholders": {
+            "hint": {
+                "type": "String"
+            }
+        }
+    },
+    "dondeQuedaConfirm": "It's here",
+    "@dondeQuedaConfirm": {
+        "description": "Button: sends the pin"
+    },
+    "dondeQuedaGuessDone": "Done. The answer shows on next week's card.",
+    "@dondeQuedaGuessDone": {
+        "description": "The pin was sent"
+    },
+    "dondeQuedaGuessError": "We couldn't save your pin. Try again.",
+    "@dondeQuedaGuessError": {
+        "description": "Sending the pin failed"
+    },
+    "dondeQuedaGuessClosed": "This photo has closed.",
+    "@dondeQuedaGuessClosed": {
+        "description": "Guess screen with nothing to guess"
+    },
+    "dondeQuedaLoadError": "We couldn't open the photo. Try again in a while.",
+    "@dondeQuedaLoadError": {
+        "description": "Guess screen couldn't load"
+    },
+    "dondeQuedaLoading": "Finding the photo…",
+    "@dondeQuedaLoading": {
+        "description": "Guess screen loading"
+    },
+    "dondeQuedaPhotoSemantics": "This week's photo, to guess where it is",
+    "@dondeQuedaPhotoSemantics": {
+        "description": "Screen reader label of the photo"
+    },
+    "dondeQuedaMapSemantics": "Map of the barrio. Tap to drop the pin.",
+    "@dondeQuedaMapSemantics": {
+        "description": "Screen reader label of the map"
+    },
+    "dondeQuedaMapAttribution": "© OpenStreetMap contributors",
+    "@dondeQuedaMapAttribution": {
+        "description": "Map attribution (ODbL)"
+    },
+    "dondeQuedaNoPeople": "Better without people: if someone shows, we blur them before it goes up. Keep house numbers out of it.",
+    "@dondeQuedaNoPeople": {
+        "description": "Before the camera: no people, no house numbers"
     }
 }

@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:contact_repository/contact_repository.dart';
+import 'package:donde_queda_repository/donde_queda_repository.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,6 +24,8 @@ import '../fixtures.dart';
 class _MockRondaRepository extends Mock implements RondaRepository;
 
 class _MockContactRepository extends Mock implements ContactRepository;
+
+class _MockDondeQuedaRepository extends Mock implements DondeQuedaRepository;
 
 class _MockPushCubit extends MockCubit<PushState> implements PushCubit;
 
@@ -50,6 +53,7 @@ void main() {
     late CuadernoCardCubit cuadernoCardCubit;
     late RondaRepository rondaRepository;
     late ContactRepository contactRepository;
+    late DondeQuedaRepository dondeQuedaRepository;
 
     final ready = ThisWeekState(
       status: ThisWeekStatus.ready,
@@ -59,6 +63,13 @@ void main() {
     setUp(() {
       rondaRepository = _MockRondaRepository();
       contactRepository = _MockContactRepository();
+      dondeQuedaRepository = _MockDondeQuedaRepository();
+      when(
+        () => dondeQuedaRepository.watch(
+          rondaId: any(named: 'rondaId'),
+          uid: any(named: 'uid'),
+        ),
+      ).thenAnswer((_) => Stream.value(const DondeQuedaWeek()));
       when(() => rondaRepository.watchBuddyAsk(any()))
           .thenAnswer((_) => Stream.value(null));
       when(() => rondaRepository.buddyOptions(any())).thenAnswer(
@@ -93,6 +104,7 @@ void main() {
           providers: [
             RepositoryProvider.value(value: rondaRepository),
             RepositoryProvider.value(value: contactRepository),
+            RepositoryProvider.value(value: dondeQuedaRepository),
           ],
           child: MultiBlocProvider(
             providers: [

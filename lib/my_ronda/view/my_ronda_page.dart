@@ -7,6 +7,7 @@ import 'package:ronda/acta/acta.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/buddy/buddy.dart';
 import 'package:ronda/cuaderno/cuaderno.dart';
+import 'package:ronda/donde_queda/donde_queda.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/cubit/bench_offer_cubit.dart';
 import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
@@ -172,6 +173,7 @@ class const MyRondaView({required final String uid, super.key})
     // The ronda's context: on a phone under the card, on a desktop beside it.
     final aside = <Widget>[
       if (state.week case final week? when !week.hasLeft) ...[
+        DondeQuedaCard(rondaId: week.rondaId, uid: uid),
         BuddySection(rondaId: week.rondaId, uid: uid),
         ActaLink(rondaId: week.rondaId),
       ],

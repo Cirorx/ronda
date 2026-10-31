@@ -8,8 +8,8 @@ Prices per million tokens unless noted.
 | Model | Id | Use in Ronda | Price |
 |---|---|---|---|
 | Muse Voice Transcribe | `muse-voice-transcribe-1.0` (`POST /v1/asr/transcribe`, real-time `wss://api.meta.ai/v1/asr/realtime`) | Voice onboarding, voice RSVP, host recap | $0.18 / hour |
-| Muse Spark 1.3 | `muse-spark-1.3` | Structured fields from transcripts; fallback for the agent | $1.25 in · $0.15 cached · $4.25 out |
-| SAM 3.1 | `sam-3.1` (Responses API, Files API) | Cut objects out of a ronda photo for the flyer; spot photo outline | $2.50 / 1,000 images; video $0.20 / 1,000 frames |
+| Muse Spark 1.3 | `muse-spark-1.3` | Structured fields from transcripts; ¿Dónde queda?'s answer line and hint; fallback for the agent | $1.25 in · $0.15 cached · $4.25 out |
+| SAM 3.1 | `sam-3.1` (Responses API, Files API) | Cut objects out of a ronda photo for the flyer; ¿Dónde queda?: find people, number plates and house numbers; spot photo outline | $2.50 / 1,000 images; video $0.20 / 1,000 frames |
 | Muse Image 1.0 | `muse-image-1.0` (`/v1/images/generations`, `/v1/images/edits`) | "Mate de más" and tear-off flyer layouts | $0.01 / image |
 
 Notes:
@@ -83,7 +83,7 @@ Counts toward "Use of Meta AI tooling" (25% of the score); mention what was used
 ## Smoke tests (day 1, tests 1–5; day 2, tests 6–7)
 Scripted in `scripts/smoke/` (`uv run scripts/smoke/s1_access.py`, `s2_structured.py`,
 `s3_transcribe.py note.wav`, `s4_baseten_tools.py`, `s5_sam.py photo.png out/`, `s6_image.py`,
-`s7_public_data.py`). They read keys
+`s7_public_data.py`, and `s8_donde_queda.py`, run with `functions/venv/bin/python`). They read keys
 from the environment or `.env` and never print them. Log latency and cost of each in
 `notes/NOW.md`.
 
@@ -111,6 +111,11 @@ Results from Uruguay, 2026-10-28:
 - 7 (`s7_public_data.py`): Open-Meteo 0.8 s (72 hours plus sunset); the DNT GTFS zip (2.7 MB,
   8 s) has `stop_times.txt`; Overpass 37 s for 100 places in Ciudad de la Costa, so cache it per
   barrio.
+- 8 (`s8_donde_queda.py [photo ...]`, #58): ¿Dónde queda?'s SAM 3.1 phrases ("person", "license
+  plate", "house number") and Spark 1.3's `WordsVerdict` through the functions' own code. **Not
+  run yet:** written in #58 without access to the key; the tests play back scripted SAM and Spark
+  answers. "house number" is the untested phrase: if it finds nothing on a real plaque, try
+  "address number" or "door number" in `donde_queda.CONCEPTS`.
 
 1. **Access from Uruguay.**
    `curl -s https://api.meta.ai/v1/responses -H "Authorization: Bearer $MODEL_API_KEY" -H "Content-Type: application/json" -d '{"model":"muse-spark-1.3","input":"Decí hola en rioplatense."}'`

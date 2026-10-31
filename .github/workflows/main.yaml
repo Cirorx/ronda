@@ -38,6 +38,7 @@ jobs:
           - packages/contact_repository
           - packages/cuaderno_repository
           - packages/device_store
+          - packages/donde_queda_repository
           - packages/error_reporter
           - packages/face_blur
           - packages/flyer_repository
@@ -116,6 +117,10 @@ jobs:
           distribution: temurin
           java-version: 21
       - run: npx --yes firebase-tools@15.34.1 emulators:exec --only firestore,storage --project demo-ronda-voice "venv/bin/pytest tests/test_voice_signup_emulators.py"
+        env:
+          RONDA_EMULATORS_REQUIRED: "1"
+      # A whole round of ¿Dónde queda? with three members, SAM and Spark faked.
+      - run: npx --yes firebase-tools@15.34.1 emulators:exec --only firestore,storage --project demo-ronda-donde-queda "venv/bin/pytest tests/test_donde_queda_emulators.py"
         env:
           RONDA_EMULATORS_REQUIRED: "1"
 
