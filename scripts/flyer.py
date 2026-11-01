@@ -51,7 +51,7 @@ import seed
 sys.path.append(str(demo_data.ROOT / "solver"))
 from ronda_solver.barrios import BARRIO_NAMES, CENTROIDS
 from ronda_solver.geo import blocks_between
-from ronda_solver.rules import MAX_WALK_BLOCKS
+from ronda_solver.rules import max_walk_blocks
 
 URUGUAY = ZoneInfo("America/Montevideo")
 ID_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyz"
@@ -109,12 +109,14 @@ def barrio_at(spot: tuple[float, float]) -> str:
 
 def near_barrios(spot: tuple[float, float], barrio: str) -> list[str]:
     """`barrio`, then every other barrio whose centroid is within walking distance of `spot`
-    (the solver's ten blocks), nearest first."""
+    (the solver's walk to a ronda there: ten blocks, fifteen in Montevideo), nearest first."""
     others = sorted(
         (b for b in CENTROIDS if b != barrio),
         key=lambda b: blocks_between(spot, CENTROIDS[b]),
     )
-    return [barrio] + [b for b in others if blocks_between(spot, CENTROIDS[b]) <= MAX_WALK_BLOCKS]
+    return [barrio] + [
+        b for b in others if blocks_between(spot, CENTROIDS[b]) <= max_walk_blocks(barrio)
+    ]
 
 
 def flyer_document(

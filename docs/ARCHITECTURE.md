@@ -96,7 +96,8 @@ isn't set up).
   - **Walk distance is per member, so the phone computes it.** It depends on the member's barrio
     and the seat's, so the document carries `blocksFrom`: the haversine walk from every barrio's
     centroid to the seat's (a block is 100 m, as in the solver), and the phone reads its own
-    barrio's entry: near ≤ 5 blocks, medium ≤ 10, far beyond (`WalkDistance.forMember` in
+    barrio's entry: near ≤ half the walk, medium ≤ the walk (`Barrio.walkBlocks`: 10 blocks, 15
+    in Montevideo), far beyond (`WalkDistance.forMember` in
     `needs_repository`). A barrio missing from the table reads as far. The server already holds
     the member's barrio in the profile, so this sends nothing new.
   - `hasStairs` and `needsCar` describe the place, so they are false until a host sets one; the
@@ -249,7 +250,7 @@ isn't set up).
     meetings from the one the push is for, the ronda becomes `active`, and the RSVP body opens
     with "Seguimos los jueves, hasta el jueves 26/11. Nadie sabe qué contestó cada uno."
     (members the RSVP skips get those words alone). Each "no" leaves (`state: left`) and gets
-    "Gracias por venir." with up to two open rondas within the solver's ten blocks that have
+    "Gracias por venir." with up to two open rondas within the solver's walk (10 blocks, 15 in Montevideo) that have
     places, same pretext first. Below the floor: no season, `status` unchanged, and everyone
     still in gets the didn't-fill words instead of the RSVP; their pick is recorded for the
     admin. The waiting list's own didn't-fill (#48) is below.
@@ -258,7 +259,7 @@ isn't set up).
   a time.
   - Who is on it and in what order is code's (`bench_order`): sign-ups with a profile who count
     (`demo_users.counts`), seated in no ronda that still meets, who picked the ronda's pretext
-    and slot, live within the solver's ten blocks, have the ronda's seat id among their
+    and slot, live within the solver's walk, have the ronda's seat id among their
     `private/eligible` ids (the needs filter), and hold no other pending offer nor a seat taken
     elsewhere that day; by profile `createdAt`, then blocks, then uid.
   - `rondas/{id}/bench/{isoWeek}` (server only): offers [{offerId, uid, firstName, status}] in
@@ -535,7 +536,7 @@ isn't set up).
   domain, and the id is eight of `[a-z0-9]` (`scripts/flyer.py`'s alphabet) for both.
   - `tearOff` (built in #43, `scripts/flyer.py`, which writes `kind: "tearOff"`): label (the
     spot, for the admin's scans per spot; never public), pretext, slot, barrio, nearBarrios[] (the barrios whose centroid is within
-    the solver's ten blocks of where it hangs, its own first), stop {id, name}, lastBus {weekday,
+    the solver's walk of where it hangs, its own first), stop {id, name}, lastBus {weekday,
     saturday, sunday: {time, estimated, route, published {time, stop}} or null}, scans, createdAt,
     lastScanAt. No coordinates: the spot picks the barrio, the near barrios and the stop when the
     flyer is made, and is dropped. The last bus is computed then, once, from the DNT timetable
@@ -655,7 +656,8 @@ weights and limits are in `solver/README.md`; every rule name and number is in
 - Candidate rondas are barrio × pretext × slot, one per key. A seat id is that key,
   `{barrio}_{pretext}_{slot}`, so the phone can send eligible ids before any ronda exists.
 - Hard: a person only in seats from their eligible set; slot and pretext match; distance by
-  barrio centroid ≤ 10 blocks; avoid pairs never together; one ronda each; a ronda opens only
+  barrio centroid ≤ 10 blocks (15 when the ronda is in Montevideo, chosen 2026-11-01 because its
+  barrios' centroids are 12 to 20 blocks apart); avoid pairs never together; one ronda each; a ronda opens only
   within its size bounds (fútbol 8–10, every other pretext 4–6).
 - Soft (weighted): nobody the only one of their age group (under 30, 30–59, 60+); shortfall from
   the target size (fútbol 10, truco 6, others 5); +1 pair together; ≤ 1 +1 pair per ronda;

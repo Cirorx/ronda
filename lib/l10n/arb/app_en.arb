@@ -879,13 +879,23 @@
             }
         }
     },
-    "adminCheckWithinTen": "Everyone lives less than 10 blocks from the spot",
-    "@adminCheckWithinTen": {
-        "description": "Check on a proposed ronda"
+    "adminCheckWithinWalk": "Everyone lives less than {blocks} blocks from the spot",
+    "@adminCheckWithinWalk": {
+        "description": "Check on a proposed ronda: the walk the solver allows in its barrio",
+        "placeholders": {
+            "blocks": {
+                "type": "int"
+            }
+        }
     },
-    "adminCheckFarther": "Someone lives more than 10 blocks from the spot",
+    "adminCheckFarther": "Someone lives more than {blocks} blocks from the spot",
     "@adminCheckFarther": {
-        "description": "Failed check on a proposed ronda"
+        "description": "Failed check on a proposed ronda",
+        "placeholders": {
+            "blocks": {
+                "type": "int"
+            }
+        }
     },
     "adminCheckPlusOneTogether": "{name} and their guest go together",
     "@adminCheckPlusOneTogether": {
@@ -2346,7 +2356,7 @@
     "@addToRondaWarnPretext": {
         "description": "Add-to-ronda warning"
     },
-    "addToRondaWarnBarrio": "Lives more than 10 blocks away",
+    "addToRondaWarnBarrio": "Lives too far to walk",
     "@addToRondaWarnBarrio": {
         "description": "Add-to-ronda warning"
     },

@@ -11,7 +11,7 @@ import montevideo_barrios
 from ronda_solver.barrios import BARRIO_NAMES, CENTROIDS, COSTA_BARRIOS
 from ronda_solver.geo import blocks_between
 from ronda_solver.montevideo import MONTEVIDEO_BARRIOS
-from ronda_solver.rules import MAX_WALK_BLOCKS
+from ronda_solver.rules import MAX_WALK_BLOCKS, MONTEVIDEO_WALK_BLOCKS
 
 ROOT = demo_data.ROOT
 
@@ -41,6 +41,11 @@ def test_the_app_enum_has_every_id_and_name():
     assert {b for b, _, area in entries if area == "costa"} == set(COSTA_BARRIOS)
 
 
+def test_the_app_walks_as_far_as_the_solver():
+    assert f"montevideo ? {MONTEVIDEO_WALK_BLOCKS} : defaultWalkBlocks" in DART
+    assert f"defaultWalkBlocks = {MAX_WALK_BLOCKS};" in DART
+
+
 def test_the_public_pages_have_every_id_and_name():
     table = re.search(r"export const BARRIOS = (\{.*?\});", JS, re.DOTALL)[1]
     assert ast.literal_eval(table) == BARRIO_NAMES
@@ -53,6 +58,8 @@ def test_neighbouring_montevideo_barrios_are_within_walking_distance():
         return blocks_between(CENTROIDS[a], CENTROIDS[b])
 
     assert blocks("barrio-sur", "centro") <= MAX_WALK_BLOCKS
-    assert blocks("cordon", "palermo") <= MAX_WALK_BLOCKS
-    assert blocks("jacinto-vera", "la-figurita") <= MAX_WALK_BLOCKS
-    assert blocks("barrio-sur", "shangrila") > MAX_WALK_BLOCKS
+    assert blocks("barrio-sur", "palermo") <= MONTEVIDEO_WALK_BLOCKS
+    assert blocks("pocitos", "punta-carretas") <= MONTEVIDEO_WALK_BLOCKS
+    assert blocks("malvin", "punta-gorda") <= MONTEVIDEO_WALK_BLOCKS
+    assert blocks("barrio-sur", "aguada") > MONTEVIDEO_WALK_BLOCKS
+    assert blocks("carrasco", "shangrila") > MONTEVIDEO_WALK_BLOCKS

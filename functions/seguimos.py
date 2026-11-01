@@ -440,7 +440,7 @@ def alternatives(db, ronda_id: str, ronda: dict, today: date) -> list[dict]:
     # Both import the solver package, and with it OR-Tools: only a close pays for that.
     from proposals import BARRIOS
     from ronda_solver.geo import blocks_between
-    from ronda_solver.rules import MAX_WALK_BLOCKS, size_rule
+    from ronda_solver.rules import max_walk_blocks, size_rule
 
     here = BARRIOS.get(ronda.get("barrio"))
     if here is None:
@@ -452,7 +452,7 @@ def alternatives(db, ronda_id: str, ronda: dict, today: date) -> list[dict]:
         if snapshot.id == ronda_id or other.get("status") not in rsvp.OPEN_STATUSES or not there:
             continue
         blocks = blocks_between((here["lat"], here["lng"]), (there["lat"], there["lng"]))
-        if blocks > MAX_WALK_BLOCKS:
+        if blocks > max_walk_blocks(other["barrio"]):
             continue
         taken = sum(
             1

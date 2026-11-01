@@ -80,7 +80,12 @@ class TestWhere:
         spot = flyer.CENTROIDS["barrio-sur"]
 
         assert flyer.barrio_at(spot) == "barrio-sur"
-        assert flyer.near_barrios(spot, "barrio-sur") == ["barrio-sur", "centro"]
+        assert flyer.near_barrios(spot, "barrio-sur") == [
+            "barrio-sur",
+            "centro",
+            "ciudad-vieja",
+            "palermo",
+        ]
         text = flyer.flyer_text("mate", "sat-afternoon", "barrio-sur")
         assert text.facts[0] == "Los sábados de 14 a 18, en Barrio Sur"
 

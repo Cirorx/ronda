@@ -110,6 +110,12 @@ class TestWarnings:
         ronda = {"barrio": "el-pinar-sur", "pretext": "mate", "slot": {"day": "sat"}}
         assert "barrio" in ronda_members.warnings(ronda, {"barrio": "las-piedras"}, [])
 
+    def test_montevideo_takes_fifteen_blocks_where_the_costa_takes_ten(self):
+        ronda = {"barrio": "barrio-sur", "pretext": "mate", "slot": {"day": "sat"}}
+        assert ronda_members.blocks("palermo", "barrio-sur") == 13
+        assert "barrio" not in ronda_members.warnings(ronda, {"barrio": "palermo"}, [])
+        assert "barrio" in ronda_members.warnings(ronda, {"barrio": "aguada"}, [])
+
     def test_the_seat_id_falls_back_to_the_rondas_key(self):
         ronda = {"barrio": "b", "pretext": "mate", "slot": {"day": "sat", "time": "afternoon"}}
 

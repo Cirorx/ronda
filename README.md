@@ -33,7 +33,7 @@ long enough for neighbours to become people you'd miss.
    plan, the bench when someone can't come, and the person you chose writing to you if you miss one.
 5. **Then Ronda goes quiet.** The group should outlive the app.
 
-Within 10 blocks · 5–6 people (10 for fútbol 5) · bring one friend · same slot all season ·
+Within 10 blocks (15 in Montevideo) · 5–6 people (10 for fútbol 5) · bring one friend · same slot all season ·
 leave or switch without explaining · free: **Ronda nunca pide plata**.
 
 ## Meta models in the product

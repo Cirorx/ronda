@@ -66,7 +66,7 @@ void main() {
       expect(find.text('El Pinar Norte · Sábado a la tarde'), findsOneWidget);
       expect(find.text('Ya está en Martes a la noche · truco'), findsOneWidget);
       expect(find.text('No eligió este día y horario'), findsOneWidget);
-      expect(find.text('Vive a más de 10 cuadras'), findsOneWidget);
+      expect(find.text('Vive lejos para venir caminando'), findsOneWidget);
       expect(button('Sumar'), findsOneWidget);
       expect(button('Pasar a esta ronda'), findsOneWidget);
     });

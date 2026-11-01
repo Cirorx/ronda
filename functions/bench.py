@@ -237,7 +237,7 @@ def bench_order(db, ronda: dict, day: date, skip: set[str]) -> list[Candidate]:
     # Both import the solver package, and with it OR-Tools: only a bench with a seat pays.
     from proposals import BARRIOS
     from ronda_solver.geo import blocks_between
-    from ronda_solver.rules import MAX_WALK_BLOCKS
+    from ronda_solver.rules import max_walk_blocks
 
     here = BARRIOS.get(ronda.get("barrio"))
     if here is None:
@@ -260,7 +260,11 @@ def bench_order(db, ronda: dict, day: date, skip: set[str]) -> list[Candidate]:
         ):
             continue
         blocks = blocks_between((here["lat"], here["lng"]), (there["lat"], there["lng"]))
-        if blocks > MAX_WALK_BLOCKS or seat not in _eligible(db, uid) or _busy(db, uid, day):
+        if (
+            blocks > max_walk_blocks(ronda["barrio"])
+            or seat not in _eligible(db, uid)
+            or _busy(db, uid, day)
+        ):
             continue
         since = user.get("createdAt")
         found.append(

@@ -17,7 +17,7 @@ issues, docs, code, commit messages.
 | `Seat` | lugar | One place in a ronda. A seat is *eligible* for a member when it passes their needs filter. Its id is the ronda's key, `{barrio}_{pretext}_{slot}` |
 | `Need` | (one item of lo que te complica ir) | `walkALot`, `climbStairs`, `returnAfterDark`, `noCar`; stored by these names on the phone |
 | `SeatFacts` | (none) | What the filter knows about a seat: `walkDistance`, `hasStairs`, `endsAfterDark`, `needsCar` |
-| `WalkDistance` | a pocas cuadras | `near` ≤ 5 blocks, `medium` ≤ 10, `far` beyond; "caminar mucho" drops far |
+| `WalkDistance` | a pocas cuadras | `near` ≤ half the walk, `medium` ≤ the walk (10 blocks, 15 in Montevideo), `far` beyond; "caminar mucho" drops far |
 | `Waitlist` | lista de espera | Neighbours seated nowhere waiting for the same seat id (barrio × pretext × slot) that passes their needs filter; opens a ronda at the threshold |
 | `Threshold` | "hay 4 anotados y hacen falta 6" | The pretext's largest ronda (6; fútbol 10) on a waitlist by its deadline, a Sunday; the ronda would start on its slot's day the week after |
 | `Proposal` | propuesta | The solver's grouping, waiting for the owner's approval, with a rejected alternative |
@@ -30,7 +30,7 @@ issues, docs, code, commit messages.
 | `HostTurn` | "Este mes abre Jorge y cierra Ana" | One month's anfitrión and cola; a ronda carries this month's and the next two (`turns`). The cola opens next month and the next member closes |
 | `Handoff` | ¿Abrís vos? | Finding someone to open one meeting when the anfitrión can't: the cola, then the others coming, then the admin. Whoever says yes is that week's `opener` |
 | `Attendance` | ¿Quién vino hoy? | Who came to a meeting, by [Vino] / [No vino]: tapped by the anfitrión or the cola on the meeting's roll (`AttendanceRoll`), read by the admin only |
-| `Bench` | banco | Ordered neighbours who take a seat freed by an "esta no" that week: seated nowhere, same pretext and slot, within ten blocks, the seat passing their needs filter, longest waiting first |
+| `Bench` | banco | Ordered neighbours who take a seat freed by an "esta no" that week: seated nowhere, same pretext and slot, within the walk (10 blocks, 15 in Montevideo), the seat passing their needs filter, longest waiting first |
 | `BenchOffer` | "se liberó un lugar" | One freed seat offered to one person on the bench, with a deadline: [Lo tomo] [Esta vez no] |
 | `Guest` | (vas esta vez) | Who took a freed seat: goes to that one meeting, listed in "who's coming" and on the roll, never a member |
 | `Despues` | después | The optional 20-minute after-spot the host sets each week; may be a member's home (asked first when it isn't the host's), shown only to that ronda; its address is deleted when the day ends |

@@ -119,7 +119,7 @@ hard rules, `score.py` for soft) that returns its violations.
 | `eligibleSeat` | Only seats whose id the phone sent |
 | `sameSlot` | The ronda's slot is one of the person's slots |
 | `samePretext` | The ronda's pretext is one of the person's pretexts |
-| `withinTenBlocks` | ≤ 10 blocks between barrio centroids (haversine; a block is 100 m) |
+| `withinTenBlocks` | ≤ 10 blocks between barrio centroids, 15 when the ronda is in Montevideo (`rules.max_walk_blocks`; haversine; a block is 100 m). The name predates Montevideo |
 | `avoidPairApart` | A report-apart pair is never in the same ronda |
 | `oneRondaEach` | Each person is in one ronda or in `unseated`, exactly once |
 | `sizeBounds` | An open ronda has floor..cap members (below) |
@@ -170,7 +170,7 @@ copy is "Alternativa B rechazada: " + the phrase + ".".
 | `eligibleSeat` | pone a alguien en un lugar que no le sirve | |
 | `sameSlot` | pone a alguien en un día y horario que no eligió | |
 | `samePretext` | pone a alguien en una actividad que no eligió | |
-| `withinTenBlocks` | pone a alguien a más de 10 cuadras de su barrio | |
+| `withinTenBlocks` | pone a alguien a más de 10 cuadras de su barrio (15 en Montevideo) | |
 | `avoidPairApart` | junta a dos personas que separaste | |
 | `oneRondaEach` | pone a alguien en dos lugares a la vez · se olvida de alguien | `places` ≥ 2 · 0 |
 | `sizeBounds` | abre una ronda de {pretext} con {members} y hacen falta {floor} · una ronda de {pretext} queda con {members} y el máximo es {cap} | below · above |

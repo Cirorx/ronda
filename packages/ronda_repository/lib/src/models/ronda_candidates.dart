@@ -8,7 +8,7 @@ enum CandidateWarning {
   /// They didn't pick its pretext.
   pretext,
 
-  /// They live more than the solver's ten blocks away.
+  /// They live farther than the solver's walk (10 blocks, 15 in Montevideo).
   barrio,
 
   /// Their phone didn't mark its seat as one that works for them (which

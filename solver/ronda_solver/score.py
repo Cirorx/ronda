@@ -8,7 +8,6 @@ from collections.abc import Callable
 
 from ronda_solver.problem import Candidate, Problem
 from ronda_solver.rules import (
-    NEAR_BLOCKS,
     SEAT_REWARD,
     TRUCO_OLD,
     TRUCO_PRETEXT,
@@ -16,6 +15,7 @@ from ronda_solver.rules import (
     SoftRule,
     Violation,
     age_group,
+    near_blocks,
     size_rule,
 )
 
@@ -141,7 +141,8 @@ def ronda_checks(problem: Problem, candidate: Candidate, uids: list[str]) -> dic
     units = ronda_units(problem, candidate, uids)
     checks = {str(rule): n == 0 for rule, n in units.items()}
     checks[SoftRule.NEARBY_FIRST] = all(
-        problem.walk(problem.person(uid), candidate) <= NEAR_BLOCKS for uid in uids
+        problem.walk(problem.person(uid), candidate) <= near_blocks(candidate.barrio)
+        for uid in uids
     )
     return checks
 

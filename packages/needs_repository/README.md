@@ -24,8 +24,9 @@ server receives only the seat ids that `eligibleSeatIds` returns (see `docs/ARCH
   (volver de noche), `noCar` (no tengo auto). UI labels come from the app's l10n, not from here.
 - `Needs(Set<Need> values)`, Equatable; `Needs.none` is the empty set.
 - `SeatFacts(seatId, walkDistance, hasStairs, endsAfterDark, needsCar)`, one per seat.
-  `WalkDistance`: `near` (≤ 5 blocks), `medium` (≤ 10), `far`.
-- `WalkDistance.fromBlocks(num)` bands a walk; `WalkDistance.forMember(memberBarrio:, blocksFrom:)`
+  `WalkDistance`: `near` (≤ half the farthest walk), `medium` (≤ the farthest walk: 10 blocks, 15
+  in Montevideo), `far`.
+- `WalkDistance.fromBlocks(num, {maxBlocks})` bands a walk; `WalkDistance.forMember(memberBarrio:, blocksFrom:, maxBlocks:)`
   reads the member's barrio from a seat's `blocksFrom` table (`seat_facts/{seatId}`, see
   `docs/ARCHITECTURE.md` § Data model). A barrio the table doesn't list reads as `far`, so a seat
   the phone can't place never passes "caminar mucho".

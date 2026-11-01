@@ -49,6 +49,11 @@ void main() {
       expect(Barrio.fromId('barrio-sur')?.label, equals('Barrio Sur'));
     });
 
+    test('walks 15 blocks in Montevideo and 10 in Ciudad de la Costa', () {
+      expect(Barrio.barrioSur.walkBlocks, equals(15));
+      expect(Barrio.solymarNorte.walkBlocks, equals(10));
+    });
+
     test('fromId reads every id back and returns null for unknown ones', () {
       for (final barrio in Barrio.values) {
         expect(Barrio.fromId(barrio.id), equals(barrio));

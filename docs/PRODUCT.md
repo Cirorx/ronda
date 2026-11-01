@@ -195,7 +195,7 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 - **Changing group:** "¿A qué grupo te querés pasar?" — nearby groups with places, "No hace
   falta explicar por qué." The old seat opens; the old group is told nothing else.
 - **Solver + approval:** Ciro sees each proposal, the members (first name, age band, distance),
-  checks ("Todos viven a menos de 10 cuadras del punto", one line per age group, always shown:
+  checks ("Todos viven a menos de 10 cuadras del punto", 15 in Montevideo, one line per age group, always shown:
   "60 o más (2): nadie es el único de su edad" or "Menos de 30 (1): Facu es la única persona de
   su edad", "Ana y su invitado van juntos") and "Por qué no otra opción" with its reason.
   "Nadie recibe nada hasta que lo aprobás." [Aprobar y avisarles] → "Aprobado. Les llega el
@@ -266,7 +266,7 @@ dates in the examples are demo data. Everything not listed here is out of the bu
     no pasa nada: seguís en la lista de espera.", and once taken "Vas esta vez" with where,
     "Tomás el lugar que alguien liberó, solo para esta reunión."
   - Who is on the bench, in order, is code's: sign-ups in no ronda who picked that activity,
-    day and time, within ten blocks, for whom the seat passes what makes it hard to go (on the
+    day and time, within the walk (10 blocks, 15 in Montevideo), for whom the seat passes what makes it hard to go (on the
     phone), longest waiting first. One offer per freed seat at a time; "Esta vez no" or a
     passed deadline moves to the next person; a member who says "voy" again takes the free
     seat back from a pending offer. Nothing is held against anyone.

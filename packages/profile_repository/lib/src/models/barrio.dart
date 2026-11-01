@@ -321,6 +321,15 @@ enum Barrio {
   /// Where the barrio is.
   final BarrioArea area;
 
+  /// The farthest walk to a ronda in this barrio, between barrio centroids:
+  /// 10 blocks, 15 in Montevideo, whose barrios are smaller (the solver's
+  /// `max_walk_blocks`).
+  int get walkBlocks => area == BarrioArea.montevideo ? 15 : defaultWalkBlocks;
+
+  /// The farthest walk outside Montevideo, and for a barrio the app doesn't
+  /// know.
+  static const defaultWalkBlocks = 10;
+
   /// The barrio stored as [id], or `null` for an unknown id.
   static Barrio? fromId(String? id) => _byId[id];
 
