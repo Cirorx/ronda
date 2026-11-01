@@ -41,6 +41,7 @@ void main() {
           firebaseAuth: MockFirebaseAuth(mockUser: mockUser),
           googleSignInFlow: GoogleSignInFlow.popup,
           linkOpener: linkOpener,
+          phoneSignInFlow: PhoneSignInFlow.verify,
         );
 
         expect(subject.user, emits(User.empty));
@@ -51,6 +52,7 @@ void main() {
           firebaseAuth: MockFirebaseAuth(signedIn: true, mockUser: mockUser),
           googleSignInFlow: GoogleSignInFlow.popup,
           linkOpener: linkOpener,
+          phoneSignInFlow: PhoneSignInFlow.verify,
         );
 
         expect(subject.user, emits(const User(id: _uid)));
@@ -62,6 +64,7 @@ void main() {
           firebaseAuth: MockFirebaseAuth(mockUser: mockUser),
           googleSignInFlow: GoogleSignInFlow.popup,
           linkOpener: linkOpener,
+          phoneSignInFlow: PhoneSignInFlow.verify,
         );
 
         final expectation = expectLater(
@@ -80,6 +83,7 @@ void main() {
           firebaseAuth: MockFirebaseAuth(mockUser: mockUser),
           googleSignInFlow: GoogleSignInFlow.popup,
           linkOpener: linkOpener,
+          phoneSignInFlow: PhoneSignInFlow.verify,
         );
 
         expect(subject.currentUser, equals(User.empty));
@@ -90,6 +94,7 @@ void main() {
           firebaseAuth: MockFirebaseAuth(signedIn: true, mockUser: mockUser),
           googleSignInFlow: GoogleSignInFlow.popup,
           linkOpener: linkOpener,
+          phoneSignInFlow: PhoneSignInFlow.verify,
         );
 
         expect(subject.currentUser, equals(const User(id: _uid)));
@@ -107,6 +112,7 @@ void main() {
         firebaseAuth: firebaseAuth,
         googleSignInFlow: flow,
         linkOpener: linkOpener,
+        phoneSignInFlow: PhoneSignInFlow.verify,
       );
 
       test('calls signInWithPopup with a '
@@ -205,6 +211,7 @@ void main() {
         firebaseAuth: MockFirebaseAuth(mockUser: mockUser),
         googleSignInFlow: GoogleSignInFlow.popup,
         linkOpener: linkOpener,
+        phoneSignInFlow: PhoneSignInFlow.verify,
       );
 
       test("opens Google's page to make an account", () async {
@@ -247,6 +254,7 @@ void main() {
           firebaseAuth: MockFirebaseAuth(signedIn: true, mockUser: mockUser),
           googleSignInFlow: GoogleSignInFlow.popup,
           linkOpener: linkOpener,
+          phoneSignInFlow: PhoneSignInFlow.verify,
         );
 
         await subject.signOut();
@@ -261,6 +269,7 @@ void main() {
           firebaseAuth: firebaseAuth,
           googleSignInFlow: GoogleSignInFlow.popup,
           linkOpener: linkOpener,
+          phoneSignInFlow: PhoneSignInFlow.verify,
         );
 
         expect(subject.signOut, throwsA(isA<SignOutFailure>()));

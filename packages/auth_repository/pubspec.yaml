@@ -1,5 +1,5 @@
 name: auth_repository
-description: Sign-in with Google over Firebase Auth, and the signed-in user.
+description: Sign-in with Google or a phone number over Firebase Auth, and the signed-in user.
 version: 0.1.0+1
 publish_to: none
 

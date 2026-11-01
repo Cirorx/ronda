@@ -27,8 +27,8 @@ dates in the examples are demo data. Everything not listed here is out of the bu
     no se entera de que contaste.", "Escribinos a <address>." and [Escribir un mail] (subject
     "Ronda: algo que pasó"), then the helpline (§ Safety), each number a button that dials it.
   - **Tus datos:** "Lo que Ronda guarda de vos" (name, age band and barrio; days, times,
-    activities and what you bring; your ronda and your answers; the Google account and this
-    phone's push code; when you accepted the terms), "Lo que no guardamos" (the audio; what makes
+    activities and what you bring; your ronda and your answers; the Google account or the mobile
+    number you sign in with, and this phone's push code; when you accepted the terms), "Lo que no guardamos" (the audio; what makes
     it hard to go, on the phone only), where it lives, and "Para cambiar o borrar tus datos,
     escribinos a <address>." with [Escribir un mail] (subject "Ronda: mis datos", the account id
     in the body). Under "Lo que no guardamos", "Tu cuaderno: queda solo en este teléfono.", and
@@ -79,7 +79,7 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   public places and adults only, what is kept, audio deleted at once, see or delete your data
   in Ajustes, reports read by a person, and "Si algo falla, la app manda un aviso anónimo, sin
   tus datos, para que lo arreglemos.") and one line on where things happen: "Tus datos se
-  guardan en Brasil; el audio lo procesa Meta y el inicio de sesión Google, en EE. UU."
+  guardan en Brasil; el audio lo procesa Meta y el inicio de sesión, Google, en EE. UU."
 - **Payoff** after the read-back, signed out: "Esto es lo que hay para vos", from the answers and
   Cerca tuyo's public `cerca/{barrio}` counts. It shows demand, never seats: "Hay 4 anotados para
   mate los sábados de tarde cerca tuyo." (the slot only where the counts have one; otherwise "Hay
@@ -91,11 +91,22 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 - **Sign-in** after the payoff: "Guardá tu lugar", "Para guardarte el lugar y avisarte el día de
   la ronda, entrá con tu cuenta.", with "No publicamos nada en tu cuenta", "No vemos tus
   contactos, tus fotos ni tus mails" and "En Ronda te conocen solo por tu nombre de pila".
-  [Seguir con Google]; "¿No tenés cuenta de Google? Te ayudamos a crear una en un minuto.", a link
-  that opens Google's create-account page in the browser. After the voice door, which signs in
+  [Seguir con Google]; [Entrar con mi celular] (#63); "¿No tenés cuenta de Google? Te ayudamos a
+  crear una en un minuto.", a link that opens Google's create-account page in the browser. After the voice door, which signs in
   before recording because the server reads the audio: "Para escucharte necesitamos que entres
   con tu cuenta", with the same three lines. Backing out of sign-in keeps the answers on the
   phone. (Signing in at the end of the voice path with a temporary account comes later.)
+- **Sign-in by phone** (#63), under either sign-in screen: "Entrar con tu celular". First "¿Cuál
+  es tu celular?", "Te mandamos un código por SMS para que entres. Tu número lo usamos solo para
+  eso: nadie de tu ronda lo ve.", the field "Tu celular" with "+598 " filled in ("Con o sin el 0,
+  como 09X XXX XXX"), [Mandame el código]. A landline: "Ese número es de un fijo. Escribí uno de
+  celular, que empiece con 09." Then "Escribí el código", "Te lo mandamos por SMS al +598 9X XXX
+  XXX.", "Código de 6 números", [Entrar], "Podés pedir otro en 30 s" turning into [Mandame otro
+  código] (waits of 30, 60 and 120 s; after the fourth code "Ya te mandamos varios códigos. Si no
+  te llega ninguno, volvé y entrá con Google."), and [Cambiar el número]. An Android phone that
+  reads the SMS by itself moves on with no tap. Failures: "Ese código no es. Revisá el SMS y
+  probá de nuevo.", "El código venció. Pedí otro.", "Pediste muchos códigos. Probá de nuevo en un
+  rato, o entrá con Google.", "Ahora no podemos mandar SMS a ese número. Probá entrar con Google."
 - **Voice:** "Te escuchamos", [Grabar] (nothing records before the tap), then "Grabando" with
   the timer and a waveform of the voice (2026-10-30; "No te escuchamos. Revisá el micrófono."
   after about 3 s of silence), ≤ 60 s, "Ideas de qué contar" shown as a plain checklist while

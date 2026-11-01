@@ -1,0 +1,69 @@
+# Phone sign-in: "Con un audio" → sign-in → "Entrar con mi celular" → the number → the code the
+# Auth emulator logged → signed in, on "Te escuchamos".
+#
+# Same setup as onboarding_buttons.yaml (development flavor, the local emulators, a reset
+# first); EMULATOR_GOOGLE_CREDENTIAL is not needed. The emulator never sends an SMS and accepts
+# any number: the one below is invented, nobody's phone.
+appId: com.ciroapps.ronda.dev
+name: Phone sign-in
+tags:
+  - sign-in
+---
+- launchApp:
+    clearState: true
+    permissions:
+      microphone: allow
+
+- extendedWaitUntil:
+    visible:
+      id: walkthrough.skip
+    timeout: 30000
+- tapOn:
+    id: walkthrough.skip
+
+- extendedWaitUntil:
+    visible:
+      id: welcome.buttons
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: welcome.voice
+- tapOn:
+    id: welcome.voice
+
+- extendedWaitUntil:
+    visible:
+      id: login_phone
+    timeout: 15000
+- tapOn:
+    id: login_phone
+
+# The field starts with "+598 ": type the rest of an invented mobile number.
+- extendedWaitUntil:
+    visible:
+      id: phone_number
+    timeout: 10000
+- tapOn:
+    id: phone_number
+- inputText: "99000001"
+- hideKeyboard
+- tapOn:
+    id: phone_send
+
+- extendedWaitUntil:
+    visible:
+      id: phone_code
+    timeout: 15000
+- runScript: scripts/emulator_sms_code.js
+- tapOn:
+    id: phone_code
+- inputText: ${output.smsCode}
+- hideKeyboard
+- tapOn:
+    id: phone_confirm
+
+# Signed in through the voice door: the recorder, nothing recorded yet.
+- extendedWaitUntil:
+    visible:
+      id: voice.record
+    timeout: 30000

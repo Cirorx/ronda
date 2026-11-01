@@ -33,7 +33,7 @@ void main() {
       }
       final where = find.text(
         'Dónde pasa cada cosa: tus datos se guardan en Brasil; el audio lo '
-        'procesa Meta y el inicio de sesión Google, en EE. UU.',
+        'procesa Meta y el inicio de sesión, Google, en EE. UU.',
       );
       await tester.scrollUntilVisible(where, 100);
       expect(where, findsOneWidget);

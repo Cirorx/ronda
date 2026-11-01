@@ -304,6 +304,9 @@ Future<void> bootstrap(
   if (emulators != null) {
     final host = emulators.host;
     await firebaseAuth.useAuthEmulator(host, FirebaseEmulators.authPort);
+    // The Auth emulator takes any number and logs the code instead of
+    // sending an SMS; no Play Integrity, APNs or reCAPTCHA in front of it.
+    await firebaseAuth.setSettings(appVerificationDisabledForTesting: true);
     firestore.useFirestoreEmulator(host, FirebaseEmulators.firestorePort);
     functions.useFunctionsEmulator(host, emulators.functionsPort);
     await storage.useStorageEmulator(host, FirebaseEmulators.storagePort);
@@ -329,6 +332,9 @@ Future<void> bootstrap(
     firebaseAuth: firebaseAuth,
     googleSignInFlow: googleSignInFlow,
     linkOpener: linkOpener,
+    phoneSignInFlow: kIsWeb
+        ? PhoneSignInFlow.confirmation
+        : PhoneSignInFlow.verify,
   );
   const needsRepository = NeedsRepository(deviceStore: deviceStore);
   final profileRepository = ProfileRepository(

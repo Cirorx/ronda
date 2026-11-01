@@ -29,6 +29,7 @@ import 'package:ronda/my_ronda/my_ronda.dart';
 import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/onboarding/view/steps/steps.dart';
 import 'package:ronda/payoff/payoff.dart';
+import 'package:ronda/phone_login/phone_login.dart';
 import 'package:ronda/rain_move/rain_move.dart';
 import 'package:ronda/ronda_setup/ronda_setup.dart';
 import 'package:ronda/settings/settings.dart';
@@ -496,6 +497,25 @@ void main() {
         verifyNever(() => profileRepository.acceptTerms(any(), any()));
       });
 
+      testWidgets('by opening $PhoneLoginPage under $LoginPage', (
+        tester,
+      ) async {
+        await pumpSignedOut(tester);
+
+        await tester.tap(voiceDoor());
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Sign in with my mobile number'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(PhoneLoginPage), findsOneWidget);
+        expect(
+          GoRouter.of(tester.element(find.byType(PhoneLoginPage)))
+              .state
+              .matchedLocation,
+          equals(LoginPage.phonePath),
+        );
+      });
+
       testWidgets('by keeping signed-out people off the questions and the '
           'payoff until a door is tapped', (tester) async {
         await pumpSignedOut(tester);
@@ -505,6 +525,8 @@ void main() {
           OnboardingPage.path,
           PayoffPage.path,
           PayoffPage.signInPath,
+          PayoffPage.phoneSignInPath,
+          LoginPage.phonePath,
         ]) {
           router.go(path);
           await tester.pumpAndSettle();
@@ -583,6 +605,17 @@ void main() {
         await tapId(PayoffView.continueIdentifier);
         expect(find.byType(LoginPage), findsOneWidget);
         expect(find.text('Keep your place'), findsOneWidget);
+
+        // Phone sign-in sits under the payoff's sign-in.
+        await tester.tap(find.text('Sign in with my mobile number'));
+        await tester.pumpAndSettle();
+        expect(find.byType(PhoneLoginPage), findsOneWidget);
+        expect(
+          GoRouter.of(tester.element(find.byType(PhoneLoginPage)))
+              .state
+              .matchedLocation,
+          equals(PayoffPage.phoneSignInPath),
+        );
 
         // Signed in: the terms, then the held answers saved straight away.
         users.add(_user);
@@ -858,6 +891,8 @@ void main() {
           OnboardingPage.path,
           PayoffPage.path,
           PayoffPage.signInPath,
+          LoginPage.phonePath,
+          PayoffPage.phoneSignInPath,
         ]) {
           router.go(path);
           await tester.pumpAndSettle();

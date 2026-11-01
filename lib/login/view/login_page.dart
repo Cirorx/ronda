@@ -2,6 +2,7 @@ import 'package:auth_repository/auth_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:ronda/login/login.dart';
+import 'package:ronda/phone_login/phone_login.dart';
 
 /// Why the sign-in screen opened, which sets what it says first.
 enum LoginReason {
@@ -17,11 +18,16 @@ enum LoginReason {
   signIn,
 }
 
-/// The sign-in screen: Google only. It sits under the screen that opened
-/// it (the welcome doors or the payoff), and its back button returns there.
+/// The sign-in screen: Google, or a code by SMS on the screen under it. It
+/// sits under the screen that opened it (the welcome doors or the payoff),
+/// and its back button returns there.
 class const LoginPage({
   /// Why it opened.
   final LoginReason reason = LoginReason.signIn,
+
+  /// Where "Entrar con mi celular" goes: this screen's path plus
+  /// [PhoneLoginPage.segment], keeping its query (`?from=/admin`).
+  final String phoneLocation = phonePath,
   super.key,
 }) extends StatelessWidget {
   /// The path under the screen that opens it.
@@ -31,12 +37,15 @@ class const LoginPage({
   /// `/admin`.
   static const path = '/bienvenida/$segment';
 
+  /// Phone sign-in under [path].
+  static const phonePath = '$path/${PhoneLoginPage.segment}';
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) =>
           LoginCubit(authRepository: context.read<AuthRepository>()),
-      child: LoginView(reason: reason),
+      child: LoginView(reason: reason, phoneLocation: phoneLocation),
     );
   }
 }

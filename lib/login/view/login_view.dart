@@ -1,20 +1,28 @@
 import 'package:auth_repository/auth_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// Why sign-in comes now ("Guardá tu lugar", or why the voice door needs
-/// it), what Ronda never does with the account, the one "Seguir con Google"
-/// button, which shows it is working while sign-in runs, and a link to make
-/// a Google account. A failure says so in a banner that is read out.
+/// it), what Ronda never does with the account, the "Seguir con Google"
+/// button, which shows it is working while sign-in runs, "Entrar con mi
+/// celular" for a code by SMS, and a link to make a Google account. A
+/// failure says so in a banner that is read out.
 class const LoginView({
   /// Why the screen opened.
   final LoginReason reason = LoginReason.signIn,
+
+  /// Where "Entrar con mi celular" goes.
+  final String phoneLocation = LoginPage.phonePath,
   super.key,
 }) extends StatelessWidget {
   /// Maestro's handle on the Google button.
   static const googleButtonIdentifier = 'login_google';
+
+  /// Maestro's handle on "Entrar con mi celular".
+  static const phoneButtonIdentifier = 'login_phone';
 
   /// Maestro's handle on the link to make a Google account.
   static const createAccountIdentifier = 'login_create_account';
@@ -106,6 +114,21 @@ class const LoginView({
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: spacing.sm),
+              MergeSemantics(
+                child: Semantics(
+                  identifier: phoneButtonIdentifier,
+                  child: OutlinedButton(
+                    onPressed: inProgress
+                        ? null
+                        : () => context.go(phoneLocation),
+                    child: Text(
+                      l10n.loginPhoneButton,
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),

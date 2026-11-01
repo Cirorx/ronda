@@ -47,6 +47,21 @@ void main() {
           equals(LoginReason.keepSeat),
         );
       });
+
+      testWidgets('$LoginView with where phone sign-in is', (tester) async {
+        await tester.pumpApp(
+          RepositoryProvider.value(
+            value: authRepository,
+            child: const LoginPage(phoneLocation: '/lo-que-hay/entrar/celular'),
+          ),
+        );
+
+        expect(
+          tester.widget<LoginView>(find.byType(LoginView)).phoneLocation,
+          equals('/lo-que-hay/entrar/celular'),
+        );
+        expect(LoginPage.phonePath, equals('/bienvenida/entrar/celular'));
+      });
     });
   });
 }

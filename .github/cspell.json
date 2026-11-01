@@ -163,7 +163,9 @@
     "Probá",
     "Sabés",
     "creés",
-    "openstreetmap"
+    "openstreetmap",
+    "volvé",
+    "cooldowns"
   ],
   "ignoreWords": [
     "realtime"

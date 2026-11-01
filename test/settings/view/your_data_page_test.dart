@@ -94,8 +94,8 @@ void main() {
 
     testWidgets('lists what Ronda keeps and what it does not', (tester) async {
       const account =
-          'Tu cuenta de Google, para que entres, y un código para mandarle '
-          'avisos a este teléfono.';
+          'Tu cuenta de Google o tu número de celular, para que entres, y un '
+          'código para mandarle avisos a este teléfono.';
       await pump(tester);
 
       expect(

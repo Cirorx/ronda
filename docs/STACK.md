@@ -74,7 +74,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | `link_opener` | Data | url_launcher: a `mailto:`, `tel:` or `https:` link to the phone's mail app, dialer or browser; the app opens links only through it | #54 |
 | `cuaderno_repository` | Repository | El cuaderno del barrio (#59): lines, the line to bring and deleting it all, over `device_store` only (`cuaderno.{uid}`, no network path); a short voice note → `audio/{uid}/…` → `read_line` (Voice Transcribe, deleted once read) → words; `make_postcard` (the week's lines in the payload, the JPEG in the answer, stored nowhere); the share sheet (over `device_store`, `voice_recorder`, `ronda_api`, `share_sheet`) | #59 |
 | `flyer_repository` | Repository | The "Un mate de más" flyer: blurred photo → `make_mate_flyer` → share (over `face_blur`, `ronda_api`, `share_sheet`); its upload takes only a `BlurredPhoto` | #44 |
-| `auth_repository` | Repository | `FirebaseAuth` passed in from bootstrap; Google's page to make an account, over `link_opener` | #13 |
+| `auth_repository` | Repository | `FirebaseAuth` passed in from bootstrap; Google's page to make an account, over `link_opener`; phone sign-in by SMS (`PhoneNumber`, `PhoneVerification`, `PhoneSignInFlow`; #63) | #13 |
 | `profile_repository` | Repository | Profile, eligible seat ids (over `ronda_api`); the terms and answers held on the phone until sign-in, and whether "¿Cómo funciona?" was shown (over `device_store`) | #18 |
 | `needs_repository` | Repository | Needs and the seat filter, over `device_store` only: this repository has no network path | #18 |
 | `onboarding_repository` | Repository | Voice note → upload → `extract` → fields (over `voice_recorder` + `ronda_api`) | #19 |
@@ -166,9 +166,12 @@ band indexes (`onboarding.slots.6.1` is Sunday afternoon).
 |---|---|---|
 | `flows/onboarding_buttons.yaml` | a reset, signed out | Mi ronda (`myRonda`), with `users/{uid}` and its `private/eligible` written |
 | `flows/onboarding_voice.yaml` | a reset, signed out, the Functions emulator with `MODEL_API_KEY` | "¿Entendimos bien?" (or "No te entendimos bien" on a silent emulator mic), with no `audio/` object left |
+| `flows/sign_in_phone.yaml` | a reset, signed out (any development build) | "Te escuchamos" after phone sign-in through the voice door; the code comes from the Auth emulator's `verificationCodes` endpoint (`flows/scripts/emulator_sms_code.js`) |
 
 Each flow runs the development flavor against the local emulators, on an Android emulator or a
-USB phone; checked with Maestro 2.12.0 on an Android 15 emulator. `maestro` must be on `PATH`
+USB phone; checked with Maestro 2.12.0 on an Android 15 emulator. On a loaded Mac the debug build can take
+more than 30 s to show its first screen, and the first wait then fails with nothing wrong: run
+again, or lengthen that wait in a scratch copy of the flow. `maestro` must be on `PATH`
 (the installer puts it under `~/.maestro/bin`). `<serial>` is the device's name in `adb devices`;
 pass it everywhere, so nothing lands on another attached device.
 
@@ -517,8 +520,10 @@ Built in #47 and #50 (`packages/push_client`, `packages/push_repository`, `lib/a
 **Firebase project `ronda-uy`** (Blaze, decided 2026-10-27; budget alert at $20, `max_instances`
 on every function): **Google sign-in** enabled (free and unlimited on Spark; Android needs the SHA-1 and SHA-256, iOS the
 reversed client id URL scheme, web the authorised domains); Firestore in `southamerica-east1`;
-Web Push (VAPID) key; admin custom claim for the owner. Phone/SMS sign-in stays off: it needs
-Blaze and bills per SMS, so it is never enabled. Storage bucket in `southamerica-east1`. App Check
+Web Push (VAPID) key; admin custom claim for the owner. **Phone sign-in** enabled (#63, 2026-11-01):
+it bills per SMS, so the SMS region policy allows UY and US only, the app spaces resends (30 s,
+60 s, 120 s, then none on that screen: `PhoneVerification.resendCooldowns`) and the console has one
+test number for checks (the owner knows it; it is not written anywhere in the repo or notes). Storage bucket in `southamerica-east1`. App Check
 after the hackathon (callables require `auth != null` meanwhile, except `report_client_error`,
 which is rate-limited instead: § Monitoring).
 
@@ -599,6 +604,27 @@ FlutterFire 7.0.1 plugin source, the iOS SDK source and the Android SDK 25.0.0 b
 | Android | `signInWithProvider(GoogleAuthProvider())` | Yes: FlutterFire calls `startActivityForSignInWithProvider`; with `useAuthEmulator` set, `GenericIdpActivity` opens `http://<host>:9099/emulator/auth/handler…` in Chrome (seen in logcat on the Pixel 8 emulator). Needs a browser past its first run |
 | iOS | `signInWithProvider(GoogleAuthProvider())` | Yes by source: FlutterFire builds an `OAuthProvider("google.com")`, and the iOS SDK swaps `https://<authDomain>/__/auth/handler` for `http://<host>/emulator/auth/handler` when an emulator is set. Not run yet |
 | Android, iOS, web (opt-in) | `signInWithCredential(GoogleAuthProvider.credential(idToken: '{"sub":…,"email":…,"email_verified":true}'))` | Yes: the emulator takes a literal JSON string as the Google id token (Firebase docs, "Connect your app to the Authentication Emulator"). Signs in as `vecina@example.com` with no picker; `--dart-define=EMULATOR_GOOGLE_CREDENTIAL=true` on `main_development.dart` only. Tried on the Pixel 8 emulator and on web (2026-10-27, for browsers that can't open the popup, such as an embedded preview) |
+
+**Phone sign-in** (#63, checked 2026-11-01 in the FlutterFire 7.0.1 source). `bootstrap` picks
+`PhoneSignInFlow.confirmation` on web (`signInWithPhoneNumber` with no verifier: FlutterFire makes
+an invisible reCAPTCHA and clears it) and `PhoneSignInFlow.verify` on phones (`verifyPhoneNumber`).
+`verifyPhoneNumber` answers through callbacks: `sendPhoneCode` settles on the first of "code
+sent", "verified without a code" (Android instant verification: signed in, returns null) or
+"failed"; an SMS Android reads after the code is sent signs in on its own and the router follows
+`AppBloc`. The number exists only in the screen's memory and Firebase Auth: `PhoneNumber`,
+`PhoneVerification` and `PhoneLoginState` hide it in `toString` because the bloc observer logs
+every state.
+
+| Platform | App check before the SMS | Setup |
+|---|---|---|
+| Android | Play Integrity, else a reCAPTCHA in a browser tab (debug builds from this Mac get the tab) | SHA-1 and SHA-256 of every signing key on the app (the debug key's are there); Play Integrity API enabled in Google Cloud for silent checks |
+| iOS | A silent APNs push, else a reCAPTCHA in a Safari view | APNs key in Firebase (not uploaded yet). The Safari view returns through the encoded app id as a URL scheme, which `ios/scripts/auth_url_scheme.sh` adds to the built Info.plist from `config/<flavor>/GoogleService-Info.plist` (build phase "Phone Sign-in URL Scheme"; skipped with a warning when the plist is missing) |
+| Web | Invisible reCAPTCHA | Authorised domains (localhost, `ronda-uy.web.app`, `ronda-uy.firebaseapp.com`, ciroapps.com) |
+
+Against the Auth emulator `bootstrap` sets `appVerificationDisabledForTesting`, so no app check
+runs; the emulator accepts any number and never sends an SMS. The code is in the emulator's log
+and at `http://127.0.0.1:9099/emulator/v1/projects/ronda-uy/verificationCodes` (newest last), which
+`flows/sign_in_phone.yaml` reads.
 
 `main_production.dart` can only pass `popup` (web) or `provider` (phones); the real project
 rejects the unsigned token anyway. On iOS the provider flow against the real project also needs the

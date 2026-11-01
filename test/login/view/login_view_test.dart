@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -9,14 +10,22 @@ import '../../helpers/helpers.dart';
 
 class _MockLoginCubit extends MockCubit<LoginState> implements LoginCubit;
 
+class _MockGoRouter extends Mock implements GoRouter;
+
 Finder get _googleButton =>
     find.widgetWithText(FilledButton, 'Seguir con Google');
+
+Finder get _phoneButton =>
+    find.widgetWithText(OutlinedButton, 'Entrar con mi celular');
 
 void main() {
   group(LoginView, () {
     late LoginCubit cubit;
+    late GoRouter router;
 
     setUp(() {
+      router = _MockGoRouter();
+      when(() => router.go(any())).thenReturn(null);
       cubit = _MockLoginCubit();
       when(() => cubit.state).thenReturn(const LoginState());
       when(() => cubit.signInWithGoogle()).thenAnswer((_) async {});
@@ -29,9 +38,15 @@ void main() {
       Locale locale = rioplatense,
     }) {
       return tester.pumpApp(
-        BlocProvider.value(
-          value: cubit,
-          child: LoginView(reason: reason),
+        InheritedGoRouter(
+          goRouter: router,
+          child: BlocProvider.value(
+            value: cubit,
+            child: LoginView(
+              reason: reason,
+              phoneLocation: '/bienvenida/entrar/celular?from=/admin',
+            ),
+          ),
         ),
         locale: locale,
       );
@@ -302,7 +317,54 @@ void main() {
 
           verifyNever(() => cubit.signInWithGoogle());
         });
+
+        testWidgets('no phone sign-in on a tap while ${status.name}', (
+          tester,
+        ) async {
+          when(() => cubit.state).thenReturn(LoginState(status: status));
+          await pumpSubject(tester);
+
+          await tester.tap(_phoneButton);
+          await tester.pump();
+
+          verifyNever(() => router.go(any()));
+        });
       }
+    });
+
+    group('phone sign-in', () {
+      testWidgets('opens on "Entrar con mi celular", keeping the query', (
+        tester,
+      ) async {
+        await pumpSubject(tester);
+
+        await tester.tap(_phoneButton);
+        await tester.pump();
+
+        verify(() => router.go('/bienvenida/entrar/celular?from=/admin'))
+            .called(1);
+      });
+
+      testWidgets('is a button Maestro finds by its identifier', (
+        tester,
+      ) async {
+        final semantics = tester.ensureSemantics();
+        await pumpSubject(tester);
+
+        expect(
+          tester.getSemantics(
+            find.bySemanticsIdentifier(LoginView.phoneButtonIdentifier),
+          ),
+          isSemantics(label: 'Entrar con mi celular', isButton: true),
+        );
+        semantics.dispose();
+      });
+
+      testWidgets('reads in English', (tester) async {
+        await pumpSubject(tester, locale: const Locale('en'));
+
+        expect(find.text('Sign in with my mobile number'), findsOneWidget);
+      });
     });
   });
 }

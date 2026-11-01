@@ -7,6 +7,7 @@ import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/payoff/payoff.dart';
+import 'package:ronda/phone_login/phone_login.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -18,6 +19,9 @@ class const PayoffPage({super.key}) extends StatelessWidget {
   /// Sign-in after the payoff, "Guardá tu lugar"; its back button returns
   /// here.
   static const signInPath = '$path/${LoginPage.segment}';
+
+  /// Phone sign-in under [signInPath].
+  static const phoneSignInPath = '$signInPath/${PhoneLoginPage.segment}';
 
   @override
   Widget build(BuildContext context) {

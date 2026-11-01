@@ -80,6 +80,121 @@
     "@loginVoiceTitle": {
         "description": "Heading of the sign-in screen after the voice door, which signs in before recording because the server reads the audio"
     },
+    "loginPhoneButton": "Sign in with my mobile number",
+    "@loginPhoneButton": {
+        "description": "Sign-in screen: the button under the Google one that opens sign-in by SMS"
+    },
+    "phoneLoginBarTitle": "Sign in with your mobile",
+    "@phoneLoginBarTitle": {
+        "description": "Top bar title of the phone sign-in screen"
+    },
+    "phoneLoginNumberTitle": "What's your mobile number?",
+    "@phoneLoginNumberTitle": {
+        "description": "Phone sign-in, first step: heading"
+    },
+    "phoneLoginNumberBody": "We'll text you a code so you can sign in. We use your number only for that: nobody in your ronda sees it.",
+    "@phoneLoginNumberBody": {
+        "description": "Phone sign-in, first step: what the number is for"
+    },
+    "phoneLoginNumberLabel": "Your mobile number",
+    "@phoneLoginNumberLabel": {
+        "description": "Phone sign-in: label of the number field, which starts with +598"
+    },
+    "phoneLoginNumberHint": "With or without the 0, like 09X XXX XXX",
+    "@phoneLoginNumberHint": {
+        "description": "Phone sign-in: hint under the number field; the X stand for digits, no real number"
+    },
+    "phoneLoginNumberEmpty": "Type your mobile number.",
+    "@phoneLoginNumberEmpty": {
+        "description": "Phone sign-in: the number field is empty"
+    },
+    "phoneLoginNumberNotMobile": "That's a landline number. Type a mobile one, starting with 09.",
+    "@phoneLoginNumberNotMobile": {
+        "description": "Phone sign-in: a Uruguayan landline was typed"
+    },
+    "phoneLoginNumberInvalid": "Check the number: it doesn't look like a mobile number.",
+    "@phoneLoginNumberInvalid": {
+        "description": "Phone sign-in: the typed number is not a phone number, or Firebase refused it"
+    },
+    "phoneLoginSendButton": "Text me the code",
+    "@phoneLoginSendButton": {
+        "description": "Phone sign-in: button that sends the code by SMS"
+    },
+    "phoneLoginSending": "Sending the code…",
+    "@phoneLoginSending": {
+        "description": "Phone sign-in: screen reader label while the code is being sent"
+    },
+    "phoneLoginCodeTitle": "Type the code",
+    "@phoneLoginCodeTitle": {
+        "description": "Phone sign-in, second step: heading"
+    },
+    "phoneLoginCodeBody": "We texted it to {number}.",
+    "@phoneLoginCodeBody": {
+        "description": "Phone sign-in, second step: where the code went",
+        "placeholders": {
+            "number": {
+                "type": "String",
+                "example": "+598 9X XXX XXX"
+            }
+        }
+    },
+    "phoneLoginResent": "We sent you another code.",
+    "@phoneLoginResent": {
+        "description": "Phone sign-in: status line after a resend"
+    },
+    "phoneLoginCodeLabel": "6-digit code",
+    "@phoneLoginCodeLabel": {
+        "description": "Phone sign-in: label of the code field"
+    },
+    "phoneLoginCodeInvalid": "The code has 6 digits.",
+    "@phoneLoginCodeInvalid": {
+        "description": "Phone sign-in: the typed code is not six digits"
+    },
+    "phoneLoginConfirmButton": "Sign in",
+    "@phoneLoginConfirmButton": {
+        "description": "Phone sign-in: button that checks the code"
+    },
+    "phoneLoginConfirming": "Signing in…",
+    "@phoneLoginConfirming": {
+        "description": "Phone sign-in: screen reader label while the code is checked"
+    },
+    "phoneLoginResendButton": "Text me another code",
+    "@phoneLoginResendButton": {
+        "description": "Phone sign-in: button that sends a new code once the wait is over"
+    },
+    "phoneLoginResendIn": "You can ask for another in {seconds} s",
+    "@phoneLoginResendIn": {
+        "description": "Phone sign-in: shown instead of the resend button during the wait",
+        "placeholders": {
+            "seconds": {
+                "type": "int"
+            }
+        }
+    },
+    "phoneLoginNoMoreResends": "We've sent you several codes. If none arrives, go back and sign in with Google.",
+    "@phoneLoginNoMoreResends": {
+        "description": "Phone sign-in: no more codes may be sent from this screen"
+    },
+    "phoneLoginChangeNumber": "Change the number",
+    "@phoneLoginChangeNumber": {
+        "description": "Phone sign-in: back to the number step"
+    },
+    "phoneLoginWrongCode": "That's not the code. Check the text message and try again.",
+    "@phoneLoginWrongCode": {
+        "description": "Phone sign-in: the typed code is wrong"
+    },
+    "phoneLoginExpiredCode": "The code expired. Ask for another one.",
+    "@phoneLoginExpiredCode": {
+        "description": "Phone sign-in: the code is too old"
+    },
+    "phoneLoginTooManyRequests": "You asked for many codes. Try again in a while, or sign in with Google.",
+    "@phoneLoginTooManyRequests": {
+        "description": "Phone sign-in: Firebase blocked the number or the phone for a while"
+    },
+    "phoneLoginUnavailable": "We can't text that number right now. Try signing in with Google.",
+    "@phoneLoginUnavailable": {
+        "description": "Phone sign-in: SMS can't go out (quota, region, app check)"
+    },
     "payoffTitle": "Here's what there is for you",
     "@payoffTitle": {
         "description": "Heading of the payoff screen, after the read-back and before sign-in"
@@ -2103,7 +2218,7 @@
     "@dataKeepRonda": {
         "description": "Your data screen: kept item"
     },
-    "dataKeepAccount": "Your Google account, so you can sign in, and a code to send notifications to this phone.",
+    "dataKeepAccount": "Your Google account or your mobile number, so you can sign in, and a code to send notifications to this phone.",
     "@dataKeepAccount": {
         "description": "Your data screen: kept item"
     },

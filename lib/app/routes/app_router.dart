@@ -16,6 +16,7 @@ import 'package:ronda/mate_flyer/mate_flyer.dart';
 import 'package:ronda/my_ronda/my_ronda.dart';
 import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/payoff/payoff.dart';
+import 'package:ronda/phone_login/phone_login.dart';
 import 'package:ronda/rain_move/rain_move.dart';
 import 'package:ronda/ronda_setup/ronda_setup.dart';
 import 'package:ronda/settings/settings.dart';
@@ -29,7 +30,8 @@ const returnToParameter = 'from';
 
 /// Builds the app's router: "¿Cómo funciona?", the welcome screen with
 /// sign-in and the terms under it, onboarding, the payoff with its sign-in
-/// under it, and one shell with a branch per tab.
+/// under it, each sign-in with its phone sign-in (`…/entrar/celular`) under
+/// it, and one shell with a branch per tab.
 ///
 /// Where people may be follows [appBloc]'s state, and [refreshListenable]
 /// fires when it changes, so the redirect runs again on every change:
@@ -40,8 +42,8 @@ const returnToParameter = 'from';
 ///   below;
 /// - signed out: the welcome screen, the terms and "¿Cómo funciona?" (the
 ///   welcome screen's link opens it again); once a welcome door
-///   accepted the terms, also the questions, the payoff and either sign-in
-///   (the answers stay on the phone until then);
+///   accepted the terms, also the questions, the payoff and either sign-in,
+///   by Google or by phone (the answers stay on the phone until then);
 /// - signed in, profile not read yet: wherever they are;
 /// - signed in without a profile: onboarding, which saves the answers held
 ///   on the phone straight away when there are some;
@@ -106,7 +108,11 @@ GoRouter createAppRouter({
           : WelcomePage.path;
       final app = appBloc.state;
       // Past a welcome door: the terms are accepted, on this phone.
-      final pastDoor = location == LoginPage.path || onOnboarding || onPayoff;
+      final pastDoor =
+          location == LoginPage.path ||
+          location == LoginPage.phonePath ||
+          onOnboarding ||
+          onPayoff;
       return switch (app.status) {
         AppStatus.unauthenticated when onEntrance && !app.walkthroughSeen =>
           WalkthroughPage.path,
@@ -132,11 +138,20 @@ GoRouter createAppRouter({
         routes: [
           GoRoute(
             path: LoginPage.segment,
-            builder: (context, _) => LoginPage(
+            builder: (context, state) => LoginPage(
               reason: context.read<AppBloc>().state.door == OnboardingDoor.voice
                   ? LoginReason.voice
                   : LoginReason.signIn,
+              phoneLocation: state.uri
+                  .replace(path: LoginPage.phonePath)
+                  .toString(),
             ),
+            routes: [
+              GoRoute(
+                path: PhoneLoginPage.segment,
+                builder: (_, _) => const PhoneLoginPage(),
+              ),
+            ],
           ),
           GoRoute(
             path: TermsPage.segment,
@@ -158,7 +173,16 @@ GoRouter createAppRouter({
         routes: [
           GoRoute(
             path: LoginPage.segment,
-            builder: (_, _) => const LoginPage(reason: LoginReason.keepSeat),
+            builder: (_, _) => const LoginPage(
+              reason: LoginReason.keepSeat,
+              phoneLocation: PayoffPage.phoneSignInPath,
+            ),
+            routes: [
+              GoRoute(
+                path: PhoneLoginPage.segment,
+                builder: (_, _) => const PhoneLoginPage(),
+              ),
+            ],
           ),
         ],
       ),

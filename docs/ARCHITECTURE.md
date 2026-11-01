@@ -22,7 +22,7 @@ Phone (Flutter: iOS, Android, web)
   ├─ needs → local filters → eligible seat ids → Firestore
   ├─ face blur (ML Kit) → upload blurred photo
   └─ FCM pushes in; RSVP / attendance / reports out
-Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign-in off)
+Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan; Google and phone sign-in)
   ├─ Firestore: users, rondas, weeks, waitlists, proposals, reports, acta, agent_runs,
   │    client_errors, osm_places
   ├─ Storage: audio + blurred photos; deleted on success, hourly sweeper, lifecycle as backstop
@@ -86,7 +86,7 @@ isn't set up).
 - `users/{uid}`: firstName, ageBand, barrio, slots[], pretexts[], brings[], plusOneUid?,
   buddyUid? (who hears when they miss a week without saying so, `""` for nobody; written by
   `set_buddy`, which checks it is another member of their ronda, and read back only by its
-  owner and the server), terms {version, acceptedAt}, createdAt. Sign-in is Google: no phone number is held. **Never:** address, cédula, birth
+  owner and the server), terms {version, acceptedAt}, createdAt. Sign-in is Google or a phone number (#63), and the number lives only in Firebase Auth: never in this document, the phone's storage, a log or an error report. **Never:** address, cédula, birth
   date, lives-alone, nationality, mood, needs.
 - `users/{uid}/private/eligible`: seatIds[], updatedAt (written by the phone; read by the solver only).
 - `seat_facts/{seatId}` (decided in #20): what the server publishes for the phone's filter, one
@@ -751,10 +751,10 @@ code jobs with no model, § Data model, the weekly loop's code jobs):
 ## Where data lives (Ley 18.331 art. 23)
 - Firestore, Storage and Functions sit in São Paulo. **Brazil is not on URCDP's adequate list**
   (Res. 23/021 and 63/023, which do list EU/EEA members, Argentina and US organisations on the
-  Data Privacy Framework). Firebase Auth keeps the sign-in identity (Google account id, email) in the US (Google claims DPF).
+  Data Privacy Framework). Firebase Auth keeps the sign-in identity (Google account id and email, or the phone number) in the US (Google claims DPF).
   Voice and photos go to Meta in the US.
 - So the terms name all three in one line: "Tus datos se guardan en Brasil; el audio lo procesa
-  Meta y el inicio de sesión Google, en EE. UU." They are accepted by continuing past the welcome
+  Meta y el inicio de sesión, Google, en EE. UU." (the comma since #63: Google runs the sign-in, by Google account or by phone). They are accepted by continuing past the welcome
   screen, which links them. Ask the URCDP before onboarding pilot members.
 - Needs and the cuaderno's lines never leave the phone, so no sensitive data crosses a border. The
   one exception is a week's lines, which go to `make_postcard` in a call that stores nothing (Spark
