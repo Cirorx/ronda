@@ -6,6 +6,7 @@ import 'package:error_reporter/error_reporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:ronda/app/app.dart';
 import 'package:ronda/cuaderno/cuaderno.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -79,7 +80,7 @@ void main() {
 
     Future<void> pump(
       WidgetTester tester, {
-      bool web = false,
+      PermissionPlace place = PermissionPlace.app,
       Locale locale = rioplatense,
       Size size = const Size(360, 1600),
     }) async {
@@ -91,7 +92,7 @@ void main() {
               BlocProvider.value(value: cubit),
               BlocProvider.value(value: voice),
             ],
-            child: CuadernoView(web: web),
+            child: CuadernoView(place: place),
           ),
         ),
         locale: locale,
@@ -347,9 +348,29 @@ void main() {
             problem: VoiceLineProblem.microphoneDenied,
           ),
         );
-        await pump(tester, web: true);
+        await pump(tester, place: PermissionPlace.browser);
 
         expect(find.textContaining('candado'), findsOneWidget);
+      });
+
+      testWidgets("sends an iPhone's browser to Ajustes, or to typing", (
+        tester,
+      ) async {
+        when(() => voice.state).thenReturn(
+          const LineVoiceState(
+            status: LineVoiceStatus.failed,
+            problem: VoiceLineProblem.microphoneDenied,
+          ),
+        );
+        await pump(tester, place: PermissionPlace.iPhoneBrowser);
+
+        expect(
+          find.text(
+            'El iPhone no nos dejó usar el micrófono. Prendelo en Ajustes → '
+            'Chrome (o Safari) → Micrófono, o escribí la línea.',
+          ),
+          findsOneWidget,
+        );
       });
 
       testWidgets("reports a failure that is Ronda's, once, with the code", (

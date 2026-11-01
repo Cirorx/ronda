@@ -38,6 +38,10 @@ enum PushAuthorization {
   /// Refused, and the system won't ask again: only the phone's settings
   /// turn notifications on.
   deniedPermanently,
+
+  /// This browser can't receive web push at all: an iPhone's browser tab,
+  /// where only a web app added to the home screen (iOS 16.4+) can.
+  unsupported,
 }
 
 /// {@template rsvp_action_labels}
@@ -327,14 +331,25 @@ class PushClient {
     return tapFrom(details.notificationResponse);
   }
 
+  /// Whether this browser can receive web push. Always true off the web.
+  ///
+  /// Where it can't (an iPhone's browser tab has no `Notification` at all),
+  /// firebase_messaging's web calls throw JavaScript errors rather than
+  /// exceptions, so every web call below checks this first.
+  Future<bool> _supported() async => !_isWeb || await _messaging.isSupported();
+
   /// Whether notifications are allowed, without asking.
-  Future<PushAuthorization> authorization() async =>
-      _authorization(await _messaging.getNotificationSettings());
+  Future<PushAuthorization> authorization() async {
+    if (!await _supported()) return PushAuthorization.unsupported;
+    return _authorization(await _messaging.getNotificationSettings());
+  }
 
   /// Shows the system's permission prompt (Android 13+, iOS, web) and returns
   /// the answer. Call it from a tap: browsers ignore it otherwise.
-  Future<PushAuthorization> requestAuthorization() async =>
-      _authorization(await _messaging.requestPermission());
+  Future<PushAuthorization> requestAuthorization() async {
+    if (!await _supported()) return PushAuthorization.unsupported;
+    return _authorization(await _messaging.requestPermission());
+  }
 
   static PushAuthorization _authorization(NotificationSettings settings) =>
       switch (settings.authorizationStatus) {
@@ -347,21 +362,26 @@ class PushClient {
       };
 
   /// This app instance's FCM registration token, or `null` when there is
-  /// none. On web it uses the VAPID key when one was given, and registers
-  /// [webWorkerScript].
+  /// none, as in a browser without web push. On web it uses the VAPID key
+  /// when one was given, and registers [webWorkerScript].
   ///
   /// The token addresses this phone: never log it.
-  Future<String?> token() => _isWeb
-      ? _messaging.getToken(
-          vapidKey: (_vapidKey?.isNotEmpty ?? false) ? _vapidKey : null,
-          serviceWorkerScriptPath: webWorkerScript,
-        )
-      : _messaging.getToken();
+  Future<String?> token() async {
+    if (!_isWeb) return await _messaging.getToken();
+    if (!await _supported()) return null;
+    return await _messaging.getToken(
+      vapidKey: (_vapidKey?.isNotEmpty ?? false) ? _vapidKey : null,
+      serviceWorkerScriptPath: webWorkerScript,
+    );
+  }
 
   /// Deletes this app instance's FCM token: nothing sent to it arrives any
   /// more, and the next [token] is a new one. On web it also drops the
-  /// browser's push subscription.
-  Future<void> deleteToken() => _messaging.deleteToken();
+  /// browser's push subscription; a browser without web push has none.
+  Future<void> deleteToken() async {
+    if (!await _supported()) return;
+    await _messaging.deleteToken();
+  }
 
   /// A new token whenever FCM rotates this app instance's token.
   Stream<String> get tokenRefreshes => _messaging.onTokenRefresh;

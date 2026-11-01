@@ -11,7 +11,8 @@ part 'notifications_state.dart';
 /// the next launch, and asks the phone again. Once allowed here, it saves
 /// this phone's token for [_uid]; Mi ronda keeps it fresh from the next
 /// launch on. A phone that refused for good is told how to allow them in
-/// its settings. Failures are reported to the observer, never shown.
+/// its settings, and a browser that can't get them, where they would work.
+/// Failures are reported to the observer, never shown.
 class NotificationsCubit extends Cubit<NotificationsState> {
   new({required this._uid, required this._pushRepository})
     : super(const NotificationsState());
@@ -53,6 +54,8 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         emit(const NotificationsState(status: NotificationsStatus.off));
       case PushPermission.blocked:
         emit(const NotificationsState(status: NotificationsStatus.blocked));
+      case PushPermission.unsupported:
+        emit(const NotificationsState(status: NotificationsStatus.unsupported));
     }
   }
 
@@ -82,6 +85,8 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         await _register();
       case PushPermission.blocked:
         emit(const NotificationsState(status: NotificationsStatus.blocked));
+      case PushPermission.unsupported:
+        emit(const NotificationsState(status: NotificationsStatus.unsupported));
       case PushPermission.notAsked || PushPermission.refused:
         emit(const NotificationsState(status: NotificationsStatus.refused));
     }

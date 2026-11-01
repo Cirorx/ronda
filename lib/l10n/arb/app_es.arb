@@ -851,5 +851,12 @@
     "sharedPlanHeldOther": "Este plan no se puede compartir con la ronda.",
     "sharedPlanShareFailed": "No pudimos avisarle a la ronda. Probá de nuevo.",
     "sharedPlanJoinFailed": "No pudimos anotarte. Probá de nuevo.",
-    "sharedPlanGone": "Ese plan ya no está."
+    "sharedPlanGone": "Ese plan ya no está.",
+    "microphoneDeniedIphoneBody": "El iPhone no nos dejó usar el micrófono. No pasa nada: podés darle permiso, o seguir tocando botones.",
+    "microphoneDeniedIphoneStepSettings": "Abrí Ajustes del iPhone, entrá en Chrome (o en Safari) y prendé «Micrófono».",
+    "microphoneDeniedIphoneStepReturn": "Volvé acá y tocá «Ya le di permiso».",
+    "microphoneDeniedIphoneStepReload": "Si no te vuelve a preguntar, recargá esta página y tocá «Permitir».",
+    "cuadernoVoiceDeniedIphone": "El iPhone no nos dejó usar el micrófono. Prendelo en Ajustes → Chrome (o Safari) → Micrófono, o escribí la línea.",
+    "pushUnsupportedIphone": "En el iPhone, los avisos llegan solo si Ronda está en la pantalla de inicio (iOS 16.4 o más nuevo). Abrí Ronda en Safari, tocá Compartir, elegí «Agregar a inicio» y entrá desde ese ícono.",
+    "pushUnsupportedBrowser": "Este navegador no puede recibir avisos de Ronda. Probá con otro navegador, o con la app en el teléfono."
 }

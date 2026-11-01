@@ -17,6 +17,10 @@ enum PushStatus {
   /// The phone refused without asking: the card says how to turn them on.
   blocked,
 
+  /// This browser can't get notifications at all (an iPhone's browser
+  /// tab): the card says where they would work.
+  unsupported,
+
   /// "Ahora no" (now or lately), a "no" in the system's prompt, or refused
   /// for good before the card ever showed: nothing to show for now.
   dismissed,
@@ -26,7 +30,10 @@ final class const PushState({final PushStatus status = PushStatus.checking})
     extends Equatable {
   /// Whether the card shows.
   bool get showsPrompt => switch (status) {
-    PushStatus.offered || PushStatus.requesting || PushStatus.blocked => true,
+    PushStatus.offered ||
+    PushStatus.requesting ||
+    PushStatus.blocked ||
+    PushStatus.unsupported => true,
     PushStatus.checking || PushStatus.allowed || PushStatus.dismissed => false,
   };
 

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:error_reporter/error_reporter.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:ronda/app/app.dart';
@@ -53,7 +52,7 @@ class const VoiceNoteStep({super.key}) extends StatelessWidget {
             ),
           );
         },
-        child: const VoiceNoteView(),
+        child: VoiceNoteView(place: PermissionPlace.current),
       ),
     );
   }
@@ -64,9 +63,9 @@ class const VoiceNoteStep({super.key}) extends StatelessWidget {
 /// each state read out as it arrives. "Cancelar" leaves for the questions
 /// from any of them.
 class const VoiceNoteView({
-  /// Whether this runs in a browser, where the microphone is allowed from
-  /// the address bar rather than the phone's settings.
-  final bool web = kIsWeb,
+  /// Where this runs, which says where the microphone is allowed: the
+  /// phone's settings, the browser's padlock, or the iPhone's Ajustes.
+  required final PermissionPlace place,
   super.key,
 }) extends StatelessWidget {
   /// Maestro's handle on "Grabar".
@@ -226,24 +225,32 @@ class const VoiceNoteView({
         ),
         VoiceNoteFailure.microphoneDenied => layout(
           title: l10n.microphoneDeniedTitle,
-          body: web
-              ? l10n.microphoneDeniedBrowserBody
-              : l10n.microphoneDeniedBody,
+          body: switch (place) {
+            PermissionPlace.app => l10n.microphoneDeniedBody,
+            PermissionPlace.browser => l10n.microphoneDeniedBrowserBody,
+            PermissionPlace.iPhoneBrowser => l10n.microphoneDeniedIphoneBody,
+          },
           primaryAction: retry(l10n.microphoneDeniedRetry),
           secondaryAction: preferButtons,
           child: _Lines(
             heading: l10n.microphoneDeniedStepsHeading,
-            web
-                ? [
-                    l10n.microphoneDeniedBrowserStepLock,
-                    l10n.microphoneDeniedBrowserStepAllow,
-                    l10n.microphoneDeniedBrowserStepReturn,
-                  ]
-                : [
-                    l10n.microphoneDeniedStepSettings,
-                    l10n.microphoneDeniedStepPermission,
-                    l10n.microphoneDeniedStepReturn,
-                  ],
+            switch (place) {
+              PermissionPlace.app => [
+                l10n.microphoneDeniedStepSettings,
+                l10n.microphoneDeniedStepPermission,
+                l10n.microphoneDeniedStepReturn,
+              ],
+              PermissionPlace.browser => [
+                l10n.microphoneDeniedBrowserStepLock,
+                l10n.microphoneDeniedBrowserStepAllow,
+                l10n.microphoneDeniedBrowserStepReturn,
+              ],
+              PermissionPlace.iPhoneBrowser => [
+                l10n.microphoneDeniedIphoneStepSettings,
+                l10n.microphoneDeniedIphoneStepReturn,
+                l10n.microphoneDeniedIphoneStepReload,
+              ],
+            },
             numbered: true,
           ),
         ),

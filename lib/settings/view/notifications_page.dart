@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:push_repository/push_repository.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/push/push.dart';
 import 'package:ronda/settings/cubit/notifications_cubit.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -36,7 +37,11 @@ class const NotificationsPage({super.key}) extends StatelessWidget {
 /// While it reads, it says so; what it finds swaps in and is read out.
 /// [Prender los avisos] is felt as it is tapped.
 class NotificationsView extends StatefulWidget {
-  const new({super.key});
+  const new({this.place, super.key});
+
+  /// Where this runs, which says where notifications would work when they
+  /// can't here; this app instance's place when not given.
+  final PermissionPlace? place;
 
   /// Maestro's handle on [Prender los avisos].
   static const turnOnIdentifier = 'notifications.turnOn';
@@ -81,10 +86,16 @@ class _NotificationsViewState extends State<NotificationsView> {
       NotificationsStatus.refused => l10n.notificationsOff,
       NotificationsStatus.blocked => l10n.pushPromptBlocked,
       NotificationsStatus.unknown => l10n.notificationsUnknown,
+      NotificationsStatus.unsupported => l10n.pushUnsupported(
+        widget.place ?? PermissionPlace.current,
+      ),
     };
-    final explains =
-        state.status != NotificationsStatus.blocked &&
-        state.status != NotificationsStatus.unknown;
+    final explains = switch (state.status) {
+      NotificationsStatus.blocked ||
+      NotificationsStatus.unknown ||
+      NotificationsStatus.unsupported => false,
+      _ => true,
+    };
 
     final refused = state.status == NotificationsStatus.refused;
     return Scaffold(

@@ -1,4 +1,5 @@
 export 'bloc/app_bloc.dart';
+export 'models/permission_place.dart';
 export 'routes/app_router.dart';
 export 'routes/bloc_refresh_listenable.dart';
 export 'view/app.dart';

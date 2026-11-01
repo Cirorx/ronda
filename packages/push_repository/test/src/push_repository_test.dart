@@ -84,6 +84,7 @@ void main() {
         PushAuthorization.notDetermined: PushPermission.notAsked,
         PushAuthorization.denied: PushPermission.refused,
         PushAuthorization.deniedPermanently: PushPermission.blocked,
+        PushAuthorization.unsupported: PushPermission.unsupported,
       };
 
       for (final MapEntry(key: authorization, value: permission)
@@ -245,6 +246,7 @@ void main() {
         PushAuthorization.notDetermined,
         PushAuthorization.denied,
         PushAuthorization.deniedPermanently,
+        PushAuthorization.unsupported,
       ]) {
         test('reads no token on a browser that is $authorization', () async {
           when(() => pushClient.platform).thenReturn(PushPlatform.web);

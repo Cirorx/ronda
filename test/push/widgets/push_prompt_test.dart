@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:ronda/app/app.dart';
 import 'package:ronda/push/push.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -23,12 +24,13 @@ void main() {
       WidgetTester tester,
       PushStatus status, {
       Locale locale = rioplatense,
+      PermissionPlace place = PermissionPlace.app,
     }) {
       when(() => cubit.state).thenReturn(PushState(status: status));
       return tester.pumpApp(
         BlocProvider.value(
           value: cubit,
-          child: const Scaffold(body: PushPrompt()),
+          child: Scaffold(body: PushPrompt(place: place)),
         ),
         locale: locale,
       );
@@ -67,6 +69,42 @@ void main() {
         expect(find.text('Sí, avisame'), findsNothing);
         expect(find.text('Entendido'), findsOneWidget);
         handle.dispose();
+      });
+
+      testWidgets("where they would work, in an iPhone's browser tab", (
+        tester,
+      ) async {
+        await pump(
+          tester,
+          PushStatus.unsupported,
+          place: PermissionPlace.iPhoneBrowser,
+        );
+
+        expect(
+          find.textContaining('tocá Compartir, elegí «Agregar a inicio»'),
+          findsOneWidget,
+        );
+        expect(find.text('Sí, avisame'), findsNothing);
+        expect(find.text('Entendido'), findsOneWidget);
+      });
+
+      testWidgets("another browser or the app, in a browser that can't", (
+        tester,
+      ) async {
+        await pump(
+          tester,
+          PushStatus.unsupported,
+          place: PermissionPlace.browser,
+          locale: const Locale('en'),
+        );
+
+        expect(
+          find.text(
+            "This browser can't get notifications from Ronda. Try another "
+            'browser, or the app on your phone.',
+          ),
+          findsOneWidget,
+        );
       });
 
       testWidgets('the buttons disabled while the system asks', (tester) async {

@@ -44,6 +44,7 @@ void main() {
         (NotificationsStatus.refused, true),
         (NotificationsStatus.blocked, false),
         (NotificationsStatus.unknown, true),
+        (NotificationsStatus.unsupported, false),
       ]) {
         test('is $expected when $status', () {
           expect(state(status).canTurnOn, equals(expected));
@@ -83,6 +84,14 @@ void main() {
         build: build,
         act: (cubit) => cubit.started(),
         expect: () => [state(NotificationsStatus.blocked)],
+      );
+
+      blocTest<NotificationsCubit, NotificationsState>(
+        "says where they would work in a browser that can't get them",
+        setUp: () => permissionIs(PushPermission.unsupported),
+        build: build,
+        act: (cubit) => cubit.started(),
+        expect: () => [state(NotificationsStatus.unsupported)],
       );
 
       blocTest<NotificationsCubit, NotificationsState>(
@@ -235,6 +244,17 @@ void main() {
         expect: () => [
           state(NotificationsStatus.asking),
           state(NotificationsStatus.blocked),
+        ],
+      );
+
+      blocTest<NotificationsCubit, NotificationsState>(
+        "says where they would work when the browser can't get them",
+        setUp: () => answerIs(PushPermission.unsupported),
+        build: build,
+        act: (cubit) => cubit.turnOnTapped(),
+        expect: () => [
+          state(NotificationsStatus.asking),
+          state(NotificationsStatus.unsupported),
         ],
       );
 

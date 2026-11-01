@@ -21,6 +21,10 @@ enum NotificationsStatus {
   /// Refused for good: only the phone's settings turn them on.
   blocked,
 
+  /// This browser can't get notifications at all (an iPhone's browser
+  /// tab): the screen says where they would work.
+  unsupported,
+
   /// The permission couldn't be read or asked.
   unknown,
 }
@@ -36,7 +40,8 @@ final class const NotificationsState({
     NotificationsStatus.unknown => true,
     NotificationsStatus.checking ||
     NotificationsStatus.on ||
-    NotificationsStatus.blocked => false,
+    NotificationsStatus.blocked ||
+    NotificationsStatus.unsupported => false,
   };
 
   @override

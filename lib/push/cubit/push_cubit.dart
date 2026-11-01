@@ -49,6 +49,15 @@ class PushCubit extends Cubit<PushState> {
         );
       case PushPermission.blocked:
         emit(const PushState(status: PushStatus.dismissed));
+      // Said once, then kept away like "Ahora no".
+      case PushPermission.unsupported:
+        final snoozed = await _pushRepository.promptSnoozed();
+        if (isClosed) return;
+        emit(
+          PushState(
+            status: snoozed ? PushStatus.dismissed : PushStatus.unsupported,
+          ),
+        );
     }
   }
 
@@ -70,18 +79,23 @@ class PushCubit extends Cubit<PushState> {
         await _register();
       case PushPermission.blocked:
         emit(const PushState(status: PushStatus.blocked));
+      case PushPermission.unsupported:
+        emit(const PushState(status: PushStatus.unsupported));
       case PushPermission.notAsked || PushPermission.refused:
         emit(const PushState(status: PushStatus.dismissed));
     }
   }
 
-  /// "Ahora no" or "Entendido": the card goes. "Ahora no" is remembered on
-  /// the phone, so the card stays away on the next launches too; a failure
-  /// to remember it is reported, and the card comes back on the next launch.
-  /// "Entendido" needs nothing remembered: a phone that refused for good
-  /// never gets the card at launch.
+  /// "Ahora no" or "Entendido": the card goes. "Ahora no", and "Entendido"
+  /// in a browser that can't get notifications, are remembered on the
+  /// phone, so the card stays away on the next launches too; a failure to
+  /// remember it is reported, and the card comes back on the next launch.
+  /// "Entendido" on a phone that refused for good needs nothing remembered:
+  /// such a phone never gets the card at launch.
   Future<void> dismissed() async {
-    final later = state.status == PushStatus.offered;
+    final later =
+        state.status == PushStatus.offered ||
+        state.status == PushStatus.unsupported;
     emit(const PushState(status: PushStatus.dismissed));
     if (!later) return;
     try {

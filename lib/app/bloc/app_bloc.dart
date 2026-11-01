@@ -145,6 +145,11 @@ class AppBloc extends Bloc<AppEvent, AppState> {
       await _pushRepository.unregisterDevice(user.id);
     } on UnregisterDeviceFailure catch (error, stackTrace) {
       addError(error, stackTrace);
+      // Anything else forgetting the token throws (a browser's JavaScript
+      // error, say) still reaches the observer, but never keeps the member
+      // signed in: signing out is what they asked for.
+    } on Object catch (error, stackTrace) {
+      addError(error, stackTrace);
     }
     try {
       await _authRepository.signOut();

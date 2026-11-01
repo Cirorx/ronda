@@ -68,10 +68,14 @@ void main() {
       WidgetTester tester,
       NotificationsStatus status, {
       Locale locale = rioplatense,
+      PermissionPlace place = PermissionPlace.app,
     }) {
       when(() => cubit.state).thenReturn(NotificationsState(status: status));
       return tester.pumpApp(
-        BlocProvider.value(value: cubit, child: const NotificationsView()),
+        BlocProvider.value(
+          value: cubit,
+          child: NotificationsView(place: place),
+        ),
         locale: locale,
       );
     }
@@ -229,6 +233,27 @@ void main() {
         find.text(
           'Los avisos de Ronda están apagados en este teléfono. Si los '
           'querés, prendelos en los ajustes del teléfono.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text(weekly), findsNothing);
+      expect(turnOn(), findsNothing);
+    });
+
+    testWidgets("says where they would work in an iPhone's browser tab", (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        NotificationsStatus.unsupported,
+        place: PermissionPlace.iPhoneBrowser,
+      );
+
+      expect(
+        find.text(
+          'En el iPhone, los avisos llegan solo si Ronda está en la pantalla '
+          'de inicio (iOS 16.4 o más nuevo). Abrí Ronda en Safari, tocá '
+          'Compartir, elegí «Agregar a inicio» y entrá desde ese ícono.',
         ),
         findsOneWidget,
       );

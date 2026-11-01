@@ -11,4 +11,8 @@ enum PushPermission {
 
   /// Refused for good: only the phone's settings turn it back on.
   blocked,
+
+  /// This browser can't receive notifications at all: on an iPhone, only
+  /// Ronda added to the home screen can.
+  unsupported,
 }

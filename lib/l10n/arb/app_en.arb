@@ -4340,5 +4340,33 @@
     "sharedPlanGone": "That plan is no longer there.",
     "@sharedPlanGone": {
         "description": "Mi ronda: the plan someone tried to join is over or withdrawn"
+    },
+    "microphoneDeniedIphoneBody": "The iPhone didn't let us use the microphone. That's fine: you can allow it, or keep tapping buttons.",
+    "@microphoneDeniedIphoneBody": {
+        "description": "Voice note: microphone refused, in an iPhone's browser"
+    },
+    "microphoneDeniedIphoneStepSettings": "Open the iPhone's Settings, go to Chrome (or Safari) and turn on Microphone.",
+    "@microphoneDeniedIphoneStepSettings": {
+        "description": "iPhone browser step 1"
+    },
+    "microphoneDeniedIphoneStepReturn": "Come back here and tap I've allowed it.",
+    "@microphoneDeniedIphoneStepReturn": {
+        "description": "iPhone browser step 2"
+    },
+    "microphoneDeniedIphoneStepReload": "If it doesn't ask you again, reload this page and tap Allow.",
+    "@microphoneDeniedIphoneStepReload": {
+        "description": "iPhone browser step 3"
+    },
+    "cuadernoVoiceDeniedIphone": "The iPhone didn't let us use the microphone. Turn it on in Settings → Chrome (or Safari) → Microphone, or type the line.",
+    "@cuadernoVoiceDeniedIphone": {
+        "description": "Cuaderno voice failure in an iPhone's browser"
+    },
+    "pushUnsupportedIphone": "On an iPhone, notifications only reach Ronda on the home screen (iOS 16.4 or later). Open Ronda in Safari, tap Share, choose Add to Home Screen, and open it from that icon.",
+    "@pushUnsupportedIphone": {
+        "description": "Notifications can't work in an iPhone's browser tab: how to get them"
+    },
+    "pushUnsupportedBrowser": "This browser can't get notifications from Ronda. Try another browser, or the app on your phone.",
+    "@pushUnsupportedBrowser": {
+        "description": "Notifications can't work in this browser"
     }
 }

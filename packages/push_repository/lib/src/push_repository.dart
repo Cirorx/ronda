@@ -199,5 +199,6 @@ extension on PushAuthorization {
     PushAuthorization.notDetermined => PushPermission.notAsked,
     PushAuthorization.denied => PushPermission.refused,
     PushAuthorization.deniedPermanently => PushPermission.blocked,
+    PushAuthorization.unsupported => PushPermission.unsupported,
   };
 }

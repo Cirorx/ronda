@@ -116,7 +116,8 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   Then "¿Entendimos bien?" with every field and a "Cambiar" on each; "Todavía no guardamos
   nada"; "Tu audio ya se borró."; [Está bien, guardalo] [Grabar de nuevo].
 - **Microphone blocked:** "No podemos usar el micrófono", three steps to allow it (the phone's
-  settings, or the browser's padlock on web), or [Prefiero tocar botones].
+  settings, the browser's padlock on web, or on an iPhone's browser Ajustes → Chrome or Safari →
+  Micrófono, then reload; 2026-11-01), or [Prefiero tocar botones].
 - **Voice failures** say what failed, each with [Prefiero tocar botones]: "No encontramos un
   micrófono", "No pudimos grabar", "No pudimos mandar el audio" (the connection: try again; or
   refused by the server: "Es un problema nuestro, no tuyo", buttons only), "Falta aceptar las
@@ -150,7 +151,9 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   opens the payoff).
 - **Before the system asks for notifications:** "¿Te avisamos los martes?" — "Uno por semana,
   el martes a las 19", "Algún otro solo si cambia algo", "Nunca de noche: solo entre las 9 y
-  las 21." [Sí, avisame] [Ahora no].
+  las 21." [Sí, avisame] [Ahora no]. In an iPhone's browser tab, which can't get web push, the
+  card and Ajustes → Avisos say instead how to get them (Safari → Compartir → «Agregar a
+  inicio», iOS 16.4+), with [Entendido], once (2026-11-01).
 - The buddy is chosen after the first ronda, not at sign-up.
 
 ## Lo que traés (profile)

@@ -190,7 +190,7 @@ void main() {
       Stream<VoiceNoteState>? states,
       Locale locale = rioplatense,
       bool reduced = false,
-      bool web = false,
+      PermissionPlace place = PermissionPlace.app,
     }) {
       if (states != null) {
         whenListen(cubit, states, initialState: state);
@@ -205,7 +205,7 @@ void main() {
               BlocProvider<OnboardingCubit>.value(value: onboarding),
               BlocProvider<VoiceNoteCubit>.value(value: cubit),
             ],
-            child: VoiceNoteView(web: web),
+            child: VoiceNoteView(place: place),
           ),
         ),
         locale: locale,
@@ -702,7 +702,7 @@ void main() {
       await pumpSubject(
         tester,
         failed(VoiceNoteFailure.microphoneDenied),
-        web: true,
+        place: PermissionPlace.browser,
       );
 
       expect(
@@ -722,6 +722,32 @@ void main() {
         find.text('3. Volvé acá y tocá «Ya le di permiso».'),
         findsOneWidget,
       );
+    });
+
+    testWidgets("tells an iPhone's browser to allow it in Ajustes", (
+      tester,
+    ) async {
+      await pumpSubject(
+        tester,
+        failed(VoiceNoteFailure.microphoneDenied),
+        place: PermissionPlace.iPhoneBrowser,
+      );
+
+      expect(
+        find.text(
+          '1. Abrí Ajustes del iPhone, entrá en Chrome (o en Safari) y prendé '
+          '«Micrófono».',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          '3. Si no te vuelve a preguntar, recargá esta página y tocá '
+          '«Permitir».',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Prefiero tocar botones'), findsOneWidget);
     });
 
     testWidgets('lists the three steps to allow the microphone', (

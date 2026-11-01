@@ -183,6 +183,18 @@ void main() {
       );
 
       blocTest<AppBloc, AppState>(
+        'signs out even when forgetting the token throws an error, as an '
+        "iPhone's browser tab did",
+        setUp: () =>
+            when(() => pushRepository.unregisterDevice(any()))
+                .thenThrow(StateError('Notification is not defined')),
+        build: buildBloc,
+        act: (bloc) => bloc.add(const AppSignOutRequested()),
+        errors: () => [isA<StateError>()],
+        verify: (_) => verify(authRepository.signOut).called(1),
+      );
+
+      blocTest<AppBloc, AppState>(
         'reports a sign-out that fails',
         setUp: () =>
             when(authRepository.signOut).thenThrow(const SignOutFailure()),

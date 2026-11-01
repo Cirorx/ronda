@@ -117,6 +117,7 @@ void main() {
           payload: any(named: 'payload'),
         ),
       ).thenAnswer((_) async {});
+      when(messaging.isSupported).thenAnswer((_) async => true);
     });
 
     PushClient buildSubject({
@@ -270,6 +271,28 @@ void main() {
           expect(await buildSubject().requestAuthorization(), equals(expected));
         });
       }
+
+      group('in a browser without web push (an iPhone tab)', () {
+        setUp(() {
+          when(messaging.isSupported).thenAnswer((_) async => false);
+        });
+
+        test('is unsupported, without reading the settings', () async {
+          expect(
+            await buildSubject(isWeb: true).authorization(),
+            equals(PushAuthorization.unsupported),
+          );
+          verifyNever(messaging.getNotificationSettings);
+        });
+
+        test('requestAuthorization is unsupported, without asking', () async {
+          expect(
+            await buildSubject(isWeb: true).requestAuthorization(),
+            equals(PushAuthorization.unsupported),
+          );
+          verifyNever(messaging.requestPermission);
+        });
+      });
     });
 
     group('token', () {
@@ -311,6 +334,18 @@ void main() {
           ),
         ).called(2);
       });
+
+      test('is null in a browser without web push', () async {
+        when(messaging.isSupported).thenAnswer((_) async => false);
+
+        expect(await buildSubject(isWeb: true).token(), isNull);
+        verifyNever(
+          () => messaging.getToken(
+            vapidKey: any(named: 'vapidKey'),
+            serviceWorkerScriptPath: any(named: 'serviceWorkerScriptPath'),
+          ),
+        );
+      });
     });
 
     group('deleteToken', () {
@@ -320,6 +355,14 @@ void main() {
         await buildSubject().deleteToken();
 
         verify(messaging.deleteToken).called(1);
+      });
+
+      test('does nothing in a browser without web push', () async {
+        when(messaging.isSupported).thenAnswer((_) async => false);
+
+        await buildSubject(isWeb: true).deleteToken();
+
+        verifyNever(messaging.deleteToken);
       });
     });
 

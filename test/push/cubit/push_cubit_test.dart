@@ -113,6 +113,48 @@ void main() {
         expect: () => [state(PushStatus.dismissed)],
       );
 
+      group("in a browser that can't get notifications", () {
+        setUp(() {
+          when(pushRepository.permission)
+              .thenAnswer((_) async => PushPermission.unsupported);
+        });
+
+        blocTest<PushCubit, PushState>(
+          'says where they would work',
+          build: build,
+          act: (cubit) => cubit.started(),
+          expect: () => [state(PushStatus.unsupported)],
+          verify: (cubit) {
+            expect(cubit.state.showsPrompt, isTrue);
+            verifyNever(pushRepository.askPermission);
+          },
+        );
+
+        blocTest<PushCubit, PushState>(
+          'shows nothing once it was said lately',
+          setUp: () =>
+              when(pushRepository.promptSnoozed).thenAnswer((_) async => true),
+          build: build,
+          act: (cubit) => cubit.started(),
+          expect: () => [state(PushStatus.dismissed)],
+        );
+
+        blocTest<PushCubit, PushState>(
+          'emits nothing when closed while reading whether it was said',
+          setUp: () => when(pushRepository.promptSnoozed).thenAnswer((_) async {
+            await Future<void>.delayed(Duration.zero);
+            return false;
+          }),
+          build: build,
+          act: (cubit) async {
+            unawaited(cubit.started());
+            await Future<void>.delayed(Duration.zero);
+            await cubit.close();
+          },
+          expect: () => <PushState>[],
+        );
+      });
+
       blocTest<PushCubit, PushState>(
         'shows nothing and reports it when the permission cannot be read',
         setUp: () =>
@@ -227,6 +269,20 @@ void main() {
         verify: (cubit) => expect(cubit.state.showsPrompt, isTrue),
       );
 
+      blocTest<PushCubit, PushState>(
+        "says where they would work when the browser can't get them",
+        setUp: () =>
+            when(pushRepository.askPermission)
+                .thenAnswer((_) async => PushPermission.unsupported),
+        build: build,
+        seed: () => state(PushStatus.offered),
+        act: (cubit) => cubit.allowTapped(),
+        expect: () => [
+          state(PushStatus.requesting),
+          state(PushStatus.unsupported),
+        ],
+      );
+
       for (final permission in [
         PushPermission.refused,
         PushPermission.notAsked,
@@ -312,6 +368,15 @@ void main() {
         act: (cubit) => cubit.dismissed(),
         expect: () => [state(PushStatus.dismissed)],
         errors: () => [isA<SnoozePromptFailure>()],
+      );
+
+      blocTest<PushCubit, PushState>(
+        'hides the card that says where they would work, and remembers it',
+        build: build,
+        seed: () => state(PushStatus.unsupported),
+        act: (cubit) => cubit.dismissed(),
+        expect: () => [state(PushStatus.dismissed)],
+        verify: (_) => verify(pushRepository.snoozePrompt).called(1),
       );
 
       blocTest<PushCubit, PushState>(

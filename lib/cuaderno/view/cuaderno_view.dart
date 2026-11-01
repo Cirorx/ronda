@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:cuaderno_repository/cuaderno_repository.dart';
 import 'package:error_reporter/error_reporter.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ronda/app/app.dart';
 import 'package:ronda/cuaderno/cubit/cuaderno_cubit.dart';
 import 'package:ronda/cuaderno/cubit/line_voice_cubit.dart';
 import 'package:ronda/cuaderno/view/cuaderno_page.dart';
@@ -21,9 +21,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// with no line. Every voice failure but a missing or refused microphone
 /// goes to the error log under `cuaderno-voice/<problem>/<server code>`.
 class const CuadernoView({
-  /// Whether this runs in a browser, where the microphone is allowed from
-  /// the address bar rather than the phone's settings.
-  final bool web = kIsWeb,
+  /// Where this runs, which says where the microphone is allowed; this app
+  /// instance's place ([PermissionPlace.current]) when not given.
+  final PermissionPlace? place,
   super.key,
 }) extends StatelessWidget {
   /// The step every voice failure is reported under.
@@ -55,7 +55,10 @@ class const CuadernoView({
           ),
         ],
       ),
-      CuadernoStatus.ready => _Ready(state: state, web: web),
+      CuadernoStatus.ready => _Ready(
+        state: state,
+        place: place ?? PermissionPlace.current,
+      ),
     };
 
     return MultiBlocListener(
@@ -94,7 +97,7 @@ class const CuadernoView({
 
 class const _Ready({
   required final CuadernoState state,
-  required final bool web,
+  required final PermissionPlace place,
 }) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -105,7 +108,7 @@ class const _Ready({
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: spacing.lg,
       children: [
-        _Today(state: state, web: web),
+        _Today(state: state, place: place),
         if (failure != null)
           NoteBanner(
             variant: NoteBannerVariant.warning,
@@ -131,7 +134,7 @@ class const _Ready({
 /// "¿Qué viste hoy?" with its field, "Anotar" and the voice.
 class const _Today({
   required final CuadernoState state,
-  required final bool web,
+  required final PermissionPlace place,
 }) extends StatefulWidget {
   @override
   State<_Today> createState() => _TodayState();
@@ -231,10 +234,12 @@ class _TodayState extends State<_Today> {
               variant: NoteBannerVariant.warning,
               message: switch (problem) {
                 VoiceLineProblem.noMicrophone => l10n.cuadernoVoiceNoMicrophone,
-                VoiceLineProblem.microphoneDenied =>
-                  widget.web
-                      ? l10n.cuadernoVoiceDeniedBrowser
-                      : l10n.cuadernoVoiceDenied,
+                VoiceLineProblem.microphoneDenied => switch (widget.place) {
+                  PermissionPlace.app => l10n.cuadernoVoiceDenied,
+                  PermissionPlace.browser => l10n.cuadernoVoiceDeniedBrowser,
+                  PermissionPlace.iPhoneBrowser =>
+                    l10n.cuadernoVoiceDeniedIphone,
+                },
                 VoiceLineProblem.notUnderstood =>
                   l10n.cuadernoVoiceNotUnderstood,
                 VoiceLineProblem.termsMissing => l10n.cuadernoVoiceTermsMissing,
