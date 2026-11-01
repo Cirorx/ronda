@@ -142,7 +142,7 @@ jobs:
           distribution: temurin
           java-version: 21
       - run: npm ci
-      - run: npx --yes firebase-tools@15.34.1 emulators:exec --only firestore,storage --project demo-ronda-rules "node --test"
+      - run: npx --yes firebase-tools@15.34.1 emulators:exec --only firestore,storage --project demo-ronda-rules "node --test --test-concurrency=1"
 
   spell-check:
     uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/spell_check.yml@v2

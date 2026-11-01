@@ -38,7 +38,9 @@ before(async () => {
     process.env.FIREBASE_STORAGE_EMULATOR_HOST ?? '127.0.0.1:9199'
   ).split(':');
   env = await initializeTestEnvironment({
-    projectId: 'demo-ronda-donde-queda',
+    // Storage rules' firestore.get() reads the emulator's own project, not the test's, so the
+    // members seeded here must live there (emulators:exec sets GCLOUD_PROJECT).
+    projectId: process.env.GCLOUD_PROJECT ?? 'demo-ronda-donde-queda',
     firestore: {
       rules: readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8'),
       host: firestoreHost,
