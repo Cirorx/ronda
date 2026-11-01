@@ -136,7 +136,10 @@ dates in the examples are demo data. Everything not listed here is out of the bu
      nada para llevar? Marcá «Tengo ganas»: venís y listo."
   3. "¿Cuándo podés?", a day × time grid. Mañana: de 9 a 12 · Tarde: de 14 a 18 · Noche: de 19
      a 21.
-  4. "¿En qué barrio estás?" ("Solo el barrio. Nunca te pedimos la dirección.").
+  4. "¿En qué barrio estás?" ("Solo el barrio. Nunca te pedimos la dirección."). 71 barrios:
+     Ciudad de la Costa's nine, then Montevideo's 62 (the INE's), each under its heading, with
+     "Buscá tu barrio" above them (accents and case aside); nothing matching says "No hay un
+     barrio con ese nombre. Probá escribirlo de otra forma."
   5. "¿Qué edad tenés, más o menos?" ("Alcanza con la década. Nunca te pedimos la fecha de
      nacimiento."): De 18 a 29, Treinta y pico … Ochenta o más.
   6. Optional: "¿Hay algo que te complique ir?" ("Caminar mucho", "Subir escaleras", "Volver de

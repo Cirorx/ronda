@@ -594,41 +594,21 @@
     "@barrioBody": {
         "description": "Text under the barrio question"
     },
-    "barrioShangrila": "Shangrilá",
-    "@barrioShangrila": {
-        "description": "Barrio name"
+    "barrioSearchLabel": "Find your barrio",
+    "@barrioSearchLabel": {
+        "description": "Label of the search field on the barrio question"
     },
-    "barrioSanJoseDeCarrasco": "San José de Carrasco",
-    "@barrioSanJoseDeCarrasco": {
-        "description": "Barrio name"
+    "barrioNoMatch": "No barrio by that name. Try writing it another way.",
+    "@barrioNoMatch": {
+        "description": "Shown under the barrio search when nothing matches"
     },
-    "barrioLagomarSur": "Lagomar Sur",
-    "@barrioLagomarSur": {
-        "description": "Barrio name"
+    "barrioAreaCosta": "Ciudad de la Costa",
+    "@barrioAreaCosta": {
+        "description": "Heading of the Ciudad de la Costa barrios on the barrio question"
     },
-    "barrioLagomarNorte": "Lagomar Norte",
-    "@barrioLagomarNorte": {
-        "description": "Barrio name"
-    },
-    "barrioSolymarSur": "Solymar Sur",
-    "@barrioSolymarSur": {
-        "description": "Barrio name"
-    },
-    "barrioSolymarNorte": "Solymar Norte",
-    "@barrioSolymarNorte": {
-        "description": "Barrio name"
-    },
-    "barrioLomasDeSolymar": "Lomas de Solymar",
-    "@barrioLomasDeSolymar": {
-        "description": "Barrio name"
-    },
-    "barrioElPinarSur": "El Pinar Sur",
-    "@barrioElPinarSur": {
-        "description": "Barrio name"
-    },
-    "barrioElPinarNorte": "El Pinar Norte",
-    "@barrioElPinarNorte": {
-        "description": "Barrio name"
+    "barrioAreaMontevideo": "Montevideo",
+    "@barrioAreaMontevideo": {
+        "description": "Heading of the Montevideo barrios on the barrio question"
     },
     "ageBandTitle": "How old are you, roughly?",
     "@ageBandTitle": {

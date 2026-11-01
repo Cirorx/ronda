@@ -219,6 +219,17 @@ class TestSchema:
         assert len(v.SlotId) == 21
         assert {a.value for a in v.AgeBand} == {*v.AGE_BANDS, v.UNKNOWN}
 
+    def test_offers_montevideo_s_barrios_next_to_the_costa_s(self):
+        assert len(v.Barrio) == 72
+        assert v.Barrio("barrio-sur") in v.Barrio
+        assert "barrio-sur (Barrio Sur)" in v.INSTRUCTIONS
+        assert {"Barrio Sur", "Shangrilá", "Bella Vista"} <= set(v.KEYWORDS)
+
+    def test_reads_a_montevideo_barrio_into_its_id(self):
+        client, _ = spark_returning(GRACIELA.model_copy(update={"barrio": v.Barrio("barrio-sur")}))
+
+        assert v.read_fields("Vivo en Barrio Sur", client=client)["barrio"] == "barrio-sur"
+
 
 class TestNoteUid:
     def test_reads_the_uid_of_a_note_path(self):

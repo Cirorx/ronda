@@ -68,23 +68,31 @@ class TestFlyerText:
         assert text.what.startswith("Grupos de 10 vecinos")
 
     def test_every_barrio_and_pretext_has_its_words(self):
-        assert set(flyer.BARRIO_NAMES) == set(flyer.DEMO_BARRIOS)
+        assert set(flyer.BARRIO_NAMES) == set(flyer.CENTROIDS)
         assert set(flyer.HEADLINES) == {"mate", "truco", "futbol5", "caminata"}
 
 
 class TestWhere:
     def test_the_barrio_is_the_nearest_centroid(self):
-        assert flyer.barrio_at(flyer.DEMO_BARRIOS["lagomar-sur"]) == "lagomar-sur"
+        assert flyer.barrio_at(flyer.CENTROIDS["lagomar-sur"]) == "lagomar-sur"
+
+    def test_a_montevideo_spot_finds_its_barrio_and_neighbours(self):
+        spot = flyer.CENTROIDS["barrio-sur"]
+
+        assert flyer.barrio_at(spot) == "barrio-sur"
+        assert flyer.near_barrios(spot, "barrio-sur") == ["barrio-sur", "centro"]
+        text = flyer.flyer_text("mate", "sat-afternoon", "barrio-sur")
+        assert text.facts[0] == "Los sábados de 14 a 18, en Barrio Sur"
 
     def test_near_barrios_start_with_its_own_then_those_within_ten_blocks(self):
-        spot = flyer.DEMO_BARRIOS["solymar-norte"]
+        spot = flyer.CENTROIDS["solymar-norte"]
 
         near = flyer.near_barrios(spot, "solymar-norte")
 
         assert near == ["solymar-norte", "solymar-sur"]
 
     def test_a_chosen_barrio_comes_first_even_when_another_is_nearer(self):
-        spot = flyer.DEMO_BARRIOS["solymar-norte"]
+        spot = flyer.CENTROIDS["solymar-norte"]
 
         assert flyer.near_barrios(spot, "el-pinar-sur") == [
             "el-pinar-sur",

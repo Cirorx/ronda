@@ -9,7 +9,8 @@ issues, docs, code, commit messages.
 | `Ronda` | ronda | A standing group of 5–6 neighbours (10 for fútbol 5) with one pretext, one slot and one place, for a season |
 | `Pretext` | actividad | What the ronda does: mate on the rambla, truco, fútbol 5, caminata |
 | `Slot` | día y horario | Weekday plus a time band (mañana / tarde / noche), and once the admin sets it the hour it starts (`slot.hour`, "16:00") |
-| `Barrio` | barrio | The neighbourhood; distance is measured between barrio centroids |
+| `Barrio` | barrio | The neighbourhood: Ciudad de la Costa's nine and Montevideo's 62 (`ronda_solver.barrios`); distance is measured between barrio centroids. Names are proper nouns, the same in every language |
+| `BarrioArea` | Ciudad de la Costa · Montevideo | Where a barrio is; the picker groups barrios by it, and a seat's walk table lists its own area's barrios |
 | `AgeBand` | edad ("sesenta y pico") | The only age data Ronda keeps; never a birth date. Values: `18-29`, `30-39`, `40-49`, `50-59`, `60-69`, `70-79`, `80+` |
 | `Brings` | lo que traés | What a member brings or teaches (pan, termo, enseño truco, tengo ganas); how people are known |
 | `Needs` | lo que te complica ir | What makes taking part hard (caminar mucho, subir escaleras, volver de noche, no tengo auto). Lives only on the phone |

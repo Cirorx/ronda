@@ -22,7 +22,9 @@ void main() {
   group(Barrio, () {
     test('uses the solver fixture ids, none with an underscore', () {
       expect(
-        Barrio.values.map((barrio) => barrio.id),
+        Barrio.values
+            .where((barrio) => barrio.area == BarrioArea.costa)
+            .map((barrio) => barrio.id),
         equals([
           'shangrila',
           'san-jose-de-carrasco',
@@ -38,11 +40,20 @@ void main() {
       expect(Barrio.values.where((barrio) => barrio.id.contains('_')), isEmpty);
     });
 
+    test("holds Montevideo's 62 barrios, each id once", () {
+      expect(
+        Barrio.values.where((barrio) => barrio.area == BarrioArea.montevideo),
+        hasLength(62),
+      );
+      expect(Barrio.values.map((barrio) => barrio.id).toSet(), hasLength(71));
+      expect(Barrio.fromId('barrio-sur')?.label, equals('Barrio Sur'));
+    });
+
     test('fromId reads every id back and returns null for unknown ones', () {
       for (final barrio in Barrio.values) {
         expect(Barrio.fromId(barrio.id), equals(barrio));
       }
-      expect(Barrio.fromId('pocitos'), isNull);
+      expect(Barrio.fromId('montevideo'), isNull);
       expect(Barrio.fromId(null), isNull);
     });
   });

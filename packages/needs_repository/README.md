@@ -16,7 +16,7 @@ server receives only the seat ids that `eligibleSeatIds` returns (see `docs/ARCH
 | `Future<Needs> read()` | The saved needs; `Needs.none` when nothing is saved or the value can't be read |
 | `Future<void> save(Needs)` | One JSON value under `NeedsRepository.storageKey` (`needs`) |
 | `Future<void> clear()` | Deletes that key |
-| `List<String> eligibleSeatIds(Needs, List<SeatFacts>)` | Pure: the ids of the seats the needs allow, in input order |
+| `List<String> eligibleSeatIds(Needs, List<SeatFacts>)` | Pure: the ids of the seats within ten blocks (never `far`) that the needs allow, in input order |
 
 ## Models
 

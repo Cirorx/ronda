@@ -109,10 +109,15 @@ isn't set up).
     the needs are saved on the phone and before the profile. The phone filters by needs only (pretext and slot are the solver's match). If
     reading the seats or writing the ids fails, the save fails and no profile is written, so
     the person retries from the read-back and nobody reaches the tabs without eligible ids.
-  - Known limits: the solver's hard `withinTenBlocks` already drops far seats, so "caminar mucho"
-    changes no grouping today and only keeps far ids from leaving the phone. And the server holds
-    both the facts it published and the ids that came back, so it could infer a need from which
-    ids are missing (all evening seats gone → "volver de noche"). The need itself is never sent.
+  - Far seats never leave the phone, need or not (2026-11-01): the solver's hard
+    `withinTenBlocks` drops them anyway, and with 71 barrios they alone would pass the 1000 ids
+    the rules accept. So "caminar mucho" changes nothing today, and a missing far id says
+    nothing about it.
+  - Known limits: the server holds both the facts it published and the ids that came back, so
+    it could infer a need from which ids are missing (all evening seats gone → "volver de
+    noche"). The need itself is never sent. Every phone reads every seat fact at the save: with
+    Montevideo that is 1,136 documents for the demo slots, worth a query by the member's barrio
+    if it gets slow.
   - Demo data: `data/demo/invented_seat_facts.json` (invented: 14 hand-made seats, two with a
     place an invented host has set) over seats generated the same way for every barrio ×
     pretext × slot the demo people pick, loaded by `scripts/seed.py` (§ Demo data).
@@ -474,7 +479,8 @@ isn't set up).
   - `propose_groups` (admin only, 2 GiB, 4 vCPU, max 1 instance, no min instances) reads
     `users`, `users/{uid}/private/eligible` and `avoid`, keeps people with a profile in a known
     barrio and eligible ids, solves, joins first names and writes a pending proposal. The
-    barrio centroids are the solver's demo table (`ronda_solver.demo.DEMO_BARRIOS`).
+    barrio centroids are `ronda_solver.barrios`: Ciudad de la Costa's nine (invented, approximate)
+    and Montevideo's 62 (OpenStreetMap, `scripts/montevideo_barrios.py`).
   - `approve_proposal {proposalId}` writes one `rondas/{autoId}` (seatId, pretext, barrio,
     slot {day, time}, size, status forming, openSeatFromWeek 4, createdAt; no place, hosts or
     season yet) and `rondas/{id}/members/{uid}` (brings, state active, joinedAt) per group in one
@@ -608,12 +614,14 @@ project checklist. Everything seeded is invented:
   exactly `solver/fixtures/invented_demo_30.json`. `scripts/demo_data.py` adds a first name and
   brings per uid, deterministically. Every uid starts with `demo-`: the rules leave no room for a
   label field on `users/{uid}`, so the id is the label.
-- Documents: `seat_facts/{seatId}` (144: 9 barrios × 4 pretexts × the 4 demo slots);
+- Documents: `seat_facts/{seatId}` (1,136: 71 barrios × 4 pretexts × the 4 demo slots, so a
+  real member in any barrio has seats; a seat's `blocksFrom` lists its own area's barrios,
+  Ciudad de la Costa's or Montevideo's, and the Costa's 144 are unchanged since #22);
   `places/demo-*` (5 invented covered public places, `data/demo/invented_places.json`);
   `users/{uid}` with the profile, `plusOneUid` on whoever brings a +1 (as the generator gives
   it) and the accepted terms; `users/{uid}/private/eligible` = `{seatIds, updatedAt}`; and
   `avoid/{uidA}_{uidB}` per report-apart pair, uids in order (one pair in the 30 set). Needs are
-  never seeded. The 30 set is 210 documents.
+  never seeded. The 30 set is 1,220 documents, the free places included.
 - Every timestamp is one fixed demo moment (`DEMO_TIME`), never the server's, so two resets leave
   identical documents (Firestore's own create and update times aside).
 - Reset deletes every Auth account and document of the project through the emulators' clear

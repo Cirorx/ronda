@@ -305,6 +305,55 @@ void main() {
         verify(() => cubit.barrioChanged(Barrio.solymarNorte)).called(1);
       });
 
+      testWidgets('a Montevideo barrio found by searching', (tester) async {
+        await pumpSubject(
+          tester,
+          const OnboardingState(step: OnboardingStep.barrio),
+        );
+        expect(find.text('Ciudad de la Costa'), findsOneWidget);
+        expect(find.text('Montevideo'), findsOneWidget);
+
+        await tester.enterText(find.byType(TextField), '  barrio SUR ');
+        await tester.pump();
+
+        expect(find.text('Ciudad de la Costa'), findsNothing);
+        expect(find.text('Solymar Norte'), findsNothing);
+        await tapVisible(tester, find.text('Barrio Sur'));
+        verify(() => cubit.barrioChanged(Barrio.barrioSur)).called(1);
+      });
+
+      testWidgets('a barrio searched without its accents', (tester) async {
+        await pumpSubject(
+          tester,
+          const OnboardingState(step: OnboardingStep.barrio),
+        );
+
+        await tester.enterText(find.byType(TextField), 'maronas');
+        await tester.pump();
+
+        expect(find.text('Maroñas y Parque Guaraní'), findsOneWidget);
+        expect(find.text('Flor de Maroñas'), findsOneWidget);
+        expect(find.text('Ciudad de la Costa'), findsNothing);
+      });
+
+      testWidgets('says so when no barrio matches', (tester) async {
+        await pumpSubject(
+          tester,
+          const OnboardingState(step: OnboardingStep.barrio),
+        );
+
+        await tester.enterText(find.byType(TextField), 'Buenos Aires');
+        await tester.pump();
+
+        expect(
+          find.text(
+            'No hay un barrio con ese nombre. Probá escribirlo de otra forma.',
+          ),
+          findsOneWidget,
+        );
+        expect(find.byType(ChoiceChip), findsNothing);
+      });
+
       testWidgets('the age band with one chip', (tester) async {
         await pumpSubject(
           tester,

@@ -139,13 +139,13 @@ void main() {
           tester,
           ronda(
             [member('Beto', '90-99')],
-            barrio: 'pocitos',
+            barrio: 'las-piedras',
             pretext: 'ajedrez',
             slot: 'someday',
           ),
         );
 
-        expect(find.text('ajedrez · pocitos'), findsOneWidget);
+        expect(find.text('ajedrez · las-piedras'), findsOneWidget);
         expect(find.text('someday'), findsOneWidget);
         expect(find.textContaining('90-99'), findsOneWidget);
       });
