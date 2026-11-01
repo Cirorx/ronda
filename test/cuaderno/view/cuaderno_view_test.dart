@@ -555,10 +555,11 @@ void main() {
             .thenReturn(offered.copyWith(postcard: () => Postcard(_png)));
         await pump(tester);
 
-        expect(find.byType(Image), findsOneWidget);
+        // Read the label off the widget: the semantics tree depends on what
+        // earlier tests in the same isolate left on, so it flips with order.
         expect(
-          find.bySemanticsLabel('Postal de tu semana, dibujada con tus líneas'),
-          findsOneWidget,
+          tester.widget<Image>(find.byType(Image)).semanticLabel,
+          'Postal de tu semana, dibujada con tus líneas',
         );
 
         await tester.tap(find.text('Guardar en el teléfono'));
