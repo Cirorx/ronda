@@ -2,8 +2,8 @@ import 'package:ronda_ui/ronda_ui.dart';
 
 /// {@template onboarding_leave_scope}
 /// Says what back does on the first question: [onLeave] returns to the
-/// welcome doors, signed out. Without a scope, or with no [onLeave], the
-/// first question has no back button.
+/// welcome doors signed out, or opens the recorder signed in. Without a
+/// scope, or with no [onLeave], the first question has no back button.
 /// {@endtemplate}
 class const OnboardingLeaveScope({
   /// Back from the first question, or `null` when there is nowhere to go.

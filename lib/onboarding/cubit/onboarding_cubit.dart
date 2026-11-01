@@ -84,7 +84,8 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     ),
   );
 
-  /// "Grabar de nuevo" on the voice read-back: the recorder opens again.
+  /// "Grabar de nuevo" on the voice read-back, or back from the first
+  /// question signed in: the recorder opens again.
   void recordAgain() => emit(state.copyWith(recording: true));
 
   /// "Cancelar" or "Prefiero tocar botones" on the recorder: the questions

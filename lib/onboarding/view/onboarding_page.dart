@@ -15,8 +15,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 ///
 /// Signed out (the buttons door), the read-back holds the answers on this
 /// phone and moves on to the payoff, and back from the first question
-/// returns to the welcome doors. Signed in, answers held on this phone are
-/// saved as soon as it opens.
+/// returns to the welcome doors. Signed in, back from the first question
+/// opens the recorder, so a voice note that failed can be tried again, and
+/// answers held on this phone are saved as soon as it opens.
 class const OnboardingPage({super.key}) extends StatelessWidget {
   static const path = '/sumarte';
 
@@ -39,8 +40,12 @@ class const OnboardingPage({super.key}) extends StatelessWidget {
             previous.status != current.status &&
             current.status == OnboardingStatus.held,
         listener: (context, _) => context.go(PayoffPage.path),
-        child: OnboardingView(
-          onLeave: app.user.isEmpty ? () => context.go(WelcomePage.path) : null,
+        child: Builder(
+          builder: (context) => OnboardingView(
+            onLeave: app.user.isEmpty
+                ? () => context.go(WelcomePage.path)
+                : context.read<OnboardingCubit>().recordAgain,
+          ),
         ),
       ),
     );

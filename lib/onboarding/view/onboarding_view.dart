@@ -10,7 +10,8 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// or leaves when there is none. The first question's back button calls
 /// [onLeave] too ([OnboardingLeaveScope]).
 class const OnboardingView({
-  /// Back from the first question (to the welcome doors, signed out).
+  /// Back from the first question: to the welcome doors signed out, to the
+  /// recorder signed in.
   final VoidCallback? onLeave,
   super.key,
 }) extends StatelessWidget {

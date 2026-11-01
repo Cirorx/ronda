@@ -143,7 +143,8 @@ dates in the examples are demo data. Everything not listed here is out of the bu
      filters; the server gets seat ids. [Seguir] [Saltear].
   7. "¿Cómo te llamás?" ("Solo el nombre de pila. Así te conocen en la ronda.").
   Back from the first question (the arrow, the phone's back, the browser's back) returns to the
-  welcome doors, signed out; a door opens the questions again from the first.
+  welcome doors, signed out; a door opens the questions again from the first. Signed in, it
+  opens the recorder, so a voice note that failed can be tried again (2026-11-01).
   Then the read-back "¿Está todo bien?" with every answer and a "Cambiar" on each, "Todavía no
   guardamos nada", and [Está bien, guardalo] (signed out, it keeps the answers on the phone and
   opens the payoff).

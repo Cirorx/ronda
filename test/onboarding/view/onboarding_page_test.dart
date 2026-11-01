@@ -120,7 +120,7 @@ void main() {
       verify(() => router.go(WelcomePage.path)).called(1);
     });
 
-    testWidgets('signed in, has nowhere to leave to from the first question', (
+    testWidgets('signed in, opens the recorder from the first question', (
       tester,
     ) async {
       await tester.pumpApp(
@@ -130,6 +130,9 @@ void main() {
               value: profileRepository,
             ),
             RepositoryProvider<NeedsRepository>.value(value: needsRepository),
+            RepositoryProvider<OnboardingRepository>.value(
+              value: _MockOnboardingRepository(),
+            ),
           ],
           child: BlocProvider.value(
             value: appBloc,
@@ -137,11 +140,13 @@ void main() {
           ),
         ),
       );
+      expect(find.byType(PretextsStep), findsOneWidget);
 
-      expect(
-        tester.widget<OnboardingView>(find.byType(OnboardingView)).onLeave,
-        isNull,
-      );
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(VoiceNoteStep), findsOneWidget);
+      verifyNever(() => router.go(any()));
     });
 
     testWidgets('provides an $OnboardingCubit on the first question', (
