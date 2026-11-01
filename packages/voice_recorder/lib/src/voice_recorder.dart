@@ -6,6 +6,18 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:voice_recorder/src/microphones/microphones.dart' as microphones;
 
+/// {@template voice_recorder_exception}
+/// The recorder failed. On web, `record` lets the browser's own error out
+/// (a `getUserMedia` refusal, a microphone in use, an audio worklet that
+/// won't load), which is not a Dart [Exception]; [VoiceRecorder] turns
+/// whatever its calls throw into this, so callers' `on Exception` sees it.
+/// It carries no detail, like the rest of this package's output.
+/// {@endtemplate}
+class VoiceRecorderException implements Exception {
+  /// {@macro voice_recorder_exception}
+  const new();
+}
+
 /// {@template voice_recorder}
 /// Records one voice note at a time as the WAV Voice Transcribe takes:
 /// RIFF/WAVE, 16 kHz, mono, 16-bit PCM, with no gain, echo or noise
@@ -70,8 +82,20 @@ class VoiceRecorder {
 
   static Future<void> _deleteIoFile(String path) => File(path).delete();
 
+  /// Runs [call], keeping an [Exception] as it is and turning any other
+  /// error into a [VoiceRecorderException], with its stack trace.
+  static Future<T> _guard<T>(Future<T> Function() call) async {
+    try {
+      return await call();
+    } on Exception {
+      rethrow;
+    } on Object catch (_, stackTrace) {
+      Error.throwWithStackTrace(const VoiceRecorderException(), stackTrace);
+    }
+  }
+
   /// Whether the microphone may be used, asking the person the first time.
-  Future<bool> hasPermission() => _recorder.hasPermission();
+  Future<bool> hasPermission() => _guard(_recorder.hasPermission);
 
   /// Whether there is any microphone to ask for: a browser on a computer
   /// may have none.
@@ -84,14 +108,17 @@ class VoiceRecorder {
       .map((amplitude) => levelOf(amplitude.current));
 
   /// Starts a new note.
-  Future<void> start() async {
+  ///
+  /// Throws a [VoiceRecorderException] for any error that is not an
+  /// [Exception] already, as every call here does.
+  Future<void> start() => _guard(() async {
     final path = _isWeb ? fileName : '${await _temporaryDirectory()}/$fileName';
     await _recorder.start(config, path: path);
-  }
+  });
 
   /// Stops the note and returns its WAV bytes, or `null` when nothing was
   /// recording. On a phone the file is deleted once read.
-  Future<Uint8List?> stop() async {
+  Future<Uint8List?> stop() => _guard(() async {
     final path = await _recorder.stop();
     if (path == null) return null;
     try {
@@ -99,11 +126,11 @@ class VoiceRecorder {
     } finally {
       if (!_isWeb) await _deleteFile(path);
     }
-  }
+  });
 
   /// Stops and throws the note away.
-  Future<void> cancel() => _recorder.cancel();
+  Future<void> cancel() => _guard(_recorder.cancel);
 
   /// Releases the microphone for good.
-  Future<void> dispose() => _recorder.dispose();
+  Future<void> dispose() => _guard(_recorder.dispose);
 }

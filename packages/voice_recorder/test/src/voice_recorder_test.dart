@@ -212,6 +212,46 @@ void main() {
       verify(() => recorder.cancel()).called(1);
     });
 
+    group("turns a browser's error into a $VoiceRecorderException", () {
+      // What record_web lets out when getUserMedia refuses: not an Exception.
+      final browserError = StateError('NotReadableError');
+
+      test('from start', () async {
+        when(() => recorder.start(any(), path: any(named: 'path')))
+            .thenThrow(browserError);
+
+        await expectLater(
+          subject(isWeb: true).start(),
+          throwsA(isA<VoiceRecorderException>()),
+        );
+      });
+
+      test('from hasPermission, stop, cancel and dispose', () async {
+        when(() => recorder.hasPermission()).thenThrow(browserError);
+        when(() => recorder.stop()).thenThrow(browserError);
+        when(() => recorder.cancel()).thenThrow(browserError);
+        when(() => recorder.dispose()).thenThrow(browserError);
+        final web = subject(isWeb: true);
+
+        for (final call in [
+          web.hasPermission,
+          web.stop,
+          web.cancel,
+          web.dispose,
+        ]) {
+          await expectLater(call(), throwsA(isA<VoiceRecorderException>()));
+        }
+      });
+
+      test('keeping an exception as it is', () async {
+        final failure = Exception('plugin');
+        when(() => recorder.start(any(), path: any(named: 'path')))
+            .thenThrow(failure);
+
+        await expectLater(subject().start(), throwsA(same(failure)));
+      });
+    });
+
     test('dispose releases the recorder', () async {
       when(() => recorder.dispose()).thenAnswer((_) async {});
 

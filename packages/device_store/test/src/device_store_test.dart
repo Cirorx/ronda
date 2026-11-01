@@ -122,5 +122,59 @@ void main() {
         ).called(1);
       });
     });
+
+    group("turns a browser's error into a $DeviceStoreException", () {
+      // What the web plugin lets out when crypto.subtle refuses: not an
+      // Exception.
+      final browserError = StateError('OperationError');
+
+      setUp(() {
+        when(
+          () => secureStorage.read(
+            key: any(named: 'key'),
+            iOptions: any(named: 'iOptions'),
+            aOptions: any(named: 'aOptions'),
+          ),
+        ).thenThrow(browserError);
+        when(
+          () => secureStorage.write(
+            key: any(named: 'key'),
+            value: any(named: 'value'),
+            iOptions: any(named: 'iOptions'),
+            aOptions: any(named: 'aOptions'),
+          ),
+        ).thenThrow(browserError);
+        when(
+          () => secureStorage.delete(
+            key: any(named: 'key'),
+            iOptions: any(named: 'iOptions'),
+            aOptions: any(named: 'aOptions'),
+          ),
+        ).thenThrow(browserError);
+      });
+
+      test('from read, write and delete', () async {
+        for (final call in [
+          () => subject.read('key'),
+          () => subject.write('key', 'value'),
+          () => subject.delete('key'),
+        ]) {
+          await expectLater(call(), throwsA(isA<DeviceStoreException>()));
+        }
+      });
+
+      test('keeping an exception as it is', () async {
+        final failure = Exception('keychain');
+        when(
+          () => secureStorage.read(
+            key: any(named: 'key'),
+            iOptions: any(named: 'iOptions'),
+            aOptions: any(named: 'aOptions'),
+          ),
+        ).thenThrow(failure);
+
+        await expectLater(subject.read('key'), throwsA(same(failure)));
+      });
+    });
   });
 }
