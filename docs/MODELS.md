@@ -8,7 +8,7 @@ Prices per million tokens unless noted.
 | Model | Id | Use in Ronda | Price |
 |---|---|---|---|
 | Muse Voice Transcribe | `muse-voice-transcribe-1.0` (`POST /v1/asr/transcribe`, real-time `wss://api.meta.ai/v1/asr/realtime`) | Voice onboarding, voice RSVP, host recap, "Decilo vos" in Algo chico esta semana | $0.18 / hour |
-| Muse Spark 1.3 | `muse-spark-1.3` | Structured fields from transcripts, and a member's own small plan (`{activity, day, time, place}` plus kind and a topic flag, `functions/small_plans.py`); ¿Dónde queda?'s answer line and hint; fallback for the agent | $1.25 in · $0.15 cached · $4.25 out |
+| Muse Spark 1.3 | `muse-spark-1.3` | Structured fields from transcripts, and a member's own small plan (`{activity, day, time, place}` plus kind and a topic flag, `functions/small_plans.py`); ¿Dónde queda?'s answer line and hint; whether a small plan may be shown to the ronda (`functions/shared_plans.py`: a public place, no address, phone number or money); fallback for the agent | $1.25 in · $0.15 cached · $4.25 out |
 | SAM 3.1 | `sam-3.1` (Responses API, Files API) | Cut objects out of a ronda photo for the flyer; ¿Dónde queda?: find people, number plates and house numbers; spot photo outline | $2.50 / 1,000 images; video $0.20 / 1,000 frames |
 | Muse Image 1.0 | `muse-image-1.0` (`/v1/images/generations`, `/v1/images/edits`) | "Mate de más" and tear-off flyer layouts | $0.01 / image |
 
@@ -116,6 +116,10 @@ Results from Uruguay, 2026-10-28:
   run yet:** written in #58 without access to the key; the tests play back scripted SAM and Spark
   answers. "house number" is the untested phrase: if it finds nothing on a real plaque, try
   "address number" or "door number" in `donde_queda.CONCEPTS`.
+- 9 (not written, #57): Spark 1.3's `PlanVerdict` for a shared small plan
+  (`shared_plans.SparkPlan`) has only played back scripted answers; it needs a real run with a
+  plan at a plaza (allowed), "en mi casa" and a phone number (held) before the pilot. Skipped:
+  the key lives in `.env`, which agents don't open.
 
 1. **Access from Uruguay.**
    `curl -s https://api.meta.ai/v1/responses -H "Authorization: Bearer $MODEL_API_KEY" -H "Content-Type: application/json" -d '{"model":"muse-spark-1.3","input":"Decí hola en rioplatense."}'`

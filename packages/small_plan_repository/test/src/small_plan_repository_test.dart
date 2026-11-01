@@ -17,6 +17,8 @@ class _MockRondaApi extends Mock implements RondaApi;
 
 class _MockSmallPlansApi extends Mock implements SmallPlansApi;
 
+class _MockSharedPlansApi extends Mock implements SharedPlansApi;
+
 class _MockCalendarClient extends Mock implements CalendarClient;
 
 void main() {
@@ -25,6 +27,7 @@ void main() {
     late VoiceRecorder voiceRecorder;
     late RondaApi rondaApi;
     late SmallPlansApi smallPlansApi;
+    late SharedPlansApi sharedPlansApi;
     late CalendarClient calendarClient;
     late SmallPlanRepository subject;
     late Map<String, String> stored;
@@ -64,6 +67,7 @@ void main() {
           voiceRecorder: voiceRecorder,
           rondaApi: rondaApi,
           smallPlansApi: smallPlansApi,
+          sharedPlansApi: sharedPlansApi,
           calendarClient: calendarClient,
           now: () => now ?? monday,
           newNoteId: newNoteId ?? () => 'note-1',
@@ -82,6 +86,7 @@ void main() {
       voiceRecorder = _MockVoiceRecorder();
       rondaApi = _MockRondaApi();
       smallPlansApi = _MockSmallPlansApi();
+      sharedPlansApi = _MockSharedPlansApi();
       calendarClient = _MockCalendarClient();
       subject = build();
       when(() => deviceStore.read(any())).thenAnswer(
@@ -526,6 +531,7 @@ void main() {
           voiceRecorder: voiceRecorder,
           rondaApi: rondaApi,
           smallPlansApi: smallPlansApi,
+          sharedPlansApi: sharedPlansApi,
           calendarClient: calendarClient,
         );
 
@@ -706,6 +712,323 @@ void main() {
               SmallPlanFailureKind.calendarUnavailable,
             ),
           ),
+        );
+      });
+    });
+
+    group('¿Alguien se suma?', () {
+      const rondaId = 'r1';
+      final walkSaid = SmallPlan(
+        kind: SmallPlanKind.walk,
+        at: DateTime(2026, 11, 3, 9, 5),
+        place: 'desde la parada 23',
+        activity: 'Caminar 30 minutos por la rambla',
+      );
+
+      Future<void> shareWalk(SmallPlan plan) => subject.share(
+        rondaId: rondaId,
+        plan: plan,
+        what: 'Caminar 30 minutos por la rambla',
+      );
+
+      void shareAnswers(Exception? error) {
+        when(
+          () => sharedPlansApi.share(
+            rondaId: any(named: 'rondaId'),
+            activity: any(named: 'activity'),
+            place: any(named: 'place'),
+            kind: any(named: 'kind'),
+            date: any(named: 'date'),
+            time: any(named: 'time'),
+          ),
+        ).thenAnswer((_) async {
+          if (error != null) throw error;
+        });
+      }
+
+      test('shares the words and the place a member said', () async {
+        shareAnswers(null);
+
+        await shareWalk(walkSaid);
+
+        verify(
+          () => sharedPlansApi.share(
+            rondaId: rondaId,
+            activity: 'Caminar 30 minutos por la rambla',
+            place: 'desde la parada 23',
+            kind: 'walk',
+            date: '2026-11-03',
+            time: '09:05',
+          ),
+        ).called(1);
+      });
+
+      test("sends no separate place for a suggestion's sentence", () async {
+        shareAnswers(null);
+
+        await shareWalk(tuesdayWalk);
+        await shareWalk(
+          SmallPlan(kind: SmallPlanKind.other, at: walkSaid.at, activity: 'x'),
+        );
+
+        verify(
+          () => sharedPlansApi.share(
+            rondaId: rondaId,
+            activity: any(named: 'activity'),
+            place: '',
+            kind: any(named: 'kind'),
+            date: any(named: 'date'),
+            time: any(named: 'time'),
+          ),
+        ).called(2);
+      });
+
+      test('says why a plan was held', () {
+        shareAnswers(const SharedPlanHeldException('phone'));
+
+        expect(
+          shareWalk(walkSaid),
+          throwsA(
+            isA<SharedPlanHeld>()
+                .having((held) => held.reason, 'reason', ShareHoldReason.phone)
+                .having((held) => held.toString(), 'text', contains('phone')),
+          ),
+        );
+      });
+
+      test('reads a reason it does not know as other', () {
+        expect(ShareHoldReason.fromName('time'), ShareHoldReason.time);
+        expect(ShareHoldReason.fromName('new'), ShareHoldReason.other);
+      });
+
+      test('fails with shareFailed when it could not be sent', () {
+        shareAnswers(Exception('offline'));
+
+        expect(
+          shareWalk(walkSaid),
+          throwsA(
+            isA<SmallPlanFailure>().having(
+              (failure) => failure.kind,
+              'kind',
+              SmallPlanFailureKind.shareFailed,
+            ),
+          ),
+        );
+      });
+
+      test('withdraws, or fails with shareFailed', () async {
+        when(() => sharedPlansApi.withdraw(rondaId)).thenAnswer((_) async {});
+        await subject.withdraw(rondaId);
+        verify(() => sharedPlansApi.withdraw(rondaId)).called(1);
+
+        when(() => sharedPlansApi.withdraw(rondaId)).thenThrow(Exception());
+        expect(
+          subject.withdraw(rondaId),
+          throwsA(
+            isA<SmallPlanFailure>().having(
+              (failure) => failure.kind,
+              'kind',
+              SmallPlanFailureKind.shareFailed,
+            ),
+          ),
+        );
+      });
+
+      test('joins and leaves', () async {
+        when(
+          () => sharedPlansApi.join(
+            rondaId: any(named: 'rondaId'),
+            authorUid: any(named: 'authorUid'),
+          ),
+        ).thenAnswer((_) async {});
+        when(
+          () => sharedPlansApi.leave(
+            rondaId: any(named: 'rondaId'),
+            authorUid: any(named: 'authorUid'),
+          ),
+        ).thenAnswer((_) async {});
+
+        await subject.join(rondaId: rondaId, authorUid: 'u1');
+        await subject.leave(rondaId: rondaId, authorUid: 'u1');
+
+        verify(() => sharedPlansApi.join(rondaId: rondaId, authorUid: 'u1'))
+            .called(1);
+        verify(() => sharedPlansApi.leave(rondaId: rondaId, authorUid: 'u1'))
+            .called(1);
+      });
+
+      for (final (error, kind) in [
+        (const SharedPlanGoneException(), SmallPlanFailureKind.planGone),
+        (Exception('offline'), SmallPlanFailureKind.joinFailed),
+      ]) {
+        test('joining fails with ${kind.name}', () {
+          when(
+            () => sharedPlansApi.join(
+              rondaId: any(named: 'rondaId'),
+              authorUid: any(named: 'authorUid'),
+            ),
+          ).thenThrow(error);
+          when(
+            () => sharedPlansApi.leave(
+              rondaId: any(named: 'rondaId'),
+              authorUid: any(named: 'authorUid'),
+            ),
+          ).thenThrow(error);
+
+          expect(
+            subject.join(rondaId: rondaId, authorUid: 'u1'),
+            throwsA(
+              isA<SmallPlanFailure>().having((f) => f.kind, 'kind', kind),
+            ),
+          );
+          expect(
+            subject.leave(rondaId: rondaId, authorUid: 'u1'),
+            throwsA(
+              isA<SmallPlanFailure>().having(
+                (f) => f.kind,
+                'kind',
+                kind == SmallPlanFailureKind.planGone
+                    ? SmallPlanFailureKind.planGone
+                    : SmallPlanFailureKind.joinFailed,
+              ),
+            ),
+          );
+        });
+      }
+
+      group('watchShared', () {
+        const line = SharedPlanLineDocument(
+          id: 'u1',
+          firstName: 'Ana',
+          activity: 'Caminar por la rambla',
+          place: 'desde la parada 23',
+          kind: 'walk',
+          date: '2026-11-03',
+          time: '19:00',
+          joined: false,
+        );
+        const own = SharedPlanMineDocument(
+          activity: 'Ir a la feria',
+          place: '',
+          kind: 'feria',
+          date: '2026-11-04',
+          time: '10:00',
+          joined: ['Bruno'],
+        );
+
+        test('turns the card into the plans still ahead', () async {
+          when(() => sharedPlansApi.watchCard(rondaId, uid)).thenAnswer(
+            (_) => Stream.value(
+              const SharedPlanCardDocument(
+                lines: [
+                  line,
+                  SharedPlanLineDocument(
+                    id: 'u3',
+                    firstName: 'Carla',
+                    activity: 'Ir a la biblioteca',
+                    place: '',
+                    kind: 'library',
+                    date: '2026-11-02',
+                    time: '09:00',
+                    joined: true,
+                  ),
+                ],
+                mine: own,
+              ),
+            ),
+          );
+
+          final shared = await subject
+              .watchShared(rondaId: rondaId, uid: uid)
+              .first;
+
+          expect(shared.lines, hasLength(1));
+          expect(shared.lines.single.firstName, 'Ana');
+          expect(shared.lines.single.place, 'desde la parada 23');
+          expect(shared.lines.single.kind, SmallPlanKind.walk);
+          expect(shared.lines.single.at, DateTime(2026, 11, 3, 19));
+          expect(shared.mine!.joined, ['Bruno']);
+          expect(shared.mine!.at, DateTime(2026, 11, 4, 10));
+        });
+
+        test('drops what is past, and reads no card as nothing', () async {
+          when(() => sharedPlansApi.watchCard(rondaId, uid)).thenAnswer(
+            (_) => Stream.fromIterable([
+              null,
+              const SharedPlanCardDocument(lines: [], mine: own),
+            ]),
+          );
+          final later = build(now: DateTime(2026, 11, 5));
+
+          final all = await later
+              .watchShared(rondaId: rondaId, uid: uid)
+              .toList();
+
+          expect(all, equals([const SharedPlans(), const SharedPlans()]));
+        });
+
+        test('errors with watchFailed', () {
+          when(() => sharedPlansApi.watchCard(rondaId, uid))
+              .thenAnswer((_) => Stream.error(Exception('denied')));
+
+          expect(
+            subject.watchShared(rondaId: rondaId, uid: uid).first,
+            throwsA(
+              isA<SmallPlanFailure>().having(
+                (failure) => failure.kind,
+                'kind',
+                SmallPlanFailureKind.watchFailed,
+              ),
+            ),
+          );
+        });
+
+        test('errors with watchFailed on a date it cannot read', () {
+          when(() => sharedPlansApi.watchCard(rondaId, uid)).thenAnswer(
+            (_) => Stream.value(
+              const SharedPlanCardDocument(
+                lines: [
+                  SharedPlanLineDocument(
+                    id: 'u1',
+                    firstName: 'Ana',
+                    activity: 'x',
+                    place: '',
+                    kind: 'walk',
+                    date: 'mañana',
+                    time: '19:00',
+                    joined: false,
+                  ),
+                ],
+              ),
+            ),
+          );
+
+          expect(
+            subject.watchShared(rondaId: rondaId, uid: uid).first,
+            throwsA(isA<SmallPlanFailure>()),
+          );
+        });
+      });
+
+      test('the models with the same fields are equal', () {
+        final at = DateTime(2026, 11, 3);
+        expect(
+          SharedPlanMine(at: at, joined: const ['a']),
+          equals(SharedPlanMine(at: at, joined: const ['a'])),
+        );
+        SharedPlanLine line() => SharedPlanLine(
+          authorUid: 'u',
+          firstName: 'Ana',
+          activity: 'x',
+          place: null,
+          kind: SmallPlanKind.walk,
+          at: at,
+          joined: false,
+        );
+        expect(line(), equals(line()));
+        expect(
+          SharedPlans(lines: [line()]),
+          equals(SharedPlans(lines: [line()])),
         );
       });
     });

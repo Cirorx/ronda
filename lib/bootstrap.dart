@@ -280,6 +280,10 @@ Future<void> bootstrap(
   final shareSheet = ShareSheet();
   final cuadernoApi = CuadernoApi(functions: functions);
   final smallPlansApi = SmallPlansApi(functions: functions);
+  final sharedPlansApi = SharedPlansApi(
+    firestore: firestore,
+    functions: functions,
+  );
   final calendarClient = CalendarClient();
   final linkOpener = LinkOpener();
   // The channel's name shows in the phone's settings, and the push's
@@ -367,6 +371,7 @@ Future<void> bootstrap(
     voiceRecorder: voiceRecorder,
     rondaApi: rondaApi,
     smallPlansApi: smallPlansApi,
+    sharedPlansApi: sharedPlansApi,
     calendarClient: calendarClient,
   );
   final contactRepository = ContactRepository(

@@ -155,11 +155,19 @@ void main() {
     late RondaRepository rondaRepository;
     late ContactRepository contactRepository;
     late DondeQuedaRepository dondeQuedaRepository;
+    late SmallPlanRepository sharedRepository;
 
     setUp(() {
       rondaRepository = _MockRondaRepository();
       contactRepository = _MockContactRepository();
       dondeQuedaRepository = _MockDondeQuedaRepository();
+      sharedRepository = _MockSmallPlanRepository();
+      when(
+        () => sharedRepository.watchShared(
+          rondaId: any(named: 'rondaId'),
+          uid: any(named: 'uid'),
+        ),
+      ).thenAnswer((_) => Stream.value(const SharedPlans()));
       when(
         () => dondeQuedaRepository.watch(
           rondaId: any(named: 'rondaId'),
@@ -205,6 +213,7 @@ void main() {
                 RepositoryProvider.value(value: rondaRepository),
                 RepositoryProvider.value(value: contactRepository),
                 RepositoryProvider.value(value: dondeQuedaRepository),
+                RepositoryProvider.value(value: sharedRepository),
               ],
               child: MultiBlocProvider(
                 providers: [

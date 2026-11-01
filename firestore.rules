@@ -317,6 +317,19 @@ service cloud.firestore {
       allow get: if isOwner(uid) && isMemberOf(rondaId);
     }
 
+    // ¿Alguien se suma? (#57, functions/shared_plans.py). The plans a member opened to their
+    // ronda live in rondas/{id}/shared_plans/{authorUid}, which no client reads (nothing
+    // matches it): it holds who joined each one. Each member reads only their own card, built
+    // for them: the others' plans still ahead (with whether they joined) and their own plan
+    // with the first names of who joined it. Never listed, so nobody reads another member's
+    // card. A member who left reads nothing, though their member document stays. The callables
+    // and the hourly job write everything with the admin SDK; no client does.
+    match /rondas/{rondaId}/plan_cards/{uid} {
+      allow get: if isOwner(uid) && isMemberOf(rondaId)
+          && get(/databases/$(database)/documents/rondas/$(rondaId)/members/$(uid))
+              .data.get('state', 'active') != 'left';
+    }
+
     // The web app's error log (functions/client_errors.py): scrubbed reports written only by
     // the report_client_error callable, read by the admin on /admin/errores. Its per-caller
     // hourly quota (client_error_quota) stays closed to every client.

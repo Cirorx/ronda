@@ -386,7 +386,40 @@ outward, toward places with people in them. Built in #56.
   it: the two callables (`suggest_small_plans`, `shape_small_plan`) write no document and log
   only ids, sizes and timings. Voice is sent only after the terms and deleted once read. The
   words go to Meta's models (the same transfer as the voice sign-up).
-- **Not built:** telling the ronda ("Avisarle a la ronda", #57), a streak or a history.
+- **Not built:** a streak or a history. Telling the ronda is ¿Alguien se suma? below.
+
+### ¿Alguien se suma?
+The social half of Algo chico (#57): a member opens their plan to their ronda, so it becomes extra
+time with the same neighbours in a second place, started by a member rather than organised by
+Ronda.
+- **The switch:** on the plan's card, "Avisarle a la ronda" — "Tu ronda lo ve la próxima vez que
+  abra Mi ronda. Se suma quien quiere." Only when it is turned on does the plan's text leave the
+  phone. It isn't offered for a call or an afternoon without the phone (nowhere to join), or once
+  the plan's time has passed. Turning it off takes the plan back, with every "Me sumo", and nobody
+  hears about it. Choosing another plan ("Cambiar") takes the old one back too, so sharing is
+  chosen again for each plan.
+- **What the others see:** on Mi ronda, under the week's card, one card per plan still ahead:
+  "Ana propone: Caminar 30 minutos por la rambla, el martes a las 19:00, desde la parada 23."
+  [Me sumo]. Joined, it says "Te sumaste." with [Ya no voy]. Nothing is pushed: they see it when
+  they open Mi ronda, until the plan's time passes. With no plans, nothing shows.
+- **What Ana sees:** under her plan, "Se suman: Bruno, Carla." by first name, only once someone
+  joined. When nobody does she sees nothing about it and her plan stands as it was. Nothing is
+  ever shown as failed, counted or ranked, and a member who takes back "Me sumo" just
+  disappears from her line.
+- **Checks before sharing** (`functions/shared_plans.py`): in code, the plan is ahead and within
+  nine days, at 09:00–21:00, with the organiser's word gates (no emoji, voseo, no money, no home
+  or address), the small-plan filter's topics (health, diet, another person) and no phone number;
+  then Muse Spark 1.3 confirms the place is public and there is no address, phone number or
+  money. A plan that fails any check is held and the plan stays private, with the reason in plain
+  words and "Tu plan sigue siendo solo tuyo.": "Solo se comparten planes entre las 9:00 y las
+  21:00. Si cambiás la hora, probá de nuevo." (hour), "Para sumar a la ronda hace falta un lugar
+  público, como una plaza, la feria o la biblioteca." (no public place), and one line each for
+  money, an address or a home, a phone number, words that don't fit, a plan that already passed
+  and anything else.
+- **Rules:** only members of that ronda (not one who left) read a plan or join it; the plan is
+  deleted after its time passes (hourly job) and when its author leaves; the author can
+  withdraw it and a member can withdraw "Me sumo". Each member reads only their own card, so
+  nobody learns who joined but the author.
 
 ## First visit
 - **Así va a ser** (two days before): "Te espera Jorge — tiene el termo verde", how to get there

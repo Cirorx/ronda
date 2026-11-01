@@ -99,3 +99,27 @@ class AlreadyGuessedException implements Exception {
   /// {@macro already_guessed_exception}
   const new();
 }
+
+/// {@template shared_plan_held_exception}
+/// A plan was not opened to the ronda: [reason] says why, in the words of
+/// `functions/shared_plans.py`: `past`, `time`, `words`, `money`, `address`,
+/// `phone`, `place` or `other`. The plan stays private.
+/// {@endtemplate}
+class const SharedPlanHeldException(
+  /// Why it was held.
+  final String reason,
+) implements Exception {
+  /// {@macro shared_plan_held_exception}
+  this;
+
+  @override
+  String toString() => 'SharedPlanHeldException($reason)';
+}
+
+/// {@template shared_plan_gone_exception}
+/// A plan someone tried to join is over or was withdrawn.
+/// {@endtemplate}
+class SharedPlanGoneException implements Exception {
+  /// {@macro shared_plan_gone_exception}
+  const new();
+}

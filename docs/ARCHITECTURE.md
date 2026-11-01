@@ -40,7 +40,8 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   │               set_despues and answer_despues (the después), answer_handoff ("¿Abrís
   │               vos?"), buddy_options and set_buddy (the buddy),
   │               suggest_small_plans and shape_small_plan (Algo chico esta semana: they
-  │               write nothing),
+  │               write nothing), share_small_plan, withdraw_small_plan, join_small_plan
+  │               and leave_small_plan (¿Alguien se suma?),
   │               report_client_error (the web app's error log; works signed out),
   │               post_donde_queda, pass_donde_queda and guess_donde_queda (¿Dónde queda?)
   │    triggers   bench_on_answer (an RSVP answer changed) and bench_on_offer (an offer
@@ -48,7 +49,7 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan, phone sign
   │    scheduled  one dispatcher on the hour in Montevideo (`dispatch`) → run_<job>(db, now)
   │               for every job in `jobs.JOBS` (rsvp_push, seguimos_ask, rain_check,
   │               attendance_ask, bench, waitlists, and the code jobs assign_hosts, handoff,
-  │               prompt_buddy, despues_sweep, donde_queda); hourly audio sweeper (`sweep_audio`
+  │               prompt_buddy, despues_sweep, donde_queda, shared_plans); hourly audio sweeper (`sweep_audio`
   │               deletes `audio/` objects older than 1 h); hourly Cerca counts (`refresh_cerca`,
   │               until the dispatcher adopts `run_refresh_cerca`)
   │    http       flyer_landing (public: counts a flyer's scan, answers /f/{id})
@@ -430,6 +431,34 @@ isn't set up).
   `demo-*` projects (`demo_users.demo_counts_here`). Algo chico itself stores nothing on the
   server: the plan is on the phone (`device_store`), and `suggest_small_plans` and
   `shape_small_plan` write no document and log only ids, sizes and timings.
+- ¿Alguien se suma? (#57, `functions/shared_plans.py`): a member's small plan opened to their
+  ronda. The plan stays on the phone until the member turns "Avisarle a la ronda" on.
+  - `rondas/{id}/shared_plans/{authorUid}` (no client reads it): author, firstName, activity,
+    place, kind, date, time, startsAt (timestamp), sharedAt, joined {uid: {firstName, at}}. One
+    per author: sharing again replaces it and its joins.
+  - `rondas/{id}/plan_cards/{uid}` (that member only, `get`, and not one who left): plans [{id (the
+    author's uid), firstName, activity, place, kind, date, time, joined}] (the others' plans
+    still ahead), mine {activity, place, kind, date, time, joined [firstName]} | null, updatedAt.
+    A member with neither has no card. A card never holds another member's uid but the author's
+    of a plan they can join, and never says who joined to anyone but the author. It is one
+    document per member rather than a shared view plus a private one, so the app reads one
+    stream and the view can't leak a join.
+  - `share_small_plan {rondaId, activity, place?, kind, date, time}` (member, terms accepted): code
+    checks first (`check_plan`: not a call or an afternoon without the phone; ahead of now and
+    within nine days; 09:00–21:00 inclusive in Montevideo; no phone number; a place; the
+    small-plan filter's topics; the organiser's word gates), then Spark 1.3's strict
+    `PlanVerdict {allowed, reason}`. A held plan is `failed-precondition` with `details.reason`:
+    past, time, words, money, address, phone, place or other. The app words the sentence in the
+    phone's language (`activity` is the phone's `planWhat`, `place` only for a plan the member
+    said); Spark never rewrites it.
+  - `withdraw_small_plan {rondaId}`, `join_small_plan {rondaId, authorUid}` (idempotent; the
+    plan must still be ahead; not your own), `leave_small_plan {rondaId, authorUid}`: each rewrites
+    the cards of the whole ronda (`refresh`) from the plans as they are.
+  - **Expiry:** the hourly `shared_plans` job deletes a plan once `startsAt` has passed or its
+    author left, after refreshing the cards; the app also hides a plan whose time passed, since the
+    job lags by up to an hour. It sends nothing.
+  - Rules tests: `rules/shared_plans.test.js`; a plan shared, joined, withdrawn and expired on the
+    emulators: `functions/tests/test_shared_plans_emulators.py`.
 - `users/{uid}/private/agent`: what the gates remember of a person: introducedAt (their first
   organiser message, which carries "Soy un programa") and routine {isoWeek: at}. No client
   reads it.

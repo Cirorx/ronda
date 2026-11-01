@@ -19,6 +19,10 @@ import 'package:voice_recorder/voice_recorder.dart';
 /// - The plan itself is kept on the phone only, in [DeviceStore], under the
 ///   member's uid, like needs: the server never learns who set a plan or who
 ///   did it. Nothing older than last week is kept, and there is no tally.
+/// - ¿Alguien se suma?: only when the member turns "Avisarle a la ronda" on
+///   does the plan's text go to the server, under the ronda
+///   ([SharedPlansApi]); the others' plans and who joined this member's come
+///   back on a card only that member reads.
 /// - The calendar is the phone's own ([CalendarClient]), so Ronda sends no
 ///   reminder of its own.
 ///
@@ -31,6 +35,7 @@ class SmallPlanRepository {
     required this._voiceRecorder,
     required this._rondaApi,
     required this._smallPlansApi,
+    required this._sharedPlansApi,
     required this._calendarClient,
     DateTime Function()? now,
     String Function()? newNoteId,
@@ -41,6 +46,7 @@ class SmallPlanRepository {
   final VoiceRecorder _voiceRecorder;
   final RondaApi _rondaApi;
   final SmallPlansApi _smallPlansApi;
+  final SharedPlansApi _sharedPlansApi;
   final CalendarClient _calendarClient;
   final DateTime Function() _now;
   final String Function() _newNoteId;
@@ -145,6 +151,10 @@ class SmallPlanRepository {
 
   static int _weeksBetween(DateTime from, DateTime to) =>
       to.difference(from).inDays ~/ 7;
+
+  static String _clock(DateTime at) =>
+      '${at.hour.toString().padLeft(2, '0')}:'
+      '${at.minute.toString().padLeft(2, '0')}';
 
   static String _dayId(DateTime day) =>
       '${day.year.toString().padLeft(4, '0')}-'
@@ -351,6 +361,89 @@ class SmallPlanRepository {
       );
     } on CalendarUnavailableException {
       throw const SmallPlanFailure(SmallPlanFailureKind.calendarUnavailable);
+    }
+  }
+
+  // --- ¿Alguien se suma? ---------------------------------------------------
+
+  /// What ¿Alguien se suma? shows [uid] in ronda [rondaId], now and on every
+  /// change: the others' plans still ahead, and their own with who joined.
+  ///
+  /// The stream errors with a [SmallPlanFailure]
+  /// ([SmallPlanFailureKind.watchFailed]) when the card can't be read.
+  Stream<SharedPlans> watchShared({
+    required String rondaId,
+    required String uid,
+  }) => _sharedPlansApi
+      .watchCard(rondaId, uid)
+      .map((card) => SharedPlans.fromDocument(card, _now()))
+      .handleError((Object _) {
+        throw const SmallPlanFailure(SmallPlanFailureKind.watchFailed);
+      });
+
+  /// Opens [plan] to ronda [rondaId]. [what] is the plan as the screen words
+  /// it ([plan]'s own words, or the sentence for a suggestion); the place a
+  /// member said goes beside it.
+  ///
+  /// Throws a [SharedPlanHeld] with the reason when a check held it, and a
+  /// [SmallPlanFailure] ([SmallPlanFailureKind.shareFailed]) when it
+  /// couldn't be sent. Either way the plan stays private.
+  Future<void> share({
+    required String rondaId,
+    required SmallPlan plan,
+    required String what,
+  }) async {
+    try {
+      await _sharedPlansApi.share(
+        rondaId: rondaId,
+        activity: what,
+        place: plan.activity == null ? '' : (plan.place ?? ''),
+        kind: plan.kind.name,
+        date: _dayId(plan.at),
+        time: _clock(plan.at),
+      );
+    } on SharedPlanHeldException catch (held) {
+      throw SharedPlanHeld(ShareHoldReason.fromName(held.reason));
+    } on Exception {
+      throw const SmallPlanFailure(SmallPlanFailureKind.shareFailed);
+    }
+  }
+
+  /// Takes the caller's shared plan back from ronda [rondaId].
+  ///
+  /// Throws a [SmallPlanFailure] ([SmallPlanFailureKind.shareFailed]).
+  Future<void> withdraw(String rondaId) async {
+    try {
+      await _sharedPlansApi.withdraw(rondaId);
+    } on Exception {
+      throw const SmallPlanFailure(SmallPlanFailureKind.shareFailed);
+    }
+  }
+
+  /// "Me sumo" on [authorUid]'s plan.
+  ///
+  /// Throws a [SmallPlanFailure]: [SmallPlanFailureKind.planGone] when it is
+  /// over or withdrawn, [SmallPlanFailureKind.joinFailed] otherwise.
+  Future<void> join({required String rondaId, required String authorUid}) =>
+      _joining(
+        () => _sharedPlansApi.join(rondaId: rondaId, authorUid: authorUid),
+      );
+
+  /// Takes "Me sumo" on [authorUid]'s plan back.
+  ///
+  /// Throws a [SmallPlanFailure] ([SmallPlanFailureKind.joinFailed]).
+  Future<void> leave({required String rondaId, required String authorUid}) =>
+      _joining(
+        () => _sharedPlansApi.leave(rondaId: rondaId, authorUid: authorUid),
+      );
+
+  Future<void> _joining(Future<void> Function() call) async {
+    try {
+      await call();
+    } on SharedPlanGoneException {
+      throw const SmallPlanFailure(SmallPlanFailureKind.planGone);
+    } on Exception {
+      throw const SmallPlanFailure(SmallPlanFailureKind.joinFailed);
     }
   }
 }

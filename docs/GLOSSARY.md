@@ -38,6 +38,9 @@ issues, docs, code, commit messages.
 | `Acta` | lo que hizo el programa | The members' log of every organiser-agent action, with "Algo estuvo mal" |
 | `AgentRun` | (admin only) | One run of the organiser agent; its steps are the trace, each labelled with who decided it (`by`: code, model or person) |
 | `SmallPlan` | algo chico | One small plan a member sets for the week (a kind of thing, a day and time, a place), kept on the phone only; asked about once the next week, never counted. Kinds (`SmallPlanKind`): `walk`, `feria`, `library`, `call`, `noPhone`, `other` |
+| `SharedPlan` | ¿Alguien se suma? / "Avisarle a la ronda" | A member's `SmallPlan` opened to their ronda: its text goes to the server under the ronda (`rondas/{id}/shared_plans/{authorUid}`), the others see one line on Mi ronda until its time passes, and deleted after it. Started by a member, not organised by Ronda |
+| `Join` | Me sumo | A member's "I'll come" on another's `SharedPlan`; the author sees only the first names of who joined, nobody sees a count, and nothing is shown when nobody does |
+| `PlanCard` | (none) | One member's own read of ¿Alguien se suma? (`rondas/{id}/plan_cards/{uid}`): the others' plans with whether they joined, and their own with who joined it |
 | `FreePlace` | lugar libre | A free public place from the OpenStreetMap cache (`osm_places`: plaza, park, rambla, library, marketplace) that a suggestion can send someone to |
 | `Gate` | (none) | A rule in code that every outgoing message passes (quiet hours, no emoji, voseo, no money, bot disclosure, one routine push a week) |
 | `Walkthrough` | ¿Cómo funciona? | The three cards a signed-out person sees before the welcome doors on a phone's first open (`/como-funciona`); `walkthroughSeen` is whether this phone has shown them |

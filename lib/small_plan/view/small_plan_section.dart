@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/small_plan/cubit/shared_plans_cubit.dart';
 import 'package:ronda/small_plan/cubit/small_plan_cubit.dart';
+import 'package:ronda/small_plan/view/share_plan_toggle.dart';
 import 'package:ronda/small_plan/view/small_plan_sheet.dart';
 import 'package:ronda/small_plan/widgets/small_plan_labels.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -14,7 +16,11 @@ import 'package:small_plan_repository/small_plan_repository.dart';
 /// "¿Saliste a caminar el martes?" asked once, with the same plain reply to
 /// either answer.
 ///
-/// It reads the [SmallPlanCubit] that Mi ronda's page provides. Reading the
+/// A plan can be opened to the ronda from its card ([SharePlanToggle]), and
+/// changing it takes what was opened back.
+///
+/// It reads the [SmallPlanCubit] that Mi ronda's page provides, and the
+/// [SharedPlansCubit] of the week's ronda. Reading the
 /// phone shows nothing at all, so the card never flashes in and out.
 class const SmallPlanSection({required final String uid, super.key})
     extends StatelessWidget {
@@ -63,8 +69,12 @@ class const SmallPlanSection({required final String uid, super.key})
   }
 
   Future<void> _choose(BuildContext context, SmallPlanCubit cubit) async {
+    final shared = context.read<SharedPlansCubit>();
     final plan = await SmallPlanSheet.show(context, uid: uid);
-    if (plan != null) await cubit.planChosen(plan);
+    if (plan == null) return;
+    // What was opened to the ronda was the old plan: it is taken back.
+    unawaited(shared.planChanged());
+    await cubit.planChosen(plan);
   }
 }
 
@@ -145,6 +155,7 @@ class const _Card({
             ),
           ],
         ),
+        SharePlanToggle(plan: plan),
         if (switch (state.calendar) {
               SmallPlanCalendar.idle => null,
               SmallPlanCalendar.opened => l10n.smallPlanCalendarOpened,

@@ -125,6 +125,10 @@ jobs:
       - run: npx --yes firebase-tools@15.34.1 emulators:exec --only firestore,storage --project demo-ronda-donde-queda "venv/bin/pytest tests/test_donde_queda_emulators.py"
         env:
           RONDA_EMULATORS_REQUIRED: "1"
+      # ¿Alguien se suma?: a plan shared, joined, withdrawn and expired, Spark faked.
+      - run: npx --yes firebase-tools@15.34.1 emulators:exec --only firestore,storage --project demo-ronda-shared-plans "venv/bin/pytest tests/test_shared_plans_emulators.py"
+        env:
+          RONDA_EMULATORS_REQUIRED: "1"
 
   # firestore.rules and storage.rules on the Firestore and Storage emulators (needs Java).
   rules:

@@ -18,6 +18,7 @@ import 'package:ronda/push/push.dart';
 import 'package:ronda/small_plan/small_plan.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
+import 'package:small_plan_repository/small_plan_repository.dart';
 
 import '../../helpers/helpers.dart';
 import '../fixtures.dart';
@@ -43,6 +44,8 @@ class _MockWaitingCubit extends MockCubit<WaitingState> implements WaitingCubit;
 
 class _MockCuadernoCardCubit extends MockCubit<String?>
     implements CuadernoCardCubit;
+class _MockSmallPlanRepository extends Mock implements SmallPlanRepository;
+
 class _MockSmallPlanCubit extends MockCubit<SmallPlanState>
     implements SmallPlanCubit;
 
@@ -58,6 +61,7 @@ void main() {
     late RondaRepository rondaRepository;
     late ContactRepository contactRepository;
     late DondeQuedaRepository dondeQuedaRepository;
+    late SmallPlanRepository sharedRepository;
 
     final ready = ThisWeekState(
       status: ThisWeekStatus.ready,
@@ -68,6 +72,13 @@ void main() {
       rondaRepository = _MockRondaRepository();
       contactRepository = _MockContactRepository();
       dondeQuedaRepository = _MockDondeQuedaRepository();
+      sharedRepository = _MockSmallPlanRepository();
+      when(
+        () => sharedRepository.watchShared(
+          rondaId: any(named: 'rondaId'),
+          uid: any(named: 'uid'),
+        ),
+      ).thenAnswer((_) => Stream.value(const SharedPlans()));
       when(
         () => dondeQuedaRepository.watch(
           rondaId: any(named: 'rondaId'),
@@ -112,6 +123,7 @@ void main() {
             RepositoryProvider.value(value: rondaRepository),
             RepositoryProvider.value(value: contactRepository),
             RepositoryProvider.value(value: dondeQuedaRepository),
+            RepositoryProvider.value(value: sharedRepository),
           ],
           child: MultiBlocProvider(
             providers: [

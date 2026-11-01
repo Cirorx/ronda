@@ -181,7 +181,18 @@ class const MyRondaView({required final String uid, super.key})
       ),
       // Algo chico esta semana: under the week's card, once a week.
       if (state.status == ThisWeekStatus.ready && !state.week!.hasLeft)
-        SmallPlanSection(uid: uid),
+        // ¿Alguien se suma?: the others' plans, then the member's own with
+        // its "Avisarle a la ronda" switch.
+        SharedPlansScope(
+          rondaId: state.week!.rondaId,
+          uid: uid,
+          child: Column(
+            children: [
+              const SharedPlansSection(),
+              SmallPlanSection(uid: uid),
+            ],
+          ),
+        ),
       SizedBox(height: spacing.md),
       const CuadernoEntryCard(),
     ];

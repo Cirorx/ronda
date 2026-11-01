@@ -22,6 +22,7 @@ import rain
 import rotation
 import rsvp
 import seguimos
+import shared_plans
 import waitlists
 
 log = logging.getLogger(__name__)
@@ -74,6 +75,8 @@ JOBS: dict[str, Callable[[object, datetime, Context], dict]] = {
     "despues_sweep": lambda db, now, context: despues.run_despues_sweep(db, now),
     # ¿Dónde queda? (#58): the weekly photo game's turns and reveal; sends nothing.
     "donde_queda": lambda db, now, context: donde_queda.run_donde_queda(db, now),
+    # ¿Alguien se suma? (#57): deletes shared plans once their time has passed; sends nothing.
+    "shared_plans": lambda db, now, context: shared_plans.run_shared_plans(db, now),
 }
 
 

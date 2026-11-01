@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/small_plan/cubit/shared_plans_cubit.dart';
 import 'package:ronda/small_plan/widgets/small_plan_labels.dart';
 import 'package:small_plan_repository/small_plan_repository.dart';
 
@@ -193,6 +194,41 @@ void main() {
         equals(l10n.smallPlanReadFailed),
       );
       expect(l10n.sayProblem(), isNull);
+    });
+
+    testWidgets("words another member's plan as a full sentence", (
+      tester,
+    ) async {
+      await pump(tester);
+      final line = SharedPlanLine(
+        authorUid: 'u1',
+        firstName: 'Ana',
+        activity: 'Caminar 30 minutos por la rambla',
+        place: 'desde la parada 23',
+        kind: SmallPlanKind.walk,
+        at: tuesday,
+        joined: false,
+      );
+
+      expect(
+        l10n.sharedLine(line),
+        equals(
+          'Ana propone: Caminar 30 minutos por la rambla, el martes a las '
+          '19:00, desde la parada 23.',
+        ),
+      );
+    });
+
+    testWidgets('says each problem of the shared plans', (tester) async {
+      await pump(tester);
+
+      expect(
+        {
+          for (final problem in SharedPlansProblem.values)
+            problem: l10n.sharedProblem(problem),
+        }.values.toSet(),
+        hasLength(SharedPlansProblem.values.length),
+      );
     });
   });
 }

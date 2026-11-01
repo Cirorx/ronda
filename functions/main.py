@@ -961,3 +961,94 @@ def suggest_small_plans(req: https_fn.CallableRequest) -> dict:
             weather=OpenMeteo(http),
             model=model,
         )
+
+
+# --- ¿Alguien se suma? (#57): a small plan opened to the ronda --------------------------------
+
+
+def _shared_plan_call(req: https_fn.CallableRequest, run):
+    """Runs `run()` for a signed-in caller; a refusal keeps its code, and a held plan says why
+    in `details.reason` (past, time, words, money, address, phone, place, other)."""
+    import shared_plans
+    import voice_signup as voice
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "sign in first")
+    try:
+        return run()
+    except shared_plans.SharedPlanError as e:
+        details = {"reason": e.reason} if e.reason else None
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e), details) from e
+    except voice.ModelUnavailable as e:
+        raise https_fn.HttpsError(
+            https_fn.FunctionsErrorCode.UNAVAILABLE, "try again in a moment"
+        ) from e
+
+
+@https_fn.on_call(
+    region=REGION,
+    max_instances=2,
+    timeout_sec=60,
+    memory=options.MemoryOption.MB_512,
+    secrets=[MODEL_API_KEY],
+    invoker="public",
+)
+def share_small_plan(req: https_fn.CallableRequest) -> dict:
+    """Opens the caller's small plan to their ronda, `{rondaId, activity, place?, kind, date,
+    time}`: held, with the reason, when code or Spark 1.3 finds the place private, an address,
+    a phone number, money or a bad hour (shared_plans.py)."""
+    from openai import OpenAI
+
+    import shared_plans
+    import voice_signup as voice
+
+    return _shared_plan_call(
+        req,
+        lambda: shared_plans.share(
+            uid=req.auth.uid,
+            data=req.data,
+            db=_firestore(),
+            checker=shared_plans.SparkPlan(
+                OpenAI(
+                    base_url=voice.META_BASE, api_key=MODEL_API_KEY.value, timeout=30, max_retries=2
+                )
+            ),
+            now=_now(),
+        ),
+    )
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def withdraw_small_plan(req: https_fn.CallableRequest) -> dict:
+    """The author takes their shared plan back, `{rondaId}`."""
+    import shared_plans
+
+    return _shared_plan_call(
+        req, lambda: shared_plans.withdraw(_firestore(), req.auth.uid, req.data, _now())
+    )
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def join_small_plan(req: https_fn.CallableRequest) -> dict:
+    """ "Me sumo", `{rondaId, authorUid}`."""
+    import shared_plans
+
+    return _shared_plan_call(
+        req, lambda: shared_plans.join(_firestore(), req.auth.uid, req.data, _now())
+    )
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def leave_small_plan(req: https_fn.CallableRequest) -> dict:
+    """A member takes back their "Me sumo", `{rondaId, authorUid}`."""
+    import shared_plans
+
+    return _shared_plan_call(
+        req, lambda: shared_plans.leave(_firestore(), req.auth.uid, req.data, _now())
+    )

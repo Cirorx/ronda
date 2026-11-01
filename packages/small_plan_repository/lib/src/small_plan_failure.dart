@@ -32,6 +32,19 @@ enum SmallPlanFailureKind {
 
   /// The phone couldn't keep or read the plan.
   storageFailed,
+
+  /// A plan couldn't be opened or taken back from the ronda: the connection
+  /// failed.
+  shareFailed,
+
+  /// "Me sumo" or taking it back didn't go through.
+  joinFailed,
+
+  /// The plan someone tried to join is over or was withdrawn.
+  planGone,
+
+  /// The ronda's plans couldn't be read.
+  watchFailed,
 }
 
 /// {@template small_plan_failure}

@@ -11,11 +11,15 @@ import '../../helpers/helpers.dart';
 class _MockSmallPlanCubit extends MockCubit<SmallPlanState>
     implements SmallPlanCubit;
 
+class _MockSharedPlansCubit extends MockCubit<SharedPlansState>
+    implements SharedPlansCubit;
+
 class _MockSmallPlanRepository extends Mock implements SmallPlanRepository;
 
 void main() {
   group(SmallPlanSection, () {
     late SmallPlanCubit cubit;
+    late SharedPlansCubit sharedCubit;
     final walk = SmallPlan(
       kind: SmallPlanKind.walk,
       at: DateTime(2026, 11, 3, 19),
@@ -30,6 +34,9 @@ void main() {
 
     setUp(() {
       cubit = _MockSmallPlanCubit();
+      sharedCubit = _MockSharedPlansCubit();
+      when(() => sharedCubit.state).thenReturn(const SharedPlansState());
+      when(() => sharedCubit.planChanged()).thenAnswer((_) async {});
       when(() => cubit.notThisWeek()).thenAnswer((_) async {});
       when(() => cubit.followUpAnswered()).thenAnswer((_) async {});
       when(() => cubit.calendarTapped(any())).thenAnswer((_) async {});
@@ -42,8 +49,11 @@ void main() {
     }) {
       when(() => cubit.state).thenReturn(state);
       return tester.pumpApp(
-        BlocProvider.value(
-          value: cubit,
+        MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: cubit),
+            BlocProvider.value(value: sharedCubit),
+          ],
           child: const Scaffold(body: SmallPlanSection(uid: 'uid')),
         ),
         locale: locale,
@@ -127,8 +137,11 @@ void main() {
         await tester.pumpApp(
           RepositoryProvider<SmallPlanRepository>.value(
             value: repository,
-            child: BlocProvider.value(
-              value: cubit,
+            child: MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: cubit),
+                BlocProvider.value(value: sharedCubit),
+              ],
               child: const Scaffold(body: SmallPlanSection(uid: 'uid')),
             ),
           ),
@@ -146,6 +159,8 @@ void main() {
             SmallPlan(kind: SmallPlanKind.call, at: DateTime(2026, 11, 3, 18)),
           ),
         ).called(1);
+        // What was opened to the ronda was the old plan.
+        verify(() => sharedCubit.planChanged()).called(1);
       });
 
       testWidgets('keeps nothing when the sheet closes without a plan', (
@@ -157,8 +172,11 @@ void main() {
         await tester.pumpApp(
           RepositoryProvider<SmallPlanRepository>.value(
             value: repository,
-            child: BlocProvider.value(
-              value: cubit,
+            child: MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: cubit),
+                BlocProvider.value(value: sharedCubit),
+              ],
               child: const Scaffold(body: SmallPlanSection(uid: 'uid')),
             ),
           ),
@@ -170,6 +188,7 @@ void main() {
         await tester.pumpAndSettle();
 
         verifyNever(() => cubit.planChosen(any()));
+        verifyNever(() => sharedCubit.planChanged());
       });
     });
 
@@ -219,6 +238,29 @@ void main() {
           expect(find.text(value), findsOneWidget);
         });
       }
+
+      testWidgets('offers "Avisarle a la ronda" under the plan', (
+        tester,
+      ) async {
+        when(
+          () => sharedCubit.state,
+        ).thenReturn(const SharedPlansState(status: SharedPlansStatus.ready));
+        final ahead = SmallPlan(
+          kind: SmallPlanKind.walk,
+          at: DateTime.now().add(const Duration(days: 1)),
+          place: 'la Rambla',
+        );
+
+        await pump(
+          tester,
+          SmallPlanState(
+            status: SmallPlanStatus.ready,
+            card: SmallPlanSet(ahead),
+          ),
+        );
+
+        expect(find.text('Avisarle a la ronda'), findsOneWidget);
+      });
 
       testWidgets('gives Maestro a handle on both buttons', (tester) async {
         final handle = tester.ensureSemantics();

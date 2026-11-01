@@ -1,4 +1,5 @@
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/small_plan/cubit/shared_plans_cubit.dart';
 import 'package:small_plan_repository/small_plan_repository.dart';
 
 /// The words of Algo chico esta semana, from a plan or what came of it.
@@ -47,6 +48,42 @@ extension SmallPlanLabels on AppLocalizations {
         final place? when plan.activity != null => ', $place',
         _ => '',
       });
+
+  /// "Ana propone: Caminar 30 minutos por la rambla, el martes a las 19:00."
+  String sharedLine(SharedPlanLine line) => sharedPlanLine(
+    line.firstName,
+    planLine(
+      SmallPlan(
+        kind: line.kind,
+        at: line.at,
+        place: line.place,
+        activity: line.activity,
+      ),
+    ),
+  );
+
+  /// Why a plan was held back from the ronda, in plain words, and that it
+  /// stays private.
+  String heldReason(ShareHoldReason reason) {
+    final why = switch (reason) {
+      ShareHoldReason.past => sharedPlanHeldPast,
+      ShareHoldReason.time => sharedPlanHeldTime,
+      ShareHoldReason.words => sharedPlanHeldWords,
+      ShareHoldReason.money => sharedPlanHeldMoney,
+      ShareHoldReason.address => sharedPlanHeldAddress,
+      ShareHoldReason.phone => sharedPlanHeldPhone,
+      ShareHoldReason.place => sharedPlanHeldPlace,
+      ShareHoldReason.other => sharedPlanHeldOther,
+    };
+    return '$why $sharedPlanHeldPrivate';
+  }
+
+  /// What went wrong on the last tap of ¿Alguien se suma?.
+  String sharedProblem(SharedPlansProblem problem) => switch (problem) {
+    SharedPlansProblem.shareFailed => sharedPlanShareFailed,
+    SharedPlansProblem.joinFailed => sharedPlanJoinFailed,
+    SharedPlansProblem.planGone => sharedPlanGone,
+  };
 
   /// "¿Saliste a caminar el martes?": last week's question, by kind.
   String followUp(SmallPlan plan) {

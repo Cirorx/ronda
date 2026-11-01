@@ -62,7 +62,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | Package | Layer | Wraps / owns | First issue |
 |---|---|---|---|
 | `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
-| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`, `answer_bench_offer`, `answer_waitlist`, `suggest_small_plans`, `shape_small_plan`, `post_donde_queda`, `pass_donde_queda`, `guess_donde_queda`, and `read_line` and `make_postcard` through `CuadernoApi`, which has no Firestore or Storage client) | #13 |
+| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`, `answer_bench_offer`, `answer_waitlist`, `suggest_small_plans`, `shape_small_plan`, `share_small_plan`, `withdraw_small_plan`, `join_small_plan`, `leave_small_plan`, `post_donde_queda`, `pass_donde_queda`, `guess_donde_queda`, and `read_line` and `make_postcard` through `CuadernoApi`, which has no Firestore or Storage client) | #13 |
 | `device_store` | Data | flutter_secure_storage (needs, the terms and answers held until sign-in, and whether "¿Cómo funciona?" was shown); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
@@ -80,7 +80,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | `onboarding_repository` | Repository | Voice note → upload → `extract` → fields (over `voice_recorder` + `ronda_api`) | #19 |
 | `ronda_repository` | Repository | Rondas, weeks, RSVPs, proposals (proposals built in #25), Cerca tuyo's demand by barrio (#52), place, hour, hosts and attendance (#47) | #25 |
 | `organiser_repository` | Repository | The organiser agent: the admin's trace (`agent_runs`), a ronda's acta and [Algo estuvo mal], the host's rain proposal and pick, the rain check by hand (over `ronda_api`'s `OrganiserApi`) | #49 |
-| `small_plan_repository` | Repository | Algo chico esta semana: the three suggestions and a plan said or typed (over `ronda_api`'s `SmallPlansApi` and the voice note path), the plan kept on the phone under the uid (`device_store`), the calendar (`calendar_client`) and the follow-up (over `voice_recorder` too: it repeats `OnboardingRepository`'s few lines rather than import it) | #56 |
+| `small_plan_repository` | Repository | Algo chico esta semana: the three suggestions and a plan said or typed (over `ronda_api`'s `SmallPlansApi` and the voice note path), the plan kept on the phone under the uid (`device_store`), the calendar (`calendar_client`) and the follow-up (over `voice_recorder` too: it repeats `OnboardingRepository`'s few lines rather than import it); ¿Alguien se suma? share, withdraw, join and the member's plan card (over `ronda_api`'s `SharedPlansApi`, which has the Firestore client) | #56, #57 |
 | `contact_repository` | Repository | The contact address (`RONDA_CONTACT_EMAIL`) and the helplines: a mail to Ronda or a call, opened in the person's own app (over `link_opener`) | #54 |
 | `error_reporter` | Repository | Error monitoring (§ Monitoring): `ErrorReporter` with Crashlytics (`firebase_crashlytics`), the `report_client_error` callable (web) and a local log; the scrubber; the error hooks; the admin's `ClientErrorLog` over Firestore. Takes the Firebase clients from bootstrap, like `auth_repository` | error log |
 
@@ -328,6 +328,18 @@ stdlib `wave` module (`audioop` is gone in 3.13).
 - **Widget tests:** stopping a recording awaits the periodic timer's cancel, which completes in
   the root zone and so never under the fake clock; tests that press "Terminé" or "Cancelar" let
   the real loop turn once (`tester.runAsync`), as `small_plan_sheet_test.dart` does.
+
+## ¿Alguien se suma? (#57)
+- It extends #56's package and screen rather than adding one: `SharedPlansApi` (Firestore card +
+  four callables) in `ronda_api`, `SmallPlanRepository.share/withdraw/join/leave/watchShared`,
+  and in the app `SharedPlansCubit` (one cubit for the others' lines and the member's own
+  switch), `SharedPlansScope` (provides it for the week's ronda), `SharedPlansSection` and
+  `SharePlanToggle` (inside the plan's card).
+- Choosing another plan takes the shared one back (`SharedPlansCubit.planChanged`).
+- Widget tests use `DateTime.now()` plus a day for plans that must still be ahead, since the
+  toggle and the lines hide a plan whose time passed.
+- Rules and emulator tests run under the same `emulators:exec` lines as ¿Dónde queda?; the new
+  project id is `demo-ronda-shared-plans`.
 
 ## Choices
 

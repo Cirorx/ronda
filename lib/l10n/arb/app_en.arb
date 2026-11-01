@@ -4136,5 +4136,94 @@
     "dondeQuedaNoPeople": "Better without people: if someone shows, we blur them before it goes up. Keep house numbers out of it.",
     "@dondeQuedaNoPeople": {
         "description": "Before the camera: no people, no house numbers"
+    },
+    "sharedPlanToggleTitle": "Tell your ronda",
+    "@sharedPlanToggleTitle": {
+        "description": "Mi ronda: the switch that opens the member's small plan to their ronda"
+    },
+    "sharedPlanToggleBody": "Your ronda sees it the next time they open Mi ronda. Whoever wants to joins.",
+    "@sharedPlanToggleBody": {
+        "description": "Mi ronda: under the switch, what turning it on does"
+    },
+    "sharedPlanLine": "{name} suggests: {plan}",
+    "@sharedPlanLine": {
+        "description": "Mi ronda: another member's plan, with the plan as a full sentence",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "plan": {
+                "type": "String"
+            }
+        }
+    },
+    "sharedPlanJoin": "Count me in",
+    "@sharedPlanJoin": {
+        "description": "Mi ronda: joins another member's plan"
+    },
+    "sharedPlanJoined": "You're in.",
+    "@sharedPlanJoined": {
+        "description": "Mi ronda: said once the member joined a plan"
+    },
+    "sharedPlanLeave": "I can't make it",
+    "@sharedPlanLeave": {
+        "description": "Mi ronda: takes back a join"
+    },
+    "sharedPlanJoiners": "Joining you: {names}.",
+    "@sharedPlanJoiners": {
+        "description": "Mi ronda: the first names of whoever joined the member's plan, shown only when someone did",
+        "placeholders": {
+            "names": {
+                "type": "String"
+            }
+        }
+    },
+    "sharedPlanHeldPrivate": "Your plan stays just yours.",
+    "@sharedPlanHeldPrivate": {
+        "description": "Mi ronda: said after a plan was held back from the ronda"
+    },
+    "sharedPlanHeldPast": "That plan has passed, or is too far ahead to share.",
+    "@sharedPlanHeldPast": {
+        "description": "Mi ronda: why a plan was held, its time"
+    },
+    "sharedPlanHeldTime": "Plans are only shared between 9:00 and 21:00. If you change the time, try again.",
+    "@sharedPlanHeldTime": {
+        "description": "Mi ronda: why a plan was held, the hour"
+    },
+    "sharedPlanHeldWords": "Something in the text doesn't belong in a plan for the ronda. Change it and try again.",
+    "@sharedPlanHeldWords": {
+        "description": "Mi ronda: why a plan was held, the words"
+    },
+    "sharedPlanHeldMoney": "The ronda's plans don't talk about money.",
+    "@sharedPlanHeldMoney": {
+        "description": "Mi ronda: why a plan was held, money"
+    },
+    "sharedPlanHeldAddress": "A plan for the ronda goes to a public place: no addresses or homes.",
+    "@sharedPlanHeldAddress": {
+        "description": "Mi ronda: why a plan was held, an address or a home"
+    },
+    "sharedPlanHeldPhone": "A plan for the ronda carries no phone numbers.",
+    "@sharedPlanHeldPhone": {
+        "description": "Mi ronda: why a plan was held, a phone number"
+    },
+    "sharedPlanHeldPlace": "To bring the ronda along you need a public place, like a plaza, the feria or the library.",
+    "@sharedPlanHeldPlace": {
+        "description": "Mi ronda: why a plan was held, no public place"
+    },
+    "sharedPlanHeldOther": "This plan can't be shared with the ronda.",
+    "@sharedPlanHeldOther": {
+        "description": "Mi ronda: why a plan was held, anything else"
+    },
+    "sharedPlanShareFailed": "We couldn't tell your ronda. Try again.",
+    "@sharedPlanShareFailed": {
+        "description": "Mi ronda: opening or taking back a plan failed"
+    },
+    "sharedPlanJoinFailed": "We couldn't put you down. Try again.",
+    "@sharedPlanJoinFailed": {
+        "description": "Mi ronda: Me sumo failed"
+    },
+    "sharedPlanGone": "That plan is no longer there.",
+    "@sharedPlanGone": {
+        "description": "Mi ronda: the plan someone tried to join is over or withdrawn"
     }
 }
