@@ -128,8 +128,10 @@ def approve_proposal(req: https_fn.CallableRequest) -> dict:
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode(error.code), str(error)) from error
 
 
+# One instance stays warm: a cold Python start added seconds to the wait after a voice note.
 @https_fn.on_call(
     region=REGION,
+    min_instances=1,
     max_instances=2,
     timeout_sec=120,
     memory=options.MemoryOption.MB_512,
