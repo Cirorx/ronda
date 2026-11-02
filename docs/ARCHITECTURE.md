@@ -45,13 +45,16 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan; Google and
   │               write nothing), share_small_plan, withdraw_small_plan, join_small_plan
   │               and leave_small_plan (¿Alguien se suma?),
   │               report_client_error (the web app's error log; works signed out),
-  │               post_donde_queda, pass_donde_queda and guess_donde_queda (¿Dónde queda?)
+  │               post_donde_queda, pass_donde_queda and guess_donde_queda (¿Dónde queda?),
+  │               report_people, send_report, add_to_report and withdraw_report (Contar
+  │               algo que pasó), review_report, separate_pair, join_pair_again,
+  │               remove_from_ronda and let_back_in (admin: the reports queue)
   │    triggers   bench_on_answer (an RSVP answer changed) and bench_on_offer (an offer
   │               was answered) run that ronda's bench at once
   │    scheduled  one dispatcher on the hour in Montevideo (`dispatch`) → run_<job>(db, now)
   │               for every job in `jobs.JOBS` (rsvp_push, seguimos_ask, rain_check,
   │               attendance_ask, bench, waitlists, and the code jobs assign_hosts, handoff,
-  │               prompt_buddy, despues_sweep, donde_queda, shared_plans); hourly audio sweeper (`sweep_audio`
+  │               prompt_buddy, despues_sweep, donde_queda, shared_plans, removal_notices); hourly audio sweeper (`sweep_audio`
   │               deletes `audio/` objects older than 1 h); hourly Cerca counts (`refresh_cerca`,
   │               until the dispatcher adopts `run_refresh_cerca`)
   │    http       flyer_landing (public: counts a flyer's scan, answers /f/{id})
@@ -424,8 +427,50 @@ isn't set up).
     the lifecycle does.
   - Rules tests: `rules/donde_queda.test.js`; a whole round with three members on the emulators:
     `functions/tests/test_donde_queda_emulators.py`.
-- `avoid/{pairId}`: uidA, uidB (report-apart; read by the solver only).
-- `reports/{id}`: reporter, reported, rondaId, tag, text (minimal), status.
+- Safety (#71, `functions/reports.py`, `safety.py`, `removals.py`; rules tests:
+  `rules/reports.test.js`, and `rules/admin.test.js` for the admin paths):
+  - `reports/{id}`: reporterUid, reporterName, aboutUid (`""` for "Alguien de afuera"),
+    aboutName, rondaId and rondaLine (the ronda the two share, else the reporter's; `""` for
+    none), tags [`askedForMoney` | `bothered` | `romantic` | `minor` | `privatePlace` | `other`],
+    text (at most 2000 characters), additions [{text, at}] (at most 20), status (open |
+    archived), withdrawnAt (null until [Retirar]; it stays in the queue), unread (set by a new
+    report, an addition and a withdrawal; cleared when the admin reads or archives it),
+    createdAt, updatedAt. Read by the admin claim only, as one document, a list or the
+    `unread == true` count; nobody else, not the reporter nor the person it is about.
+  - `users/{uid}/reports/{id}`: the reporter's receipt, read by that person only: status (open |
+    withdrawn), createdAt. Archiving changes nothing here (telling the reporter the outcome is
+    out of #71), and they may still add to an archived report, which brings it back to open.
+  - `report_people {}`: the other members of the caller's rondas (their `users/{uid}/rondas`
+    links, who left included) by first name. `send_report {text, tags, aboutUid}`: some words or
+    a tag, `aboutUid` one of those or `""`, five a day (`resource-exhausted`). `add_to_report
+    {reportId, text}` and `withdraw_report {reportId}`: the reporter's own, not withdrawn.
+    Nothing is sent and nothing logs the words; the admin's unread count is the alert.
+  - `review_report {reportId, action: read | archive | reopen}` (admin).
+  - `avoid/{uidA}_{uidB}` (uids in order): uidA, uidB, nameA, nameB, reportId, together
+    ({rondaId, line} of a ronda both sat in when it was written, else null), at. Written by
+    `separate_pair {reportId}` and deleted by `join_pair_again {pairId}` (admin); the demo seed
+    writes uidA and uidB only. Read by the solver's input (`proposals._read_sign_ups`), by
+    `ronda_members` (left out of `ronda_candidates`; `add_to_ronda` answers
+    `failed-precondition` when the other of the pair sits in the ronda), by the bench
+    (`bench_order` skips anyone separated from a member of that ronda) and by the admin claim;
+    no other client.
+  - `removed/{uid}`: firstName, reportId, at, rondaIds (the rondas they left), notice (pending |
+    sent | held | unreachable | skipped | none), noticeAt?. Written by `remove_from_ronda
+    {reportId}` (admin), which in one transaction marks every seated membership `left` with
+    `leftAt`, deletes their `users/{uid}/rondas` links and rewrites each ronda's `size` and
+    `views/week`, then withdraws their pending bench offers. While it exists they are out of the
+    solver's input, every waiting list, every bench and `ronda_candidates` / `add_to_ronda`
+    (`failed-precondition`). `let_back_in {uid}` deletes it and seats nobody. Read by the admin
+    claim only.
+  - The notice: «Ya no estás en esta ronda.» (title "Ronda", `data.type: notice`, drawn plain),
+    with no reporter and no reason, through the organiser's outbox and gates as kind `notice`
+    (not routine), in the trace of the first ronda they left
+    (`agent_runs/{rondaId}_{isoWeek}_notice_{uid}`), never in the acta; only when they left a
+    ronda (otherwise `notice: none`). From 21:00 to 09:00 nothing is written and it stays
+    `pending`; the hourly `removal_notices` job sends it at the next run inside the hours.
+  - Known limits: hosts are not reassigned (a removed anfitrión or cola stays named on the
+    ronda until the admin changes them on `/admin/rondas`), a bench guest already seated for
+    this week keeps that seat, and the approved proposal's groups still list them.
 - `acta/{rondaId}/entries/{runId}-{k}` (built in #49, `functions/organiser/trace.py`): week, ts,
   tool, summary (es-419, written in code like the pushes; the model's own words only through
   `log_acta`, after the word gates), decidedBy (agent | host), runId. Read by that ronda's

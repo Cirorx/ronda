@@ -42,7 +42,7 @@ Where things live (docs/ARCHITECTURE.md § Data model):
 """
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time, timedelta
 
@@ -52,6 +52,7 @@ import demo_users
 import member_barrios
 import rain
 import rsvp
+import safety
 from organiser import gates, moves, outbox
 from organiser import tools as organiser_tools
 from organiser.agent import CAPPED, DONE, FAILED, STOPPED, run_agent
@@ -229,11 +230,14 @@ def seat_id(ronda: dict) -> str:
     return ronda.get("seatId") or fallback
 
 
-def bench_order(db, ronda: dict, day: date, skip: set[str]) -> list[Candidate]:
+def bench_order(
+    db, ronda: dict, day: date, skip: set[str], members: Iterable[str] = ()
+) -> list[Candidate]:
     """The ronda's bench for the meeting on `day`, in order: sign-ups with a profile who count here,
     sit in no ronda, picked this pretext and slot, live or work within the solver's walking distance
     (member_barrios.py), for whom the seat passes their needs filter, and who hold no other offer
-    nor a seat elsewhere that day; `skip` (already offered this seat this week) left out. Who waited
+    nor a seat elsewhere that day; `skip` (already offered this seat this week), anyone out of
+    Ronda and anyone separated from one of the ronda's `members` (safety.py) left out. Who waited
     longest comes first, then the nearest."""
     # Both import the solver package, and with it OR-Tools: only a bench with a seat pays.
     from proposals import BARRIOS
@@ -242,13 +246,13 @@ def bench_order(db, ronda: dict, day: date, skip: set[str]) -> list[Candidate]:
         return []
     slot = ronda.get("slot") or {}
     slot_id, seat = f"{slot.get('day')}-{slot.get('time')}", seat_id(ronda)
-    seated = _seated(db)
+    kept_off = _seated(db) | safety.removed(db) | safety.apart_from(db, members)
     found = []
     for snapshot in db.collection("users").stream():
         uid, user = snapshot.id, snapshot.to_dict() or {}
         if (
             uid in skip
-            or uid in seated
+            or uid in kept_off
             or not demo_users.counts(uid)
             or "firstName" not in user
             or not member_barrios.anchors(user)
@@ -643,7 +647,13 @@ class _Step:
                     once="late",
                 )
                 return True
-            queue = bench_order(self.db, self.ronda, self.day, {o["uid"] for o in self.offers})
+            queue = bench_order(
+                self.db,
+                self.ronda,
+                self.day,
+                {o["uid"] for o in self.offers},
+                rsvp.counted(self.members),
+            )
             if not queue:
                 self.note("No queda nadie en la lista de espera para este lugar.", once="empty")
                 return True

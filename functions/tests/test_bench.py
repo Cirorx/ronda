@@ -206,6 +206,28 @@ class TestTheBench:
         assert [c.first_name for c in queue][:2] == ["Tere", "Ugo"]
         assert queue[0].blocks == 0
 
+    def test_leaves_out_who_is_out_of_ronda_or_separated_from_a_member(self):
+        db = bench_db()
+        db.documents["removed/demo-201"] = {"firstName": "Eva"}
+        db.documents["avoid/demo-101_demo-202"] = {"uidA": "demo-101", "uidB": "demo-202"}
+        ronda = db.documents[f"rondas/{RONDA}"]
+
+        queue = bench.bench_order(db, ronda, THURSDAY, set(), ["demo-101", "demo-103"])
+
+        assert [c.first_name for c in queue] == ["Pablo"]
+        assert [c.first_name for c in bench.bench_order(db, ronda, THURSDAY, set())] == [
+            "Nico",
+            "Pablo",
+        ]
+
+    def test_a_run_never_offers_the_seat_to_someone_separated_from_a_member(self):
+        db = bench_db()
+        db.documents["avoid/demo-101_demo-201"] = {"uidA": "demo-101", "uidB": "demo-201"}
+
+        run(db, script=offers())
+
+        assert [path.split("/")[1] for path in offer_docs(db)] == ["demo-202"]
+
     def test_a_ronda_in_an_unknown_barrio_has_no_bench(self):
         assert bench.bench_order(bench_db(), {"barrio": "atlantida"}, THURSDAY, set()) == []
 

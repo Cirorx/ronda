@@ -819,6 +819,11 @@ class TestEveryAdminCallable:
         "pilot_numbers",
         "ronda_setups",
         "set_ronda_setup",
+        "review_report",
+        "separate_pair",
+        "join_pair_again",
+        "remove_from_ronda",
+        "let_back_in",
     }
 
     LOOKALIKES: ClassVar = [
@@ -834,7 +839,10 @@ class TestEveryAdminCallable:
         requiring = {
             name
             for name, function in _callables().items()
-            if "_require_admin(" in _source(function) or "_setup_call(" in _source(function)
+            if any(
+                check in _source(function)
+                for check in ("_require_admin(", "_setup_call(", "_safety_call(")
+            )
         }
         assert requiring == self.ADMIN_ONLY
 
@@ -864,6 +872,73 @@ class TestEveryAdminCallable:
         with pytest.raises(https_fn.HttpsError) as excinfo:
             call(getattr(main, name), None, {"proposalId": "p1", "rondaId": "r1"})
         assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+
+
+class TestSafety:
+    """Contar algo que pasó and the admin's queue (#71): reports.py, safety.py and removals.py
+    hold the rules; these check auth, the wiring and the error codes."""
+
+    @pytest.fixture
+    def safety_db(self, monkeypatch) -> FakeFirestore:
+        import jobs
+        from tests.safety_fakes import NOW, world
+        from tests.test_rsvp import Sender
+
+        db = FakeFirestore(world())
+        self.sender = Sender()
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setattr(main, "_now", lambda: NOW)
+        monkeypatch.setattr(jobs, "context", lambda: jobs.Context(send=self.sender, app_url="x"))
+        return db
+
+    ANA = SimpleNamespace(uid="ana", token={})
+    BOSS = SimpleNamespace(uid="boss", token={"admin": True})
+
+    @pytest.mark.parametrize(
+        "function",
+        [main.report_people, main.send_report, main.add_to_report, main.withdraw_report],
+    )
+    def test_each_needs_a_signed_in_caller(self, function, safety_db):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(function, None, {"text": "hola"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+
+    def test_a_member_reports_adds_and_withdraws(self, safety_db):
+        people = call(main.report_people, self.ANA)["people"]
+        assert [p["firstName"] for p in people] == ["Beto", "Cora", "Dani", "Fede"]
+
+        report_id = call(main.send_report, self.ANA, {"text": "Me molestó", "aboutUid": "beto"})[
+            "reportId"
+        ]
+        call(main.add_to_report, self.ANA, {"reportId": report_id, "text": "Y el jueves"})
+        call(main.withdraw_report, self.ANA, {"reportId": report_id})
+
+        assert safety_db.documents[f"users/ana/reports/{report_id}"]["status"] == "withdrawn"
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.send_report, self.ANA, {"text": ""})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.INVALID_ARGUMENT
+
+    def test_the_admin_reviews_separates_removes_and_undoes(self, safety_db):
+        report_id = call(main.send_report, self.ANA, {"text": "Me molestó", "aboutUid": "beto"})[
+            "reportId"
+        ]
+        data = {"reportId": report_id}
+
+        assert call(main.review_report, self.BOSS, {**data, "action": "read"})["status"] == "open"
+        assert call(main.separate_pair, self.BOSS, data)["pairId"] == "ana_beto"
+        assert call(main.join_pair_again, self.BOSS, {"pairId": "ana_beto"}) == {
+            "pairId": "ana_beto"
+        }
+        assert call(main.remove_from_ronda, self.BOSS, data)["notice"] == "sent"
+        assert len(self.sender.messages) == 1
+        assert call(main.let_back_in, self.BOSS, {"uid": "beto"}) == {"uid": "beto"}
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.review_report, self.BOSS, {"reportId": "nope", "action": "read"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.NOT_FOUND
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.let_back_in, self.BOSS, {"uid": "beto"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.NOT_FOUND
 
 
 class TestWeeklyLoopCodeJobs:

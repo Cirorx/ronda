@@ -38,6 +38,7 @@ from datetime import date, datetime, timedelta
 import demo_users
 import member_barrios
 import rsvp
+import safety
 import seguimos
 
 log = logging.getLogger(__name__)
@@ -92,10 +93,11 @@ def waiting_people(db) -> dict[str, dict]:
         for member in db.collection(f"rondas/{snapshot.id}/members").stream():
             if (member.to_dict() or {}).get("state") in ("active", "paused"):
                 seated.add(member.id)
+    out = safety.removed(db)
     lists: dict[str, dict] = {}
     for snapshot in db.collection("users").stream():
         uid, user = snapshot.id, snapshot.to_dict() or {}
-        if uid in seated or not demo_users.counts(uid) or "firstName" not in user:
+        if uid in seated or uid in out or not demo_users.counts(uid) or "firstName" not in user:
             continue
         barrios = member_barrios.barrios(user)
         if not barrios:

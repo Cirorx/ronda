@@ -206,6 +206,31 @@ class TestDemoSignUps:
         assert [person["uid"] for person in data["people"]] == sorted(self.REAL)
         assert data["avoidPairs"] == [["Pq7Lm2", "Xb3kQ9"]]
 
+    def test_who_is_out_of_ronda_never_reaches_the_solver_nor_do_their_pairs(self, monkeypatch):
+        on_the_real_project(monkeypatch)
+        seen = []
+        monkeypatch.setattr(
+            proposals,
+            "solve",
+            lambda data: (
+                seen.append(data)
+                or {
+                    "status": "optimal",
+                    "proposals": [],
+                    "unseated": [],
+                    "rejectedAlternative": None,
+                }
+            ),
+        )
+        db = FakeFirestore(self.sign_ups())
+        db.documents["removed/Pq7Lm2"] = {"firstName": "Vecina"}
+
+        proposals.propose(db, ADMIN, NOW)
+
+        [data] = seen
+        assert "Pq7Lm2" not in [person["uid"] for person in data["people"]]
+        assert data["avoidPairs"] == []
+
     def test_on_the_real_project_alone_they_make_no_group(self, monkeypatch):
         on_the_real_project(monkeypatch)
         db = FakeFirestore(invented_sign_ups())

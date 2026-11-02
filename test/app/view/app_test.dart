@@ -33,11 +33,13 @@ import 'package:ronda/payoff/payoff.dart';
 import 'package:ronda/phone_login/phone_login.dart';
 import 'package:ronda/rain_move/rain_move.dart';
 import 'package:ronda/ronda_setup/ronda_setup.dart';
+import 'package:ronda/safety_queue/safety_queue.dart';
 import 'package:ronda/settings/settings.dart';
 import 'package:ronda/walkthrough/walkthrough.dart';
 import 'package:ronda/welcome/welcome.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
+import 'package:safety_repository/safety_repository.dart';
 import 'package:small_plan_repository/small_plan_repository.dart';
 
 import '../../helpers/helpers.dart';
@@ -64,6 +66,8 @@ class _MockFlyerRepository extends Mock implements FlyerRepository;
 class _MockOrganiserRepository extends Mock implements OrganiserRepository;
 
 class _MockSmallPlanRepository extends Mock implements SmallPlanRepository;
+
+class _MockSafetyRepository extends Mock implements SafetyRepository;
 
 class _MockErrorReporter extends Mock implements ErrorReporter;
 
@@ -93,6 +97,7 @@ void main() {
     late ProfileRepository profileRepository;
     late RondaRepository rondaRepository;
     late SmallPlanRepository smallPlanRepository;
+    late SafetyRepository safetyRepository;
     late PushRepository pushRepository;
     late FlyerRepository flyerRepository;
     late OrganiserRepository organiserRepository;
@@ -137,6 +142,12 @@ void main() {
       profileRepository = _MockProfileRepository();
       rondaRepository = _MockRondaRepository();
       smallPlanRepository = _MockSmallPlanRepository();
+      safetyRepository = _MockSafetyRepository();
+      when(safetyRepository.watchUnreadCount)
+          .thenAnswer((_) => const Stream.empty());
+      when(() => safetyRepository.watchReceipts(any()))
+          .thenAnswer((_) => const Stream.empty());
+      when(safetyRepository.reportPeople).thenAnswer((_) async => const []);
       when(() => smallPlanRepository.current(any()))
           .thenAnswer((_) async => const SmallPlanNothing());
       pushRepository = _MockPushRepository();
@@ -248,6 +259,7 @@ void main() {
           profileRepository: profileRepository,
           pushRepository: pushRepository,
           rondaRepository: rondaRepository,
+          safetyRepository: safetyRepository,
           smallPlanRepository: smallPlanRepository,
           walkthroughSeen: walkthroughSeen,
           language: language,
@@ -1005,6 +1017,30 @@ void main() {
             .called(1);
       });
 
+      testWidgets('by counting the unread reports for the admin only', (
+        tester,
+      ) async {
+        when(safetyRepository.watchUnreadCount)
+            .thenAnswer((_) => Stream.value(2));
+        adminClaim = true;
+        await pumpSignedIn(tester);
+
+        expect(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text('2'),
+          ),
+          findsOneWidget,
+        );
+        verify(safetyRepository.watchUnreadCount).called(1);
+      });
+
+      testWidgets('by asking a member for no unread count', (tester) async {
+        await pumpSignedIn(tester);
+
+        verifyNever(safetyRepository.watchUnreadCount);
+      });
+
       testWidgets('by showing the admin an Admin tab that opens $AdminPage', (
         tester,
       ) async {
@@ -1027,6 +1063,23 @@ void main() {
         expect(_tab('Admin'), findsOneWidget);
       });
 
+      testWidgets('by opening the reports from the admin screen', (
+        tester,
+      ) async {
+        when(safetyRepository.watchQueue)
+            .thenAnswer((_) => Stream.value(const SafetyQueue()));
+        adminClaim = true;
+        await pumpSignedIn(tester);
+        await tester.tap(_tab('Admin'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byType(SafetyQueueLink));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SafetyQueuePage), findsOneWidget);
+        expect(_tab('Admin'), findsOneWidget);
+      });
+
       testWidgets('by showing a member no Admin tab', (tester) async {
         await pumpSignedIn(tester);
 
@@ -1039,6 +1092,7 @@ void main() {
         (' trace', AgentTracePage.path),
         (' setup', RondaSetupPage.path),
         (' errors', ErrorLogPage.path),
+        (' reports', SafetyQueuePage.path),
         (' roll', AttendancePage.location('ronda-1', '2026-W45', admin: true)),
       ]) {
         testWidgets('by sending a member who opens the admin$name screen '
@@ -1060,6 +1114,7 @@ void main() {
           verifyNever(rondaRepository.rondaSetups);
           verifyNever(organiserRepository.watchRuns);
           verifyNever(() => rondaRepository.watchRoll(any(), any()));
+          verifyNever(safetyRepository.watchQueue);
         });
       }
 

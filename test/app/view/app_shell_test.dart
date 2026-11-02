@@ -43,6 +43,7 @@ void main() {
       double textScale = 1,
       Locale locale = rioplatense,
       String initialLocation = '/ronda',
+      int unread = 0,
     }) {
       router = GoRouter(
         initialLocation: initialLocation,
@@ -75,8 +76,11 @@ void main() {
         ..devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       return tester.pumpWidget(
-        BlocProvider.value(
-          value: adminAccess,
+        MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: adminAccess),
+            BlocProvider.value(value: unreadReports(unread)),
+          ],
           child: MaterialApp.router(
             theme: AppTheme.light,
             locale: locale,
@@ -177,6 +181,39 @@ void main() {
               .selectedIndex,
           AppShell.adminBranch,
         );
+      });
+
+      testWidgets('carries the unread reports, said in words', (tester) async {
+        when(() => adminAccess.state).thenReturn(AdminAccess.admin);
+
+        await pumpShell(tester, unread: 2);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text('2'),
+          ),
+          findsOneWidget,
+        );
+        final admin = tester.widget<NavigationDestination>(
+          find.widgetWithText(NavigationDestination, 'Admin'),
+        );
+        expect(admin.tooltip, equals('Admin, 2 reportes sin leer'));
+      });
+
+      testWidgets('says the unread reports in the rail too', (tester) async {
+        final semantics = tester.ensureSemantics();
+        when(() => adminAccess.state).thenReturn(AdminAccess.admin);
+
+        await pumpShell(tester, size: desktopSize, unread: 1);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.bySemanticsLabel(RegExp('Admin, 1 reporte sin leer')),
+          findsOneWidget,
+        );
+        semantics.dispose();
       });
 
       testWidgets('stands in the rail for the admin on a desktop', (

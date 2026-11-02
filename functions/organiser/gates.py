@@ -13,8 +13,8 @@ In order:
    and says so only in the terms and on the flyers. Held as "menciona plata".
 6. `routine`: one routine message a week per member. The week's RSVP push ("¿Venís?") is that
    ronda's routine message, so a routine message from the organiser in the same week is held.
-   A change the host decided (a rain move), a proposal to the host and a question to one person
-   (`ASK`, from a code job) are not routine.
+   A change the host decided (a rain move), a proposal to the host, a question to one person
+   (`ASK`, from a code job) and the admin's notice to one person (`NOTICE`) are not routine.
 7. `public_place`: the ronda itself only meets in public places. A message that sends people
    somewhere must name a public place, and its words must not look like a home or an address
    (`text.private_place`). A home is only for the después, which the organiser never sends.
@@ -44,6 +44,9 @@ that person had no RSVP from the ronda, and code allows one offer per freed seat
 ASK = "ask"
 """A question to one person about one meeting, sent by a code job, not the model ("¿Abrís
 vos?", the después where someone lives, a buddy's check-in)."""
+NOTICE = "notice"
+"""A one-off notice to one person about their place in Ronda, sent by code when the admin
+decided it ("Ya no estás en esta ronda", removals.py). Not routine."""
 
 PUBLIC = "public"
 """`places/{id}.kind` of a place the ronda itself may meet in."""

@@ -73,6 +73,8 @@ dependencies:
     path: packages/ronda_repository
   ronda_ui:
     path: packages/ronda_ui
+  safety_repository:
+    path: packages/safety_repository
   share_sheet:
     path: packages/share_sheet
   small_plan_repository:

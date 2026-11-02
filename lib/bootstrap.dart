@@ -34,6 +34,7 @@ import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_api/ronda_api.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
+import 'package:safety_repository/safety_repository.dart';
 import 'package:share_sheet/share_sheet.dart';
 import 'package:small_plan_repository/small_plan_repository.dart';
 import 'package:voice_recorder/voice_recorder.dart';
@@ -51,6 +52,7 @@ typedef AppBuilder = FutureOr<Widget> Function({
   required ProfileRepository profileRepository,
   required PushRepository pushRepository,
   required RondaRepository rondaRepository,
+  required SafetyRepository safetyRepository,
   required SmallPlanRepository smallPlanRepository,
   required bool walkthroughSeen,
   required AppLanguage? language,
@@ -276,6 +278,7 @@ Future<void> bootstrap(
   );
   final rondasApi = RondasApi(firestore: firestore, functions: functions);
   final organiserApi = OrganiserApi(firestore: firestore, functions: functions);
+  final safetyApi = SafetyApi(firestore: firestore, functions: functions);
   final voiceRecorder = VoiceRecorder();
   final liveTranscript = liveTranscriptUrl.isEmpty
       ? null
@@ -389,6 +392,7 @@ Future<void> bootstrap(
     liveTranscript: liveTranscript,
   );
   final organiserRepository = OrganiserRepository(organiserApi: organiserApi);
+  final safetyRepository = SafetyRepository(safetyApi: safetyApi);
   final smallPlanRepository = SmallPlanRepository(
     deviceStore: deviceStore,
     voiceRecorder: voiceRecorder,
@@ -422,6 +426,7 @@ Future<void> bootstrap(
     profileRepository: profileRepository,
     pushRepository: pushRepository,
     rondaRepository: rondaRepository,
+    safetyRepository: safetyRepository,
     smallPlanRepository: smallPlanRepository,
     walkthroughSeen: walkthroughSeen,
     language: language,

@@ -124,6 +124,14 @@ class TestTheJob:
         cards = {p.split("/")[1] for p in db.documents if p.startswith("waiting/")}
         assert cards == {"demo-500", "demo-501", "demo-502", "demo-503", "demo-514"}
 
+    def test_who_is_out_of_ronda_waits_nowhere(self):
+        db = waiting_db()
+        db.documents["removed/demo-500"] = {"firstName": "Vecina"}
+        waitlists.run_waitlists(db, FRIDAY)
+
+        assert "demo-500" not in [e["uid"] for e in db.documents[f"waitlists/{SEAT}"]["entries"]]
+        assert "waiting/demo-500" not in db.documents
+
     def test_who_works_in_another_barrio_waits_there_too(self):
         db = waiting_db()
         work_seat = "solymar-sur_mate_sat-afternoon"

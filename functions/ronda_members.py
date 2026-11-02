@@ -17,6 +17,8 @@ The rules, checked in `add`:
   leaves the old one (`state: left`, `leftAt`) and deletes its `users/{uid}/rondas` link, since
   the phone follows the lowest ronda id it finds there. A link to a ronda they already left, or
   that no longer meets, is deleted too.
+- Never someone out of Ronda ([Sacar de Ronda]), nor someone separated from one of the ronda's
+  members ([Separarlos]; safety.py): `candidates` leaves them out and `add` refuses them.
 - Warnings never block: a slot or pretext they didn't pick, a ronda beyond the solver's walk from
   both their casa and their trabajo, a seat their phone didn't mark as possible (which need, the
   server never knows).
@@ -32,6 +34,7 @@ import demo_users
 import first_visit
 import member_barrios
 import rsvp
+import safety
 from proposals import APPROVED, unseated_person
 
 SEATED = ("active", "paused")
@@ -165,7 +168,8 @@ def _links(db, uid: str, ronda_id: str) -> tuple[dict[str, dict], list[str]]:
 
 def candidates(db, ronda_id: str) -> dict:
     """Who the admin could add to ronda `ronda_id`: every sign-up who counts here, with a
-    profile in a known barrio, not sitting in it; those in no ronda first, then by first name.
+    profile in a known barrio, not sitting in it, neither out of Ronda nor separated from one
+    of its members; those in no ronda first, then by first name.
     Each with first name, age band, barrio, slots, pretexts, the walk in blocks, `warnings`,
     and the ronda they sit in now (`rondaId`, `rondaLine`) if any. With the ronda's line, its
     members' first names, how many seats are taken and its cap."""
@@ -173,6 +177,7 @@ def candidates(db, ronda_id: str) -> dict:
     members = rsvp._members(db, ronda_id)
     inside = seated(members)
     names = rsvp._first_names(db, inside)
+    kept_off = set(inside) | safety.removed(db) | safety.apart_from(db, inside)
     people = []
     for snapshot in db.collection("users").stream():
         uid, user = snapshot.id, snapshot.to_dict() or {}
@@ -180,7 +185,7 @@ def candidates(db, ronda_id: str) -> dict:
             not demo_users.counts(uid)
             or "firstName" not in user
             or not member_barrios.anchors(user)
-            or uid in inside
+            or uid in kept_off
         ):
             continue
         sitting, _ = _links(db, uid, ronda_id)
@@ -219,10 +224,14 @@ def add(db, ronda_id: str, uid: str, now: datetime, *, move: bool = False) -> di
     user = (user_snapshot.to_dict() or {}) if user_snapshot.exists else {}
     if "firstName" not in user or not member_barrios.anchors(user):
         raise MemberError("not-found", "no sign-up with a profile in a known barrio")
+    if uid in safety.removed(db):
+        raise MemberError("failed-precondition", "out of Ronda: let them back in first")
     members = rsvp._members(db, ronda_id)
     inside = seated(members)
     if uid in inside:
         raise MemberError("already-exists", "already in this ronda")
+    if uid in safety.apart_from(db, inside):
+        raise MemberError("failed-precondition", "separated from someone in this ronda")
     if len(inside) >= cap(ronda):
         raise MemberError("resource-exhausted", "the ronda is full")
     sitting, stale = _links(db, uid, ronda_id)

@@ -352,6 +352,28 @@ service cloud.firestore {
               .data.get('state', 'active') != 'left';
     }
 
+    // Safety (#71, functions/reports.py, safety.py, removals.py). A report ("Contar algo que
+    // pasó") is read by the admin only: not the reporter, not the person it is about, nobody in
+    // their ronda. The reporter reads only their own receipt, which says it arrived and whether
+    // they withdrew it, never what the admin did. Who is kept apart ([Separarlos]) and who is
+    // out of Ronda ([Sacar de Ronda]) are the admin's too. The callables write all of it with
+    // the admin SDK; no client writes any of it.
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+    }
+
+    match /users/{uid}/reports/{reportId} {
+      allow read: if isOwner(uid);
+    }
+
+    match /avoid/{pairId} {
+      allow read: if isAdmin();
+    }
+
+    match /removed/{uid} {
+      allow read: if isAdmin();
+    }
+
     // The web app's error log (functions/client_errors.py): scrubbed reports written only by
     // the report_client_error callable, read by the admin on /admin/errores. Its per-caller
     // hourly quota (client_error_quota) stays closed to every client.

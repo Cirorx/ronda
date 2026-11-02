@@ -13,5 +13,6 @@ export 'src/proposals/proposals.dart';
 export 'src/ronda_api.dart';
 export 'src/ronda_api_exceptions.dart';
 export 'src/rondas/rondas.dart';
+export 'src/safety/safety.dart';
 export 'src/seat_facts/seat_facts.dart';
 export 'src/small_plans/small_plans.dart';

@@ -32,9 +32,10 @@ dates in the examples are demo data. Everything not listed here is out of the bu
     sends, and [Prender los avisos], which forgets "Ahora no" and asks the phone again. A phone
     that refused for good gets the push card's line: "Los avisos de Ronda están apagados en este
     teléfono. Si los querés, prendelos en los ajustes del teléfono."
-  - **Contar algo que pasó:** "Contá qué pasó. Lo lee una persona, no un programa. La otra persona
-    no se entera de que contaste.", "Escribinos a <address>." and [Escribir un mail] (subject
-    "Ronda: algo que pasó"), then the helpline (§ Safety), each number a button that dials it.
+  - **Contar algo que pasó** (#71, § Safety): "Contá qué pasó. Lo lee una persona, no un programa.
+    La otra persona no se entera de que contaste.", "Si estás en peligro ahora, llamá al 911.", the
+    person's open receipts, the in-app form, then the helpline, each number a button that dials
+    it.
   - **Tus datos:** "Lo que Ronda guarda de vos" (name, age band and barrio; days, times,
     activities and what you bring; your ronda and your answers; the Google account or the mobile
     number you sign in with, and this phone's push code; when you accepted the terms), "Lo que no guardamos" (the audio; what makes
@@ -49,7 +50,7 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   - **Salir de esta cuenta:** "¿Salís de esta cuenta?" — your group and answers stay; this phone
     stops getting notifications. [Salir] forgets this phone's push token, then signs out.
   - The address is one build value, `RONDA_CONTACT_EMAIL` (`docs/STACK.md` § Pilot builds); a
-    person reads it. There is no in-app report form, no "Bajar una copia" and no "Borrar todo"
+    person reads it. There is no "Bajar una copia" and no "Borrar todo"
     yet: changes and deletions are done by hand on request.
   - Still to come: "Tomarme unas semanas", "Cambiarme de grupo", "Dejar Ronda", "Lo que te
     complica ir" (on the phone only). "Tu persona de confianza" is chosen and changed on Mi
@@ -622,13 +623,40 @@ rates anything, keeps a streak or counts days, and never says "ánimo", "bienest
   question.
 
 ## Safety
-- **Contar algo que pasó** (voice or text): "Contá qué pasó. Lo lee una persona, no un
-  programa. La otra persona no se entera de que contaste." Tags: "Me pidió plata", "Me
-  molestó", "Insistió con algo romántico", "Había un menor", "Quiso ir a un lugar privado",
-  "Otra cosa"; "¿Con quién?"; "Si estás en peligro ahora, llamá al 911."
-- Ciro's queue puts anyone reported in two rondas on top; actions [Sacar de Ronda]
-  [Separarlos], or for small things [Pasarle a Mirta] [Archivar]. Report-apart pairs never
-  seated together. The agent may only move a ronda to a public place in OSM, host confirms.
+- **Contar algo que pasó** (text; built in #71, voice later): "Contá qué pasó. Lo lee una
+  persona, no un programa. La otra persona no se entera de que contaste." Tags ("¿Qué pasó?"):
+  "Me pidió plata", "Me molestó", "Insistió con algo romántico", "Había un menor", "Quiso ir a un
+  lugar privado", "Otra cosa"; "¿Con quién?": the first names of the others in their rondas, and
+  "Alguien de afuera"; "Contalo con tus palabras"; "Si estás en peligro ahora, llamá al 911."
+  above it, and the helplines under it. [Mandar] needs someone picked and a tag or some words
+  ("Elegí con quién fue, y una etiqueta o unas palabras."); five a day at most ("Por hoy ya
+  mandaste varios. Si es urgente, llamá al 911.").
+  - The receipt: "Lo recibimos. Lo lee una persona." and "Lo contaste el 2/11.", with [Agregar
+    algo] ("¿Qué querés agregar?") and [Retirar] ("¿Retirás lo que contaste?", "La persona que
+    lo lee va a ver que lo retiraste.", [Retirar] [Mejor no]). A withdrawn report leaves the
+    screen. The receipt never says what the admin did (telling the reporter the outcome is out).
+  - The person it is about sees nothing, and no notice or message names the reporter.
+- **The queue** (Admin, "Reportes", `/admin/reportes`; the admin only): [Abiertos (n)]
+  [Archivados]. Anyone reported by two or more different people goes on top ("2 personas
+  contaron sobre Beto"), then the newest. Each report: "Ana contó sobre Beto" (or "sobre alguien
+  de afuera"), the day and the ronda, the tags, the words, "Agregó el 3/11: …", and the marks
+  "Nuevo" (unread when the screen opened) and "Retirado" (a withdrawn report stays in the queue).
+  Opening the queue marks what it shows read. No push goes to the admin on a new report: the
+  Admin tab's unread count (and the count on the link to "Reportes") is the alert; an addition or
+  a withdrawal makes a report unread again, and an addition brings an archived one back to
+  Abiertos.
+  - [Separarlos]: the two are never seated together again (the solver, "Sumar a esta ronda" and
+    the bench). If they are in one ronda now: "Siguen juntos en {ronda}; esto vale desde la
+    próxima vez." Otherwise "Separados: no los ponemos juntos de nuevo." Under "Separados", each
+    pair with [Juntarlos de nuevo].
+  - [Sacar de Ronda] asks "¿Sacás a Beto de Ronda?": "Sale de su ronda y no entra en grupos,
+    listas de espera ni lugares libres hasta que lo dejes entrar de nuevo. Le llega solo «Ya no
+    estás en esta ronda.», sin decir quién contó ni por qué." [Sacar] [Mejor no]. They leave
+    every ronda at once; the notice passes the gates (at night it waits for 09:00: "El aviso le
+    sale a las 9."), and goes only when they left a ronda. Under "Fuera de Ronda", each with
+    [Dejar entrar de nuevo], which seats nobody again.
+  - [Archivar] and [Reabrir]. Not built: [Pasarle a Mirta], urgency by tag, voice reports.
+- Report-apart pairs never seated together. The agent may only move a ronda to a public place in OSM, host confirms.
 - The ronda always meets in a public place, adults only; only the después may be at a home,
   when the host sets it. Helpline in Ajustes: "¿Necesitás hablar con alguien ahora?"
   Línea de Prevención del Suicidio 0800 0767 / *0767, Emergencias 911.

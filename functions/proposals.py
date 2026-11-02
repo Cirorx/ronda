@@ -17,6 +17,7 @@ from datetime import datetime
 
 import demo_users
 import member_barrios
+import safety
 from ronda_solver import solve
 from ronda_solver.barrios import CENTROIDS
 
@@ -177,20 +178,20 @@ def ronda_documents(
 
 
 def _read_sign_ups(db) -> tuple[dict[str, dict], dict[str, list[str]], list[dict]]:
-    """The users who count here (demo_users.counts), their eligible seat ids and the avoid
-    pairs between two of them."""
+    """The users who count here (demo_users.counts) and aren't out of Ronda (safety.removed),
+    their eligible seat ids and the avoid pairs between two of them."""
+    out = safety.removed(db)
     users = {
         snapshot.id: snapshot.to_dict()
         for snapshot in db.collection("users").stream()
-        if demo_users.counts(snapshot.id)
+        if demo_users.counts(snapshot.id) and snapshot.id not in out
     }
     eligible = {}
     for uid in users:
         snapshot = db.document(f"users/{uid}/private/eligible").get()
         if snapshot.exists:
             eligible[uid] = snapshot.to_dict().get("seatIds", [])
-    pairs = [snapshot.to_dict() for snapshot in db.collection("avoid").stream()]
-    avoid = [p for p in pairs if demo_users.counts(p["uidA"]) and demo_users.counts(p["uidB"])]
+    avoid = [p for p in safety.avoid_pairs(db) if p["uidA"] in users and p["uidB"] in users]
     return users, eligible, avoid
 
 

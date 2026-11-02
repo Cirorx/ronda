@@ -170,6 +170,16 @@ class TestCandidates:
 
         assert "demo-007" not in [p["uid"] for p in listed["people"]]
 
+    def test_leaves_out_who_is_out_of_ronda_or_separated_from_a_member(self):
+        db = FakeFirestore(world())
+        db.documents["removed/fede"] = {"firstName": "Fede"}
+        db.documents["avoid/beto_eva"] = {"uidA": "beto", "uidB": "eva"}
+        db.documents["avoid/dani_gabi"] = {"uidA": "dani", "uidB": "gabi"}
+
+        listed = ronda_members.candidates(db, "r1")
+
+        assert [p["uid"] for p in listed["people"]] == ["dani", "demo-007", "gabi"]
+
     def test_refuses_an_unknown_ronda_or_one_that_no_longer_meets(self):
         db = FakeFirestore(world())
         db.documents["rondas/r1"]["status"] = "ended"
@@ -276,6 +286,27 @@ class TestAdd:
 
         assert excinfo.value.code == "resource-exhausted"
         assert "rondas/r1/members/eva" not in db.documents
+
+    def test_refuses_someone_out_of_ronda(self):
+        db = FakeFirestore(world())
+        db.documents["removed/eva"] = {"firstName": "Eva"}
+
+        with pytest.raises(ronda_members.MemberError) as excinfo:
+            ronda_members.add(db, "r1", "eva", NOW)
+
+        assert excinfo.value.code == "failed-precondition"
+        assert "rondas/r1/members/eva" not in db.documents
+
+    def test_refuses_someone_separated_from_a_member_but_not_from_one_who_left(self):
+        db = FakeFirestore(world())
+        db.documents["avoid/cora_eva"] = {"uidA": "cora", "uidB": "eva"}
+
+        with pytest.raises(ronda_members.MemberError) as excinfo:
+            ronda_members.add(db, "r1", "eva", NOW)
+        assert excinfo.value.code == "failed-precondition"
+
+        db.documents["avoid/cora_eva"] = {"uidA": "dani", "uidB": "eva"}
+        assert ronda_members.add(db, "r1", "eva", NOW)["uid"] == "eva"
 
     def test_refuses_someone_already_in_it(self):
         with pytest.raises(ronda_members.MemberError) as excinfo:

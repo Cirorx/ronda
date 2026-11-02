@@ -1140,3 +1140,128 @@ def leave_small_plan(req: https_fn.CallableRequest) -> dict:
     return _shared_plan_call(
         req, lambda: shared_plans.leave(_firestore(), req.auth.uid, req.data, _now())
     )
+
+
+# --- Safety (#71): Contar algo que pasó, and the admin's queue -------------------------------
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def report_people(req: https_fn.CallableRequest) -> dict:
+    """ "¿Con quién?": the other members of the caller's rondas by first name (reports.py)."""
+    import reports
+
+    return _member_call(
+        req, reports.ReportError, lambda: reports.people(_firestore(), req.auth.uid)
+    )
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def send_report(req: https_fn.CallableRequest) -> dict:
+    """Contar algo que pasó, `{text, tags, aboutUid}`: only the admin reads it; the caller keeps
+    a receipt (reports.py)."""
+    import reports
+
+    return _member_call(
+        req, reports.ReportError, lambda: reports.file(_firestore(), req.auth.uid, req.data, _now())
+    )
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def add_to_report(req: https_fn.CallableRequest) -> dict:
+    """More words on the caller's own report, `{reportId, text}` (reports.py)."""
+    import reports
+
+    return _member_call(
+        req, reports.ReportError, lambda: reports.add(_firestore(), req.auth.uid, req.data, _now())
+    )
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def withdraw_report(req: https_fn.CallableRequest) -> dict:
+    """[Retirar] on the caller's own report, `{reportId}`: it stays in the admin's queue,
+    marked «retirado» (reports.py)."""
+    import reports
+
+    return _member_call(
+        req,
+        reports.ReportError,
+        lambda: reports.withdraw(_firestore(), req.auth.uid, req.data, _now()),
+    )
+
+
+def _safety_call(req: https_fn.CallableRequest, run):
+    """Runs `run(db)` for the admin only, mapping a refusal to its code."""
+    import reports
+    import safety
+
+    _require_admin(req)
+    try:
+        return run(_firestore())
+    except (reports.ReportError, safety.SafetyError) as e:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e)) from e
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=1, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def review_report(req: https_fn.CallableRequest) -> dict:
+    """The admin reads, archives or reopens a report, `{reportId, action: read | archive |
+    reopen}`. Admin only (reports.py)."""
+    import reports
+
+    return _safety_call(req, lambda db: reports.review(db, req.data, _now()))
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=1, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def separate_pair(req: https_fn.CallableRequest) -> dict:
+    """[Separarlos] on a report, `{reportId}`: its two people are never seated together again.
+    Admin only (safety.py)."""
+    import safety
+
+    return _safety_call(req, lambda db: safety.separate(db, req.data, _now()))
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=1, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def join_pair_again(req: https_fn.CallableRequest) -> dict:
+    """[Juntarlos de nuevo], `{pairId}`. Admin only (safety.py)."""
+    import safety
+
+    return _safety_call(req, lambda db: safety.join_again(db, req.data))
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=1, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def remove_from_ronda(req: https_fn.CallableRequest) -> dict:
+    """[Sacar de Ronda] on a report, `{reportId}`: the person it is about leaves every ronda,
+    is kept out until let back in, and gets one neutral notice. Admin only (removals.py)."""
+    import jobs
+    import removals
+
+    def run(db) -> dict:
+        context = jobs.context()
+        return removals.remove(db, req.data, _now(), send=context.send, app_url=context.app_url)
+
+    return _safety_call(req, run)
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=1, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def let_back_in(req: https_fn.CallableRequest) -> dict:
+    """[Dejar entrar de nuevo], `{uid}`. Admin only (removals.py)."""
+    import removals
+
+    return _safety_call(req, lambda db: removals.let_back_in(db, req.data))

@@ -2287,19 +2287,6 @@
     "@reportBody": {
         "description": "Report screen: who reads it"
     },
-    "reportWriteTo": "Write to us at {email}.",
-    "@reportWriteTo": {
-        "description": "Report screen: the contact address",
-        "placeholders": {
-            "email": {
-                "type": "String"
-            }
-        }
-    },
-    "reportEmailSubject": "Ronda: something that happened",
-    "@reportEmailSubject": {
-        "description": "Subject of the report email"
-    },
     "contactEmailButton": "Write an email",
     "@contactEmailButton": {
         "description": "Button that opens the mail app on a mail to Ronda"
@@ -4955,5 +4942,341 @@
     "waiterAskNo": "I can't",
     "@waiterAskNo": {
         "description": "Mi ronda, the waiter: hands the choice back to the hosts"
+    },
+    "reportDangerNow": "If you're in danger right now, call 911.",
+    "@reportDangerNow": {
+        "description": "Report screen: the line above the form"
+    },
+    "reportWhatTitle": "What happened?",
+    "@reportWhatTitle": {
+        "description": "Report screen: the tags' heading"
+    },
+    "reportTagAskedForMoney": "Asked me for money",
+    "@reportTagAskedForMoney": {
+        "description": "Report tag"
+    },
+    "reportTagBothered": "Bothered me",
+    "@reportTagBothered": {
+        "description": "Report tag"
+    },
+    "reportTagRomantic": "Kept pushing something romantic",
+    "@reportTagRomantic": {
+        "description": "Report tag"
+    },
+    "reportTagMinor": "There was a minor",
+    "@reportTagMinor": {
+        "description": "Report tag"
+    },
+    "reportTagPrivatePlace": "Wanted to go somewhere private",
+    "@reportTagPrivatePlace": {
+        "description": "Report tag"
+    },
+    "reportTagOther": "Something else",
+    "@reportTagOther": {
+        "description": "Report tag"
+    },
+    "reportWhoTitle": "Who with?",
+    "@reportWhoTitle": {
+        "description": "Report screen: who it is about"
+    },
+    "reportWhoOutside": "Someone from outside",
+    "@reportWhoOutside": {
+        "description": "Report screen: someone not in Ronda"
+    },
+    "reportTextLabel": "Tell it in your own words",
+    "@reportTextLabel": {
+        "description": "Report screen: the text field"
+    },
+    "reportTextTooLong": "That's too long: {limit} characters at most.",
+    "@reportTextTooLong": {
+        "description": "Report screen: the text is over the limit",
+        "placeholders": {
+            "limit": {
+                "type": "int"
+            }
+        }
+    },
+    "reportSendHint": "Pick who it was with, and a tag or a few words.",
+    "@reportSendHint": {
+        "description": "Report screen: what Mandar still needs"
+    },
+    "reportSend": "Send",
+    "@reportSend": {
+        "description": "Report screen: send button"
+    },
+    "reportSending": "Sending…",
+    "@reportSending": {
+        "description": "Report screen: while sending"
+    },
+    "reportSendFailed": "It didn't go through. Try again.",
+    "@reportSendFailed": {
+        "description": "Report screen: sending failed"
+    },
+    "reportTooMany": "You've sent several today. If it's urgent, call 911.",
+    "@reportTooMany": {
+        "description": "Report screen: five reports today"
+    },
+    "reportReceived": "We got it. A person reads it.",
+    "@reportReceived": {
+        "description": "Report receipt"
+    },
+    "reportReceivedOn": "You told us on {date}.",
+    "@reportReceivedOn": {
+        "description": "Report receipt: when",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "reportAdd": "Add something",
+    "@reportAdd": {
+        "description": "Report receipt: add to it"
+    },
+    "reportAddTitle": "What do you want to add?",
+    "@reportAddTitle": {
+        "description": "Add-to-report sheet: title"
+    },
+    "reportAddSend": "Add",
+    "@reportAddSend": {
+        "description": "Add-to-report sheet: send"
+    },
+    "reportAdded": "Added. A person reads it.",
+    "@reportAdded": {
+        "description": "Report receipt: after adding"
+    },
+    "reportWithdraw": "Withdraw",
+    "@reportWithdraw": {
+        "description": "Report receipt: withdraw it"
+    },
+    "reportWithdrawTitle": "Withdraw what you told us?",
+    "@reportWithdrawTitle": {
+        "description": "Withdraw dialog: title"
+    },
+    "reportWithdrawBody": "The person who reads it will see that you withdrew it.",
+    "@reportWithdrawBody": {
+        "description": "Withdraw dialog: body"
+    },
+    "reportKeep": "Never mind",
+    "@reportKeep": {
+        "description": "Withdraw dialog: cancel"
+    },
+    "reportWithdrawn": "You withdrew it.",
+    "@reportWithdrawn": {
+        "description": "Report receipt after Retirar"
+    },
+    "reportActionFailed": "It didn't go through. Try again.",
+    "@reportActionFailed": {
+        "description": "Report receipt: add or withdraw failed"
+    },
+    "reportLoading": "Loading…",
+    "@reportLoading": {
+        "description": "Report screen: reading"
+    },
+    "safetyQueueTitle": "Reports",
+    "@safetyQueueTitle": {
+        "description": "Admin: the reports queue's title"
+    },
+    "safetyQueueLink": "Reports",
+    "@safetyQueueLink": {
+        "description": "Admin: the link to the reports queue"
+    },
+    "safetyUnread": "{count, plural, =1{1 unread report} other{{count} unread reports}}",
+    "@safetyUnread": {
+        "description": "Admin tab: the unread count, read aloud",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "safetyQueueLoading": "Looking for the reports…",
+    "@safetyQueueLoading": {
+        "description": "Admin queue: reading"
+    },
+    "safetyQueueLoadError": "We couldn't read the reports. Try again.",
+    "@safetyQueueLoadError": {
+        "description": "Admin queue: reading failed"
+    },
+    "safetyOpenTab": "Open",
+    "@safetyOpenTab": {
+        "description": "Admin queue: open reports"
+    },
+    "safetyArchivedTab": "Archived",
+    "@safetyArchivedTab": {
+        "description": "Admin queue: archived reports"
+    },
+    "safetyNoneOpen": "No open reports.",
+    "@safetyNoneOpen": {
+        "description": "Admin queue: none open"
+    },
+    "safetyNoneArchived": "No archived reports.",
+    "@safetyNoneArchived": {
+        "description": "Admin queue: none archived"
+    },
+    "safetyReportAbout": "{reporter} told us about {about}",
+    "@safetyReportAbout": {
+        "description": "Admin queue: who about whom",
+        "placeholders": {
+            "reporter": {
+                "type": "String"
+            },
+            "about": {
+                "type": "String"
+            }
+        }
+    },
+    "safetyReportOutside": "{reporter} told us about someone from outside",
+    "@safetyReportOutside": {
+        "description": "Admin queue: about someone outside Ronda",
+        "placeholders": {
+            "reporter": {
+                "type": "String"
+            }
+        }
+    },
+    "safetyReportOn": "On {date}",
+    "@safetyReportOn": {
+        "description": "Admin queue: when it was sent",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "safetyNew": "New",
+    "@safetyNew": {
+        "description": "Admin queue: unread marker"
+    },
+    "safetyWithdrawnMark": "Withdrawn",
+    "@safetyWithdrawnMark": {
+        "description": "Admin queue: the reporter withdrew it"
+    },
+    "safetyReporters": "{count} people told us about {name}",
+    "@safetyReporters": {
+        "description": "Admin queue: two or more reporters",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            },
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "safetyAddedOn": "Added on {date}:",
+    "@safetyAddedOn": {
+        "description": "Admin queue: an addition",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "safetySeparate": "Keep them apart",
+    "@safetySeparate": {
+        "description": "Admin queue: separate the pair"
+    },
+    "safetySeparated": "Kept apart: never grouped together again.",
+    "@safetySeparated": {
+        "description": "Admin queue: the pair is separated"
+    },
+    "safetyStillTogether": "They're still together in {ronda}; this counts from next time.",
+    "@safetyStillTogether": {
+        "description": "Admin queue: separated but in one ronda",
+        "placeholders": {
+            "ronda": {
+                "type": "String"
+            }
+        }
+    },
+    "safetyRemove": "Take out of Ronda",
+    "@safetyRemove": {
+        "description": "Admin queue: remove the person"
+    },
+    "safetyRemoveTitle": "Take {name} out of Ronda?",
+    "@safetyRemoveTitle": {
+        "description": "Remove dialog: title",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "safetyRemoveBody": "They leave their ronda and get into no group, waiting list or freed seat until you let them back in. They only get «Ya no estás en esta ronda.», which says nothing of who told us or why.",
+    "@safetyRemoveBody": {
+        "description": "Remove dialog: body"
+    },
+    "safetyRemoveConfirm": "Take out",
+    "@safetyRemoveConfirm": {
+        "description": "Remove dialog: confirm"
+    },
+    "safetyCancel": "Never mind",
+    "@safetyCancel": {
+        "description": "Remove dialog: cancel"
+    },
+    "safetyRemovedMark": "Out of Ronda.",
+    "@safetyRemovedMark": {
+        "description": "Admin queue: the person is out"
+    },
+    "safetyArchive": "Archive",
+    "@safetyArchive": {
+        "description": "Admin queue: archive"
+    },
+    "safetyReopen": "Reopen",
+    "@safetyReopen": {
+        "description": "Admin queue: reopen"
+    },
+    "safetyActionFailed": "It didn't go through. Try again.",
+    "@safetyActionFailed": {
+        "description": "Admin queue: an action failed"
+    },
+    "safetySeparatedTitle": "Kept apart",
+    "@safetySeparatedTitle": {
+        "description": "Admin queue: the pairs kept apart"
+    },
+    "safetyPair": "{a} and {b}",
+    "@safetyPair": {
+        "description": "Admin queue: a pair",
+        "placeholders": {
+            "a": {
+                "type": "String"
+            },
+            "b": {
+                "type": "String"
+            }
+        }
+    },
+    "safetySomeone": "someone",
+    "@safetySomeone": {
+        "description": "Admin queue: a name we don't have"
+    },
+    "safetyJoinAgain": "Let them be grouped together",
+    "@safetyJoinAgain": {
+        "description": "Admin queue: undo Separarlos"
+    },
+    "safetyRemovedTitle": "Out of Ronda",
+    "@safetyRemovedTitle": {
+        "description": "Admin queue: who is out"
+    },
+    "safetyRemovedSince": "{name}, since {date}",
+    "@safetyRemovedSince": {
+        "description": "Admin queue: someone out",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "safetyNoticePending": "Their notice goes out at 9.",
+    "@safetyNoticePending": {
+        "description": "Admin queue: the notice waits for the morning"
+    },
+    "safetyLetBackIn": "Let back in",
+    "@safetyLetBackIn": {
+        "description": "Admin queue: undo Sacar de Ronda"
     }
 }

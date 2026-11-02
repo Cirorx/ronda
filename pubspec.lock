@@ -1513,6 +1513,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.28.0"
+  safety_repository:
+    dependency: "direct main"
+    description:
+      path: "packages/safety_repository"
+      relative: true
+    source: path
+    version: "0.1.0+1"
   share_plus:
     dependency: transitive
     description:

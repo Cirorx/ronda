@@ -52,6 +52,7 @@ jobs:
           - packages/push_repository
           - packages/ronda_api
           - packages/ronda_repository
+          - packages/safety_repository
           - packages/share_sheet
           - packages/small_plan_repository
           - packages/voice_recorder

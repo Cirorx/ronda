@@ -50,6 +50,12 @@ issues, docs, code, commit messages.
 | `Join` | Me sumo | A member's "I'll come" on another's `SharedPlan`; the author sees only the first names of who joined, nobody sees a count, and nothing is shown when nobody does |
 | `PlanCard` | (none) | One member's own read of ¿Alguien se suma? (`rondas/{id}/plan_cards/{uid}`): the others' plans with whether they joined, and their own with who joined it |
 | `FreePlace` | lugar libre | A free public place from the OpenStreetMap cache (`osm_places`: plaza, park, rambla, library, marketplace) that a suggestion can send someone to |
+| `Report` | contar algo que pasó / reporte | What a member tells Ronda happened, with tags, "¿Con quién?" (someone from their rondas, or `aboutUid: ""` for "Alguien de afuera") and words; read by the admin only (`reports/{id}`). A withdrawn one stays in the queue, «retirado» |
+| `ReportReceipt` | "Lo recibimos. Lo lee una persona." | The reporter's own trace of a report (`users/{uid}/reports/{id}`): that it arrived and whether they withdrew it, never what the admin did |
+| `ReportTag` | (the report's tags) | `askedForMoney`, `bothered`, `romantic`, `minor`, `privatePlace`, `other` |
+| `SafetyQueue` | Reportes | The admin's queue: the reports (anyone reported by two or more different people on top), the separated pairs and who is out of Ronda |
+| `SeparatedPair` | Separarlos / Separados | Two people never seated together again (`avoid/{uidA}_{uidB}`, uids in order): the solver, "Sumar a esta ronda" and the bench keep them apart; it counts from the next grouping |
+| `Removal` | Sacar de Ronda / Fuera de Ronda | The admin took the person a report is about out of Ronda (`removed/{uid}`): they leave every ronda and are in no proposal, waiting list, bench or "Sumar a esta ronda" until [Dejar entrar de nuevo]; one neutral notice, «Ya no estás en esta ronda.» |
 | `Gate` | (none) | A rule in code that every outgoing message passes (quiet hours, no emoji, voseo, no money, bot disclosure, one routine push a week) |
 | `Walkthrough` | ¿Cómo funciona? | The three cards a signed-out person sees before the welcome doors on a phone's first open (`/como-funciona`); `walkthroughSeen` is whether this phone has shown them |
 | `Cuaderno` | el cuaderno del barrio | The member's private noticing log: one line a day about what they saw in the barrio, kept only on the phone (`device_store`, `cuaderno.{uid}`); never a mood log, a streak or a count |

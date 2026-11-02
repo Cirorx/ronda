@@ -58,6 +58,8 @@ void main() {
             providers: [
               BlocProvider.value(value: cubit),
               BlocProvider.value(value: rsvpPushCubit),
+              BlocProvider.value(value: unreadReports()),
+              BlocProvider.value(value: unreadReports()),
               BlocProvider.value(value: seguimosCountsCubit),
               BlocProvider.value(value: pilotNumbersCubit),
             ],
@@ -467,6 +469,7 @@ void main() {
           providers: [
             BlocProvider.value(value: cubit),
             BlocProvider.value(value: rsvpPushCubit),
+            BlocProvider.value(value: unreadReports()),
             BlocProvider.value(value: seguimosCountsCubit),
           ],
           child: const AdminView(),

@@ -62,7 +62,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | Package | Layer | Wraps / owns | First issue |
 |---|---|---|---|
 | `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
-| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`, `answer_bench_offer`, `answer_waitlist`, `suggest_small_plans`, `shape_small_plan`, `share_small_plan`, `withdraw_small_plan`, `join_small_plan`, `leave_small_plan`, `post_donde_queda`, `pass_donde_queda`, `guess_donde_queda`, `set_welcome`, `decline_welcome`, and `read_line` and `make_postcard` through `CuadernoApi`, which has no Firestore or Storage client) | #13 |
+| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`, `answer_bench_offer`, `answer_waitlist`, `suggest_small_plans`, `shape_small_plan`, `share_small_plan`, `withdraw_small_plan`, `join_small_plan`, `leave_small_plan`, `post_donde_queda`, `pass_donde_queda`, `guess_donde_queda`, `set_welcome`, `decline_welcome`, the safety callables through `SafetyApi` (`report_people`, `send_report`, `add_to_report`, `withdraw_report`, and the admin's `review_report`, `separate_pair`, `join_pair_again`, `remove_from_ronda`, `let_back_in`), and `read_line` and `make_postcard` through `CuadernoApi`, which has no Firestore or Storage client) | #13 |
 | `device_store` | Data | flutter_secure_storage (needs, the terms and answers held until sign-in, and whether "¿Cómo funciona?" was shown); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
@@ -81,6 +81,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | `ronda_repository` | Repository | Rondas, weeks, RSVPs, proposals (proposals built in #25), Cerca tuyo's demand by barrio (#52), place, hour, hosts and attendance (#47) | #25 |
 | `organiser_repository` | Repository | The organiser agent: the admin's trace (`agent_runs`), a ronda's acta and [Algo estuvo mal], the host's rain proposal and pick, the rain check by hand (over `ronda_api`'s `OrganiserApi`) | #49 |
 | `small_plan_repository` | Repository | Algo chico esta semana: the three suggestions and a plan said or typed (over `ronda_api`'s `SmallPlansApi` and the voice note path), the plan kept on the phone under the uid (`device_store`), the calendar (`calendar_client`) and the follow-up (over `voice_recorder` too: it repeats `OnboardingRepository`'s few lines rather than import it); ¿Alguien se suma? share, withdraw, join and the member's plan card (over `ronda_api`'s `SharedPlansApi`, which has the Firestore client) | #56, #57 |
+| `safety_repository` | Repository | Contar algo que pasó (#71): who "¿Con quién?" offers, sending a report, adding to it and [Retirar], the reporter's receipts; for the admin the queue (`reports`, `avoid`, `removed`), the Admin tab's unread count and what the queue does (over `ronda_api`'s `SafetyApi`). Which reports go on top is the app's cubit's rule | #71 |
 | `contact_repository` | Repository | The contact address (`RONDA_CONTACT_EMAIL`) and the helplines: a mail to Ronda or a call, opened in the person's own app (over `link_opener`) | #54 |
 | `error_reporter` | Repository | Error monitoring (§ Monitoring): `ErrorReporter` with Crashlytics (`firebase_crashlytics`), the `report_client_error` callable (web) and a local log; the scrubber; the error hooks; the admin's `ClientErrorLog` over Firestore. Takes the Firebase clients from bootstrap, like `auth_repository` | error log |
 
@@ -716,8 +717,8 @@ Before any build: `keytool -list -v -keystore ~/.android/debug.keystore -alias a
 -storepass android` for the debug key, `keytool -list -v -keystore <path>.jks -alias upload` for a
 release key.
 
-**Contact address** (`RONDA_CONTACT_EMAIL`). Ajustes' "Contar algo que pasó" and "Tus datos"
-show one address and open a mail to it (`contact_repository`, over `link_opener` and
+**Contact address** (`RONDA_CONTACT_EMAIL`). Ajustes' "Tus datos"
+shows one address and open a mail to it (`contact_repository`, over `link_opener` and
 url_launcher). It is read once in `lib/bootstrap.dart` from `--dart-define=RONDA_CONTACT_EMAIL=…`;
 missing or empty, it is `hola@ciroapps.com`. Both build scripts below pass the
 `RONDA_CONTACT_EMAIL` environment variable through. The address is public (it is on the screen),

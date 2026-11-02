@@ -1,7 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ronda/app/cubit/admin_access_cubit.dart';
+import 'package:ronda/app/cubit/unread_reports_cubit.dart';
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/safety_queue/widgets/safety_queue_link.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// The navigation around the tabs: Mi ronda, Cerca, Ajustes and, for the
@@ -13,7 +15,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 ///
 /// The Admin tab follows [AdminAccessCubit]: it shows once the signed-in
 /// account's token carries the admin claim and goes when a renewed token no
-/// longer does. It is the last branch, so hiding it moves no other tab.
+/// longer does. It is the last branch, so hiding it moves no other tab. It
+/// carries the count of reports the admin hasn't seen
+/// ([UnreadReportsCubit]), the only alert of a new one.
 class const AppShell({
   required final StatefulNavigationShell navigationShell,
   super.key,
@@ -27,7 +31,8 @@ class const AppShell({
     final admin = context.select<AdminAccessCubit, bool>(
       (cubit) => cubit.state == AdminAccess.admin,
     );
-    final tabs = [
+    final unread = context.watch<UnreadReportsCubit>().state;
+    final tabs = <(IconData, IconData, String)>[
       (Icons.groups_outlined, Icons.groups, l10n.myRondaTabLabel),
       (Icons.near_me_outlined, Icons.near_me, l10n.cercaTabLabel),
       (Icons.settings_outlined, Icons.settings, l10n.settingsTabLabel),
@@ -40,6 +45,15 @@ class const AppShell({
           l10n.adminTabLabel,
         ),
     ];
+
+    // The Admin tab's icon carries the unread count; its label says it too.
+    Widget tabIcon(int index, IconData icon) => index == adminBranch
+        ? UnreadBadge(count: unread, child: Icon(icon))
+        : Icon(icon);
+    String tabLabel(int index, String label) =>
+        index == adminBranch && unread > 0
+        ? '$label, ${l10n.safetyUnread(unread)}'
+        : label;
 
     void select(int index) => navigationShell.goBranch(
       index,
@@ -63,11 +77,18 @@ class const AppShell({
                       selectedIndex: navigationShell.currentIndex,
                       onDestinationSelected: select,
                       destinations: [
-                        for (final (icon, selectedIcon, label) in tabs)
+                        for (final (index, (icon, selectedIcon, label))
+                            in tabs.indexed)
                           NavigationRailDestination(
-                            icon: PressScale(child: Icon(icon)),
-                            selectedIcon: PressScale(child: Icon(selectedIcon)),
-                            label: Text(label),
+                            icon: PressScale(child: tabIcon(index, icon)),
+                            selectedIcon: PressScale(
+                              child: tabIcon(index, selectedIcon),
+                            ),
+                            label: Semantics(
+                              label: tabLabel(index, label),
+                              excludeSemantics: true,
+                              child: Text(label),
+                            ),
                           ),
                       ],
                     ),
@@ -92,12 +113,13 @@ class const AppShell({
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: select,
         destinations: [
-          for (final (icon, selectedIcon, label) in tabs)
+          for (final (index, (icon, selectedIcon, label)) in tabs.indexed)
             PressScale(
               child: NavigationDestination(
-                icon: Icon(icon),
-                selectedIcon: Icon(selectedIcon),
+                icon: tabIcon(index, icon),
+                selectedIcon: tabIcon(index, selectedIcon),
                 label: label,
+                tooltip: tabLabel(index, label),
               ),
             ),
         ],

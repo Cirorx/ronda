@@ -38,6 +38,12 @@ const ADMIN_PATHS = [
     getOnly: true,
   },
   { path: 'client_errors/e1', fields: { code: 'x', at: NOW } },
+  {
+    path: 'reports/rep1',
+    fields: { reporterUid: MEMBER, aboutUid: 'demo-admin-host', text: 'x', unread: true },
+  },
+  { path: `avoid/demo-admin-host_${MEMBER}`, fields: { uidA: 'demo-admin-host', uidB: MEMBER } },
+  { path: 'removed/demo-admin-host', fields: { firstName: 'Mirta', at: NOW, notice: 'sent' } },
 ];
 
 // Stored files a member might upload or the functions publish: the claim reads none of them.

@@ -18,6 +18,7 @@ import 'package:ronda/attendance/attendance.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
+import 'package:safety_repository/safety_repository.dart';
 import 'package:small_plan_repository/small_plan_repository.dart';
 
 /// The app's root: provides the repositories bootstrap built, the [AppBloc]
@@ -35,6 +36,7 @@ class const App({
   required final ProfileRepository profileRepository,
   required final PushRepository pushRepository,
   required final RondaRepository rondaRepository,
+  required final SafetyRepository safetyRepository,
   required final SmallPlanRepository smallPlanRepository,
 
   /// Whether this phone has shown "¿Cómo funciona?", read before the app
@@ -61,6 +63,7 @@ class const App({
         RepositoryProvider.value(value: profileRepository),
         RepositoryProvider.value(value: pushRepository),
         RepositoryProvider.value(value: rondaRepository),
+        RepositoryProvider.value(value: safetyRepository),
         RepositoryProvider.value(value: smallPlanRepository),
       ],
       child: MultiBlocProvider(
@@ -83,8 +86,19 @@ class const App({
             create: (_) =>
                 AdminAccessCubit(authRepository: authRepository)..subscribe(),
           ),
+          BlocProvider(
+            create: (_) =>
+                UnreadReportsCubit(safetyRepository: safetyRepository),
+          ),
         ],
-        child: const AppView(),
+        // The Admin tab's unread count reads only while the account is the
+        // admin; the access starts signed out, so every change comes here.
+        child: BlocListener<AdminAccessCubit, AdminAccess>(
+          listener: (context, access) => context
+              .read<UnreadReportsCubit>()
+              .follow(admin: access == AdminAccess.admin),
+          child: const AppView(),
+        ),
       ),
     );
   }

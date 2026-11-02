@@ -27,7 +27,10 @@ void main() {
       await tester.pumpApp(
         RepositoryProvider.value(
           value: rondaRepository,
-          child: const AdminPage(),
+          child: BlocProvider.value(
+            value: unreadReports(),
+            child: const AdminPage(),
+          ),
         ),
       );
       await tester.pump();

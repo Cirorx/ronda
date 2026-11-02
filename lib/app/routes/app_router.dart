@@ -21,6 +21,7 @@ import 'package:ronda/payoff/payoff.dart';
 import 'package:ronda/phone_login/phone_login.dart';
 import 'package:ronda/rain_move/rain_move.dart';
 import 'package:ronda/ronda_setup/ronda_setup.dart';
+import 'package:ronda/safety_queue/safety_queue.dart';
 import 'package:ronda/settings/settings.dart';
 import 'package:ronda/walkthrough/walkthrough.dart';
 import 'package:ronda/welcome/welcome.dart';
@@ -55,7 +56,7 @@ const returnToParameter = 'from';
 /// - signed in with a profile: the tabs, never welcome, onboarding or the
 ///   payoff;
 /// - the Admin tab (`/admin`) and everything under it (`/admin/programa`,
-///   `/admin/rondas`, `/admin/errores`, the admin's roll): only the account
+///   `/admin/rondas`, `/admin/errores`, `/admin/reportes`, the admin's roll): only the account
 ///   whose ID token carries the admin claim, with or without a profile (the
 ///   owner need not onboard). While the claim is read the screen waits
 ///   ([AdminGate]); without it, a signed-in person goes to Mi ronda, or to
@@ -308,6 +309,11 @@ GoRouter createAppRouter({
                   GoRoute(
                     path: ErrorLogPage.segment,
                     builder: (_, _) => const AdminGate(child: ErrorLogPage()),
+                  ),
+                  GoRoute(
+                    path: SafetyQueuePage.segment,
+                    builder: (_, _) =>
+                        const AdminGate(child: SafetyQueuePage()),
                   ),
                   GoRoute(
                     path: AttendancePage.adminSegment,
