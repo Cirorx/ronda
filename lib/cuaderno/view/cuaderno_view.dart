@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/cuaderno/cubit/cuaderno_cubit.dart';
+import 'package:ronda/cuaderno/cubit/cuaderno_hook.dart';
 import 'package:ronda/cuaderno/cubit/line_voice_cubit.dart';
 import 'package:ronda/cuaderno/view/cuaderno_page.dart';
 import 'package:ronda/l10n/l10n.dart';
@@ -131,7 +132,7 @@ class const _Ready({
   }
 }
 
-/// "¿Qué viste hoy?" with its field, "Anotar" and the voice.
+/// The day's [EntryHook] with its field, "Anotar" and the voice.
 class const _Today({
   required final CuadernoState state,
   required final PermissionPlace place,
@@ -284,7 +285,15 @@ class _TodayState extends State<_Today> {
         children: [
           Semantics(
             header: true,
-            child: Text(l10n.cuadernoAsk, style: textTheme.headlineSmall),
+            child: Text(switch (widget.state.hook) {
+              EntryHook.afterMeeting => l10n.cuadernoEntryHookAfterMeeting,
+              EntryHook.postcard => l10n.cuadernoEntryHookPostcard,
+              EntryHook.rambla => l10n.cuadernoEntryHookRambla,
+              EntryHook.corner => l10n.cuadernoEntryHookCorner,
+              EntryHook.learned => l10n.cuadernoEntryHookLearned,
+              EntryHook.bizcochos => l10n.cuadernoEntryHookBizcochos,
+              EntryHook.bring => l10n.cuadernoEntryHookBring,
+            }, style: textTheme.titleLarge),
           ),
           if (!recording) ...[
             Semantics(

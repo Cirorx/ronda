@@ -12,8 +12,8 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   happens next, without promising a seat: "Armamos cada grupo con vecinos que viven cerca y buscan
   lo mismo que vos. Puede tardar, según cuántos se anoten. Cuando haya uno para vos, te avisamos y
   lo vas a ver acá."
-  Under the card, **¿Qué viste hoy?** (§ El cuaderno del barrio): a pull entry with one button,
-  [Abrir el cuaderno]. On the member's own card, the line they chose to bring shows as a
+  Under the card, the cuaderno's way in (§ El cuaderno del barrio): a pull entry headed by the
+  day's hook, with one button, [Abrir el cuaderno]. On the member's own card, the line they chose to bring shows as a
   reminder, "Llevás esta línea: «…»".
 - **Cerca** (tab): groups with open places, groups about to start, waiting demand. Also a public
   web page with no login. Until the in-app list exists the tab says so: "Pronto vas a ver acá los
@@ -520,7 +520,26 @@ Ronda.
 A private noticing log about the barrio, not a mood log (#59). It never asks "¿cómo te sentís?",
 rates anything, keeps a streak or counts days, and never says "ánimo", "bienestar", "mindfulness",
 "gratitud" or "salud". Nothing about it is pushed: it is a pull entry on Mi ronda.
-- **The question:** "¿Qué viste hoy?" Optional, any day, at most one line a day (writing again
+- **The hooks:** each place asks something specific, saying what to write and what for. They
+  turn with the day of the week, so a weekday always asks the same thing.
+  - On Mi ronda the card sells the cuaderno to someone who hasn't opened it, Monday to Sunday:
+    "¿Viste un atardecer lindo en la rambla? Anotalo en el cuaderno." / "¿Querés acordarte de
+    quién trajo los bizcochos? Para eso está el cuaderno." / "¿Querés una postal de tu semana?
+    Escribí unas líneas y te la dibujamos." / "¿Encontraste un rincón nuevo del barrio? Dejalo
+    anotado en el cuaderno." / "¿Alguien te enseñó algo? Anotalo en el cuaderno para la
+    próxima." / "¿Te acordás de lo que charlaron en la ronda? Guardalo en el cuaderno antes de que
+    se te olvide." / "¿Tenés algo para contarle a la ronda? Anotalo y te lo recordamos en tu
+    tarjeta." Under it, always: "Una línea sobre tu barrio. La ves solo vos y queda en este
+    teléfono."
+  - Inside the cuaderno the hook is the prompt for the next line. The day after the ronda's
+    meeting and the one after that: "¿De qué charlaron en la ronda? Guardalo antes de que se te
+    olvide." With a ronda and three lines or more in the last seven days: "¿Querés que tu postal
+    salga más completa? Cada línea de la semana le suma algo." Any other day, Monday first and
+    round again: "¿Viste algo lindo en la rambla o en la plaza? Contalo en una línea." /
+    "¿Encontraste un rincón nuevo del barrio? Dejalo anotado." / "¿Alguien te enseñó algo?
+    Anotalo para la próxima." / "¿Quién trajo qué la última vez? Anotalo y no te lo olvidás." /
+    "¿Tenés algo para contarle a la ronda? Anotalo y llevalo."
+- **Today's line:** optional, any day, at most one line a day (writing again
   changes that day's line: [Cambiar lo de hoy]). One line typed ("El jacarandá de la esquina
   floreció."), or said: [Decilo con la voz] records up to 30 seconds, Voice Transcribe turns it
   into words (the audio is deleted once read, "El audio se borra apenas lo leemos."), and the

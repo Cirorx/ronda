@@ -46,7 +46,8 @@ issues, docs, code, commit messages.
 | `Gate` | (none) | A rule in code that every outgoing message passes (quiet hours, no emoji, voseo, no money, bot disclosure, one routine push a week) |
 | `Walkthrough` | ¿Cómo funciona? | The three cards a signed-out person sees before the welcome doors on a phone's first open (`/como-funciona`); `walkthroughSeen` is whether this phone has shown them |
 | `Cuaderno` | el cuaderno del barrio | The member's private noticing log: one line a day about what they saw in the barrio, kept only on the phone (`device_store`, `cuaderno.{uid}`); never a mood log, a streak or a count |
-| `CuadernoEntry` | línea ("¿Qué viste hoy?") | One line of the cuaderno, at most one a day; typed, or said and read back by Voice Transcribe before it is written |
+| `CuadernoEntry` | línea | One line of the cuaderno, at most one a day; typed, or said and read back by Voice Transcribe before it is written |
+| `CardHook`, `EntryHook` | (the cuaderno's question) | The specific question heading the cuaderno: `CardHook` on Mi ronda's card, turning by weekday; `EntryHook` over today's line, about the meeting the two days after it, about the postcard from three lines in the week, otherwise by weekday |
 | `Postcard` | postal de la semana | The picture Muse Image draws, on the day before the meeting, from a week's lines: objects and places, never people. Held in memory, saved through the share sheet, stored nowhere by the server |
 | `Bring` (a line) | Llevar esta línea | The one line a member picks to see on their own card as a reminder; not shared with the ronda |
 | `Flyer` | volante | Paper growth: the tear-off flyer and "Hay un mate de más" |

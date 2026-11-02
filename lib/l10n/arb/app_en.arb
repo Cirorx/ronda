@@ -3810,9 +3810,61 @@
     "@cuadernoTitle": {
         "description": "Cuaderno screen title"
     },
-    "cuadernoAsk": "What did you see today?",
-    "@cuadernoAsk": {
-        "description": "Cuaderno: the question, on Mi ronda and on its screen"
+    "cuadernoCardHookSunset": "Saw a lovely sunset on the rambla? Write it in the notebook.",
+    "@cuadernoCardHookSunset": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookBizcochos": "Want to remember who brought the pastries? That's what the notebook is for.",
+    "@cuadernoCardHookBizcochos": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookPostcard": "Want a postcard of your week? Write a few lines and we'll draw it.",
+    "@cuadernoCardHookPostcard": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookCorner": "Found a new corner of the barrio? Note it down in the notebook.",
+    "@cuadernoCardHookCorner": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookLearned": "Did someone teach you something? Write it in the notebook for next time.",
+    "@cuadernoCardHookLearned": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookTalk": "Remember what you talked about at the ronda? Keep it in the notebook before you forget.",
+    "@cuadernoCardHookTalk": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookBring": "Got something to tell the ronda? Write it down and your card will remind you.",
+    "@cuadernoCardHookBring": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoEntryHookAfterMeeting": "What did you talk about at the ronda? Keep it before you forget.",
+    "@cuadernoEntryHookAfterMeeting": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookPostcard": "Want a fuller postcard? Every line this week adds something to it.",
+    "@cuadernoEntryHookPostcard": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookRambla": "Saw something nice on the rambla or in the plaza? Tell it in one line.",
+    "@cuadernoEntryHookRambla": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookCorner": "Found a new corner of the barrio? Note it down.",
+    "@cuadernoEntryHookCorner": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookLearned": "Did someone teach you something? Write it down for next time.",
+    "@cuadernoEntryHookLearned": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookBizcochos": "Who brought what last time? Write it down so you don't forget.",
+    "@cuadernoEntryHookBizcochos": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookBring": "Got something to tell the ronda? Write it down and bring it.",
+    "@cuadernoEntryHookBring": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
     },
     "cuadernoEntryBody": "One line about your barrio. Only you see it, and it stays on this phone.",
     "@cuadernoEntryBody": {
