@@ -21,6 +21,8 @@ class _MockFirebaseUser extends Mock implements firebase_auth.User;
 
 class _MockIdTokenResult extends Mock implements firebase_auth.IdTokenResult;
 
+class _MockUserInfo extends Mock implements firebase_auth.UserInfo;
+
 const _uid = 'demo-uid';
 
 void main() {
@@ -102,6 +104,93 @@ void main() {
         );
 
         expect(subject.currentUser, equals(const User(id: _uid)));
+      });
+    });
+
+    group('signInAccount', () {
+      late firebase_auth.FirebaseAuth firebaseAuth;
+      late firebase_auth.User firebaseUser;
+
+      AuthRepository subject() => AuthRepository(
+        firebaseAuth: firebaseAuth,
+        googleSignInFlow: GoogleSignInFlow.popup,
+        linkOpener: linkOpener,
+        phoneSignInFlow: PhoneSignInFlow.verify,
+      );
+
+      firebase_auth.UserInfo info(
+        String providerId, {
+        String? email,
+        String? phoneNumber,
+      }) {
+        final info = _MockUserInfo();
+        when(() => info.providerId).thenReturn(providerId);
+        when(() => info.email).thenReturn(email);
+        when(() => info.phoneNumber).thenReturn(phoneNumber);
+        return info;
+      }
+
+      setUp(() {
+        firebaseAuth = _MockFirebaseAuth();
+        firebaseUser = _MockFirebaseUser();
+        when(() => firebaseAuth.currentUser).thenReturn(firebaseUser);
+        when(() => firebaseUser.email).thenReturn(null);
+        when(() => firebaseUser.phoneNumber).thenReturn(null);
+      });
+
+      test('is null when nobody is signed in', () {
+        when(() => firebaseAuth.currentUser).thenReturn(null);
+
+        expect(subject().signInAccount, isNull);
+      });
+
+      test('is Google with its email', () {
+        final google = info('google.com', email: 'vecina@example.com');
+        when(() => firebaseUser.providerData).thenReturn([google]);
+
+        expect(
+          subject().signInAccount,
+          equals(
+            const SignInAccount(
+              method: SignInMethod.google,
+              address: 'vecina@example.com',
+            ),
+          ),
+        );
+      });
+
+      test('is the phone with its number', () {
+        final phone = info('phone', phoneNumber: '+59899123456');
+        when(() => firebaseUser.providerData).thenReturn([phone]);
+
+        expect(
+          subject().signInAccount,
+          equals(
+            const SignInAccount(
+              method: SignInMethod.phone,
+              address: '+59899123456',
+            ),
+          ),
+        );
+      });
+
+      test("falls back to the user's own email and number", () {
+        when(() => firebaseUser.email).thenReturn('vecina@example.com');
+        when(() => firebaseUser.phoneNumber).thenReturn('+59899123456');
+        final google = info('google.com');
+        when(() => firebaseUser.providerData).thenReturn([google]);
+        expect(subject().signInAccount?.address, equals('vecina@example.com'));
+
+        final phone = info('phone');
+        when(() => firebaseUser.providerData).thenReturn([phone]);
+        expect(subject().signInAccount?.address, equals('+59899123456'));
+      });
+
+      test('is null for an account with neither way in', () {
+        final password = info('password');
+        when(() => firebaseUser.providerData).thenReturn([password]);
+
+        expect(subject().signInAccount, isNull);
       });
     });
 

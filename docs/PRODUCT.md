@@ -43,6 +43,9 @@ dates in the examples are demo data. Everything not listed here is out of the bu
     in the body). Under "Lo que no guardamos", "Tu cuaderno: queda solo en este teléfono.", and
     below the lists "Tu cuaderno" with [Borrar mi cuaderno]: one question ("¿Borrás todo tu
     cuaderno?") and it is gone from the phone.
+  - **How you sign in** (2026-11-02), just above Salir, nothing to tap: "Entraste con Google" with
+    the account's email, or "Entraste con tu celular" with the number ("+598 9X XXX XXX"). Read
+    from Firebase Auth on the phone for the person's own eyes; no document holds it.
   - **Salir de esta cuenta:** "¿Salís de esta cuenta?" — your group and answers stay; this phone
     stops getting notifications. [Salir] forgets this phone's push token, then signs out.
   - The address is one build value, `RONDA_CONTACT_EMAIL` (`docs/STACK.md` § Pilot builds); a

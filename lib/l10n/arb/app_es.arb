@@ -457,6 +457,8 @@
     "languagePhone": "Como el teléfono",
     "languageSpanish": "Español",
     "languageEnglish": "English",
+    "settingsAccountGoogle": "Entraste con Google",
+    "settingsAccountPhone": "Entraste con tu celular",
     "settingsSignOutRow": "Salir de esta cuenta",
     "signOutTitle": "¿Salís de esta cuenta?",
     "signOutBody": "Tu grupo y tus respuestas quedan guardados: si entrás con la misma cuenta, siguen ahí. Hasta que entres, a este teléfono no le llegan avisos.",

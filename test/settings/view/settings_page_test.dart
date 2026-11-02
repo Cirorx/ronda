@@ -15,10 +15,13 @@ class _MockAppBloc extends MockBloc<AppEvent, AppState> implements AppBloc;
 class _MockLanguageCubit extends MockCubit<LanguageState>
     implements LanguageCubit;
 
+class _MockAuthRepository extends Mock implements AuthRepository;
+
 void main() {
   group(SettingsPage, () {
     late AppBloc appBloc;
     late LanguageCubit languageCubit;
+    late AuthRepository authRepository;
 
     setUpAll(() {
       registerFallbackValue(const AppSignOutRequested());
@@ -26,6 +29,13 @@ void main() {
     });
 
     setUp(() {
+      authRepository = _MockAuthRepository();
+      when(() => authRepository.signInAccount).thenReturn(
+        const SignInAccount(
+          method: SignInMethod.google,
+          address: 'vecina@example.com',
+        ),
+      );
       languageCubit = _MockLanguageCubit();
       when(() => languageCubit.state).thenReturn(const LanguageState());
       when(() => languageCubit.languagePicked(any())).thenAnswer((_) async {});
@@ -42,12 +52,15 @@ void main() {
 
     Future<void> pump(WidgetTester tester, {Locale locale = rioplatense}) =>
         tester.pumpApp(
-          MultiBlocProvider(
-            providers: [
-              BlocProvider.value(value: appBloc),
-              BlocProvider.value(value: languageCubit),
-            ],
-            child: const SettingsPage(),
+          RepositoryProvider.value(
+            value: authRepository,
+            child: MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: appBloc),
+                BlocProvider.value(value: languageCubit),
+              ],
+              child: const SettingsPage(),
+            ),
           ),
           locale: locale,
         );
@@ -129,6 +142,7 @@ void main() {
           SettingsPage.reportIdentifier,
           SettingsPage.dataIdentifier,
           SettingsPage.languageIdentifier,
+          AccountTile.identifier,
           SettingsPage.signOutIdentifier,
         ]) {
           expect(
@@ -137,6 +151,21 @@ void main() {
             reason: identifier,
           );
         }
+      });
+    });
+
+    group('account', () {
+      testWidgets('shows how this account signs in, above sign-out', (
+        tester,
+      ) async {
+        await pump(tester);
+
+        expect(find.text('Entraste con Google'), findsOneWidget);
+        expect(find.text('vecina@example.com'), findsOneWidget);
+        expect(
+          tester.getTopLeft(find.text('Entraste con Google')).dy,
+          lessThan(tester.getTopLeft(find.text('Salir de esta cuenta')).dy),
+        );
       });
     });
 

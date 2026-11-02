@@ -2231,6 +2231,14 @@
     "@languageEnglish": {
         "description": "Language choice, always written in English so an English speaker finds it"
     },
+    "settingsAccountGoogle": "You signed in with Google",
+    "@settingsAccountGoogle": {
+        "description": "Settings row above sign-out, for an account that signs in with Google; the email shows under it"
+    },
+    "settingsAccountPhone": "You signed in with your mobile number",
+    "@settingsAccountPhone": {
+        "description": "Settings row above sign-out, for an account that signs in with a code by SMS; the number shows under it"
+    },
     "settingsSignOutRow": "Sign out of this account",
     "@settingsSignOutRow": {
         "description": "Settings row that signs out after a confirmation"

@@ -55,6 +55,36 @@ class AuthRepository {
   /// Who is signed in right now; [User.empty] when nobody is.
   User get currentUser => _firebaseAuth.currentUser.toUser;
 
+  /// How the signed-in person enters, with Google or a phone number, and the
+  /// email or the number; null when nobody is signed in or the account has
+  /// neither (only the Auth emulator makes such accounts).
+  ///
+  /// Read from Firebase Auth on the phone, for the person's own eyes: no
+  /// document holds it.
+  SignInAccount? get signInAccount {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return null;
+    for (final info in user.providerData) {
+      switch (info.providerId) {
+        case _googleProviderId:
+          return SignInAccount(
+            method: SignInMethod.google,
+            address: info.email ?? user.email,
+          );
+        case _phoneProviderId:
+          return SignInAccount(
+            method: SignInMethod.phone,
+            address: info.phoneNumber ?? user.phoneNumber,
+          );
+      }
+    }
+    return null;
+  }
+
+  /// Firebase Auth's ids for the two ways in.
+  static const _googleProviderId = 'google.com';
+  static const _phoneProviderId = 'phone';
+
   /// The signed-in [User], or [User.empty] when nobody is; emits on every
   /// sign-in and sign-out and each time Firebase Auth renews the ID token
   /// (about once an hour while the app is open), so a custom claim set or
