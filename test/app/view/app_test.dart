@@ -1018,6 +1018,13 @@ void main() {
 
         expect(find.byType(AdminPage), findsOneWidget);
         expect(find.byType(AppShell), findsOneWidget);
+
+        await tester.tap(find.byType(AgentTraceLink));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AgentTracePage), findsOneWidget);
+        expect(find.byType(AppShell), findsOneWidget);
+        expect(_tab('Admin'), findsOneWidget);
       });
 
       testWidgets('by showing a member no Admin tab', (tester) async {
