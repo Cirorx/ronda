@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -513,11 +514,13 @@ void main() {
       group('with live transcription', () {
         late LiveTranscriptClient liveTranscript;
         late LiveTranscription session;
+        late StreamController<String> heard;
         late SmallPlanRepository live;
 
         setUp(() {
           liveTranscript = _MockLiveTranscriptClient();
           session = _MockLiveTranscription();
+          heard = StreamController<String>.broadcast();
           live = SmallPlanRepository(
             deviceStore: deviceStore,
             voiceRecorder: voiceRecorder,
@@ -535,7 +538,7 @@ void main() {
           when(() => voiceRecorder.cancel()).thenAnswer((_) async {});
           when(() => liveTranscript.start(SmallPlanRepository.liveSurface))
               .thenAnswer((_) async => session);
-          when(() => session.words).thenAnswer((_) => Stream.value('mate'));
+          when(() => session.words).thenAnswer((_) => heard.stream);
           when(() => session.isOver).thenReturn(false);
           when(() => session.finish())
               .thenAnswer((_) async => 'Mate en la rambla el sábado.');
@@ -543,6 +546,8 @@ void main() {
           when(() => smallPlansApi.shape(transcript: any(named: 'transcript')))
               .thenAnswer((_) async => shaped);
         });
+
+        tearDown(() => heard.close());
 
         Future<void> settle() => Future<void>.delayed(Duration.zero);
 
@@ -552,6 +557,7 @@ void main() {
           await settle();
           final words = live.liveWords().first;
           await settle();
+          heard.add('mate');
 
           expect(await live.shapeVoiceNote(uid), isA<SmallPlanRead>());
           expect(await words, equals('mate'));
@@ -590,7 +596,17 @@ void main() {
           await settle();
 
           verifyNever(() => liveTranscript.start(any()));
-          expect(live.liveWords(), emitsDone);
+          await live.discardVoiceNote();
+          verify(() => voiceRecorder.cancel()).called(1);
+        });
+
+        test('records without live when the terms cannot be read', () async {
+          when(() => rondaApi.readUser(uid)).thenThrow(Exception('offline'));
+
+          await live.startVoiceNote(uid);
+          await settle();
+
+          verifyNever(() => liveTranscript.start(any()));
         });
 
         test('falls back to the upload when live failed', () async {

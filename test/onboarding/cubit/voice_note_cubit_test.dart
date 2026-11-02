@@ -26,16 +26,21 @@ void main() {
     late OnboardingRepository repository;
     late StreamController<void> ticks;
     late StreamController<double> levels;
+    late StreamController<String> words;
 
     setUp(() {
       repository = _MockOnboardingRepository();
       ticks = StreamController<void>.broadcast();
       levels = StreamController<double>.broadcast();
+      words = StreamController<String>.broadcast();
+      addTearDown(words.close);
       addTearDown(ticks.close);
       addTearDown(levels.close);
-      when(() => repository.startVoiceNote()).thenAnswer((_) async {});
+      when(() => repository.startVoiceNote('demo-uid'))
+          .thenAnswer((_) async {});
       when(() => repository.discardVoiceNote()).thenAnswer((_) async {});
       when(() => repository.voiceLevels()).thenAnswer((_) => levels.stream);
+      when(() => repository.liveWords()).thenAnswer((_) => words.stream);
       when(() => repository.readVoiceNote(any()))
           .thenAnswer((_) async => _signup);
     });
@@ -61,7 +66,7 @@ void main() {
     test('waits for "Grabar": nothing records on its own', () {
       expect(buildCubit().state, equals(const VoiceNoteState()));
       expect(buildCubit().state.status, equals(VoiceNoteStatus.ready));
-      verifyNever(() => repository.startVoiceNote());
+      verifyNever(() => repository.startVoiceNote('demo-uid'));
     });
 
     test('ticks every second by default', () async {
@@ -105,7 +110,8 @@ void main() {
         blocTest<VoiceNoteCubit, VoiceNoteState>(
           'says ${failure.name} on ${thrown.runtimeType}',
           setUp: () =>
-              when(() => repository.startVoiceNote()).thenThrow(thrown),
+              when(() => repository.startVoiceNote('demo-uid'))
+                  .thenThrow(thrown),
           build: buildCubit,
           act: (cubit) => cubit.start(),
           expect: () => [_starting, _failed(failure)],
@@ -115,7 +121,7 @@ void main() {
 
       test('throws the note away when closed while starting', () async {
         final started = Completer<void>();
-        when(() => repository.startVoiceNote())
+        when(() => repository.startVoiceNote('demo-uid'))
             .thenAnswer((_) => started.future);
         final cubit = buildCubit();
         final starting = cubit.start();
@@ -131,7 +137,7 @@ void main() {
 
       test('says nothing when closed while the start fails', () async {
         final started = Completer<void>();
-        when(() => repository.startVoiceNote())
+        when(() => repository.startVoiceNote('demo-uid'))
             .thenAnswer((_) => started.future);
         final cubit = buildCubit();
         final starting = cubit.start();
@@ -278,6 +284,82 @@ void main() {
       );
     });
 
+    group('live words', () {
+      Future<void> say(String heard) async {
+        words.add(heard);
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      blocTest<VoiceNoteCubit, VoiceNoteState>(
+        'follow what is said while recording, revised as it goes',
+        build: buildCubit,
+        act: (cubit) async {
+          await cubit.start();
+          await say('Hola');
+          await say('Hola, soy Marta');
+        },
+        skip: 2,
+        expect: () => const [
+          VoiceNoteState(status: VoiceNoteStatus.recording, words: 'Hola'),
+          VoiceNoteState(
+            status: VoiceNoteStatus.recording,
+            words: 'Hola, soy Marta',
+          ),
+        ],
+      );
+
+      blocTest<VoiceNoteCubit, VoiceNoteState>(
+        'ignore a failure of the words',
+        build: buildCubit,
+        act: (cubit) async {
+          await cubit.start();
+          words.addError(Exception('relay'));
+          await say('Hola');
+        },
+        verify: (cubit) => expect(cubit.state.words, equals('Hola')),
+      );
+
+      blocTest<VoiceNoteCubit, VoiceNoteState>(
+        'are kept while the note is read',
+        build: buildCubit,
+        act: (cubit) async {
+          await cubit.start();
+          await say('Hola');
+          await cubit.finish();
+        },
+        skip: 3,
+        expect: () => const [
+          VoiceNoteState(status: VoiceNoteStatus.reading, words: 'Hola'),
+          VoiceNoteState(status: VoiceNoteStatus.read, signup: _signup),
+        ],
+      );
+
+      blocTest<VoiceNoteCubit, VoiceNoteState>(
+        'are ignored once the note is no longer recording',
+        build: buildCubit,
+        act: (cubit) async {
+          await cubit.start();
+          await cubit.finish();
+          await say('late');
+        },
+        verify: (cubit) {
+          expect(cubit.state.status, equals(VoiceNoteStatus.read));
+          expect(cubit.state.words, isEmpty);
+          expect(words.hasListener, isFalse);
+        },
+      );
+
+      test('stop being heard when the cubit closes', () async {
+        final cubit = buildCubit();
+        await cubit.start();
+        expect(words.hasListener, isTrue);
+
+        await cubit.close();
+
+        expect(words.hasListener, isFalse);
+      });
+    });
+
     group('restart', () {
       blocTest<VoiceNoteCubit, VoiceNoteState>(
         'throws the note away and starts again from zero',
@@ -302,7 +384,7 @@ void main() {
           // Once for the restart, once more as blocTest closes the cubit
           // with the new note still recording.
           verify(() => repository.discardVoiceNote()).called(2);
-          verify(() => repository.startVoiceNote()).called(2);
+          verify(() => repository.startVoiceNote('demo-uid')).called(2);
         },
       );
     });

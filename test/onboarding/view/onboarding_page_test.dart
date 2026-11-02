@@ -185,7 +185,8 @@ void main() {
         ),
       );
       final onboardingRepository = _MockOnboardingRepository();
-      when(onboardingRepository.startVoiceNote).thenAnswer((_) async {});
+      when(() => onboardingRepository.startVoiceNote(any()))
+          .thenAnswer((_) async {});
       when(onboardingRepository.discardVoiceNote).thenAnswer((_) async {});
 
       await tester.pumpApp(

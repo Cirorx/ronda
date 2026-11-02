@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/cuaderno/cuaderno.dart';
+import 'package:ronda/onboarding/widgets/live_words.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 import '../../helpers/helpers.dart';
@@ -259,6 +260,31 @@ void main() {
 
         await tester.tap(find.text('Terminé'));
         verify(() => voice.finish()).called(1);
+      });
+
+      testWidgets('shows the words heard so far, with their caption', (
+        tester,
+      ) async {
+        when(() => voice.state).thenReturn(
+          const LineVoiceState(
+            status: LineVoiceStatus.recording,
+            words: 'El jacarandá',
+          ),
+        );
+        await pump(tester);
+
+        expect(find.byType(LiveWords), findsOneWidget);
+        expect(find.text('Lo que vamos escuchando'), findsOneWidget);
+        expect(find.text('El jacarandá'), findsOneWidget);
+      });
+
+      testWidgets('shows no words before any is heard', (tester) async {
+        when(
+          () => voice.state,
+        ).thenReturn(const LineVoiceState(status: LineVoiceStatus.recording));
+        await pump(tester);
+
+        expect(find.byType(LiveWords), findsNothing);
       });
 
       testWidgets('"Cancelar" throws the recording away', (tester) async {

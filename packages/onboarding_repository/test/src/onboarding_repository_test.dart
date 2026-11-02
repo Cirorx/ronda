@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:cloud_functions/cloud_functions.dart';
@@ -362,6 +363,7 @@ void main() {
     late RondaApi rondaApi;
     late LiveTranscriptClient liveTranscript;
     late LiveTranscription session;
+    late StreamController<String> heard;
     late OnboardingRepository subject;
 
     const uid = 'demo-uid';
@@ -383,6 +385,7 @@ void main() {
       rondaApi = _MockRondaApi();
       liveTranscript = _MockLiveTranscriptClient();
       session = _MockLiveTranscription();
+      heard = StreamController<String>.broadcast();
       subject = OnboardingRepository(
         voiceRecorder: voiceRecorder,
         rondaApi: rondaApi,
@@ -397,7 +400,7 @@ void main() {
       when(() => rondaApi.readUser(uid)).thenAnswer((_) async => withTerms);
       when(() => liveTranscript.start(OnboardingRepository.liveSurface))
           .thenAnswer((_) async => session);
-      when(() => session.words).thenAnswer((_) => Stream.value('Hola'));
+      when(() => session.words).thenAnswer((_) => heard.stream);
       when(() => session.isOver).thenReturn(false);
       when(() => session.finish()).thenAnswer((_) async => 'Hola, soy Marta.');
       when(() => session.abandon()).thenAnswer((_) async {});
@@ -413,6 +416,8 @@ void main() {
       when(() => rondaApi.extract(path)).thenAnswer((_) async => fields);
     });
 
+    tearDown(() => heard.close());
+
     Future<void> settle() => Future<void>.delayed(Duration.zero);
 
     test('shows the words as they come and reads the final transcript with '
@@ -421,6 +426,7 @@ void main() {
       await settle();
       final words = subject.liveWords().first;
       await settle();
+      heard.add('Hola');
 
       expect(await subject.readVoiceNote(uid), equals(signup));
       expect(await words, equals('Hola'));

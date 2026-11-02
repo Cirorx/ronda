@@ -64,6 +64,7 @@ final class const LineVoiceState({
     elapsed,
     levels,
     heard,
+    words,
     text,
     problem,
     problemCode,

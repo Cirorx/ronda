@@ -84,7 +84,8 @@ class const RondaApi({
   /// take a few seconds each, a cold start a few more.
   static const extractTimeout = Duration(seconds: 120);
 
-  /// How long `read_transcript` may take: Spark's step only.
+  /// How long `read_transcript` may take: Spark's step only. It is the
+  /// callable's default timeout, so the call does not pass it.
   static const readTranscriptTimeout = Duration(seconds: 60);
 
   /// Uploads a WAV voice note to `audio/{uid}/{noteId}.wav` and returns
@@ -132,10 +133,7 @@ class const RondaApi({
   Future<ExtractedFields> readTranscript(String text) async {
     try {
       final result = await functions
-          .httpsCallable(
-            'read_transcript',
-            options: HttpsCallableOptions(timeout: readTranscriptTimeout),
-          )
+          .httpsCallable('read_transcript', options: HttpsCallableOptions())
           .call<Object?>({'text': text});
       return switch (result.data) {
         final Map<Object?, Object?> json => ExtractedFields.fromJson(json),

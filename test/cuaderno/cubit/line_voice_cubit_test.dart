@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bloc_test/bloc_test.dart';
 import 'package:cuaderno_repository/cuaderno_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -14,15 +15,19 @@ void main() {
     late CuadernoRepository repository;
     late StreamController<void> ticks;
     late StreamController<double> levels;
+    late StreamController<String> words;
 
     setUp(() {
       repository = _MockCuadernoRepository();
       ticks = StreamController<void>.broadcast();
       levels = StreamController<double>.broadcast();
+      words = StreamController<String>.broadcast();
+      addTearDown(words.close);
       addTearDown(ticks.close);
       addTearDown(levels.close);
-      when(() => repository.startVoiceNote()).thenAnswer((_) async {});
+      when(() => repository.startVoiceNote(_uid)).thenAnswer((_) async {});
       when(() => repository.voiceLevels()).thenAnswer((_) => levels.stream);
+      when(() => repository.liveWords()).thenAnswer((_) => words.stream);
       when(() => repository.discardVoiceNote()).thenAnswer((_) async {});
       when(() => repository.readVoiceLine(_uid))
           .thenAnswer((_) async => 'El jacarandá floreció.');
@@ -43,7 +48,7 @@ void main() {
 
     test('waits for the tap: nothing records on its own', () {
       expect(build().state.status, equals(LineVoiceStatus.ready));
-      verifyNever(() => repository.startVoiceNote());
+      verifyNever(() => repository.startVoiceNote(_uid));
     });
 
     test("has the app's default clock", () async {
@@ -92,7 +97,7 @@ void main() {
 
       for (final problem in VoiceLineProblem.values) {
         test('says $problem when the repository does', () async {
-          when(() => repository.startVoiceNote())
+          when(() => repository.startVoiceNote(_uid))
               .thenThrow(VoiceLineFailure(problem, code: 'c'));
           final cubit = build();
           addTearDown(cubit.close);
@@ -106,7 +111,7 @@ void main() {
       }
 
       test('says the recorder failed when anything else does', () async {
-        when(() => repository.startVoiceNote()).thenThrow(Exception('x'));
+        when(() => repository.startVoiceNote(_uid)).thenThrow(Exception('x'));
         final cubit = build();
         addTearDown(cubit.close);
 
@@ -117,7 +122,7 @@ void main() {
 
       test('throws the note away when the person left meanwhile', () async {
         final starting = Completer<void>();
-        when(() => repository.startVoiceNote())
+        when(() => repository.startVoiceNote(_uid))
             .thenAnswer((_) => starting.future);
         final cubit = build();
         final start = cubit.start();
@@ -131,7 +136,7 @@ void main() {
 
       test('says nothing of a failure once closed', () async {
         final starting = Completer<void>();
-        when(() => repository.startVoiceNote())
+        when(() => repository.startVoiceNote(_uid))
             .thenAnswer((_) => starting.future);
         final cubit = build();
         final start = cubit.start();
@@ -232,7 +237,7 @@ void main() {
       });
 
       test('dismisses a failure', () async {
-        when(() => repository.startVoiceNote())
+        when(() => repository.startVoiceNote(_uid))
             .thenThrow(const VoiceLineFailure(VoiceLineProblem.noMicrophone));
         final cubit = build();
         addTearDown(cubit.close);
@@ -252,6 +257,66 @@ void main() {
       cubit.textTaken();
 
       expect(cubit.state, equals(const LineVoiceState()));
+    });
+
+    group('live words', () {
+      Future<void> say(String heard) async {
+        words.add(heard);
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      blocTest<LineVoiceCubit, LineVoiceState>(
+        'follow what is said while recording',
+        build: build,
+        act: (cubit) async {
+          await cubit.start();
+          await say('El');
+          await say('El jacarandá');
+        },
+        skip: 2,
+        expect: () => const [
+          LineVoiceState(status: LineVoiceStatus.recording, words: 'El'),
+          LineVoiceState(
+            status: LineVoiceStatus.recording,
+            words: 'El jacarandá',
+          ),
+        ],
+      );
+
+      blocTest<LineVoiceCubit, LineVoiceState>(
+        'ignore a failure of the words',
+        build: build,
+        act: (cubit) async {
+          await cubit.start();
+          words.addError(Exception('relay'));
+          await say('El');
+        },
+        verify: (cubit) => expect(cubit.state.words, equals('El')),
+      );
+
+      blocTest<LineVoiceCubit, LineVoiceState>(
+        'are ignored once the note is no longer recording',
+        build: build,
+        act: (cubit) async {
+          await cubit.start();
+          await cubit.finish();
+          await say('late');
+        },
+        verify: (cubit) {
+          expect(cubit.state.status, equals(LineVoiceStatus.read));
+          expect(cubit.state.words, isEmpty);
+          expect(words.hasListener, isFalse);
+        },
+      );
+
+      test('stop being heard when the cubit closes', () async {
+        final cubit = await recording();
+        expect(words.hasListener, isTrue);
+
+        await cubit.close();
+
+        expect(words.hasListener, isFalse);
+      });
     });
 
     test('closing throws a recording away', () async {

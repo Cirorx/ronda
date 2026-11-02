@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -340,6 +341,7 @@ void main() {
       setUp(() {
         when(() => voiceRecorder.hasPermission()).thenAnswer((_) async => true);
         when(() => voiceRecorder.hasMicrophone()).thenAnswer((_) async => true);
+        when(() => rondaApi.readUser(uid)).thenAnswer((_) async => null);
         when(() => voiceRecorder.startStreaming())
             .thenAnswer((_) async => const Stream.empty());
       });
@@ -416,11 +418,13 @@ void main() {
     group('with live transcription', () {
       late LiveTranscriptClient liveTranscript;
       late LiveTranscription session;
+      late StreamController<String> heard;
       late CuadernoRepository live;
 
       setUp(() {
         liveTranscript = _MockLiveTranscriptClient();
         session = _MockLiveTranscription();
+        heard = StreamController<String>.broadcast();
         live = CuadernoRepository(
           deviceStore: deviceStore,
           voiceRecorder: voiceRecorder,
@@ -438,12 +442,14 @@ void main() {
         when(() => rondaApi.readUser(uid)).thenAnswer((_) async => withTerms);
         when(() => liveTranscript.start(CuadernoRepository.liveSurface))
             .thenAnswer((_) async => session);
-        when(() => session.words).thenAnswer((_) => Stream.value('El'));
+        when(() => session.words).thenAnswer((_) => heard.stream);
         when(() => session.isOver).thenReturn(false);
         when(() => session.finish())
             .thenAnswer((_) async => 'El  jacarandá\nfloreció.');
         when(() => session.abandon()).thenAnswer((_) async {});
       });
+
+      tearDown(() => heard.close());
 
       Future<void> settle() => Future<void>.delayed(Duration.zero);
 
@@ -453,6 +459,7 @@ void main() {
         await settle();
         final words = live.liveWords().first;
         await settle();
+        heard.add('El');
 
         expect(await live.readVoiceLine(uid), equals('El jacarandá floreció.'));
         expect(await words, equals('El'));
@@ -483,7 +490,17 @@ void main() {
         await settle();
 
         verifyNever(() => liveTranscript.start(any()));
-        expect(live.liveWords(), emitsDone);
+        await live.discardVoiceNote();
+        verify(() => voiceRecorder.cancel()).called(1);
+      });
+
+      test('records without live when the terms cannot be read', () async {
+        when(() => rondaApi.readUser(uid)).thenThrow(Exception('offline'));
+
+        await live.startVoiceNote(uid);
+        await settle();
+
+        verifyNever(() => liveTranscript.start(any()));
       });
 
       test('falls back to the upload when live failed', () async {

@@ -49,6 +49,8 @@ dependencies:
   intl: ^0.20.2
   link_opener:
     path: packages/link_opener
+  live_transcript:
+    path: packages/live_transcript
   material_ui: ^1.8.0
   needs_repository:
     path: packages/needs_repository
@@ -72,8 +74,6 @@ dependencies:
     path: packages/share_sheet
   small_plan_repository:
     path: packages/small_plan_repository
-  live_transcript:
-    path: packages/live_transcript
   voice_recorder:
     path: packages/voice_recorder
 

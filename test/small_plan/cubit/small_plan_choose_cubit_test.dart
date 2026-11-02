@@ -14,6 +14,7 @@ void main() {
     late SmallPlanRepository repository;
     late StreamController<double> levels;
     late StreamController<void> ticks;
+    late StreamController<String> words;
 
     final suggestion = SmallPlanSuggestion(
       id: 'walk-1',
@@ -36,14 +37,17 @@ void main() {
       repository = _MockSmallPlanRepository();
       levels = StreamController<double>.broadcast();
       ticks = StreamController<void>.broadcast();
+      words = StreamController<String>.broadcast();
       addTearDown(() async {
+        await words.close();
         await levels.close();
         await ticks.close();
       });
       when(() => repository.suggestions())
           .thenAnswer((_) async => [suggestion]);
-      when(() => repository.startVoiceNote()).thenAnswer((_) async {});
+      when(() => repository.startVoiceNote('uid')).thenAnswer((_) async {});
       when(() => repository.voiceLevels()).thenAnswer((_) => levels.stream);
+      when(() => repository.liveWords()).thenAnswer((_) => words.stream);
       when(() => repository.discardVoiceNote()).thenAnswer((_) async {});
       when(() => repository.shapeVoiceNote('uid'))
           .thenAnswer((_) async => read);
@@ -345,6 +349,75 @@ void main() {
         verify(() => repository.discardVoiceNote()).called(2);
       });
 
+      group('live words', () {
+        Future<void> say(String heard) async {
+          words.add(heard);
+          await Future<void>.delayed(Duration.zero);
+        }
+
+        blocTest<SmallPlanChooseCubit, SmallPlanChooseState>(
+          'follow what is said while recording',
+          build: build,
+          act: (cubit) async {
+            await cubit.recordTapped();
+            await say('mate');
+            await say('mate en la rambla');
+          },
+          verify: (cubit) {
+            expect(cubit.state.step, equals(SmallPlanStep.recording));
+            expect(cubit.state.words, equals('mate en la rambla'));
+          },
+        );
+
+        blocTest<SmallPlanChooseCubit, SmallPlanChooseState>(
+          'ignore a failure of the words',
+          build: build,
+          act: (cubit) async {
+            await cubit.recordTapped();
+            words.addError(Exception('relay'));
+            await say('mate');
+          },
+          verify: (cubit) => expect(cubit.state.words, equals('mate')),
+        );
+
+        blocTest<SmallPlanChooseCubit, SmallPlanChooseState>(
+          'start empty on each recording',
+          build: build,
+          act: (cubit) async {
+            await cubit.recordTapped();
+            await say('mate');
+            await cubit.recordingCancelled();
+            await cubit.recordTapped();
+          },
+          verify: (cubit) => expect(cubit.state.words, isEmpty),
+        );
+
+        blocTest<SmallPlanChooseCubit, SmallPlanChooseState>(
+          'are ignored once the note is no longer recording',
+          build: build,
+          act: (cubit) async {
+            await cubit.recordTapped();
+            await cubit.recordingCancelled();
+            await say('late');
+          },
+          verify: (cubit) {
+            expect(cubit.state.step, equals(SmallPlanStep.say));
+            expect(cubit.state.words, isEmpty);
+            expect(words.hasListener, isFalse);
+          },
+        );
+
+        test('stop being heard when the cubit closes', () async {
+          final cubit = build();
+          await cubit.recordTapped();
+          expect(words.hasListener, isTrue);
+
+          await cubit.close();
+
+          expect(words.hasListener, isFalse);
+        });
+      });
+
       test('"Terminé" does nothing when nothing records', () async {
         final cubit = build();
 
@@ -356,7 +429,7 @@ void main() {
       });
 
       test('says why the microphone did not start', () async {
-        when(() => repository.startVoiceNote()).thenThrow(
+        when(() => repository.startVoiceNote('uid')).thenThrow(
           const SmallPlanFailure(SmallPlanFailureKind.microphoneDenied),
         );
         final cubit = build();
@@ -374,7 +447,7 @@ void main() {
       test('throws the note away when the person left while the microphone '
           'started', () async {
         final started = Completer<void>();
-        when(() => repository.startVoiceNote())
+        when(() => repository.startVoiceNote('uid'))
             .thenAnswer((_) => started.future);
         final cubit = build();
 
