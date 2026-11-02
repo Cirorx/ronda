@@ -31,6 +31,10 @@ final class const LineVoiceState({
   /// How many levels have been heard: the waveform scrolls one bar each.
   final int heard = 0,
 
+  /// What Voice Transcribe has heard so far, live, revised as the person
+  /// talks. Empty without live transcription.
+  final String words = '',
+
   /// What was said, once [LineVoiceStatus.read].
   final String? text,
 
@@ -45,11 +49,13 @@ final class const LineVoiceState({
     Duration? elapsed,
     List<double>? levels,
     int? heard,
+    String? words,
   }) => LineVoiceState(
     status: status,
     elapsed: elapsed ?? this.elapsed,
     levels: levels ?? this.levels,
     heard: heard ?? this.heard,
+    words: words ?? this.words,
   );
 
   @override
@@ -58,6 +64,7 @@ final class const LineVoiceState({
     elapsed,
     levels,
     heard,
+    words,
     text,
     problem,
     problemCode,

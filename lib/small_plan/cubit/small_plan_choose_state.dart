@@ -46,6 +46,10 @@ final class const SmallPlanChooseState({
   /// [SmallPlanChooseCubit.silentAfter].
   final bool silent = false,
 
+  /// What Voice Transcribe has heard so far, live, revised as the person
+  /// talks. Empty without live transcription.
+  final String words = '',
+
   /// The plan made of what was said, at [SmallPlanStep.review].
   final SmallPlanRead? read,
 
@@ -74,6 +78,7 @@ final class const SmallPlanChooseState({
     List<double>? levels,
     int? heard,
     bool? silent,
+    String? words,
     SmallPlanRead? Function()? read,
     PlanDropReason? Function()? dropped,
     SmallPlanFailureKind? Function()? failure,
@@ -89,6 +94,7 @@ final class const SmallPlanChooseState({
     levels: levels ?? this.levels,
     heard: heard ?? this.heard,
     silent: silent ?? this.silent,
+    words: words ?? this.words,
     read: read == null ? this.read : read(),
     dropped: dropped == null ? this.dropped : dropped(),
     failure: failure == null ? this.failure : failure(),
@@ -107,6 +113,7 @@ final class const SmallPlanChooseState({
     levels,
     heard,
     silent,
+    words,
     read,
     dropped,
     failure,

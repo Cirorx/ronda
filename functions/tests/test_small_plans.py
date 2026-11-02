@@ -314,6 +314,17 @@ class TestShapeRequest:
 
         assert [len(words) for words in seen] == [sp.MAX_TYPED]
 
+    def test_shapes_what_voice_transcribe_heard_live(self, monkeypatch):
+        seen = []
+        monkeypatch.setattr(
+            sp, "shape_words", lambda words, **kwargs: seen.append(words) or {"plan": {}}
+        )
+
+        self.request({"transcript": "  caminar  por\nla rambla " + "a" * 2000})
+
+        assert seen[0].startswith("caminar por la rambla ")
+        assert len(seen[0]) == sp.MAX_SPOKEN
+
     def test_reads_and_deletes_a_voice_note(self):
         blob = FakeBlob(wav())
 

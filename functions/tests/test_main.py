@@ -216,6 +216,72 @@ class TestVoiceSignUp:
         assert bucket.objects == {}
 
 
+class TestReadTranscript:
+    """`read_transcript`: words heard live go to Spark 1.3 only; no Storage, nothing written."""
+
+    @pytest.fixture
+    def spark(self, monkeypatch):
+        import openai
+
+        from tests.test_voice_signup import GRACIELA, spark_returning
+
+        client, calls = spark_returning(GRACIELA)
+        monkeypatch.setattr(openai, "OpenAI", lambda **_: client)
+        monkeypatch.setenv("MODEL_API_KEY", "test-key")
+        return calls
+
+    def test_reads_the_fields_and_writes_nothing(self, monkeypatch, spark):
+        documents = {"users/demo-001": {"terms": {"version": "2026-10-27"}}}
+        db = FakeFirestore(copy.deepcopy(documents))
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+
+        fields = call(main.read_transcript, MEMBER, {"text": "Hola, soy Graciela"})
+
+        assert fields["firstName"] == "Graciela"
+        assert set(fields) == {"firstName", "ageBand", "barrio", "pretexts", "slots", "brings"}
+        assert db.documents == documents
+        assert spark[0]["messages"][1]["content"] == "Hola, soy Graciela"
+
+    def test_refuses_a_signed_out_caller(self, spark):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.read_transcript, None, {"text": "Hola"})
+
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+
+    def test_refuses_a_caller_without_terms(self, monkeypatch, spark):
+        monkeypatch.setattr(main, "_firestore", lambda: FakeFirestore({"users/demo-001": {}}))
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.read_transcript, MEMBER, {"text": "Hola"})
+
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.FAILED_PRECONDITION
+
+    def test_nothing_heard_is_an_invalid_argument(self, monkeypatch, spark):
+        db = FakeFirestore({"users/demo-001": {"terms": {"version": "2026-10-27"}}})
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+
+        for data in (None, {}, {"text": "  "}):
+            with pytest.raises(https_fn.HttpsError) as excinfo:
+                call(main.read_transcript, MEMBER, data)
+            assert error_code(excinfo) == https_fn.FunctionsErrorCode.INVALID_ARGUMENT
+
+    def test_a_failing_model_is_unavailable(self, monkeypatch):
+        import openai
+
+        from tests.test_voice_signup import spark_returning
+
+        client, _ = spark_returning(error=RuntimeError("down"))
+        monkeypatch.setattr(openai, "OpenAI", lambda **_: client)
+        monkeypatch.setenv("MODEL_API_KEY", "test-key")
+        db = FakeFirestore({"users/demo-001": {"terms": {"version": "2026-10-27"}}})
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.read_transcript, MEMBER, {"text": "Hola"})
+
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAVAILABLE
+
+
 SWEEP_TIME = datetime(2026, 10, 29, 15, 0, tzinfo=UTC)
 
 

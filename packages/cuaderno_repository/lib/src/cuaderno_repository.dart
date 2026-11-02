@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:cuaderno_repository/src/cuaderno_failures.dart';
 import 'package:cuaderno_repository/src/models/models.dart';
 import 'package:device_store/device_store.dart';
+import 'package:live_transcript/live_transcript.dart';
 import 'package:ronda_api/ronda_api.dart';
 import 'package:share_sheet/share_sheet.dart';
 import 'package:voice_recorder/voice_recorder.dart';
@@ -35,6 +35,7 @@ class CuadernoRepository {
     required this._rondaApi,
     required this._cuadernoApi,
     required this._shareSheet,
+    this._liveTranscript,
     String Function()? newNoteId,
   }) : _newNoteId = newNoteId ?? _randomNoteId;
 
@@ -43,7 +44,17 @@ class CuadernoRepository {
   final RondaApi _rondaApi;
   final CuadernoApi _cuadernoApi;
   final ShareSheet _shareSheet;
+  final LiveTranscriptClient? _liveTranscript;
   final String Function() _newNoteId;
+
+  /// The surface the relay picks Voice Transcribe's words for.
+  static const liveSurface = 'line';
+
+  /// The longest line, as `read_line` cuts it.
+  static const maxLineChars = 280;
+
+  /// The note being recorded, if any.
+  LiveVoiceNote? _note;
   final _changes = StreamController<void>.broadcast();
 
   /// The file name a shared postcard gets.
@@ -203,11 +214,12 @@ class CuadernoRepository {
     return Cuaderno(entries: entries, bringDay: _parseDay(json['bring']));
   }
 
-  /// Starts a voice note, asking for the microphone the first time.
+  /// Starts a voice note for [uid], asking for the microphone the first
+  /// time. The words go live once `users/{uid}.terms` is seen.
   ///
   /// Throws a [VoiceLineFailure] when there is none to use, it may not be
   /// used, or the recorder fails.
-  Future<void> startVoiceNote() async {
+  Future<void> startVoiceNote(String uid) async {
     final bool allowed;
     final bool present;
     try {
@@ -221,10 +233,23 @@ class CuadernoRepository {
     if (!allowed) {
       throw const VoiceLineFailure(VoiceLineProblem.microphoneDenied);
     }
+    final note = LiveVoiceNote(
+      recorder: _voiceRecorder,
+      client: _liveTranscript,
+    );
     try {
-      await _voiceRecorder.start();
+      await note.start(surface: liveSurface, live: _termsAccepted(uid));
     } on Exception {
       throw const VoiceLineFailure(VoiceLineProblem.recorderFailed);
+    }
+    _note = note;
+  }
+
+  Future<bool> _termsAccepted(String uid) async {
+    try {
+      return (await _rondaApi.readUser(uid))?.terms != null;
+    } on Exception {
+      return false;
     }
   }
 
@@ -232,13 +257,30 @@ class CuadernoRepository {
   /// 1. Only levels; never the audio.
   Stream<double> voiceLevels() => _voiceRecorder.levels();
 
+  /// What Voice Transcribe has heard so far, revised as the person talks.
+  /// Nothing comes without live transcription.
+  Stream<String> liveWords() => _note?.words ?? const Stream.empty();
+
   /// Stops and throws away the note being recorded, if any.
   Future<void> discardVoiceNote() async {
+    final note = _note;
+    _note = null;
     try {
-      await _voiceRecorder.cancel();
+      await (note?.cancel() ?? _voiceRecorder.cancel());
     } on Exception {
       // Nothing was recording; there is nothing to throw away.
     }
+  }
+
+  /// Ends the note: the WAV, and the transcript when live saw it through.
+  Future<LiveVoiceNoteResult> _stopNote() async {
+    final note = _note;
+    _note = null;
+    if (note != null) return await note.stop();
+    return LiveVoiceNoteResult(
+      wav: await _voiceRecorder.stop(),
+      transcript: null,
+    );
   }
 
   /// Stops the note and returns the words [uid] said in it, to be read and
@@ -248,15 +290,23 @@ class CuadernoRepository {
   /// uploaded only once `users/{uid}.terms` exists; `read_line` deletes it
   /// once read, and when it never got to, this repository does.
   Future<String> readVoiceLine(String uid) async {
-    final Uint8List? wav;
+    final LiveVoiceNoteResult note;
     try {
-      wav = await _voiceRecorder.stop();
+      note = await _stopNote();
     } on Exception {
       throw const VoiceLineFailure(VoiceLineProblem.recorderFailed);
     }
+    final wav = note.wav;
     // A WAV header alone (44 bytes) is a note with no sound in it.
     if (wav == null || wav.length <= _wavHeaderBytes) {
       throw const VoiceLineFailure(VoiceLineProblem.recorderFailed);
+    }
+    // Heard live: the line is there already, as `read_line` would cut it.
+    if (note.transcript case final transcript?) {
+      final line = transcript.split(RegExp(r'\s+')).join(' ');
+      return line.length > maxLineChars
+          ? line.substring(0, maxLineChars).trim()
+          : line;
     }
 
     final UserDocument? user;

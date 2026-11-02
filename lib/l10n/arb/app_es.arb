@@ -240,6 +240,7 @@
     "microphoneDeniedStepReturn": "Volvé a Ronda y grabá.",
     "microphoneDeniedRetry": "Ya le di permiso",
     "voiceRecord": "Grabar",
+    "voiceLiveHeard": "Lo que vamos escuchando",
     "voiceRecording": "Grabando",
     "voiceReadyBody": "Tocá «Grabar» cuando quieras y hablá tranquilo, como en un audio a un amigo.",
     "voiceSilent": "No te escuchamos. Revisá el micrófono.",

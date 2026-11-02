@@ -397,6 +397,22 @@ stdlib `wave` module (`audioop` is gone in 3.13).
    Maestro's `inputText`, and the next tap then fails. Press Back, reset and run again; it doesn't
    come back.
 
+## Live transcription (the relay)
+
+`--dart-define=LIVE_TRANSCRIPT_URL=wss://<relay>/v1/live` turns on the words-while-you-talk
+path on every recording surface (onboarding, the cuaderno's line, Algo chico's "Decilo vos");
+it is a URL, not a key. Empty (the default, so every existing build and test) means the note is
+recorded and read exactly as before. The relay is `relay/` (Python 3.13, `websockets`,
+`firebase-admin`): tests with `uv venv --seed --python 3.13 relay/venv`,
+`VIRTUAL_ENV=relay/venv uv pip install -r relay/requirements.txt -r relay/requirements-dev.txt`,
+then `cd relay && venv/bin/pytest --cov && venv/bin/ruff check . && venv/bin/ruff format --check .`
+(100%). Locally it runs with `MODEL_API_KEY`, `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099`,
+`FIRESTORE_EMULATOR_HOST=127.0.0.1:<port>` and `GOOGLE_CLOUD_PROJECT=ronda-uy` set, on port
+8090 (`venv/bin/python main.py`), and the development flavor takes
+`LIVE_TRANSCRIPT_URL=ws://127.0.0.1:8090/v1/live` (`ws://10.0.2.2:8090/v1/live` from the
+Android emulator). Deploy: `scripts/deploy_relay.sh` (needs gcloud). Design and numbers:
+`docs/MODELS.md` § Voice Transcribe in real time; the eval in `evals/voice/`.
+
 ## Push with "Voy / Esta no"
 
 | | Android | iOS (only with the paid Apple Developer Program) | Web |

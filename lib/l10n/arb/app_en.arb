@@ -1098,6 +1098,10 @@
     "@voiceRecord": {
         "description": "Starts the voice note; nothing records before this tap"
     },
+    "voiceLiveHeard": "What we hear so far",
+    "@voiceLiveHeard": {
+        "description": "Caption over the words Voice Transcribe has heard so far while a voice note records (live transcription)"
+    },
     "voiceRecording": "Recording",
     "@voiceRecording": {
         "description": "Said once when recording starts, beside the timer"

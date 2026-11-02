@@ -1,0 +1,2 @@
+websockets==15.0.1
+firebase-admin==7.7.0

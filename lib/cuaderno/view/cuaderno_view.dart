@@ -11,6 +11,7 @@ import 'package:ronda/cuaderno/cubit/line_voice_cubit.dart';
 import 'package:ronda/cuaderno/view/cuaderno_page.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/widgets/bench_labels.dart';
+import 'package:ronda/onboarding/widgets/live_words.dart';
 import 'package:ronda/onboarding/widgets/voice_waveform.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
@@ -195,6 +196,7 @@ class _TodayState extends State<_Today> {
             heard: voice.heard,
             length: LineVoiceCubit.waveformLength,
           ),
+          if (voice.words.isNotEmpty) LiveWords(words: voice.words),
           Wrap(
             spacing: spacing.sm,
             runSpacing: spacing.xs,

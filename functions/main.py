@@ -184,6 +184,44 @@ def extract(req: https_fn.CallableRequest) -> dict:
 @https_fn.on_call(
     region=REGION,
     max_instances=2,
+    timeout_sec=60,
+    memory=options.MemoryOption.MB_512,
+    secrets=[MODEL_API_KEY],
+    invoker="public",
+)
+def read_transcript(req: https_fn.CallableRequest) -> dict:
+    """Reads words Voice Transcribe heard live (`relay/`, `{text}`) into sign-up fields with
+    Spark 1.3, as `extract` does after transcribing a note. Nothing is stored. Refuses callers
+    who haven't accepted the terms (`users/{uid}.terms`)."""
+    from openai import OpenAI
+
+    import voice_signup as voice
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "Sign in first.")
+    uid = req.auth.uid
+    text = req.data.get("text") if isinstance(req.data, dict) else None
+    user = _firestore().collection("users").document(uid).get().to_dict()
+    key = MODEL_API_KEY.value
+    error = https_fn.FunctionsErrorCode
+    try:
+        return voice.read_transcript(
+            uid=uid,
+            text=text,
+            user=user,
+            client=OpenAI(base_url=voice.META_BASE, api_key=key, timeout=60, max_retries=2),
+        )
+    except voice.TermsMissing as e:
+        raise https_fn.HttpsError(error.FAILED_PRECONDITION, "Accept the terms first.") from e
+    except voice.BadVoiceNote as e:
+        raise https_fn.HttpsError(error.INVALID_ARGUMENT, "We couldn't read the note.") from e
+    except voice.ModelUnavailable as e:
+        raise https_fn.HttpsError(error.UNAVAILABLE, "Try again in a moment.") from e
+
+
+@https_fn.on_call(
+    region=REGION,
+    max_instances=2,
     timeout_sec=120,
     memory=options.MemoryOption.MB_512,
     secrets=[MODEL_API_KEY],

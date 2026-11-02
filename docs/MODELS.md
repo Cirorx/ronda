@@ -41,6 +41,38 @@ Notes:
 - Standard mode doesn't train on our data. Zero data retention needs Meta's sales team.
 - Uruguay isn't on the restricted list; the first paid call confirms access.
 
+## Voice Transcribe in real time (#64, `relay/`, `packages/live_transcript`)
+
+Measured 2026-11-01 from Uruguay with `scripts/smoke/s9_realtime.py` on an invented 10.5 s
+note streamed at real time in 80 ms frames (`PCM_16KHZ`, `PUSH_TO_TALK`, `CUMULATIVE`,
+Spanish bias, Ronda's keywords); the eval in `evals/voice/` repeats it and keeps the numbers:
+- connect 1.2 s (TLS handshake from Montevideo), ack right after the handshake frame;
+- **first words 0.7–0.8 s after the first audio frame**, then a revised cumulative partial every
+  0.2–0.6 s (24–27 per note);
+- **final transcript 0.24 s after `endStream`**, close code 1000; the transcript matched the
+  reference word for word, batch missed one word (WER 0.06).
+- Batch (`POST /v1/asr/transcribe`, same note): 3.2 s for the whole round trip. So live cuts the
+  wait after "Terminé" from ~4 s + upload to ~0.3 s, leaving Spark's ~2 s.
+
+Protocol as observed (docs: dev.meta.ai/docs/speech-to-text): the key goes **only** in the first
+JSON frame (`authorization.accessToken: "Bearer …"`; the HTTP header is ignored); audio as
+binary frames paced at real time (no more than 5 s ahead, idle input closes the session);
+`{"type":"endStream"}` ends input and the server flushes, then closes. Close codes: 1000 done,
+1008 bad request or pacing, 1011 backend (retry), 1013 rate limited (256 concurrent streams,
+16,000 per hour per tenant). Sessions last up to 60 min. Billing $0.18/h, same as batch.
+
+**Decision: a relay, not a client token.** Meta offers no short-lived client credential for the
+realtime endpoint: the only thing it accepts is the Model API key inside the handshake frame, so
+a phone that spoke to Meta directly would hold the key. Python Functions are WSGI and can't hold
+a WebSocket, so the relay is a small Cloud Run service (`relay/main.py`, `websockets` +
+`firebase-admin`, `southamerica-east1`, `scripts/deploy_relay.sh`): it verifies the member's
+Firebase ID token and `users/{uid}.terms`, opens the Meta session with the key from Secret
+Manager, pipes the PCM one way and only `transcript` events the other, caps a note at 65 s of
+audio, stores nothing and logs session ids, bytes and timings only. The app reaches it through
+`--dart-define=LIVE_TRANSCRIPT_URL`; with no URL (the default) nothing changes: the note is
+uploaded and read by `extract` as before, which is also the fallback whenever live fails
+(connect, ready, backlog, a dropped socket, a late final) and when `read_transcript` fails.
+
 ## Open weights
 
 | Model | Where | Use |

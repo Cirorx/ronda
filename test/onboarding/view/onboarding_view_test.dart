@@ -451,7 +451,7 @@ void main() {
       setUp(() {
         repository = _MockOnboardingRepository();
         appBloc = _MockAppBloc();
-        when(() => repository.startVoiceNote()).thenAnswer((_) async {});
+        when(() => repository.startVoiceNote(any())).thenAnswer((_) async {});
         when(() => repository.discardVoiceNote()).thenAnswer((_) async {});
         when(() => appBloc.state).thenReturn(
           const AppState(
