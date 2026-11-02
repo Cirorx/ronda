@@ -158,6 +158,61 @@ void main() {
         expect(user?['createdAt'], isA<Timestamp>());
       });
 
+      test(
+        'an old profile gains casa without neighbours and no trabajo',
+        () async {
+          await save();
+
+          final user = await readUser('demo-uid');
+          expect(user, containsPair('barrioNeighbours', false));
+          expect(user?.containsKey('workBarrio'), isFalse);
+          expect(user?.containsKey('workBarrioNeighbours'), isFalse);
+        },
+      );
+
+      test(
+        'writes trabajo, and an edit takes it out and keeps createdAt',
+        () async {
+          await subject.saveProfile(
+            'demo-uid',
+            firstName: 'Marta',
+            ageBand: '60-69',
+            barrio: 'cordon',
+            barrioNeighbours: true,
+            workBarrio: 'centro',
+            workBarrioNeighbours: true,
+            slots: const [],
+            pretexts: const [],
+            brings: const [],
+          );
+          final created = (await readUser('demo-uid'))?['createdAt'];
+          expect(
+            await readUser('demo-uid'),
+            allOf(
+              containsPair('barrioNeighbours', true),
+              containsPair('workBarrio', 'centro'),
+              containsPair('workBarrioNeighbours', true),
+            ),
+          );
+
+          await subject.saveProfile(
+            'demo-uid',
+            firstName: 'Marta',
+            ageBand: '60-69',
+            barrio: 'cordon',
+            slots: const [],
+            pretexts: const [],
+            brings: const [],
+            isNew: false,
+          );
+
+          final user = await readUser('demo-uid');
+          expect(user?.containsKey('workBarrio'), isFalse);
+          expect(user?.containsKey('workBarrioNeighbours'), isFalse);
+          expect(user?['createdAt'], created);
+        },
+      );
+
       test('keeps the terms recorded before', () async {
         await subject.saveTerms(
           'demo-uid',

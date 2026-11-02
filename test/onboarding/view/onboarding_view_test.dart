@@ -497,6 +497,98 @@ void main() {
         verifyNever(() => cubit.back());
       });
 
+      group('what the note left out', () {
+        final gapped = OnboardingState(
+          step: OnboardingStep.review,
+          pretexts: const {Pretext.mate},
+          slots: {_thursday},
+          barrio: Barrio.solymarNorte,
+          firstName: const FirstName.dirty('Marta'),
+          fromVoice: true,
+          gaps: const [OnboardingStep.brings, OnboardingStep.ageBand],
+        );
+
+        testWidgets('asks only those questions, on one screen', (tester) async {
+          await pumpSubject(tester, gapped);
+
+          expect(find.byType(VoiceGapsStep), findsOneWidget);
+          expect(find.text('Nos falta poco'), findsOneWidget);
+          expect(find.byType(BringsStep), findsOneWidget);
+          expect(find.byType(AgeBandStep), findsOneWidget);
+          expect(find.byType(PretextsStep), findsNothing);
+          expect(find.byType(BarrioStep), findsNothing);
+          expect(find.byType(FirstNameStep), findsNothing);
+          expect(find.byType(ReviewStep), findsNothing);
+        });
+
+        testWidgets('holds "Seguir" while one is unanswered', (tester) async {
+          await pumpSubject(tester, gapped.copyWith(brings: {Bring.termo}));
+
+          await tapVisible(tester, _byId(VoiceGapsStep.nextIdentifier));
+
+          verifyNever(() => cubit.gapsFilled());
+        });
+
+        testWidgets('goes on with "Seguir" once all are answered', (
+          tester,
+        ) async {
+          await pumpSubject(
+            tester,
+            gapped.copyWith(brings: {Bring.termo}, ageBand: AgeBand.forties),
+          );
+
+          await tapVisible(tester, _byId(VoiceGapsStep.nextIdentifier));
+
+          verify(() => cubit.gapsFilled()).called(1);
+        });
+
+        testWidgets('answers a gap with its own picker', (tester) async {
+          await pumpSubject(tester, gapped);
+
+          await tapVisible(tester, find.text('Termo'));
+
+          verify(() => cubit.bringsChanged({Bring.termo})).called(1);
+        });
+
+        testWidgets('records again with "Grabar de nuevo"', (tester) async {
+          await pumpSubject(tester, gapped);
+
+          await tapVisible(tester, _byId(VoiceGapsStep.recordAgainIdentifier));
+
+          verify(() => cubit.recordAgain()).called(1);
+        });
+
+        testWidgets('records again on the system back button', (tester) async {
+          await pumpSubject(tester, gapped);
+
+          await tester.binding.handlePopRoute();
+          await tester.pump();
+
+          verify(() => cubit.recordAgain()).called(1);
+          verifyNever(() => cubit.back());
+        });
+
+        testWidgets('in English', (tester) async {
+          when(() => cubit.state).thenReturn(gapped);
+          await tester.pumpApp(
+            BlocProvider<OnboardingCubit>.value(
+              value: cubit,
+              child: const OnboardingView(),
+            ),
+            locale: const Locale('en'),
+          );
+
+          expect(find.text('Almost there'), findsOneWidget);
+          expect(
+            find.text(
+              "We didn't catch these in your recording. Fill them in and "
+              "we're done.",
+            ),
+            findsOneWidget,
+          );
+        });
+      });
+
       group('read-back', () {
         final fromVoice = _answered.copyWith(fromVoice: true);
 
@@ -509,25 +601,7 @@ void main() {
           expect(find.text('¿Está todo bien?'), findsNothing);
           await tester.ensureVisible(find.text('Tu audio ya se borró.'));
           expect(find.text('Tu audio ya se borró.'), findsOneWidget);
-          expect(find.byIcon(Icons.check_circle), findsNWidgets(4));
           expect(_byId(OnboardingStepLayout.backIdentifier), findsNothing);
-        });
-
-        testWidgets('ticks only the ideas the note covered', (tester) async {
-          final handle = tester.ensureSemantics();
-          await pumpSubject(
-            tester,
-            fromVoice.copyWith(slots: const {}, brings: const {}),
-          );
-
-          expect(find.byIcon(Icons.check_circle), findsNWidgets(2));
-          expect(find.byIcon(Icons.radio_button_unchecked), findsNWidgets(2));
-          expect(find.bySemanticsLabel(RegExp('Qué días')), findsOneWidget);
-          expect(
-            tester.getSemantics(find.text('Qué días y a qué hora podés')),
-            isSemantics(value: 'Faltó'),
-          );
-          handle.dispose();
         });
 
         testWidgets('asks for what the note missed and holds the save', (

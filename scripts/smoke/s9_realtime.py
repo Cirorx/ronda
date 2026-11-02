@@ -74,8 +74,10 @@ async def run(path: str, record: str | None) -> None:
                 event["atMs"] = stamp()
                 events.append(event)
                 text = event.get("transcript", event.get("message", ""))
-                print(f"  {event['atMs']:>6} ms {event.get('type')}"
-                      f"{' FINAL' if event.get('final') else ''}: {text}")
+                print(
+                    f"  {event['atMs']:>6} ms {event.get('type')}"
+                    f"{' FINAL' if event.get('final') else ''}: {text}"
+                )
 
         receiver = asyncio.create_task(receive())
         sent_at = stamp()

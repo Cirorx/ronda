@@ -63,6 +63,41 @@ class TestSolverInput:
             "eligibleSeatIds": ["solymar-sur_mate_sat-afternoon"],
         }
 
+    def test_carries_trabajo_and_the_neighbours_when_they_are_set(self):
+        users = {
+            "a": {"firstName": "Ana", "ageBand": "60-69", "barrio": "cordon",
+                  "barrioNeighbours": True, "workBarrio": "centro"},
+            "b": {"firstName": "Bea", "ageBand": "30-39", "barrio": "cordon",
+                  "workBarrio": "atlantida", "workBarrioNeighbours": True},
+        }  # fmt: skip
+
+        a, b = proposals.solver_input(users, {"a": [], "b": []}, [])["people"]
+
+        assert (a["barrioNeighbours"], a["workBarrio"], a["workBarrioNeighbours"]) == (
+            True,
+            "centro",
+            False,
+        )
+        assert "workBarrio" not in b and "barrioNeighbours" not in b
+
+    def test_a_neighbour_who_works_near_a_ronda_is_seated_in_it(self):
+        users = {
+            f"r{i}": {"firstName": f"V{i}", "ageBand": "60-69", "barrio": "centro",
+                      "pretexts": ["mate"], "slots": ["sat-afternoon"]}
+            for i in range(4)
+        } | {
+            "w": {"firstName": "W", "ageBand": "60-69", "barrio": "shangrila",
+                  "workBarrio": "centro", "pretexts": ["mate"], "slots": ["sat-afternoon"]}
+        }  # fmt: skip
+        seat = "centro_mate_sat-afternoon"
+
+        from ronda_solver import solve
+
+        result = solve(proposals.solver_input(users, {uid: [seat] for uid in users}, []))
+
+        [group] = result["proposals"]
+        assert group["id"] == seat and "w" in {m["uid"] for m in group["members"]}
+
     def test_carries_the_plus_one_and_the_avoid_pairs(self):
         users = {"a": {"firstName": "Ana", "ageBand": "60-69", "barrio": "lagomar-sur",
                        "plusOneUid": "b"}}  # fmt: skip

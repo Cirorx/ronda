@@ -18,7 +18,16 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 - **Cerca** (tab): groups with open places, groups about to start, waiting demand. Also a public
   web page with no login. Until the in-app list exists the tab says so: "Pronto vas a ver acá los
   grupos cerca tuyo que tienen lugar. Mientras tanto, si tenés grupo, lo ves en Mi ronda."
-- **Ajustes** (tab). Built (#54), four rows:
+- **Mis datos** (Mi ronda's app bar, and the first row of Ajustes): "Lo que cambies acá lo usamos
+  para armar los grupos. Los demás ven solo tu nombre, tu edad y lo que traés." Then the first
+  name, the age band, "Dónde podés juntarte" (Casa, with [Cambiar] and "También barrios
+  vecinos · Hasta unas N cuadras"; Trabajo: "Si trabajás en otro barrio, también podés juntarte
+  ahí. Nadie ve cuál es tu trabajo." [Agregar trabajo], then the same row and [Sacar trabajo]),
+  the activities, days and times and what they bring, with onboarding's pickers, and [Guardar].
+  A member already in a ronda who changes a barrio or the times reads "Ya estás en una ronda y
+  seguís en ella. Si cambiás el barrio o los horarios, cuenta desde la próxima vez que armemos
+  grupos." Saving sends the new eligible seat ids first, then the profile.
+- **Ajustes** (tab). Built (#54), five rows (Mis datos first):
   - **Avisos:** "Los avisos están prendidos." or "Los avisos están apagados." with what Ronda
     sends, and [Prender los avisos], which forgets "Ahora no" and asks the phone again. A phone
     that refused for good gets the push card's line: "Los avisos de Ronda están apagados en este
@@ -109,12 +118,23 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   rato, o entrá con Google.", "Ahora no podemos mandar SMS a ese número. Probá entrar con Google."
 - **Voice:** "Te escuchamos", [Grabar] (nothing records before the tap), then "Grabando" with
   the timer and a waveform of the voice (2026-10-30; "No te escuchamos. Revisá el micrófono."
-  after about 3 s of silence), ≤ 60 s, "Ideas de qué contar" shown as a plain checklist while
-  recording and ticked on the read-back from what the transcript covered (live ticking would
-  need live transcription; decided 2026-10-27),
+  after about 3 s of silence; "Lo que vamos escuchando" under it when live transcription is on),
+  ≤ 60 s, "Qué contar": an example to almost read aloud («Soy Ana,
+  tengo 34, vivo en Barrio Sur. Me copa el mate en la rambla y la caminata, los sábados de mañana
+  o los martes de tarde. Llevo el termo.») and "Que no falte": Tu nombre · Tu edad, más o menos ·
+  Tu barrio · Qué te gustaría hacer (the pretexts) · Qué días, y si de mañana, tarde o noche · Qué
+  podés llevar o enseñar (2026-11-01). The needs are never asked aloud: they stay on the phone.
   [Terminé], "Borrar y empezar de nuevo", [Cancelar], and "El audio se borra apenas lo leemos."
-  Then "¿Entendimos bien?" with every field and a "Cambiar" on each; "Todavía no guardamos
-  nada"; "Tu audio ya se borró."; [Está bien, guardalo] [Grabar de nuevo].
+  Then "Estamos leyendo tu audio" with its real steps (Mandando tu audio · Escuchándolo ·
+  Entendiendo lo que contaste; the one under way breathes, still under reduced motion; words
+  heard live skip the first two), the words
+  as soon as Voice Transcribe hands them back ("Esto escuchamos" «…», "Tu audio ya se borró.")
+  while Spark reads them, and a barrio line every 3 s ("Cebando el mate…", "Buscando quién trae
+  los bizcochos…", "Contando sillas en la rambla…"…). A note that named everything goes straight
+  to "¿Entendimos bien?"; otherwise "Nos falta poco" asks only what it left out, each with its
+  own picker, on one screen, [Seguir] [Grabar de nuevo]. Then "¿Entendimos bien?" with every
+  field and a "Cambiar" on each; "Todavía no guardamos nada"; "Tu audio ya se borró."; [Está
+  bien, guardalo] [Grabar de nuevo].
 - **Microphone blocked:** "No podemos usar el micrófono", three steps to allow it (the phone's
   settings, the browser's padlock on web, or on an iPhone's browser Ajustes → Chrome or Safari →
   Micrófono, then reload; 2026-11-01), or [Prefiero tocar botones].

@@ -36,7 +36,7 @@ void main() {
         );
 
     group('renders', () {
-      testWidgets('its title and the four rows', (tester) async {
+      testWidgets('its title and the five rows', (tester) async {
         await pump(tester);
 
         expect(
@@ -47,6 +47,7 @@ void main() {
           findsOneWidget,
         );
         for (final row in [
+          'Mis datos',
           'Avisos',
           'Contar algo que pasó',
           'Tus datos',
@@ -60,6 +61,7 @@ void main() {
         await pump(tester, locale: const Locale('en'));
 
         for (final row in [
+          'My details',
           'Notifications',
           'Tell us something that happened',
           'Your data',
@@ -73,6 +75,7 @@ void main() {
         await pump(tester);
 
         for (final identifier in [
+          SettingsPage.myDataIdentifier,
           SettingsPage.notificationsIdentifier,
           SettingsPage.reportIdentifier,
           SettingsPage.dataIdentifier,

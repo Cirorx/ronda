@@ -124,6 +124,19 @@ class TestTheJob:
         cards = {p.split("/")[1] for p in db.documents if p.startswith("waiting/")}
         assert cards == {"demo-500", "demo-501", "demo-502", "demo-503", "demo-514"}
 
+    def test_who_works_in_another_barrio_waits_there_too(self):
+        db = waiting_db()
+        work_seat = "solymar-sur_mate_sat-afternoon"
+        db.documents |= sign_up("demo-515", day=2, seats=(SEAT, work_seat))
+        db.documents["users/demo-515"]["workBarrio"] = "solymar-sur"
+        waitlists.run_waitlists(db, FRIDAY)
+
+        assert db.documents[f"waitlists/{SEAT}"]["entries"][0]["uid"] == "demo-515"
+        assert db.documents[f"waitlists/{work_seat}"]["entries"] == [
+            {"uid": "demo-515", "at": datetime(2026, 10, 2, 12, tzinfo=UTC)}
+        ]
+        assert db.documents[f"waitlists/{work_seat}"]["barrio"] == "solymar-sur"
+
     def test_shows_each_person_the_list_nearest_to_filling(self):
         db = waiting_db()
         waitlists.run_waitlists(db, FRIDAY)

@@ -118,13 +118,12 @@ class const VoiceNoteView({
       FilledButton(onPressed: cubit.start, child: Text(label)),
     );
 
-    // Starting shares the ready screen, read the recorder's, until the
-    // read-back takes over.
+    // Starting shares the ready screen, and read keeps the reading one, every
+    // step ticked, until the read-back takes over.
     final Object shows = switch (status) {
       VoiceNoteStatus.ready ||
       VoiceNoteStatus.starting => VoiceNoteStatus.ready,
-      VoiceNoteStatus.recording ||
-      VoiceNoteStatus.read => VoiceNoteStatus.recording,
+      VoiceNoteStatus.read => VoiceNoteStatus.reading,
       VoiceNoteStatus.failed => failure ?? VoiceNoteFailure.readFailed,
       _ => status,
     };
@@ -200,11 +199,7 @@ class const VoiceNoteView({
           primaryAction: LinearProgressIndicator(
             semanticsLabel: l10n.voiceReadingTitle,
           ),
-          child: _Lines([
-            l10n.voiceReadingTranscribe,
-            l10n.voiceReadingFields,
-            l10n.voiceReadingDelete,
-          ]),
+          child: const _Reading(),
         ),
         VoiceNoteStatus.notUnderstood => layout(
           title: l10n.voiceNotUnderstoodTitle,
@@ -409,6 +404,28 @@ class const _Recording() extends StatelessWidget {
         ),
         const _Ideas(),
       ],
+    );
+  }
+}
+
+/// The reading's steps, the words and the line, from the cubit.
+class const _Reading() extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final (stage, transcript, waited, done) = context
+        .select<VoiceNoteCubit, (VoiceNoteStage, String?, Duration, bool)>(
+          (cubit) => (
+            cubit.state.stage,
+            cubit.state.transcript,
+            cubit.state.waited,
+            cubit.state.status == VoiceNoteStatus.read,
+          ),
+        );
+    return VoiceReading(
+      stage: stage,
+      transcript: transcript,
+      waited: waited,
+      done: done,
     );
   }
 }

@@ -37,6 +37,20 @@ void main() {
       });
     });
 
+    group('nearest', () {
+      test('is the shortest walk, or far with none', () {
+        expect(
+          WalkDistance.nearest(const [WalkDistance.far, WalkDistance.near]),
+          WalkDistance.near,
+        );
+        expect(
+          WalkDistance.nearest(const [WalkDistance.medium, WalkDistance.far]),
+          WalkDistance.medium,
+        );
+        expect(WalkDistance.nearest(const []), WalkDistance.far);
+      });
+    });
+
     group('forMember', () {
       const blocksFrom = {'solymar-sur': 9.1, 'solymar-norte': 0};
 

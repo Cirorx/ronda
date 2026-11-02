@@ -16,6 +16,7 @@ tests cover them without Firestore; the three entry points only read and write a
 from datetime import datetime
 
 import demo_users
+import member_barrios
 from ronda_solver import solve
 from ronda_solver.barrios import CENTROIDS
 
@@ -43,11 +44,14 @@ def solver_input(users: dict[str, dict], eligible: dict[str, list[str]], avoid: 
     `avoid/{pairId}` documents.
 
     Only people with a saved profile in a known barrio and eligible ids take part: someone who
-    has only accepted the terms, or whose phone sent no ids yet, is left out. No name, no need.
+    has only accepted the terms, or whose phone sent no ids yet, is left out. Casa goes in as
+    `barrio`, trabajo as `workBarrio` when it is a known barrio, each with whether it reaches
+    its neighbours (member_barrios.py). No name, no need.
     """
     people = []
     for uid, user in sorted(users.items()):
-        if "firstName" not in user or user.get("barrio") not in BARRIOS or uid not in eligible:
+        anchors = member_barrios.anchors(user)
+        if "firstName" not in user or not anchors or uid not in eligible:
             continue
         person = {
             "uid": uid,
@@ -57,6 +61,11 @@ def solver_input(users: dict[str, dict], eligible: dict[str, list[str]], avoid: 
             "slots": list(user.get("slots", [])),
             "eligibleSeatIds": list(eligible[uid]),
         }
+        if anchors[0].neighbours:
+            person["barrioNeighbours"] = True
+        for work in anchors[1:]:
+            person["workBarrio"] = work.barrio
+            person["workBarrioNeighbours"] = work.neighbours
         if plus_one := user.get("plusOneUid"):
             person["plusOneUid"] = plus_one
         people.append(person)

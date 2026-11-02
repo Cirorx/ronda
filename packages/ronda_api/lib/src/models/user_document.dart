@@ -46,8 +46,18 @@ class const UserDocument({
   /// The age band id (`60-69`).
   final String? ageBand,
 
-  /// The barrio id (`solymar-norte`).
+  /// Casa's barrio id (`solymar-norte`).
   final String? barrio,
+
+  /// Whether casa reaches its neighbouring barrios too; `false` on a
+  /// profile saved before it existed.
+  final bool barrioNeighbours = false,
+
+  /// Trabajo's barrio id, when the person gave one.
+  final String? workBarrio,
+
+  /// Whether trabajo reaches its neighbouring barrios too.
+  final bool workBarrioNeighbours = false,
 
   /// Slot ids (`sat-afternoon`).
   final List<String> slots = const [],
@@ -73,6 +83,9 @@ class const UserDocument({
     firstName: _string(json['firstName']),
     ageBand: _string(json['ageBand']),
     barrio: _string(json['barrio']),
+    barrioNeighbours: json['barrioNeighbours'] == true,
+    workBarrio: _string(json['workBarrio']),
+    workBarrioNeighbours: json['workBarrioNeighbours'] == true,
     slots: _strings(json['slots']),
     pretexts: _strings(json['pretexts']),
     brings: _strings(json['brings']),
@@ -93,6 +106,9 @@ class const UserDocument({
     firstName,
     ageBand,
     barrio,
+    barrioNeighbours,
+    workBarrio,
+    workBarrioNeighbours,
     slots,
     pretexts,
     brings,

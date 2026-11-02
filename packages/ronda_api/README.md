@@ -17,7 +17,8 @@ bootstrap (pointed at the emulators in the development flavor) and passed in. `f
 | `Future<UserDocument?> readUser(String uid)` | `users/{uid}` once; `null` while it doesn't exist |
 | `Future<String> uploadVoiceNote({uid, noteId, wav})` | Puts `audio/{uid}/{noteId}.wav` (`audio/wav`), logs bytes and ms, returns the path |
 | `Future<void> deleteVoiceNote(String path)` | For a note `extract` never read |
-| `Future<ExtractedFields> extract(String path)` | The `extract` callable (120 s timeout); `UnreadableVoiceNoteException` on `invalid-argument` |
+| `Future<String> listenToVoiceNote(String path)` | `extract` with `stage: listen`: Voice Transcribe's words, the note deleted (120 s timeout); `UnreadableVoiceNoteException` on `invalid-argument` or no words |
+| `Future<ExtractedFields> readTranscript(String transcript)` | `extract` with `stage: fields`: Spark 1.3 reads those words into fields (120 s timeout); `UnreadableVoiceNoteException` on `invalid-argument` |
 | `RondaApi.region` | `southamerica-east1`, where every function and callable runs |
 | `RondaApi.usersCollection` | `users`, one document per Firebase uid |
 | `Stream<UserDocument?> watchUser(String uid)` | `users/{uid}` now and on every change; `null` while it doesn't exist |

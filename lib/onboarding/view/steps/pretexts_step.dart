@@ -19,16 +19,10 @@ class const PretextsStep({super.key}) extends StatelessWidget {
       step: OnboardingStep.pretexts,
       title: l10n.pretextsTitle,
       body: l10n.pretextsBody,
-      child: ChipPicker(
+      child: PretextsPicker(
         identifier: identifier,
-        options: [
-          for (final pretext in Pretext.values)
-            ChipPickerOption(value: pretext.name, label: l10n.pretext(pretext)),
-        ],
-        selected: {for (final pretext in pretexts) pretext.name},
-        onChanged: (names) => context.read<OnboardingCubit>().pretextsChanged({
-          for (final name in names) Pretext.values.byName(name),
-        }),
+        selected: pretexts,
+        onChanged: context.read<OnboardingCubit>().pretextsChanged,
       ),
     );
   }

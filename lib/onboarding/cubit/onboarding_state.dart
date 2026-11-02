@@ -75,6 +75,10 @@ final class const OnboardingState({
   /// Whether the answers came from a voice note, so the read-back says
   /// what was understood and offers "Grabar de nuevo".
   final bool fromVoice = false,
+
+  /// The questions a voice note left unanswered, asked together on one
+  /// screen before the read-back; empty when there is no such screen open.
+  final List<OnboardingStep> gaps = const [],
 }) extends Equatable {
   /// Whether the open step has what it needs for "Seguir".
   bool get canContinue => isAnswered(step);
@@ -101,13 +105,11 @@ final class const OnboardingState({
       ageBand != null &&
       firstName.isValid;
 
-  /// Which "Ideas de qué contar" the answers cover, in the recorder's order:
-  /// name and barrio, pretexts, slots, brings.
-  List<bool> get coveredIdeas => [
-    firstName.isValid && barrio != null,
-    pretexts.isNotEmpty,
-    slots.isNotEmpty,
-    brings.isNotEmpty,
+  /// The questions the profile needs that are still unanswered, in order.
+  /// The needs never count: they are optional and never said aloud.
+  List<OnboardingStep> get unanswered => [
+    for (final step in OnboardingStep.questions)
+      if (!isAnswered(step)) step,
   ];
 
   OnboardingState copyWith({
@@ -123,6 +125,7 @@ final class const OnboardingState({
     OnboardingStatus? status,
     bool? recording,
     bool? fromVoice,
+    List<OnboardingStep>? gaps,
   }) => OnboardingState(
     step: step ?? this.step,
     pretexts: pretexts ?? this.pretexts,
@@ -136,6 +139,7 @@ final class const OnboardingState({
     status: status ?? this.status,
     recording: recording ?? this.recording,
     fromVoice: fromVoice ?? this.fromVoice,
+    gaps: gaps ?? this.gaps,
   );
 
   @override
@@ -152,5 +156,6 @@ final class const OnboardingState({
     status,
     recording,
     fromVoice,
+    gaps,
   ];
 }

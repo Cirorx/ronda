@@ -106,15 +106,29 @@ class TestWarnings:
         assert found == ["slot", "pretext", "barrio", "seat"]
 
     def test_an_unknown_barrio_is_far(self):
-        assert ronda_members.blocks("las-piedras", "el-pinar-sur") is None
         ronda = {"barrio": "el-pinar-sur", "pretext": "mate", "slot": {"day": "sat"}}
+        assert ronda_members.walk({"barrio": "las-piedras"}, ronda) is None
+        assert ronda_members.walk({"barrio": "el-pinar-sur"}, {"barrio": "nowhere"}) is None
         assert "barrio" in ronda_members.warnings(ronda, {"barrio": "las-piedras"}, [])
 
     def test_montevideo_takes_fifteen_blocks_where_the_costa_takes_ten(self):
         ronda = {"barrio": "barrio-sur", "pretext": "mate", "slot": {"day": "sat"}}
-        assert ronda_members.blocks("palermo", "barrio-sur") == 13
+        assert ronda_members.walk({"barrio": "palermo"}, ronda) == 13
         assert "barrio" not in ronda_members.warnings(ronda, {"barrio": "palermo"}, [])
         assert "barrio" in ronda_members.warnings(ronda, {"barrio": "aguada"}, [])
+
+    def test_a_ronda_near_trabajo_is_no_far_barrio_and_the_walk_is_from_there(self):
+        ronda = {"barrio": "barrio-sur", "pretext": "mate", "slot": {"day": "sat"}}
+        commuter = {"barrio": "el-pinar-sur", "workBarrio": "palermo"}
+
+        assert "barrio" not in ronda_members.warnings(ronda, commuter, [])
+        assert ronda_members.walk(commuter, ronda) == 13
+
+    def test_aguada_is_close_enough_with_its_neighbours(self):
+        ronda = {"barrio": "barrio-sur", "pretext": "mate", "slot": {"day": "sat"}}
+        user = {"barrio": "aguada", "barrioNeighbours": True}
+
+        assert "barrio" not in ronda_members.warnings(ronda, user, [])
 
     def test_the_seat_id_falls_back_to_the_rondas_key(self):
         ronda = {"barrio": "b", "pretext": "mate", "slot": {"day": "sat", "time": "afternoon"}}

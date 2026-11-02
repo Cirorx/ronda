@@ -137,8 +137,11 @@ class VoiceNoteCubit extends Cubit<VoiceNoteState> {
     await start();
   }
 
-  /// "Terminé", or the limit: the note is read. Does nothing unless
-  /// recording. Cancelled while reading, the answer is dropped.
+  /// "Terminé", or the limit: the note is read, one step at a time
+  /// ([VoiceNoteState.stage]), with the words in [VoiceNoteState.transcript]
+  /// as soon as they are back and [VoiceNoteState.waited] counting the
+  /// seconds. Does nothing unless recording. Cancelled while reading, the
+  /// answer is dropped.
   Future<void> finish() async {
     if (state.status != VoiceNoteStatus.recording) return;
     await _stopListening();
@@ -149,11 +152,18 @@ class VoiceNoteCubit extends Cubit<VoiceNoteState> {
         words: state.words,
       ),
     );
+    _tick = _ticks().listen((_) => _onReadingTick());
     final read = await _read();
+    await _stopListening();
     if (!isClosed) emit(read);
   }
 
-  /// What reading the note came to.
+  void _onReadingTick() {
+    if (isClosed || state.status != VoiceNoteStatus.reading) return;
+    emit(state.copyWith(waited: state.waited + const Duration(seconds: 1)));
+  }
+
+  /// What reading the note came to, showing each step on the way.
   Future<VoiceNoteState> _read() async {
     VoiceNoteState failed(VoiceNoteFailure failure, [String? code]) =>
         VoiceNoteState(
@@ -162,8 +172,31 @@ class VoiceNoteCubit extends Cubit<VoiceNoteState> {
           failureCode: code,
         );
     try {
-      final signup = await _onboardingRepository.readVoiceNote(_uid);
-      return VoiceNoteState(status: VoiceNoteStatus.read, signup: signup);
+      await for (final step in _onboardingRepository.readVoiceNote(_uid)) {
+        // Leaving cancels the reading; nobody is waiting for the answer.
+        if (isClosed) break;
+        switch (step) {
+          case VoiceNoteUploading():
+            emit(state.copyWith(stage: VoiceNoteStage.uploading));
+          case VoiceNoteListening():
+            emit(state.copyWith(stage: VoiceNoteStage.listening));
+          case VoiceNoteHeard(:final transcript):
+            emit(
+              state.copyWith(
+                stage: VoiceNoteStage.understanding,
+                transcript: transcript,
+              ),
+            );
+          case VoiceNoteUnderstood(:final signup):
+            return VoiceNoteState(
+              status: VoiceNoteStatus.read,
+              signup: signup,
+              stage: VoiceNoteStage.understanding,
+              transcript: state.transcript,
+            );
+        }
+      }
+      return failed(VoiceNoteFailure.readFailed);
     } on VoiceNoteNotUnderstoodFailure {
       return const VoiceNoteState(status: VoiceNoteStatus.notUnderstood);
     } on RecordVoiceNoteFailure {

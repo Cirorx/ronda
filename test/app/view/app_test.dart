@@ -25,6 +25,7 @@ import 'package:ronda/donde_queda/donde_queda.dart';
 import 'package:ronda/error_log/error_log.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda/mate_flyer/mate_flyer.dart';
+import 'package:ronda/my_data/my_data.dart';
 import 'package:ronda/my_ronda/my_ronda.dart';
 import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/onboarding/view/steps/steps.dart';
@@ -421,6 +422,35 @@ void main() {
           expect(find.byType(page), findsNothing);
           expect(find.byType(SettingsPage), findsOneWidget);
         }
+      });
+
+      testWidgets('to $MyDataPage from Ajustes and from Mi ronda', (
+        tester,
+      ) async {
+        await pumpSignedIn(tester);
+        await tester.tap(_tab('Settings'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.widgetWithText(ListTile, 'My details'));
+        await tester.pump();
+        profiles.add(_profile);
+        await tester.pumpAndSettle();
+        expect(find.byType(MyDataPage), findsOneWidget);
+        expect(find.byType(AppShell), findsOneWidget);
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+        expect(find.byType(SettingsPage), findsOneWidget);
+
+        await tester.tap(_tab('My ronda'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip('My details'));
+        await tester.pump();
+        profiles.add(_profile);
+        await tester.pumpAndSettle();
+        expect(find.byType(MyDataPage), findsOneWidget);
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+        expect(find.byType(MyRondaPage), findsOneWidget);
       });
 
       testWidgets('from / to $MyRondaPage', (tester) async {

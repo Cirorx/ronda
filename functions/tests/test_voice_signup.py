@@ -349,3 +349,53 @@ class TestReadTranscript:
 
         with pytest.raises(v.ModelUnavailable):
             v.read_transcript(uid=UID, text="Hola", user=USER, client=client)
+
+
+class TestListenToNote:
+    def listen(self, blob: FakeBlob, *, user=USER, path=PATH, http=None):
+        return v.listen_to_note(
+            uid=UID,
+            path=path,
+            user=user,
+            blob=lambda _: blob,
+            api_key="k",
+            http=http or http_answering(transcript("  Hola,\n soy Graciela ")),
+        )
+
+    def test_answers_the_words_and_deletes_the_note(self):
+        blob = FakeBlob(wav())
+
+        assert self.listen(blob) == {"transcript": "Hola, soy Graciela"}
+        assert blob.deleted
+
+    def test_keeps_the_words_within_the_cap(self):
+        long = transcript("palabra " * 1000)
+
+        assert len(self.listen(FakeBlob(wav()), http=http_answering(long))["transcript"]) == (
+            v.MAX_TRANSCRIPT_CHARS
+        )
+
+    def test_refuses_before_the_terms_and_leaves_the_note_alone(self):
+        blob = FakeBlob(wav())
+
+        with pytest.raises(v.TermsMissing):
+            self.listen(blob, user=None)
+        assert not blob.deleted
+
+    def test_refuses_someone_elses_note(self):
+        with pytest.raises(PermissionError):
+            self.listen(FakeBlob(wav()), path="audio/other-uid/note-1.wav")
+
+    def test_deletes_a_silent_note(self):
+        blob = FakeBlob(wav())
+
+        with pytest.raises(v.BadVoiceNote, match="nothing heard"):
+            self.listen(blob, http=http_answering(transcript(" ")))
+        assert blob.deleted
+
+
+class TestInstructions:
+    def test_reads_an_exact_age_and_the_ways_people_say_they_like_something(self):
+        assert '"tengo 34" es 30-39' in v.INSTRUCTIONS
+        assert '"Me copa"' in v.INSTRUCTIONS
+        assert '"bizcochos"' in v.INSTRUCTIONS

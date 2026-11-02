@@ -58,16 +58,36 @@ class ProfileRepository {
   /// Lists are stored in the enums' declaration order, so the same choices
   /// always produce the same document. Throws a [SaveProfileFailure] when
   /// the write fails.
-  Future<void> createProfile(String uid, Profile profile) async {
+  Future<void> createProfile(String uid, Profile profile) =>
+      _saveProfile(uid, profile, isNew: true);
+
+  /// Replaces the profile of [uid] with [profile], from "Mis datos": casa,
+  /// trabajo and every answer, keeping when it was first saved. A profile
+  /// saved before trabajo existed gains its fields here.
+  ///
+  /// Throws a [SaveProfileFailure] when the write fails.
+  Future<void> updateProfile(String uid, Profile profile) =>
+      _saveProfile(uid, profile, isNew: false);
+
+  Future<void> _saveProfile(
+    String uid,
+    Profile profile, {
+    required bool isNew,
+  }) async {
+    final work = profile.anchors.skip(1).firstOrNull;
     try {
       await _rondaApi.saveProfile(
         uid,
         firstName: profile.firstName,
         ageBand: profile.ageBand.id,
         barrio: profile.barrio.id,
+        barrioNeighbours: profile.barrioNeighbours,
+        workBarrio: work?.barrio.id,
+        workBarrioNeighbours: work?.neighbours ?? false,
         slots: _slotIds(profile),
         pretexts: _pretextIds(profile),
         brings: _bringIds(profile),
+        isNew: isNew,
       );
     } on Exception {
       throw const SaveProfileFailure();
@@ -109,6 +129,11 @@ class ProfileRepository {
     'firstName': answers.firstName,
     'ageBand': answers.ageBand.id,
     'barrio': answers.barrio.id,
+    'barrioNeighbours': answers.barrioNeighbours,
+    if (answers.anchors.skip(1).firstOrNull case final work?) ...{
+      'workBarrio': work.barrio.id,
+      'workBarrioNeighbours': work.neighbours,
+    },
     'pretexts': _pretextIds(answers),
     'slots': _slotIds(answers),
     'brings': _bringIds(answers),
@@ -117,7 +142,8 @@ class ProfileRepository {
   /// The onboarding answers held on this phone, or `null` when none are
   /// held or they can't be read.
   Future<Profile?> heldAnswers() async {
-    if (await _held(heldAnswersKey) case {
+    final held = await _held(heldAnswersKey);
+    if (held case {
       'firstName': final String firstName,
       'ageBand': final String ageBandId,
       'barrio': final String barrioId,
@@ -138,6 +164,8 @@ class ProfileRepository {
           brings: {
             for (final id in brings.whereType<String>()) ?Bring.fromId(id),
           },
+          barrioNeighbours: held['barrioNeighbours'] == true,
+          work: _work(held['workBarrio'], held['workBarrioNeighbours']),
         );
       }
     }
@@ -185,6 +213,14 @@ class ProfileRepository {
       throw const HoldOnPhoneFailure();
     }
   }
+
+  /// Trabajo from its stored id and switch, or `null` for none or an
+  /// unknown barrio.
+  static Anchor? _work(Object? barrioId, Object? neighbours) =>
+      switch (Barrio.fromId(barrioId is String ? barrioId : null)) {
+        final barrio? => Anchor(barrio: barrio, neighbours: neighbours == true),
+        null => null,
+      };
 
   /// The ids of the profile's lists in the enums' declaration order, so the
   /// same choices always produce the same document.
@@ -258,6 +294,8 @@ extension on UserDocument {
       pretexts: {for (final id in pretexts) ?Pretext.fromId(id)},
       slots: {for (final id in slots) ?Slot.fromId(id)},
       brings: {for (final id in brings) ?Bring.fromId(id)},
+      barrioNeighbours: barrioNeighbours,
+      work: ProfileRepository._work(workBarrio, workBarrioNeighbours),
     );
   }
 }

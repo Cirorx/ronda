@@ -1,9 +1,11 @@
 """Reads a spoken sign-up: the WAV check, Voice Transcribe, then Spark 1.3 into fields.
 
-`read_voice_note` is the whole of the `extract` callable except Firebase: `main.py` passes the
-Storage blob, the user document and the key, and the note is deleted here once it was read,
-whatever happened while reading it. Logs carry ids, sizes and timings only: never a transcript,
-a name or a field (`docs/STACK.md` § Security).
+The `extract` callable runs in one call (`read_voice_note`) or in two, so the phone can show the
+words while the fields are still being read: `listen_to_note` answers the transcript, then the
+`read_transcript` callable turns it into fields, as it does for words heard live. `main.py`
+passes the Storage blob, the user document and the key, and the note is deleted here once it was
+read, whatever happened while reading it. Logs carry ids, sizes and timings only: never a
+transcript, a name or a field (`docs/STACK.md` § Security).
 """
 
 import io
@@ -132,19 +134,22 @@ con lo que dijo. No inventes: si algo no lo dijo o no queda claro, dejá "unknow
 vacía.
 
 - first_name: solo el nombre de pila, como lo dijo. Vacío si no lo dijo.
-- age_band: la década. "sesenta y pico" o "tengo 64" es 60-69. Menos de 18 es unknown.
+- age_band: la década. "sesenta y pico" o "tengo 64" es 60-69, "tengo 34" es 30-39. Menos de
+  18 es unknown.
 - barrio: uno de estos: {", ".join(f"{k} ({v})" for k, v in BARRIOS.items())}.
   Si nombra uno de los dos lugares de un barrio ("Bella Vista" es capurro-bella-vista,
   "Bolívar" es mercado-modelo-bolivar), ese barrio. "Malvín" y "Carrasco" solos son malvin y
   carrasco. Si dice solo "Solymar", "Lagomar" o "El Pinar" sin Norte o Sur, o solo "Colón",
   unknown.
 - pretexts: lo que le gustaría hacer: {", ".join(f"{k} ({v})" for k, v in PRETEXTS.items())}.
+  "Me copa", "me gusta" o "me prendo" cuentan; "el mate" solo, sin la rambla, es mate.
 - slots: día y franja, como día-franja. Días: mon lun, tue mar, wed mié, thu jue, fri vie,
   sat sáb, sun dom. Franjas: morning (mañana, de 9 a 12), afternoon (tarde o tardecita, de 14
   a 18), evening (noche, de 19 a 21). "Los fines de semana" son sat y sun; "entre semana", de
   mon a fri. Sin franja dicha, las tres.
 - brings: lo que puede llevar o enseñar: {", ".join(f"{k} ({v})" for k, v in BRINGS.items())}.
-  Algo parecido cuenta ("un termo con agua" es termo). Si no puede llevar nada, tengo-ganas.
+  Algo parecido cuenta ("un termo con agua" es termo, "bizcochos" o "galletitas" es pan). Si
+  no puede llevar nada, tengo-ganas.
 """
 
 
@@ -287,6 +292,66 @@ def note_uid(path: object) -> str:
     return match["uid"]
 
 
+def _check_caller(uid: str, user: dict[str, Any] | None) -> None:
+    if not (user or {}).get("terms"):
+        raise TermsMissing(uid)
+
+
+def _listen(
+    *,
+    uid: str,
+    path: object,
+    user: dict[str, Any] | None,
+    blob: Callable[[str], Blob],
+    api_key: str,
+    http: httpx.Client,
+) -> tuple[str, float, int, float]:
+    """The words in the note at `path`, its length, its size and when they came back; the note
+    is deleted in every case once it was found."""
+    if note_uid(path) != uid:
+        raise PermissionError("not your voice note")
+    _check_caller(uid, user)
+    note = blob(str(path))
+    try:
+        audio = note.download_as_bytes()
+        seconds = check_wav(audio)
+        words = transcribe(audio, api_key=api_key, http=http).split()
+        transcript = " ".join(words)[:MAX_TRANSCRIPT_CHARS]
+        if not transcript:
+            raise BadVoiceNote("nothing heard")
+        return transcript, seconds, len(audio), time.perf_counter()
+    finally:
+        try:
+            note.delete()
+        except Exception as error:  # a missing note; the 1-day lifecycle rule is the backstop
+            log.warning("extract %s: delete failed (%s)", path, type(error).__name__)
+
+
+def listen_to_note(
+    *,
+    uid: str,
+    path: object,
+    user: dict[str, Any] | None,
+    blob: Callable[[str], Blob],
+    api_key: str,
+    http: httpx.Client,
+) -> dict[str, str]:
+    """`extract` with `stage: "listen"`: checks, transcribes and deletes the note at `path`,
+    answering `{"transcript": <the words>}` for the phone to show and send to `read_transcript`."""
+    started = time.perf_counter()
+    transcript, seconds, size, heard = _listen(
+        uid=uid, path=path, user=user, blob=blob, api_key=api_key, http=http
+    )
+    log.info(
+        "extract %s listen: %d bytes, %.1f s of audio, transcribe %d ms",
+        path,
+        size,
+        seconds,
+        (heard - started) * 1000,
+    )
+    return {"transcript": transcript}
+
+
 def read_voice_note(
     *,
     uid: str,
@@ -297,36 +362,22 @@ def read_voice_note(
     http: httpx.Client,
     client: Any,
 ) -> dict[str, Any]:
-    """The `extract` callable: checks, reads and deletes the note at `path`.
+    """`extract` in one call: checks, reads and deletes the note at `path`.
 
     `user` is `users/{uid}` (or `None`); `blob(path)` opens the Storage object. The note is
     deleted in every case once it was found, so it never outlives the call.
     """
-    if note_uid(path) != uid:
-        raise PermissionError("not your voice note")
-    if not (user or {}).get("terms"):
-        raise TermsMissing(uid)
-    note = blob(str(path))
     started = time.perf_counter()
-    try:
-        audio = note.download_as_bytes()
-        seconds = check_wav(audio)
-        transcript = transcribe(audio, api_key=api_key, http=http)
-        heard = time.perf_counter()
-        if not transcript:
-            raise BadVoiceNote("nothing heard")
-        fields = read_fields(transcript, client=client)
-        log.info(
-            "extract %s: %d bytes, %.1f s of audio, transcribe %d ms, fields %d ms",
-            path,
-            len(audio),
-            seconds,
-            (heard - started) * 1000,
-            (time.perf_counter() - heard) * 1000,
-        )
-        return fields
-    finally:
-        try:
-            note.delete()
-        except Exception as error:  # a missing note; the 1-day lifecycle rule is the backstop
-            log.warning("extract %s: delete failed (%s)", path, type(error).__name__)
+    transcript, seconds, size, heard = _listen(
+        uid=uid, path=path, user=user, blob=blob, api_key=api_key, http=http
+    )
+    fields = read_fields(transcript, client=client)
+    log.info(
+        "extract %s: %d bytes, %.1f s of audio, transcribe %d ms, fields %d ms",
+        path,
+        size,
+        seconds,
+        (heard - started) * 1000,
+        (time.perf_counter() - heard) * 1000,
+    )
+    return fields

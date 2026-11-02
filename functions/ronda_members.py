@@ -17,8 +17,9 @@ The rules, checked in `add`:
   leaves the old one (`state: left`, `leftAt`) and deletes its `users/{uid}/rondas` link, since
   the phone follows the lowest ronda id it finds there. A link to a ronda they already left, or
   that no longer meets, is deleted too.
-- Warnings never block: a slot or pretext they didn't pick, a barrio more than the solver's ten
-  blocks away, a seat their phone didn't mark as possible (which need, the server never knows).
+- Warnings never block: a slot or pretext they didn't pick, a ronda beyond the solver's walk from
+  both their casa and their trabajo, a seat their phone didn't mark as possible (which need, the
+  server never knows).
 
 Nothing here sends anything: if the week's ¿Venís? already went out, the new member answers
 from the card; an open ¿seguimos? didn't ask them.
@@ -27,8 +28,9 @@ from the card; an open ¿seguimos? didn't ask them.
 from datetime import datetime
 
 import demo_users
+import member_barrios
 import rsvp
-from proposals import APPROVED, BARRIOS, unseated_person
+from proposals import APPROVED, unseated_person
 
 SEATED = ("active", "paused")
 """Member states that take a seat; `left` doesn't."""
@@ -56,28 +58,21 @@ def seat_id(ronda: dict) -> str:
     return ronda.get("seatId") or f"{ronda.get('barrio')}_{ronda.get('pretext')}_{slot_id(ronda)}"
 
 
-def blocks(from_barrio: str, to_barrio: str) -> int | None:
-    """Whole blocks between two barrio centroids, as the solver measures a walk; `None` when
-    either barrio is unknown."""
-    from ronda_solver.geo import blocks_between
-
-    here, there = BARRIOS.get(from_barrio), BARRIOS.get(to_barrio)
-    if here is None or there is None:
-        return None
-    return round(blocks_between((here["lat"], here["lng"]), (there["lat"], there["lng"])))
+def walk(user: dict, ronda: dict) -> int | None:
+    """Whole blocks from the nearest of the user's barrios (casa or trabajo) to the ronda's, as
+    the solver measures a walk; `None` when the ronda's barrio or the user's are unknown."""
+    found = member_barrios.nearest_blocks(user, ronda.get("barrio", ""))
+    return None if found is None else round(found)
 
 
 def warnings(ronda: dict, user: dict, eligible: list[str] | None) -> list[str]:
     """What about `user` doesn't match `ronda`, in the order the screen shows it."""
-    from ronda_solver.rules import max_walk_blocks
-
     found = []
     if slot_id(ronda) not in user.get("slots", []):
         found.append(SLOT)
     if ronda.get("pretext") not in user.get("pretexts", []):
         found.append(PRETEXT)
-    walk = blocks(user.get("barrio", ""), ronda.get("barrio", ""))
-    if walk is None or walk > max_walk_blocks(ronda.get("barrio", "")):
+    if not member_barrios.reaches(user, ronda.get("barrio", "")):
         found.append(BARRIO)
     if seat_id(ronda) not in (eligible or []):
         found.append(SEAT)
@@ -182,7 +177,7 @@ def candidates(db, ronda_id: str) -> dict:
         if (
             not demo_users.counts(uid)
             or "firstName" not in user
-            or user.get("barrio") not in BARRIOS
+            or not member_barrios.anchors(user)
             or uid in inside
         ):
             continue
@@ -192,7 +187,7 @@ def candidates(db, ronda_id: str) -> dict:
             {
                 **unseated_person(uid, user),
                 "ageBand": user.get("ageBand", ""),
-                "blocks": blocks(user["barrio"], ronda.get("barrio", "")),
+                "blocks": walk(user, ronda),
                 "warnings": warnings(ronda, user, _eligible(db, uid)),
                 "rondaId": other,
                 "rondaLine": rsvp.ronda_line(sitting[other]) if other else None,
@@ -220,7 +215,7 @@ def add(db, ronda_id: str, uid: str, now: datetime, *, move: bool = False) -> di
     ronda = _open_ronda(db, ronda_id)
     user_snapshot = db.document(f"users/{uid}").get()
     user = (user_snapshot.to_dict() or {}) if user_snapshot.exists else {}
-    if "firstName" not in user or user.get("barrio") not in BARRIOS:
+    if "firstName" not in user or not member_barrios.anchors(user):
         raise MemberError("not-found", "no sign-up with a profile in a known barrio")
     members = rsvp._members(db, ronda_id)
     inside = seated(members)
@@ -260,7 +255,7 @@ def add(db, ronda_id: str, uid: str, now: datetime, *, move: bool = False) -> di
         "uid": uid,
         "firstName": user["firstName"],
         "ageBand": user.get("ageBand", ""),
-        "distanceBlocks": blocks(user["barrio"], ronda.get("barrio", "")),
+        "distanceBlocks": walk(user, ronda),
     }
 
     def write(transaction) -> None:

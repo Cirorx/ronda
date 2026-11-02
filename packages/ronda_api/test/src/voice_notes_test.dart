@@ -259,12 +259,15 @@ void main() {
       });
     });
 
-    group('extract', () {
-      test('calls extract with the path and a two-minute timeout', () async {
-        when(() => result.data).thenReturn(<Object?, Object?>{});
+    group('listenToVoiceNote', () {
+      test('calls extract to listen, with a two-minute timeout', () async {
+        when(() => result.data)
+            .thenReturn(<Object?, Object?>{'transcript': 'Hola, soy Graciela'});
 
-        await subject.extract('audio/demo-uid/note-1.wav');
-
+        expect(
+          await subject.listenToVoiceNote('audio/demo-uid/note-1.wav'),
+          equals('Hola, soy Graciela'),
+        );
         final options =
             verify(
                   () => functions.httpsCallable(
@@ -275,43 +278,28 @@ void main() {
                 as HttpsCallableOptions;
         expect(options.timeout, equals(RondaApi.extractTimeout));
         verify(
-          () => callable.call<Object?>({'path': 'audio/demo-uid/note-1.wav'}),
+          () => callable.call<Object?>({
+            'path': 'audio/demo-uid/note-1.wav',
+            'stage': 'listen',
+          }),
         ).called(1);
       });
 
-      test('returns the fields the callable read', () async {
-        when(() => result.data).thenReturn(<Object?, Object?>{
-          'firstName': 'Graciela',
-          'ageBand': '60-69',
-          'barrio': 'solymar-norte',
-          'pretexts': ['mate', 'truco'],
-          'slots': ['tue-afternoon'],
-          'brings': ['termo'],
+      for (final data in <Object?>[
+        null,
+        <Object?, Object?>{},
+        <Object?, Object?>{'transcript': ''},
+        <Object?, Object?>{'transcript': 3},
+      ]) {
+        test('throws $UnreadableVoiceNoteException on $data', () {
+          when(() => result.data).thenReturn(data);
+
+          expect(
+            () => subject.listenToVoiceNote('audio/demo-uid/note-1.wav'),
+            throwsA(isA<UnreadableVoiceNoteException>()),
+          );
         });
-
-        expect(
-          await subject.extract('audio/demo-uid/note-1.wav'),
-          equals(
-            const ExtractedFields(
-              firstName: 'Graciela',
-              ageBand: '60-69',
-              barrio: 'solymar-norte',
-              pretexts: ['mate', 'truco'],
-              slots: ['tue-afternoon'],
-              brings: ['termo'],
-            ),
-          ),
-        );
-      });
-
-      test('returns no fields when the answer is not a map', () async {
-        when(() => result.data).thenReturn(null);
-
-        expect(
-          await subject.extract('audio/demo-uid/note-1.wav'),
-          equals(const ExtractedFields()),
-        );
-      });
+      }
 
       test('throws $UnreadableVoiceNoteException on invalid-argument', () {
         when(() => callable.call<Object?>(any<Object?>())).thenThrow(
@@ -319,7 +307,7 @@ void main() {
         );
 
         expect(
-          () => subject.extract('audio/demo-uid/note-1.wav'),
+          () => subject.listenToVoiceNote('audio/demo-uid/note-1.wav'),
           throwsA(isA<UnreadableVoiceNoteException>()),
         );
       });
@@ -330,7 +318,7 @@ void main() {
         );
 
         expect(
-          () => subject.extract('audio/demo-uid/note-1.wav'),
+          () => subject.listenToVoiceNote('audio/demo-uid/note-1.wav'),
           throwsA(isA<FirebaseFunctionsException>()),
         );
       });

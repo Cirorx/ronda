@@ -193,6 +193,19 @@ class TestTheBench:
 
         assert [c.first_name for c in bench.bench_order(db, ronda, THURSDAY, set())] == ["Pablo"]
 
+    def test_who_lives_far_but_works_near_or_reaches_with_the_neighbours_is_on_it(self):
+        db = bench_db()
+        db.documents |= waiting("demo-230", "Tere", barrio="lagomar-sur", day=2)
+        db.documents["users/demo-230"]["workBarrio"] = "el-pinar-sur"
+        db.documents |= waiting("demo-231", "Ugo", barrio="el-pinar-norte", day=3)
+        db.documents["users/demo-231"]["workBarrio"] = "atlantida"
+        ronda = db.documents[f"rondas/{RONDA}"]
+
+        queue = bench.bench_order(db, ronda, THURSDAY, set())
+
+        assert [c.first_name for c in queue][:2] == ["Tere", "Ugo"]
+        assert queue[0].blocks == 0
+
     def test_a_ronda_in_an_unknown_barrio_has_no_bench(self):
         assert bench.bench_order(bench_db(), {"barrio": "atlantida"}, THURSDAY, set()) == []
 

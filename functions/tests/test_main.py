@@ -178,6 +178,34 @@ class TestExtract:
         assert error_code(excinfo) == code
 
 
+class TestExtractListen:
+    @pytest.fixture
+    def stages(self, monkeypatch):
+        """Stands in for the Admin clients and the listen stage; records what it was given."""
+        import voice_signup
+
+        db = FakeFirestore({"users/demo-001": {"terms": {"version": "2026-10-27"}}})
+        monkeypatch.setattr(main, "_firestore", lambda: db)
+        monkeypatch.setattr(main, "_bucket", lambda: SimpleNamespace(blob=lambda path: path))
+        monkeypatch.setenv("MODEL_API_KEY", "test-key")
+        seen: dict = {}
+
+        def listen(**kwargs):
+            seen["listen"] = kwargs
+            return {"transcript": "Hola, soy Graciela"}
+
+        monkeypatch.setattr(voice_signup, "listen_to_note", listen)
+        return seen
+
+    def test_listen_answers_the_words_of_the_callers_note(self, stages):
+        answer = call(main.extract, MEMBER, {"path": NOTE_PATH, "stage": "listen"})
+
+        assert answer == {"transcript": "Hola, soy Graciela"}
+        assert stages["listen"]["uid"] == "demo-001"
+        assert stages["listen"]["path"] == NOTE_PATH
+        assert stages["listen"]["api_key"] == "test-key"
+
+
 def test_bucket_is_the_default_admin_bucket(monkeypatch):
     from firebase_admin import storage
 

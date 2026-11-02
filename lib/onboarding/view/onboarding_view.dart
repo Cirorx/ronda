@@ -3,9 +3,11 @@ import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/onboarding/view/steps/steps.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
-/// The voice recorder, or the open onboarding step, moving from one to the
-/// next as pushed screens do ([StepSwitcher]). The system back
-/// button leaves the recorder for the questions, and steps back through the
+/// The voice recorder, what a voice note left out, or the open onboarding
+/// step, moving from one to the next as pushed screens do
+/// ([StepSwitcher]). The system back button leaves the recorder for the
+/// questions, goes from what a note left out back to the recorder, and
+/// steps back through the
 /// questions instead of leaving; on the first question it calls [onLeave],
 /// or leaves when there is none. The first question's back button calls
 /// [onLeave] too ([OnboardingLeaveScope]).
@@ -39,7 +41,9 @@ class const OnboardingView({
           return;
         }
         final cubit = context.read<OnboardingCubit>();
-        if (recording) {
+        if (screen.gaps) {
+          cubit.recordAgain();
+        } else if (recording) {
           cubit.voiceCancelled();
         } else if (page != null && page.length > 1) {
           cubit.backTo(pages[pages.indexOf(page) - 1].first);
@@ -53,6 +57,7 @@ class const OnboardingView({
           step: screen,
           forward: (from, to) => to.isForwardFrom(from),
           child: switch (screen.step) {
+            _ when screen.gaps => const VoiceGapsStep(),
             _ when page != null && page.length > 1 => OnboardingQuestionPage(
               page: page,
               pages: pages,
@@ -60,19 +65,20 @@ class const OnboardingView({
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   spacing: context.appSpacing.xlg,
-                  children: [for (final step in page) _question(step)],
+                  children: [for (final step in page) question(step)],
                 ),
               ),
             ),
             null => const VoiceNoteStep(),
-            final step => _question(step),
+            final step => question(step),
           },
         ),
       ),
     );
   }
 
-  static Widget _question(OnboardingStep step) => switch (step) {
+  /// The screen that asks [step].
+  static Widget question(OnboardingStep step) => switch (step) {
     OnboardingStep.pretexts => const PretextsStep(),
     OnboardingStep.brings => const BringsStep(),
     OnboardingStep.slots => const SlotsStep(),

@@ -8,8 +8,8 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// The read-back: every answer with its "Cambiar", what stays on the phone,
 /// and "Está bien, guardalo", felt as it is tapped. A save that fails says
 /// so in a banner that is read out. After a voice note it says what was
-/// understood, ticks the ideas the note covered, says the audio is already
-/// deleted and offers "Grabar de nuevo".
+/// understood, says the audio is already deleted and offers "Grabar de
+/// nuevo".
 class const ReviewStep({super.key}) extends StatelessWidget {
   /// Prefix of every "Cambiar" action's semantics identifier.
   static const identifier = 'onboarding.review';
@@ -147,14 +147,12 @@ class const ReviewStep({super.key}) extends StatelessWidget {
             icon: Icons.smartphone,
             message: l10n.reviewNeedsKeptOnPhone,
           ),
-          if (state.fromVoice) ...[
+          if (state.fromVoice)
             NoteBanner(
               variant: NoteBannerVariant.keptOnPhone,
               icon: Icons.delete_outline,
               message: l10n.reviewVoiceAudioDeleted,
             ),
-            VoiceIdeas(covered: state.coveredIdeas),
-          ],
           if (state.status == OnboardingStatus.failure)
             NoteBanner(
               variant: NoteBannerVariant.warning,

@@ -66,9 +66,11 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   }
 
   /// What a voice note said: the answers it understood replace the ones
-  /// held, and the read-back opens. Ids nobody stores are dropped.
-  void voiceRead(VoiceSignup signup) => emit(
-    OnboardingState(
+  /// held. A note that answered everything opens the read-back; otherwise
+  /// what it left out is asked on one screen first ([OnboardingState.gaps]).
+  /// Ids nobody stores are dropped.
+  void voiceRead(VoiceSignup signup) {
+    final heard = OnboardingState(
       step: OnboardingStep.review,
       pretexts: {for (final id in signup.pretexts) ?Pretext.fromId(id)},
       brings: {for (final id in signup.brings) ?Bring.fromId(id)},
@@ -81,12 +83,20 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         null => const FirstName.pure(),
       },
       fromVoice: true,
-    ),
-  );
+    );
+    emit(heard.copyWith(gaps: heard.unanswered));
+  }
 
-  /// "Grabar de nuevo" on the voice read-back, or back from the first
-  /// question signed in: the recorder opens again.
-  void recordAgain() => emit(state.copyWith(recording: true));
+  /// "Seguir" on the screen of what the voice note left out: the read-back,
+  /// once every one of them is answered.
+  void gapsFilled() {
+    if (state.gaps.isEmpty || !state.gaps.every(state.isAnswered)) return;
+    emit(state.copyWith(step: OnboardingStep.review, gaps: const []));
+  }
+
+  /// "Grabar de nuevo" on the voice read-back or on what it left out, or
+  /// back from the first question signed in: the recorder opens again.
+  void recordAgain() => emit(state.copyWith(recording: true, gaps: const []));
 
   /// "Cancelar" or "Prefiero tocar botones" on the recorder: the questions
   /// by buttons, from the first one.
@@ -220,38 +230,17 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         emit(state.copyWith(status: OnboardingStatus.held));
         return;
       }
-      await _publishEligibleSeatIds(needs, barrio);
+      await publishEligibleSeatIds(
+        uid: _uid,
+        needs: needs,
+        profile: answers,
+        profileRepository: _profileRepository,
+        needsRepository: _needsRepository,
+      );
       await _profileRepository.createProfile(_uid, answers);
       emit(state.copyWith(status: OnboardingStatus.saved));
     } on Exception {
       emit(state.copyWith(status: OnboardingStatus.failure));
     }
-  }
-
-  /// Filters the published seats with [needs] on this phone, measuring each
-  /// walk from [barrio], and writes only the ids that pass.
-  ///
-  /// Pretext and slot are not filtered here: the solver matches those
-  /// against the profile.
-  Future<void> _publishEligibleSeatIds(Needs needs, Barrio barrio) async {
-    final seats = await _profileRepository.publishedSeats();
-    final facts = [
-      for (final seat in seats)
-        SeatFacts(
-          seatId: seat.seatId,
-          walkDistance: WalkDistance.forMember(
-            memberBarrio: barrio.id,
-            blocksFrom: seat.blocksFrom,
-            maxBlocks: barrio.walkBlocks,
-          ),
-          hasStairs: seat.hasStairs,
-          endsAfterDark: seat.endsAfterDark,
-          needsCar: seat.needsCar,
-        ),
-    ];
-    await _profileRepository.saveEligibleSeatIds(
-      uid: _uid,
-      seatIds: _needsRepository.eligibleSeatIds(needs, facts),
-    );
   }
 }

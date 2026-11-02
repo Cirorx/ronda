@@ -16,6 +16,39 @@ void main() {
       expect(build(), equals(build()));
       expect(build(), isNot(equals(build(firstName: 'Julio'))));
     });
+
+    test('meets from casa alone, then from trabajo when it is another', () {
+      expect(build().anchors, [const Anchor(barrio: Barrio.solymarNorte)]);
+      Profile withWork(Barrio work) => Profile(
+        firstName: 'Marta',
+        ageBand: AgeBand.sixties,
+        barrio: Barrio.solymarNorte,
+        barrioNeighbours: true,
+        pretexts: const {},
+        slots: const {},
+        brings: const {},
+        work: Anchor(barrio: work),
+      );
+      expect(withWork(Barrio.centro).anchors, [
+        const Anchor(barrio: Barrio.solymarNorte, neighbours: true),
+        const Anchor(barrio: Barrio.centro),
+      ]);
+      expect(withWork(Barrio.solymarNorte).anchors, hasLength(1));
+    });
+  });
+
+  group(Anchor, () {
+    test('reaches the walk, or one and a half with the neighbours', () {
+      expect(const Anchor(barrio: Barrio.solymarNorte).reachBlocks, 10);
+      expect(
+        const Anchor(barrio: Barrio.cordon, neighbours: true).reachBlocks,
+        22.5,
+      );
+      expect(
+        const Anchor(barrio: Barrio.cordon).withNeighbours(neighbours: true),
+        const Anchor(barrio: Barrio.cordon, neighbours: true),
+      );
+    });
   });
 
   group(TermsAcceptance, () {

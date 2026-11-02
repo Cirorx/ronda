@@ -60,8 +60,12 @@ class const RondaApi({
   Future<void> saveTerms(String uid, TermsRecord terms) =>
       _user(uid).set({'terms': terms.toJson()}, SetOptions(merge: true));
 
-  /// Writes the profile fields on `users/{uid}` and stamps `createdAt` with
-  /// the server time, leaving `terms` as it is.
+  /// Writes the profile fields on `users/{uid}`, leaving `terms` as it is.
+  ///
+  /// [barrio] is casa; [workBarrio] is trabajo, removed from the document
+  /// when `null`, and each says whether it reaches its neighbouring barrios.
+  /// A new profile stamps `createdAt` with the server time; an edit
+  /// ([isNew] false) keeps the first one, which the bench orders by.
   Future<void> saveProfile(
     String uid, {
     required String firstName,
@@ -70,18 +74,27 @@ class const RondaApi({
     required List<String> slots,
     required List<String> pretexts,
     required List<String> brings,
+    bool barrioNeighbours = false,
+    String? workBarrio,
+    bool workBarrioNeighbours = false,
+    bool isNew = true,
   }) => _user(uid).set({
     'firstName': firstName,
     'ageBand': ageBand,
     'barrio': barrio,
+    'barrioNeighbours': barrioNeighbours,
+    'workBarrio': workBarrio ?? FieldValue.delete(),
+    'workBarrioNeighbours': workBarrio == null
+        ? FieldValue.delete()
+        : workBarrioNeighbours,
     'slots': slots,
     'pretexts': pretexts,
     'brings': brings,
-    'createdAt': FieldValue.serverTimestamp(),
+    if (isNew) 'createdAt': FieldValue.serverTimestamp(),
   }, SetOptions(merge: true));
 
-  /// How long the app waits for `extract`: Voice Transcribe and Spark 1.3
-  /// take a few seconds each, a cold start a few more.
+  /// How long the app waits for each half of `extract`: Voice Transcribe
+  /// or Spark 1.3 take a few seconds, a cold start a few more.
   static const extractTimeout = Duration(seconds: 120);
 
   /// How long `read_transcript` may take: Spark's step only. It is the
@@ -147,28 +160,32 @@ class const RondaApi({
     }
   }
 
-  /// Calls `extract` on the voice note at [path]. The callable deletes the
-  /// note before it answers.
+  /// The first half of `extract`: Voice Transcribe on the voice note at
+  /// [path], answering the words it heard, which [readTranscript] then
+  /// reads into fields. The callable deletes the note before it answers.
   ///
   /// Throws an [UnreadableVoiceNoteException] when the callable couldn't
-  /// read the note; any other failure passes through.
-  Future<ExtractedFields> extract(String path) async {
+  /// read the note or heard nothing; any other failure passes through.
+  Future<String> listenToVoiceNote(String path) async {
+    final Object? data;
     try {
       final result = await functions
           .httpsCallable(
             'extract',
             options: HttpsCallableOptions(timeout: extractTimeout),
           )
-          .call<Object?>({'path': path});
-      return switch (result.data) {
-        final Map<Object?, Object?> json => ExtractedFields.fromJson(json),
-        _ => const ExtractedFields(),
-      };
+          .call<Object?>({'path': path, 'stage': 'listen'});
+      data = result.data;
     } on FirebaseFunctionsException catch (error) {
       if (error.code == 'invalid-argument') {
         throw const UnreadableVoiceNoteException();
       }
       rethrow;
     }
+    return switch (data) {
+      {'transcript': final String transcript} when transcript.isNotEmpty =>
+        transcript,
+      _ => throw const UnreadableVoiceNoteException(),
+    };
   }
 }

@@ -966,33 +966,53 @@
             }
         }
     },
-    "voiceIdeasHeading": "Ideas for what to say",
+    "voiceIdeasHeading": "What to say",
     "@voiceIdeasHeading": {
-        "description": "Heading of the checklist of things to mention"
+        "description": "Heading of the example and checklist of what to say"
     },
-    "voiceIdeaNameAndBarrio": "Your first name and your barrio",
-    "@voiceIdeaNameAndBarrio": {
-        "description": "Idea to mention"
+    "voiceIdeasExample": "“I'm Ana, I'm 34, I live in Barrio Sur. I'm into mate on the rambla and walks, Saturday mornings or Tuesday afternoons. I can bring the thermos.”",
+    "@voiceIdeasExample": {
+        "description": "An example the person can almost read aloud; it names every answer the sign-up needs. Invented, not a real person"
     },
-    "voiceIdeaPretexts": "What you'd like to do",
+    "voiceIdeasChecklistHeading": "Make sure you say",
+    "@voiceIdeasChecklistHeading": {
+        "description": "Heading of the checklist of answers the note should name"
+    },
+    "voiceIdeaName": "Your first name",
+    "@voiceIdeaName": {
+        "description": "Checklist line"
+    },
+    "voiceIdeaAge": "Your age, roughly",
+    "@voiceIdeaAge": {
+        "description": "Checklist line"
+    },
+    "voiceIdeaBarrio": "Your barrio",
+    "@voiceIdeaBarrio": {
+        "description": "Checklist line"
+    },
+    "voiceIdeaPretexts": "What you'd like to do: {options}",
     "@voiceIdeaPretexts": {
-        "description": "Idea to mention"
+        "description": "Checklist line; options are the pretexts, comma separated",
+        "placeholders": {
+            "options": {
+                "type": "String",
+                "example": "mate on the rambla, truco"
+            }
+        }
     },
-    "voiceIdeaSlots": "Which days and times suit you",
+    "voiceIdeaSlots": "Which days, and morning, afternoon or evening",
     "@voiceIdeaSlots": {
-        "description": "Idea to mention"
+        "description": "Checklist line"
     },
-    "voiceIdeaBrings": "What you can bring or teach",
+    "voiceIdeaBrings": "What you can bring or teach: {options}",
     "@voiceIdeaBrings": {
-        "description": "Idea to mention"
-    },
-    "voiceIdeaCovered": "You mentioned it",
-    "@voiceIdeaCovered": {
-        "description": "Screen reader state of an idea the recording covered"
-    },
-    "voiceIdeaNotCovered": "Not mentioned",
-    "@voiceIdeaNotCovered": {
-        "description": "Screen reader state of an idea the recording missed"
+        "description": "Checklist line; options are the things to bring, comma separated",
+        "placeholders": {
+            "options": {
+                "type": "String",
+                "example": "mate on the rambla, truco"
+            }
+        }
     },
     "voiceDone": "I'm done",
     "@voiceDone": {
@@ -1014,17 +1034,88 @@
     "@voiceReadingBody": {
         "description": "Under the reading heading"
     },
-    "voiceReadingTranscribe": "We turn it into text",
-    "@voiceReadingTranscribe": {
-        "description": "Reading step"
+    "voiceReadingUpload": "Sending your recording",
+    "@voiceReadingUpload": {
+        "description": "Reading step: the upload"
     },
-    "voiceReadingFields": "We pick out what matters",
-    "@voiceReadingFields": {
-        "description": "Reading step"
+    "voiceReadingListen": "Listening to it",
+    "@voiceReadingListen": {
+        "description": "Reading step: Voice Transcribe"
     },
-    "voiceReadingDelete": "We delete the recording",
-    "@voiceReadingDelete": {
-        "description": "Reading step"
+    "voiceReadingUnderstand": "Working out your answers",
+    "@voiceReadingUnderstand": {
+        "description": "Reading step: Spark reads the fields"
+    },
+    "voiceReadingDone": "Done",
+    "@voiceReadingDone": {
+        "description": "Screen reader state of a finished reading step"
+    },
+    "voiceReadingNow": "In progress",
+    "@voiceReadingNow": {
+        "description": "Screen reader state of the reading step under way"
+    },
+    "voiceReadingNext": "Still to come",
+    "@voiceReadingNext": {
+        "description": "Screen reader state of a reading step still to come"
+    },
+    "voiceReadingHeard": "Here's what we heard",
+    "@voiceReadingHeard": {
+        "description": "Heading over the transcript, shown while the answers are read"
+    },
+    "voiceReadingQuote": "“{words}”",
+    "@voiceReadingQuote": {
+        "description": "The transcript, quoted",
+        "placeholders": {
+            "words": {
+                "type": "String",
+                "example": "I'm Ana"
+            }
+        }
+    },
+    "voiceReadingLineMate": "Brewing the mate…",
+    "@voiceReadingLineMate": {
+        "description": "Light line while waiting; no money, health or politics"
+    },
+    "voiceReadingLineBizcochos": "Finding out who brings the bizcochos…",
+    "@voiceReadingLineBizcochos": {
+        "description": "Light line while waiting"
+    },
+    "voiceReadingLineSillas": "Counting chairs on the rambla…",
+    "@voiceReadingLineSillas": {
+        "description": "Light line while waiting"
+    },
+    "voiceReadingLineAgua": "Heating the water, not boiling it…",
+    "@voiceReadingLineAgua": {
+        "description": "Light line while waiting"
+    },
+    "voiceReadingLineMazo": "Shuffling the deck for truco…",
+    "@voiceReadingLineMazo": {
+        "description": "Light line while waiting"
+    },
+    "voiceReadingLinePelota": "Pumping up the ball for the cinco…",
+    "@voiceReadingLinePelota": {
+        "description": "Light line while waiting"
+    },
+    "voiceReadingLineLluvia": "Checking whether it rains on Saturday…",
+    "@voiceReadingLineLluvia": {
+        "description": "Light line while waiting"
+    },
+    "voiceReadingLineBanco": "Making room on the plaza bench…",
+    "@voiceReadingLineBanco": {
+        "description": "Light line while waiting"
+    },
+    "voiceGapsTitle": "Almost there",
+    "@voiceGapsTitle": {
+        "description": "Heading of the screen that asks only what the voice note left out"
+    },
+    "voiceGapsBody": "{count, plural, =1{We didn't catch this one in your recording. Fill it in and we're done.} other{We didn't catch these in your recording. Fill them in and we're done.}}",
+    "@voiceGapsBody": {
+        "description": "Under the heading; count is how many questions are left",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
     },
     "voiceNotUnderstoodTitle": "We didn't quite catch that",
     "@voiceNotUnderstoodTitle": {
@@ -4422,5 +4513,94 @@
     "pushUnsupportedBrowser": "This browser can't get notifications from Ronda. Try another browser, or the app on your phone.",
     "@pushUnsupportedBrowser": {
         "description": "Notifications can't work in this browser"
+    },
+    "myDataTitle": "My details",
+    "@myDataTitle": {
+        "description": "Screen title, Ajustes row and Home's button: the member changes what they gave at sign-up"
+    },
+    "myDataIntro": "What you change here is used to put groups together. Others only see your first name, your age and what you bring.",
+    "@myDataIntro": {
+        "description": "Under the title: what the screen is for and what others see"
+    },
+    "myDataPlacesTitle": "Where you can meet",
+    "@myDataPlacesTitle": {
+        "description": "Heading of casa and trabajo"
+    },
+    "myDataHome": "Home",
+    "@myDataHome": {
+        "description": "The barrio the member lives in"
+    },
+    "myDataWork": "Work",
+    "@myDataWork": {
+        "description": "The optional barrio the member works in"
+    },
+    "myDataWorkBody": "If you work in another barrio, you can meet there too. Nobody sees which one is your work.",
+    "@myDataWorkBody": {
+        "description": "Under Trabajo, before one is set"
+    },
+    "myDataAddWork": "Add work",
+    "@myDataAddWork": {
+        "description": "Button that picks a work barrio"
+    },
+    "myDataRemoveWork": "Remove work",
+    "@myDataRemoveWork": {
+        "description": "Button that removes the work barrio"
+    },
+    "myDataChangeBarrio": "Change",
+    "@myDataChangeBarrio": {
+        "description": "Button that picks another barrio for casa or trabajo"
+    },
+    "myDataNeighbours": "Neighbouring barrios too",
+    "@myDataNeighbours": {
+        "description": "Switch: this barrio also reaches the barrios next to it"
+    },
+    "myDataPickTitle": "Pick the barrio",
+    "@myDataPickTitle": {
+        "description": "Title of the barrio sheet"
+    },
+    "myDataSeatedNote": "You're already in a ronda and you stay in it. A new barrio or new times count from the next time we put groups together.",
+    "@myDataSeatedNote": {
+        "description": "Shown to a seated member who changed a barrio or the times"
+    },
+    "myDataIncomplete": "Pick at least one in each question.",
+    "@myDataIncomplete": {
+        "description": "Under Guardar while an answer is missing"
+    },
+    "myDataSave": "Save",
+    "@myDataSave": {
+        "description": "Saves the changes"
+    },
+    "myDataSaving": "Saving…",
+    "@myDataSaving": {
+        "description": "While saving"
+    },
+    "myDataSaved": "Done, saved.",
+    "@myDataSaved": {
+        "description": "After saving"
+    },
+    "myDataSaveError": "We couldn't save. Try again.",
+    "@myDataSaveError": {
+        "description": "When saving failed"
+    },
+    "myDataLoading": "Getting your details…",
+    "@myDataLoading": {
+        "description": "While the profile loads"
+    },
+    "myDataLoadError": "We couldn't get your details.",
+    "@myDataLoadError": {
+        "description": "When the profile can't be read"
+    },
+    "myDataRetry": "Try again",
+    "@myDataRetry": {
+        "description": "Reads the profile again"
+    },
+    "myDataNeighboursBody": "Up to about {blocks} blocks",
+    "@myDataNeighboursBody": {
+        "description": "Under the neighbours switch: how far the barrio then reaches",
+        "placeholders": {
+            "blocks": {
+                "type": "int"
+            }
+        }
     }
 }

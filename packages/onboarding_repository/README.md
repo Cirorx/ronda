@@ -6,7 +6,7 @@ Repository layer. Onboarding by voice, over `voice_recorder` and `ronda_api`.
 |---|---|
 | `startVoiceNote()` | Starts recording; `MicrophoneDeniedFailure` without the microphone, `StartVoiceNoteFailure` when the recorder fails |
 | `discardVoiceNote()` | Stops and throws the note away ("Borrar y empezar de nuevo", "Cancelar") |
-| `readVoiceNote(uid)` | Stops the note, reads `users/{uid}.terms`, uploads to `audio/{uid}/{noteId}.wav`, awaits `extract` and returns a `VoiceSignup` |
+| `readVoiceNote(uid)` | Stops the note, reads `users/{uid}.terms`, uploads to `audio/{uid}/{noteId}.wav`, has `extract` listen and then read the words; a stream of `VoiceNoteReading` steps (uploading, listening, heard with the transcript, understood with a `VoiceSignup`) |
 
 `readVoiceNote` refuses to upload while `users/{uid}.terms` is missing (`TermsNotAcceptedFailure`);
 the Storage rules and the callable check the same. `VoiceNoteNotUnderstoodFailure` means the note

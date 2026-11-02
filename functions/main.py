@@ -142,7 +142,9 @@ def extract(req: https_fn.CallableRequest) -> dict:
     """Reads the caller's voice note at `audio/{uid}/{id}.wav` into sign-up fields.
 
     Voice Transcribe, then Spark 1.3; the note is deleted before the answer goes back. Refuses
-    callers who haven't accepted the terms (`users/{uid}.terms`).
+    callers who haven't accepted the terms (`users/{uid}.terms`). `{path}` does both; with
+    `stage: "listen"` it answers `{transcript}` only, so the app can show the words while
+    `read_transcript` reads them into fields.
     """
     import httpx
     from google.api_core.exceptions import NotFound
@@ -153,13 +155,20 @@ def extract(req: https_fn.CallableRequest) -> dict:
     if req.auth is None:
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "Sign in first.")
     uid = req.auth.uid
-    path = req.data.get("path") if isinstance(req.data, dict) else None
+    data = req.data if isinstance(req.data, dict) else {}
+    path = data.get("path")
+    stage = data.get("stage")
     user = _firestore().collection("users").document(uid).get().to_dict()
-    bucket = _bucket()
     key = MODEL_API_KEY.value
     error = https_fn.FunctionsErrorCode
+
     try:
+        bucket = _bucket()
         with httpx.Client() as http:
+            if stage == "listen":
+                return voice.listen_to_note(
+                    uid=uid, path=path, user=user, blob=bucket.blob, api_key=key, http=http
+                )
             return voice.read_voice_note(
                 uid=uid,
                 path=path,

@@ -18,7 +18,15 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { Timestamp, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import {
+  Timestamp,
+  deleteField,
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from 'firebase/firestore';
 
 const PROJECT = 'demo-ronda-users';
 const EMULATOR = { host: '127.0.0.1', port: 8088 };
@@ -188,6 +196,46 @@ describe('users/{uid}', () => {
       await assertFails(saveProfile(db, fields));
     }
     await assertSucceeds(saveProfile(db, { brings: [], pretexts: ['futbol5'] }));
+  });
+
+  test('takes casa with its neighbours and trabajo with its own, and an old single barrio', async () => {
+    const db = member();
+    await saveTerms(db);
+    await assertSucceeds(saveProfile(db));
+    await assertSucceeds(
+      saveProfile(db, {
+        barrioNeighbours: true,
+        workBarrio: 'solymar-sur',
+        workBarrioNeighbours: false,
+      }),
+    );
+    // Mis datos: the profile again without createdAt, and trabajo taken out.
+    await assertSucceeds(
+      updateDoc(doc(db, USER), {
+        ...READ_BACK,
+        barrioNeighbours: false,
+        workBarrio: deleteField(),
+        workBarrioNeighbours: deleteField(),
+      }),
+    );
+    const saved = (await getDoc(doc(db, USER))).data();
+    assert.equal(saved.workBarrio, undefined);
+    assert.equal(saved.terms.version, TERMS.version);
+  });
+
+  test('refuses a trabajo that is casa again, not an id, or neighbours that are not a yes or no', async () => {
+    const db = member();
+    await saveTerms(db);
+    for (const fields of [
+      { workBarrio: READ_BACK.barrio },
+      { workBarrio: 'Mi trabajo, 18 de Julio 1234' },
+      { workBarrio: 5 },
+      { barrioNeighbours: 'yes' },
+      { workBarrio: 'solymar-sur', workBarrioNeighbours: 1 },
+      { workBarrio: { barrio: 'solymar-sur', address: 'x' } },
+    ]) {
+      await assertFails(saveProfile(db, fields));
+    }
   });
 
   test('refuses anything else inside the terms', async () => {

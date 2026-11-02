@@ -28,7 +28,8 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan; Google and
   │    client_errors, osm_places
   ├─ Storage: audio + blurred photos; deleted on success, hourly sweeper, lifecycle as backstop
   ├─ Functions (Python 3.13, 2nd gen):
-  │    callables  extract (Transcribe → Spark), read_line (Transcribe only, the cuaderno's voice
+  │    callables  extract (Transcribe → Spark; stage "listen": Transcribe only), read_transcript
+  │               (Spark on words already heard), read_line (Transcribe only, the cuaderno's voice
   │               line), make_postcard (Spark strips, Muse Image draws; stores nothing), propose_groups (CP-SAT, admin), answer_rsvp,
   │               answer_seguimos, run_job(name, now?, force?) (admin, for tests and the
   │               demo), make_mate_flyer (SAM → cutouts, Muse Image background → text + QR
@@ -88,11 +89,21 @@ isn't set up).
 
 ## Data model (Firestore, draft)
 
-- `users/{uid}`: firstName, ageBand, barrio, slots[], pretexts[], brings[], plusOneUid?,
+- `users/{uid}`: firstName, ageBand, barrio (casa), barrioNeighbours?, workBarrio?, workBarrioNeighbours?, slots[], pretexts[], brings[], plusOneUid?,
   buddyUid? (who hears when they miss a week without saying so, `""` for nobody; written by
   `set_buddy`, which checks it is another member of their ronda, and read back only by its
   owner and the server), terms {version, acceptedAt}, createdAt. Sign-in is Google or a phone number (#63), and the number lives only in Firebase Auth: never in this document, the phone's storage, a log or an error report. **Never:** address, cédula, birth
   date, lives-alone, nationality, mood, needs.
+  - **Casa and trabajo (2026-11-02):** `barrio` is casa; `workBarrio` (a second barrio id, never
+    casa again) is trabajo, and each `…Neighbours` switch widens that barrio's reach to 1.5 times
+    the walk (`ronda_solver.anchors`, the owner's choice: within the walk every barrio already
+    reaches its neighbours). A profile saved before has only `barrio` and reads as casa without
+    its neighbours, so pilot members match as before; "Mis datos" writes every field on its
+    next save (`saveProfile(isNew: false)`, which keeps `createdAt`, the bench's order).
+    Every server path reads them through `functions/member_barrios.py`: the solver's input, the
+    bench, add-to-ronda, waiting lists (a member with trabajo waits in both barrios) and Cerca's
+    counts (counted in both). The phone's seat filter measures each seat from the nearer anchor.
+    Trabajo is in no document another member or the public reads; the admin's lists show casa.
 - `users/{uid}/private/eligible`: seatIds[], updatedAt (written by the phone; read by the solver only).
 - `seat_facts/{seatId}` (decided in #20): what the server publishes for the phone's filter, one
   document per seat id `{barrio}_{pretext}_{slot}`, read by any signed-in member, written by the

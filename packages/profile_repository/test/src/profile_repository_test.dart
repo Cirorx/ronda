@@ -113,6 +113,42 @@ void main() {
 
         expect(subject.watchProfile('demo-uid'), emits(profile));
       });
+
+      test('emits casa with its neighbours and trabajo, dropping an unknown '
+          'trabajo', () {
+        when(() => rondaApi.watchUser('demo-uid')).thenAnswer(
+          (_) => Stream.fromIterable(const [
+            UserDocument(
+              firstName: 'Marta',
+              ageBand: '60-69',
+              barrio: 'cordon',
+              barrioNeighbours: true,
+              workBarrio: 'centro',
+              workBarrioNeighbours: true,
+            ),
+            UserDocument(
+              firstName: 'Marta',
+              ageBand: '60-69',
+              barrio: 'cordon',
+              workBarrio: 'atlantida',
+            ),
+          ]),
+        );
+
+        expect(
+          subject.watchProfile('demo-uid'),
+          emitsInOrder([
+            isA<Profile>()
+                .having((p) => p.barrioNeighbours, 'barrioNeighbours', isTrue)
+                .having(
+                  (p) => p.work,
+                  'work',
+                  const Anchor(barrio: Barrio.centro, neighbours: true),
+                ),
+            isA<Profile>().having((p) => p.work, 'work', isNull),
+          ]),
+        );
+      });
     });
 
     group('acceptTerms', () {
@@ -153,9 +189,13 @@ void main() {
           firstName: any(named: 'firstName'),
           ageBand: any(named: 'ageBand'),
           barrio: any(named: 'barrio'),
+          barrioNeighbours: any(named: 'barrioNeighbours'),
+          workBarrio: any(named: 'workBarrio'),
+          workBarrioNeighbours: any(named: 'workBarrioNeighbours'),
           slots: any(named: 'slots'),
           pretexts: any(named: 'pretexts'),
           brings: any(named: 'brings'),
+          isNew: any(named: 'isNew'),
         ),
       );
 
@@ -173,6 +213,41 @@ void main() {
             slots: ['thu-afternoon', 'sat-morning'],
             pretexts: ['mate', 'truco'],
             brings: ['termo', 'tengo-ganas'],
+          ),
+        ).called(1);
+      });
+
+      test('updateProfile writes casa, trabajo and their neighbours, keeping '
+          'createdAt', () async {
+        stubSave().thenAnswer((_) async {});
+
+        await subject.updateProfile(
+          'demo-uid',
+          const Profile(
+            firstName: 'Marta',
+            ageBand: AgeBand.sixties,
+            barrio: Barrio.cordon,
+            barrioNeighbours: true,
+            pretexts: {},
+            slots: {},
+            brings: {},
+            work: Anchor(barrio: Barrio.centro, neighbours: true),
+          ),
+        );
+
+        verify(
+          () => rondaApi.saveProfile(
+            'demo-uid',
+            firstName: 'Marta',
+            ageBand: '60-69',
+            barrio: 'cordon',
+            barrioNeighbours: true,
+            workBarrio: 'centro',
+            workBarrioNeighbours: true,
+            slots: [],
+            pretexts: [],
+            brings: [],
+            isNew: false,
           ),
         ).called(1);
       });
