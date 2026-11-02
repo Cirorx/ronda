@@ -245,8 +245,10 @@ class TestPushText:
         ("names", "brings", "body"),
         [
             ([], ["pan"], "Te toca llevar el pan. ¿Venís?"),
-            ([], ["tengo-ganas", "termo"], "Te toca llevar el termo. ¿Venís?"),
+            ([], ["tengo-ganas", "termo"], "Te toca llevar el mate y el termo. ¿Venís?"),
             ([], ["tengo-ganas"], "¿Venís?"),
+            ([], ["tortas-fritas"], "Si llueve, te tocan las tortas fritas. ¿Venís?"),
+            ([], ["pan", "tortas-fritas"], "Te toca llevar el pan. ¿Venís?"),
             (["Marta"], [], "Ya va Marta. ¿Venís?"),
             (["Marta", "Raúl"], ["sillas"],
              "Ya van Marta y Raúl. Te toca llevar las sillas. ¿Venís?"),
@@ -433,7 +435,7 @@ class TestRunRsvpPush:
         android = next(m for m in sender.messages if m["token"] == "tok-a2")
         assert android["data"]["title"] == "Sábado a la tarde · mate en la rambla"
         assert android["data"]["body"] == (
-            "Lugar y hora a confirmar. Te toca llevar el termo. ¿Venís?"
+            "Lugar y hora a confirmar. Te toca llevar el mate y el termo. ¿Venís?"
         )
         assert android["data"]["week"] == "2026-W44"
         web = next(m for m in sender.messages if m["token"] == "tok-w1")
@@ -505,7 +507,7 @@ class TestRunRsvpPush:
 
         assert sender.tokens == ["tok-a2"]
         assert sender.messages[0]["data"]["body"] == (
-            "Lugar y hora a confirmar. Ya va Marta. Te toca llevar el termo. ¿Venís?"
+            "Lugar y hora a confirmar. Ya va Marta. Te toca llevar el mate y el termo. ¿Venís?"
         )
 
     def test_a_monday_meeting_pushed_on_saturday_belongs_to_the_meetings_week(self):

@@ -1,6 +1,7 @@
 import 'package:auth_repository/auth_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ronda/app/app.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -49,7 +50,10 @@ class const LoginView({
 
     return Scaffold(
       // Its back button returns to the welcome doors.
-      appBar: AppBar(title: Text(l10n.loginBarTitle)),
+      appBar: AppBar(
+        title: Text(l10n.loginBarTitle),
+        actions: const [LanguageToggle()],
+      ),
       body: SafeArea(
         child: ReadableColumn(
           child: ListView(

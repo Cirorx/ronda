@@ -3,6 +3,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/settings/settings.dart';
 import 'package:ronda_ui/ronda_ui.dart';
@@ -11,13 +12,23 @@ import '../../helpers/helpers.dart';
 
 class _MockAppBloc extends MockBloc<AppEvent, AppState> implements AppBloc;
 
+class _MockLanguageCubit extends MockCubit<LanguageState>
+    implements LanguageCubit;
+
 void main() {
   group(SettingsPage, () {
     late AppBloc appBloc;
+    late LanguageCubit languageCubit;
 
-    setUpAll(() => registerFallbackValue(const AppSignOutRequested()));
+    setUpAll(() {
+      registerFallbackValue(const AppSignOutRequested());
+      registerFallbackValue(AppLanguage.spanish);
+    });
 
     setUp(() {
+      languageCubit = _MockLanguageCubit();
+      when(() => languageCubit.state).thenReturn(const LanguageState());
+      when(() => languageCubit.languagePicked(any())).thenAnswer((_) async {});
       appBloc = _MockAppBloc();
       whenListen(
         appBloc,
@@ -31,12 +42,49 @@ void main() {
 
     Future<void> pump(WidgetTester tester, {Locale locale = rioplatense}) =>
         tester.pumpApp(
-          BlocProvider.value(value: appBloc, child: const SettingsPage()),
+          MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: appBloc),
+              BlocProvider.value(value: languageCubit),
+            ],
+            child: const SettingsPage(),
+          ),
           locale: locale,
         );
 
+    group('language', () {
+      testWidgets('shows the language the app follows', (tester) async {
+        await pump(tester);
+
+        expect(find.text('Como el teléfono'), findsOneWidget);
+      });
+
+      testWidgets('shows the picked language', (tester) async {
+        when(() => languageCubit.state)
+            .thenReturn(const LanguageState(language: AppLanguage.english));
+        await pump(tester);
+
+        expect(find.text('English'), findsOneWidget);
+      });
+
+      testWidgets('picks English in the sheet', (tester) async {
+        await pump(tester);
+
+        await tester.tap(find.text('Idioma'));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.bySemanticsIdentifier('${LanguageSheet.identifier}.english'),
+        );
+        await tester.pumpAndSettle();
+
+        verify(() => languageCubit.languagePicked(AppLanguage.english))
+            .called(1);
+        expect(find.byType(LanguageSheet), findsNothing);
+      });
+    });
+
     group('renders', () {
-      testWidgets('its title and the five rows', (tester) async {
+      testWidgets('its title and the six rows', (tester) async {
         await pump(tester);
 
         expect(
@@ -51,6 +99,7 @@ void main() {
           'Avisos',
           'Contar algo que pasó',
           'Tus datos',
+          'Idioma',
           'Salir de esta cuenta',
         ]) {
           expect(find.widgetWithText(ListTile, row), findsOneWidget);
@@ -79,6 +128,7 @@ void main() {
           SettingsPage.notificationsIdentifier,
           SettingsPage.reportIdentifier,
           SettingsPage.dataIdentifier,
+          SettingsPage.languageIdentifier,
           SettingsPage.signOutIdentifier,
         ]) {
           expect(

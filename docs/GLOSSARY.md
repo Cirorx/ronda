@@ -7,14 +7,14 @@ issues, docs, code, commit messages.
 | Identifier | UI (es-419) | Meaning |
 |---|---|---|
 | `Ronda` | ronda | A standing group of 5–6 neighbours (10 for fútbol 5) with one pretext, one slot and one place, for a season |
-| `Pretext` | actividad | What the ronda does: mate on the rambla, truco, fútbol 5, caminata |
+| `Pretext` | actividad | What the ronda does: mate on the rambla, truco, fútbol 5, caminata, conga, merienda (un café o merienda), pajaros (mirar pájaros) |
 | `Slot` | día y horario | Weekday plus a time band (mañana / tarde / noche), and once the admin sets it the hour it starts (`slot.hour`, "16:00") |
 | `Barrio` | barrio | The neighbourhood: Ciudad de la Costa's nine and Montevideo's 62 (`ronda_solver.barrios`); distance is measured between barrio centroids. Names are proper nouns, the same in every language |
 | `Anchor` | casa · trabajo | A barrio a member meets from: casa (`barrio`, required) and optionally trabajo (`workBarrio`), at most two. With "también barrios vecinos" (`barrioNeighbours`, `workBarrioNeighbours`) it reaches 1.5 times the walk. A seat is eligible from either; the walk is from the nearer. Nobody else ever sees which is trabajo |
 | `MisDatos` | Mis datos | The screen where a member changes what they gave at sign-up (Mi ronda's app bar, Ajustes). A barrio or slot change counts from the next grouping; a seated member stays in their ronda |
 | `BarrioArea` | Ciudad de la Costa · Montevideo | Where a barrio is; the picker groups barrios by it, and a seat's walk table lists its own area's barrios |
 | `AgeBand` | edad ("sesenta y pico") | The only age data Ronda keeps; never a birth date. Values: `18-29`, `30-39`, `40-49`, `50-59`, `60-69`, `70-79`, `80+` |
-| `Brings` | lo que traés | What a member brings or teaches (pan, termo, enseño truco, tengo ganas); how people are known |
+| `Brings` | lo que traés | What a member brings or teaches (pan, termo, enseño truco, tortas fritas, tengo ganas; `termo` reads "Mate y termo": the mate and the termo together); how people are known |
 | `Needs` | lo que te complica ir | What makes taking part hard (caminar mucho, subir escaleras, volver de noche, no tengo auto). Lives only on the phone |
 | `Seat` | lugar | One place in a ronda. A seat is *eligible* for a member when it passes their needs filter. Its id is the ronda's key, `{barrio}_{pretext}_{slot}` |
 | `Need` | (one item of lo que te complica ir) | `walkALot`, `climbStairs`, `returnAfterDark`, `noCar`; stored by these names on the phone |

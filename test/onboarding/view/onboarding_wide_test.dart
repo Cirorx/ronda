@@ -267,7 +267,7 @@ void main() {
           expect(inPanel(find.text('Para llevar')), findsOneWidget);
           expect(inPanel(find.text('Mate en la rambla')), findsOneWidget);
           expect(inPanel(find.text('Caminata')), findsOneWidget);
-          expect(inPanel(find.text('Termo')), findsOneWidget);
+          expect(inPanel(find.text('Mate y termo')), findsOneWidget);
           expect(inPanel(find.text('Tengo ganas')), findsOneWidget);
           // A walk and "Tengo ganas" are not things to draw.
           expect(inPanel(find.byType(RondaObjectIcon)), findsNWidgets(2));

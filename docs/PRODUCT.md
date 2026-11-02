@@ -121,7 +121,7 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   after about 3 s of silence; "Lo que vamos escuchando" under it when live transcription is on),
   ≤ 60 s, "Qué contar": an example to almost read aloud («Soy Ana,
   tengo 34, vivo en Barrio Sur. Me copa el mate en la rambla y la caminata, los sábados de mañana
-  o los martes de tarde. Llevo el termo.») and "Que no falte": Tu nombre · Tu edad, más o menos ·
+  o los martes de tarde. Llevo el mate.») and "Que no falte": Tu nombre · Tu edad, más o menos ·
   Tu barrio · Qué te gustaría hacer (the pretexts) · Qué días, y si de mañana, tarde o noche · Qué
   podés llevar o enseñar (2026-11-01). The needs are never asked aloud: they stay on the phone.
   [Terminé], "Borrar y empezar de nuevo", [Cancelar], and "El audio se borra apenas lo leemos."
@@ -149,9 +149,13 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   recording → "¿Entendimos bien?" → saved. Signed-in people without a profile land on the steps
   (or straight on the save, when the phone holds answers); with a profile, on the tabs.
 - **Buttons, seven questions and a read-back** (one per screen, "1 de 7"):
-  1. "¿Qué te gustaría hacer?" (mate en la rambla, truco, fútbol 5, caminata; "no hace falta
-     saber").
-  2. "¿Qué podés llevar o enseñar?" (pan, yerba, termo, sillas, enseño truco, tengo ganas).
+  1. "¿Qué te gustaría hacer?" (mate en la rambla, truco, fútbol 5, caminata, conga, un café o
+     merienda, mirar pájaros; "no hace falta saber").
+  2. "¿Qué podés llevar o enseñar?" (pan, yerba, mate y termo, sillas, enseño truco, tortas
+     fritas si llueve, tengo ganas). "Mate y termo" is one offer: whoever brings the mate brings
+     the termo (2026-11-02, owner). Tortas fritas are asked for on a rainy day only: the card
+     says "Si llueve, te tocan las tortas fritas." and, after Voy, "Vas. Si llueve, llevá las
+     tortas fritas."; anything else the member carries comes first.
      "Cada uno pone algo chico. Con una cosa alcanza, y no hace falta comprar nada." "¿No tenés
      nada para llevar? Marcá «Tengo ganas»: venís y listo."
   3. "¿Cuándo podés?", a day × time grid. Mañana: de 9 a 12 · Tarde: de 14 a 18 · Noche: de 19
@@ -490,7 +494,10 @@ Ronda.
   80%. Ráfagas de 50 km/h en la rambla. Pronóstico de Open-Meteo." [Al Club Solymar] [Pasarla
   al viernes] [Vamos igual]. "Lo que elijas les llega a los 6 en un solo mensaje. Si no
   contestás antes de las 21, queda como está." The host sees the exact message before it goes,
-  e.g. "Por la lluvia, el jueves nos vemos en el Club Solymar a las 16:00. Lo decidió Mirta."
+  e.g. "Por la lluvia, el jueves nos vemos en el Club Solymar a las 16:00. Lo decidió Mirta.
+  Día de lluvia, día de tortas fritas." The tortas fritas line closes every choice where the
+  ronda still meets that day (a roof, or "Vamos igual"), never a postponed one; the weekly card's
+  rain block may suggest them too.
 - **Winter:** sunset and last bus on every card ("Atardece 17:44", "Último ómnibus de la rambla
   21:10"); the agent suggests starting before 17:00 June–August, and the card says "En invierno
   empezamos una hora antes, para volver con luz. Lo decidió Mirta."

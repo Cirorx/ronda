@@ -10,15 +10,19 @@ extension OnboardingLabels on AppLocalizations {
     Pretext.truco => pretextTruco,
     Pretext.futbol5 => pretextFutbol5,
     Pretext.caminata => pretextCaminata,
+    Pretext.conga => pretextConga,
+    Pretext.merienda => pretextMerienda,
+    Pretext.pajaros => pretextPajaros,
   };
 
-  /// "Termo".
+  /// "Mate y termo".
   String bring(Bring bring) => switch (bring) {
     Bring.pan => bringPan,
     Bring.yerba => bringYerba,
     Bring.termo => bringTermo,
     Bring.sillas => bringSillas,
     Bring.ensenoTruco => bringEnsenoTruco,
+    Bring.tortasFritas => bringTortasFritas,
     Bring.tengoGanas => bringTengoGanas,
   };
 

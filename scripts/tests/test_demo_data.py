@@ -171,7 +171,8 @@ def test_every_seat_anyone_lists_has_seat_facts_with_a_walk_from_every_barrio(st
 def test_seat_facts_cover_every_barrio_pretext_and_demo_slot():
     seats = _collection(demo_data.documents(30), r"seat_facts/.+")
 
-    assert len(seats) == (9 + 62) * 4 * 4
+    assert len(seats) == (9 + 62) * len(demo_data.PRETEXTS) * 4
+    assert {facts["pretext"] for facts in seats.values()} == set(demo_data.PRETEXTS)
     for path, facts in seats.items():
         assert path == f"seat_facts/{facts['barrio']}_{facts['pretext']}_{facts['slot']}"
         assert set(facts) == {

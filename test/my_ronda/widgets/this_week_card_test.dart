@@ -135,7 +135,7 @@ void main() {
 
       expect(find.text('Quiénes van'), findsOneWidget);
       expect(find.text('Raúl'), findsOneWidget);
-      expect(find.text('Termo'), findsOneWidget);
+      expect(find.text('Mate y termo'), findsOneWidget);
       expect(
         find.text('Va 1 · 1 no puede · 1 sin contestar · falta tu respuesta'),
         findsOneWidget,
@@ -179,6 +179,37 @@ void main() {
       );
 
       expect(find.text('Vas.'), findsOneWidget);
+    });
+
+    testWidgets('asks for tortas fritas only if it rains', (tester) async {
+      await pump(
+        tester,
+        ready(MyRondaFixtures.week(myBrings: const ['tortas-fritas'])),
+      );
+
+      expect(
+        find.text('Si llueve, te tocan las tortas fritas.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('after Voy with tortas fritas: bring them if it rains', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        ready(
+          MyRondaFixtures.week(
+            myAnswer: RsvpAnswer.yes,
+            myBrings: const ['tortas-fritas'],
+          ),
+        ),
+      );
+
+      expect(
+        find.text('Vas. Si llueve, llevá las tortas fritas.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('after Esta no, and Cambiar mi respuesta', (tester) async {
@@ -255,7 +286,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Abre Raúl. Cierra Ana.'), findsOneWidget);
-      expect(find.text('Llega primero · Termo'), findsOneWidget);
+      expect(find.text('Llega primero · Mate y termo'), findsOneWidget);
     });
 
     testWidgets('tells the host they open, and the cola they close', (
@@ -280,7 +311,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Se queda al final · Termo'), findsOneWidget);
+      expect(find.text('Se queda al final · Mate y termo'), findsOneWidget);
       verify(() => repository.watchRoll('r1', '2026-W44')).called(1);
       expect(find.text('¿Quién vino hoy?'), findsNothing);
     });

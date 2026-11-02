@@ -254,6 +254,39 @@ void main() {
       });
     });
 
+    group('language', () {
+      test('is null before a language was picked', () async {
+        expect(await subject.language(), isNull);
+      });
+
+      test('reads back the language holdLanguage kept', () async {
+        await subject.holdLanguage(AppLanguage.english);
+
+        expect(await subject.language(), equals(AppLanguage.english));
+        expect(
+          deviceStore.values[ProfileRepository.languageKey],
+          equals('"en"'),
+        );
+      });
+
+      test('holdLanguage with null goes back to the phone', () async {
+        await subject.holdLanguage(AppLanguage.spanish);
+        await subject.holdLanguage(null);
+
+        expect(await subject.language(), isNull);
+        expect(
+          deviceStore.values.containsKey(ProfileRepository.languageKey),
+          isFalse,
+        );
+      });
+
+      test('is null for an id it does not know', () async {
+        deviceStore.values[ProfileRepository.languageKey] = '"fr"';
+
+        expect(await subject.language(), isNull);
+      });
+    });
+
     group('when the device store fails', () {
       late DeviceStore failing;
 
@@ -293,6 +326,17 @@ void main() {
           subject.markWalkthroughSeen(),
           throwsA(isA<HoldOnPhoneFailure>()),
         );
+      });
+
+      test('holdLanguage throws $HoldOnPhoneFailure', () {
+        expect(
+          subject.holdLanguage(AppLanguage.english),
+          throwsA(isA<HoldOnPhoneFailure>()),
+        );
+      });
+
+      test('language is null', () async {
+        expect(await subject.language(), isNull);
       });
 
       test('walkthroughSeen is false', () async {

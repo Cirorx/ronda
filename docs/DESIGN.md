@@ -179,7 +179,7 @@ edge. Phones are unchanged; every rule below is guarded by the window's width.
     trace beside it (the trace gets the 600, the list 440); the rondas' setup in one column.
 - **Objects, not people.** `RondaObjectIcon` draws mate, termo, pelota, mazo, bizcochos and sillas
   in code on a 24-unit grid with round 1.6 strokes, in birome on paper. Pretexts and brings map to
-  them in the app (a caminata and "Tengo ganas" have none). They are decoration: screen readers skip
+  them in the app (a caminata, mirar pájaros and "Tengo ganas" have none; conga uses the mazo, merienda and tortas fritas the bizcochos). They are decoration: screen readers skip
   them and large text drops them.
 - **Keyboard and mouse.** Anything focused from a keyboard gets a 2 dp ring, birome in both
   themes, at once and never animated. A theme button draws it as its border (paper inside a filled

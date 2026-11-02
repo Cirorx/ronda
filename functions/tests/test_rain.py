@@ -89,7 +89,7 @@ class TestDoneWhen:
         ]
         assert proposal["options"][0]["message"] == (
             "Por la lluvia, el jueves nos vemos en el Salón Comunal de El Pinar a las 16:00. "
-            "Lo decidió Mirta."
+            "Lo decidió Mirta. Día de lluvia, día de tortas fritas."
         )
         assert proposal["recipients"] == 3
         assert proposal["title"] == "El jueves puede llover"
@@ -360,7 +360,8 @@ class TestTheJob:
         assert proposal["hour"] is None
         assert proposal["body"].startswith("Jueves a la noche · lluvia 75%.")
         assert [o["message"] for o in proposal["options"]][-1] == (
-            "Puede llover, pero el jueves vamos igual, a la noche como siempre. Lo decidió Mirta."
+            "Puede llover, pero el jueves vamos igual, a la noche como siempre. Lo decidió Mirta. "
+            "Día de lluvia, día de tortas fritas."
         )
         assert (
             "Reunión: jueves 2026-11-05 a la noche, en frente al quiosco."

@@ -7,7 +7,8 @@ enum Bring {
   /// Yerba.
   yerba('yerba'),
 
-  /// Termo.
+  /// El mate: the mate and the termo together. The id stays `termo`, so
+  /// profiles saved before the label changed keep their choice.
   termo('termo'),
 
   /// Sillas.
@@ -15,6 +16,9 @@ enum Bring {
 
   /// Enseño truco.
   ensenoTruco('enseno-truco'),
+
+  /// Tortas fritas, on a rainy day only.
+  tortasFritas('tortas-fritas'),
 
   /// Tengo ganas: nothing to bring, just coming.
   tengoGanas('tengo-ganas');

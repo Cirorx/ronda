@@ -40,7 +40,21 @@ MAX_AUDIO_BYTES = 65 * 32_000
 # Words Voice Transcribe should expect on each surface (as `functions/voice_signup.KEYWORDS`).
 PLACES = ["Solymar", "Lagomar", "El Pinar", "Shangrilá", "San José de Carrasco", "rambla"]
 KEYWORDS = {
-    "signup": [*PLACES, "mate", "truco", "fútbol 5", "caminata", "termo", "yerba", "bizcochos"],
+    "signup": [
+        *PLACES,
+        "mate",
+        "truco",
+        "fútbol 5",
+        "caminata",
+        "conga",
+        "merienda",
+        "café",
+        "pájaros",
+        "termo",
+        "yerba",
+        "bizcochos",
+        "tortas fritas",
+    ],
     "line": [*PLACES, "vecina", "vecino", "feria", "plaza"],
     "plan": [*PLACES, "mate", "caminata", "feria", "plaza", "bizcochos"],
 }

@@ -109,6 +109,7 @@ void main() {
       );
       registerFallbackValue(_profile);
       registerFallbackValue(Needs.none);
+      registerFallbackValue(AppLanguage.spanish);
       registerFallbackValue(<SeatFacts>[]);
     });
 
@@ -204,6 +205,8 @@ void main() {
       ).thenAnswer((_) async {});
       when(() => profileRepository.createProfile(any(), any()))
           .thenAnswer((_) async {});
+      when(() => profileRepository.holdLanguage(any()))
+          .thenAnswer((_) async {});
       when(() => rondaRepository.cerca(any())).thenAnswer(
         (_) async => const Cerca(
           barrioId: 'solymar-norte',
@@ -212,21 +215,23 @@ void main() {
       );
     });
 
-    Widget buildSubject({bool walkthroughSeen = true}) => App(
-      authRepository: authRepository,
-      contactRepository: contactRepository,
-      cuadernoRepository: cuadernoRepository,
-      dondeQuedaRepository: dondeQuedaRepository,
-      flyerRepository: flyerRepository,
-      needsRepository: needsRepository,
-      onboardingRepository: onboardingRepository,
-      organiserRepository: organiserRepository,
-      profileRepository: profileRepository,
-      pushRepository: pushRepository,
-      rondaRepository: rondaRepository,
-      smallPlanRepository: smallPlanRepository,
-      walkthroughSeen: walkthroughSeen,
-    );
+    Widget buildSubject({bool walkthroughSeen = true, AppLanguage? language}) =>
+        App(
+          authRepository: authRepository,
+          contactRepository: contactRepository,
+          cuadernoRepository: cuadernoRepository,
+          dondeQuedaRepository: dondeQuedaRepository,
+          flyerRepository: flyerRepository,
+          needsRepository: needsRepository,
+          onboardingRepository: onboardingRepository,
+          organiserRepository: organiserRepository,
+          profileRepository: profileRepository,
+          pushRepository: pushRepository,
+          rondaRepository: rondaRepository,
+          smallPlanRepository: smallPlanRepository,
+          walkthroughSeen: walkthroughSeen,
+          language: language,
+        );
 
     /// Pumps the app with [_user] signed in and [profile] read, `_profile`
     /// by default.
@@ -320,6 +325,36 @@ void main() {
         expect(_tab('Cerca'), findsOneWidget);
         expect(_tab('Ajustes'), findsOneWidget);
         expect(find.text('Todavía no tenés grupo'), findsOneWidget);
+      });
+
+      testWidgets('in the language picked on the phone, over the device', (
+        tester,
+      ) async {
+        tester.platformDispatcher.localesTestValue = const [Locale('es', 'UY')];
+        addTearDown(tester.platformDispatcher.clearLocalesTestValue);
+
+        await tester.pumpWidget(buildSubject(language: AppLanguage.english));
+        users.add(_user);
+        await tester.pump();
+        profiles.add(_profile);
+        await tester.pumpAndSettle();
+
+        expect(_tab('My ronda'), findsOneWidget);
+      });
+
+      testWidgets('the welcome screen at once when its toggle is tapped', (
+        tester,
+      ) async {
+        tester.platformDispatcher.localesTestValue = const [Locale('es', 'UY')];
+        addTearDown(tester.platformDispatcher.clearLocalesTestValue);
+        await pumpSignedOut(tester);
+
+        await tester.tap(find.bySemanticsIdentifier(LanguageToggle.identifier));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Español'), findsOneWidget);
+        verify(() => profileRepository.holdLanguage(AppLanguage.english))
+            .called(1);
       });
 
       testWidgets('the tabs in English on an en_US device', (tester) async {

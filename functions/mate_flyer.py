@@ -113,6 +113,9 @@ SCENES = {
     "truco": "A wooden table in a small neighbourhood club, a window onto a quiet street.",
     "futbol5": "A small five-a-side football pitch behind a wire fence, trees around it.",
     "caminata": "A quiet tree-lined street of low houses with wide sidewalks.",
+    "conga": "A wooden table on a shaded porch, a quiet street beyond the railing.",
+    "merienda": "A small corner café with two tables on the sidewalk, cups on a tray.",
+    "pajaros": "A coastal wetland at the edge of the dunes, tall grass and still water.",
 }
 BACKGROUND_PROMPT = (
     "A calm, warm illustration for a neighbourhood poster in Ciudad de la Costa, Uruguay. "

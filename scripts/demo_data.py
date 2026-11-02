@@ -50,7 +50,7 @@ TERMS_VERSION = "2026-10-27"
 
 # The app's ids in its enums' declaration order (packages/profile_repository/lib/src/models/),
 # which is the order ProfileRepository stores lists in.
-PRETEXTS = ("mate", "truco", "futbol5", "caminata")
+PRETEXTS = ("mate", "truco", "futbol5", "caminata", "conga", "merienda", "pajaros")
 SLOT_DAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 SLOT_BANDS = ("morning", "afternoon", "evening")
 BRINGS = ("pan", "yerba", "termo", "sillas", "enseno-truco", "tengo-ganas")
@@ -85,13 +85,14 @@ def documents(people: int) -> Documents:
 
 
 def seat_facts_documents(problem: dict) -> Documents:
-    """`seat_facts/{seatId}` for every barrio, Montevideo's too, × pretext × slot the demo people
-    pick, so a real member anywhere has seats to be matched in.
+    """`seat_facts/{seatId}` for every barrio, Montevideo's too, × every pretext × slot the demo
+    people pick, so a real member anywhere has seats to be matched in, whatever they like doing
+    (a pretext none of the invented people picks still needs seats).
 
     The hand-made seats in data/demo/invented_seat_facts.json replace their generated twins,
     which keeps the two places an invented host has set.
     """
-    pretexts = sorted({p for person in problem["people"] for p in person["pretexts"]})
+    pretexts = sorted(PRETEXTS)
     slots = sorted({s for person in problem["people"] for s in person["slots"]})
     seats = generated_seat_facts(pretexts, slots)
     seats |= json.loads(INVENTED_SEAT_FACTS.read_text())["seats"]

@@ -133,6 +133,9 @@ const STRINGS = {
       truco: ['Truco', 'un truco'],
       futbol5: ['Fútbol 5', 'un fútbol 5'],
       caminata: ['Caminata', 'una caminata'],
+      conga: ['Conga', 'una conga'],
+      merienda: ['Un café o merienda', 'un café o una merienda'],
+      pajaros: ['Mirar pájaros', 'mirar pájaros'],
     },
     days: {
       mon: 'Los lunes', tue: 'Los martes', wed: 'Los miércoles', thu: 'Los jueves',
@@ -193,6 +196,9 @@ const STRINGS = {
       truco: ['Truco', 'a truco game'],
       futbol5: ['Five-a-side football', 'a five-a-side game'],
       caminata: ['A walk', 'a walk'],
+      conga: ['Conga', 'a conga game'],
+      merienda: ['Coffee or merienda', 'a coffee or merienda'],
+      pajaros: ['Birdwatching', 'birdwatching'],
     },
     days: {
       mon: 'Mondays', tue: 'Tuesdays', wed: 'Wednesdays', thu: 'Thursdays',

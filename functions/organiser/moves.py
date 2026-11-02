@@ -82,6 +82,10 @@ def host_message(meeting: date, when: str, forecast: Forecast) -> tuple[str, str
     return title, f"{body} Pronóstico de {SOURCE}."
 
 
+RAINY_DAY = "Día de lluvia, día de tortas fritas."
+"""The line a rainy meeting's message ends with, when the ronda still meets that day."""
+
+
 def options(
     meeting: date,
     at: str,
@@ -100,7 +104,8 @@ def options(
             {
                 "id": COVERED,
                 "label": towards(covered.name),
-                "message": f"Por la lluvia, el {day} nos vemos en {covered.name} {at}. " + decided,
+                "message": f"Por la lluvia, el {day} nos vemos en {covered.name} {at}. "
+                f"{decided} {RAINY_DAY}",
                 "placeId": covered.id,
                 "placeName": covered.name,
             }
@@ -120,7 +125,8 @@ def options(
         {
             "id": AS_IS,
             "label": "Vamos igual",
-            "message": f"Puede llover, pero el {day} vamos igual, {at} como siempre. " + decided,
+            "message": f"Puede llover, pero el {day} vamos igual, {at} como siempre. "
+            f"{decided} {RAINY_DAY}",
         }
     )
     return choices

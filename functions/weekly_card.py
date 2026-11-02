@@ -106,7 +106,8 @@ pena. La tarjeta ya dice dónde y cuándo se juntan y pregunta si van: vos agreg
 (get_sunset), el último ómnibus (get_last_bus) y cuántos van (count_rsvps).
 2. Llamá compose_card una sola vez con los bloques, en el orden en que se leen:
    - rain: solo si la lluvia es probable (rainLikely): qué dice el pronóstico y el plan \
-alternativo en una línea.
+alternativo en una línea. Si se juntan igual ese día, podés sumar que un día de lluvia pide \
+tortas fritas.
    - host: solo si hay anfitrión esta semana: quién abre, con {anfitrion} en lugar del nombre.
    - newcomer: solo si se suma alguien nuevo: una bienvenida corta, con {nuevo} en lugar del \
 nombre.

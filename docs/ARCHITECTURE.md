@@ -133,7 +133,7 @@ isn't set up).
   - Known limits: the server holds both the facts it published and the ids that came back, so
     it could infer a need from which ids are missing (all evening seats gone → "volver de
     noche"). The need itself is never sent. Every phone reads every seat fact at the save: with
-    Montevideo that is 1,136 documents for the demo slots, worth a query by the member's barrio
+    Montevideo that is 1,988 documents for the demo slots, worth a query by the member's barrio
     if it gets slow.
   - Demo data: `data/demo/invented_seat_facts.json` (invented: 14 hand-made seats, two with a
     place an invented host has set) over seats generated the same way for every barrio ×
@@ -640,8 +640,8 @@ project checklist. Everything seeded is invented:
   exactly `solver/fixtures/invented_demo_30.json`. `scripts/demo_data.py` adds a first name and
   brings per uid, deterministically. Every uid starts with `demo-`: the rules leave no room for a
   label field on `users/{uid}`, so the id is the label.
-- Documents: `seat_facts/{seatId}` (1,136: 71 barrios × 4 pretexts × the 4 demo slots, so a
-  real member in any barrio has seats; a seat's `blocksFrom` lists its own area's barrios,
+- Documents: `seat_facts/{seatId}` (1,988: 71 barrios × all 7 pretexts × the 4 demo slots, so a
+  real member in any barrio has seats, whatever they picked; a seat's `blocksFrom` lists its own area's barrios,
   Ciudad de la Costa's or Montevideo's, and the Costa's 144 are unchanged since #22);
   `places/demo-*` (5 invented covered public places, `data/demo/invented_places.json`);
   `users/{uid}` with the profile, `plusOneUid` on whoever brings a +1 (as the generator gives

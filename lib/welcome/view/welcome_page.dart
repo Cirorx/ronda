@@ -92,19 +92,26 @@ class const WelcomePage({
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         spacing: spacing.md,
                         children: [
-                          // The link shares the name's line, so the doors
-                          // don't move down for it.
-                          Row(
+                          // The language and the link share the name's line
+                          // while they fit, so the doors don't move down for
+                          // them; with large text they wrap under it.
+                          Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  l10n.appTitle,
-                                  style: textTheme.headlineSmall?.copyWith(
-                                    color: theme.colorScheme.primary,
-                                  ),
+                              Text(
+                                l10n.appTitle,
+                                style: textTheme.headlineSmall?.copyWith(
+                                  color: theme.colorScheme.primary,
                                 ),
                               ),
-                              const Flexible(child: _HowItWorksLink()),
+                              const Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  LanguageToggle(showIcon: false),
+                                  _HowItWorksLink(),
+                                ],
+                              ),
                             ],
                           ),
                           Semantics(
@@ -167,15 +174,12 @@ class const WelcomePage({
 class const _HowItWorksLink() extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: AlignmentDirectional.centerEnd,
-      child: MergeSemantics(
-        child: Semantics(
-          identifier: WelcomePage.howItWorksIdentifier,
-          child: TextButton(
-            onPressed: () => context.push(WalkthroughPage.path),
-            child: Text(context.l10n.welcomeHowItWorks),
-          ),
+    return MergeSemantics(
+      child: Semantics(
+        identifier: WelcomePage.howItWorksIdentifier,
+        child: TextButton(
+          onPressed: () => context.push(WalkthroughPage.path),
+          child: Text(context.l10n.welcomeHowItWorks),
         ),
       ),
     );

@@ -110,8 +110,22 @@ void main() {
         'las sillas',
       );
       expect(es.bringItem(['yerba']), 'la yerba');
-      expect(es.bringItem(['termo']), 'el termo');
+      expect(es.bringItem(['termo']), 'el mate y el termo');
+      expect(es.bringItem(['tortas-fritas']), isNull);
       expect(es.bringItem(['nada']), isNull);
+    });
+
+    test('says whose turn it is, and tortas fritas only for a rainy day', () {
+      expect(es.yourTurn(['pan']), 'Te toca llevar el pan.');
+      expect(
+        es.yourTurn(['tortas-fritas']),
+        'Si llueve, te tocan las tortas fritas.',
+      );
+      expect(
+        es.yourTurn(['tortas-fritas', 'sillas']),
+        'Te toca llevar las sillas.',
+      );
+      expect(es.yourTurn(['tengo-ganas']), isNull);
     });
 
     test('lists what a neighbour brings by its labels', () {

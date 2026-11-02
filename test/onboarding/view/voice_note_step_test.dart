@@ -240,10 +240,10 @@ void main() {
         expect(find.textContaining('«Soy Ana, tengo 34'), findsOneWidget);
         const pretexts =
             'Qué te gustaría hacer: mate en la rambla, truco, fútbol 5, '
-            'caminata';
+            'caminata, conga, un café o merienda, mirar pájaros';
         const brings =
-            'Qué podés llevar o enseñar: pan, yerba, termo, sillas, enseño '
-            'truco';
+            'Qué podés llevar o enseñar: pan, yerba, mate y termo, sillas, '
+            'enseño truco, tortas fritas si llueve';
         for (final idea in [
           'Tu nombre',
           'Tu edad, más o menos',

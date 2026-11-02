@@ -545,7 +545,7 @@ void main() {
         testWidgets('answers a gap with its own picker', (tester) async {
           await pumpSubject(tester, gapped);
 
-          await tapVisible(tester, find.text('Termo'));
+          await tapVisible(tester, find.text('Mate y termo'));
 
           verify(() => cubit.bringsChanged({Bring.termo})).called(1);
         });
@@ -657,7 +657,7 @@ void main() {
           'Solymar Norte',
           'Mate en la rambla, Truco',
           'Jueves a la tarde, Sábado a la mañana',
-          'Termo',
+          'Mate y termo',
           'Caminar mucho, No tengo auto',
         ]) {
           expect(find.text(text), findsOneWidget, reason: text);

@@ -1,8 +1,8 @@
 import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
-/// The object a pretext needs, drawn by [RondaObjectIcon]; a walk needs
-/// none.
+/// The object a pretext needs, drawn by [RondaObjectIcon]; a walk and
+/// birdwatching need none.
 extension PretextObject on Pretext {
   /// The pretext's object, or `null` when it has none.
   RondaObject? get object => switch (this) {
@@ -10,6 +10,9 @@ extension PretextObject on Pretext {
     Pretext.truco => RondaObject.mazo,
     Pretext.futbol5 => RondaObject.pelota,
     Pretext.caminata => null,
+    Pretext.conga => RondaObject.mazo,
+    Pretext.merienda => RondaObject.bizcochos,
+    Pretext.pajaros => null,
   };
 }
 
@@ -23,6 +26,7 @@ extension BringObject on Bring {
     Bring.termo => RondaObject.termo,
     Bring.sillas => RondaObject.sillas,
     Bring.ensenoTruco => RondaObject.mazo,
+    Bring.tortasFritas => RondaObject.bizcochos,
     Bring.tengoGanas => null,
   };
 }

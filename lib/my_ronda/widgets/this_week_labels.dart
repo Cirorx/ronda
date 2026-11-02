@@ -186,8 +186,18 @@ extension ThisWeekLabels on AppLocalizations {
     };
   }
 
+  /// The line under "¿Venís?" about what the member brings: "Te toca llevar
+  /// el pan." for the first thing that can be carried, else "Si llueve, te
+  /// tocan las tortas fritas." for whoever offered them, else `null`.
+  String? yourTurn(List<String> brings) => switch (bringItem(brings)) {
+    final item? => thisWeekYourTurn(item),
+    null when brings.contains(Bring.tortasFritas.id) => thisWeekRainTurn,
+    null => null,
+  };
+
   /// "el pan": the first thing the member brings that can be carried, or
-  /// `null` ("Tengo ganas", "Enseño truco").
+  /// `null` ("Tengo ganas", "Enseño truco", and tortas fritas, which only a
+  /// rainy day asks for).
   String? bringItem(List<String> brings) {
     for (final id in brings) {
       final item = switch (Bring.fromId(id)) {
@@ -195,7 +205,10 @@ extension ThisWeekLabels on AppLocalizations {
         Bring.yerba => bringItemYerba,
         Bring.termo => bringItemTermo,
         Bring.sillas => bringItemSillas,
-        Bring.ensenoTruco || Bring.tengoGanas || null => null,
+        Bring.ensenoTruco ||
+        Bring.tortasFritas ||
+        Bring.tengoGanas ||
+        null => null,
       };
       if (item != null) return item;
     }

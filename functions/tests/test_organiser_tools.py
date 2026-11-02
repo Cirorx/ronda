@@ -344,7 +344,7 @@ class TestProposeMove:
                 "id": "asIs",
                 "label": "Vamos igual",
                 "message": "Puede llover, pero el jueves vamos igual, a las 16:00 como siempre. "
-                "Lo decidió Mirta.",
+                "Lo decidió Mirta. Día de lluvia, día de tortas fritas.",
             }
         ]
 

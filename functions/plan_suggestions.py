@@ -50,6 +50,9 @@ PRETEXT_LABELS = {
     "truco": "truco",
     "futbol5": "fútbol 5",
     "caminata": "caminata",
+    "conga": "conga",
+    "merienda": "café o merienda",
+    "pajaros": "mirar pájaros",
 }
 
 INSTRUCTIONS = """Sos el que elige ideas de Ronda: grupos semanales de vecinos. Una persona

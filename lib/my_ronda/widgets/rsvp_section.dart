@@ -27,6 +27,8 @@ class const RsvpSection({required final ThisWeekState state, super.key})
     final spacing = context.appSpacing;
     final cubit = context.read<ThisWeekCubit>();
     final item = l10n.bringItem(week.myBrings);
+    final turn = l10n.yourTurn(week.myBrings);
+    final rainTurn = item == null && turn != null;
 
     final Widget answer;
     final Key answerKey;
@@ -35,7 +37,7 @@ class const RsvpSection({required final ThisWeekState state, super.key})
       answer = RsvpBar(
         identifier: rsvpIdentifier,
         question: l10n.thisWeekQuestion,
-        message: item == null ? null : l10n.thisWeekYourTurn(item),
+        message: turn,
         yesLabel: l10n.thisWeekYes,
         noLabel: l10n.thisWeekNo,
         onYes: cubit.yesTapped,
@@ -58,9 +60,11 @@ class const RsvpSection({required final ThisWeekState state, super.key})
             liveRegion: true,
             child: Text(
               going
-                  ? (item == null
-                        ? l10n.thisWeekGoing
-                        : l10n.thisWeekGoingBring(item))
+                  ? switch (item) {
+                      final item? => l10n.thisWeekGoingBring(item),
+                      null when rainTurn => l10n.thisWeekGoingRain,
+                      null => l10n.thisWeekGoing,
+                    }
                   : l10n.thisWeekNotGoing,
               style: textTheme.headlineSmall,
             ),

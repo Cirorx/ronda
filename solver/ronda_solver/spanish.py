@@ -19,8 +19,8 @@ AGE_GROUPS_ES = {UNDER_30: "menos de 30", FROM_30_TO_59: "30 a 59", SIXTY_PLUS: 
 """A band outside rules.AGE_GROUPS is its own group and reads as the band itself."""
 
 
-PRETEXTS_ES = {"futbol5": "fútbol 5"}
-"""Every other pretext id reads as itself (mate, truco, caminata)."""
+PRETEXTS_ES = {"futbol5": "fútbol 5", "merienda": "café o merienda", "pajaros": "mirar pájaros"}
+"""Every other pretext id reads as itself (mate, truco, caminata, conga)."""
 
 
 def _pretext(pretext: str) -> str:

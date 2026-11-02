@@ -4,3 +4,4 @@ export 'view/notifications_page.dart';
 export 'view/report_page.dart';
 export 'view/settings_page.dart';
 export 'view/your_data_page.dart';
+export 'widgets/language_sheet.dart';

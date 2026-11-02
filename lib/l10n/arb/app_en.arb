@@ -234,7 +234,7 @@
             }
         }
     },
-    "payoffPretext": "{pretext, select, mate{mate} truco{truco} futbol5{five-a-side} caminata{walks} other{{pretext}}}",
+    "payoffPretext": "{pretext, select, mate{mate} truco{truco} futbol5{five-a-side} caminata{walks} conga{conga} merienda{a coffee or merienda} pajaros{birdwatching} other{{pretext}}}",
     "@payoffPretext": {
         "description": "A pretext inside a payoff demand line, by its stored id",
         "placeholders": {
@@ -471,6 +471,18 @@
     "@pretextCaminata": {
         "description": "Pretext: a walk"
     },
+    "pretextConga": "Conga",
+    "@pretextConga": {
+        "description": "Pretext: conga, a card game played with the Spanish deck"
+    },
+    "pretextMerienda": "Coffee or merienda",
+    "@pretextMerienda": {
+        "description": "Pretext: a coffee or an afternoon merienda"
+    },
+    "pretextPajaros": "Birdwatching",
+    "@pretextPajaros": {
+        "description": "Pretext: watching birds"
+    },
     "bringsTitle": "What can you bring or teach?",
     "@bringsTitle": {
         "description": "Onboarding question: what the person brings"
@@ -491,9 +503,9 @@
     "@bringYerba": {
         "description": "Something to bring: yerba mate"
     },
-    "bringTermo": "Thermos",
+    "bringTermo": "Mate and thermos",
     "@bringTermo": {
-        "description": "Something to bring: a thermos of hot water"
+        "description": "Something to bring: the mate and the thermos of hot water, together"
     },
     "bringSillas": "Chairs",
     "@bringSillas": {
@@ -502,6 +514,10 @@
     "bringEnsenoTruco": "I teach truco",
     "@bringEnsenoTruco": {
         "description": "Something to teach: truco"
+    },
+    "bringTortasFritas": "Tortas fritas if it rains",
+    "@bringTortasFritas": {
+        "description": "Something to bring on a rainy day only: tortas fritas (Uruguayan fried dough)"
     },
     "bringTengoGanas": "I'm keen",
     "@bringTengoGanas": {
@@ -970,7 +986,7 @@
     "@voiceIdeasHeading": {
         "description": "Heading of the example and checklist of what to say"
     },
-    "voiceIdeasExample": "“I'm Ana, I'm 34, I live in Barrio Sur. I'm into mate on the rambla and walks, Saturday mornings or Tuesday afternoons. I can bring the thermos.”",
+    "voiceIdeasExample": "“I'm Ana, I'm 34, I live in Barrio Sur. I'm into mate on the rambla and walks, Saturday mornings or Tuesday afternoons. I can bring the mate.”",
     "@voiceIdeasExample": {
         "description": "An example the person can almost read aloud; it names every answer the sign-up needs. Invented, not a real person"
     },
@@ -1459,6 +1475,10 @@
             }
         }
     },
+    "thisWeekRainTurn": "If it rains, the tortas fritas are on you.",
+    "@thisWeekRainTurn": {
+        "description": "Under the question, for a member who offered tortas fritas on rainy days"
+    },
     "thisWeekGoing": "You're going.",
     "@thisWeekGoing": {
         "description": "The card after a yes, with nothing to bring"
@@ -1471,6 +1491,10 @@
                 "type": "String"
             }
         }
+    },
+    "thisWeekGoingRain": "You're going. If it rains, bring the tortas fritas.",
+    "@thisWeekGoingRain": {
+        "description": "The card after a yes, for a member who offered tortas fritas on rainy days"
     },
     "thisWeekNotGoing": "You're skipping this one.",
     "@thisWeekNotGoing": {
@@ -1548,7 +1572,7 @@
     "@bringItemYerba": {
         "description": "Yerba, as a thing to bring"
     },
-    "bringItemTermo": "the thermos",
+    "bringItemTermo": "the mate and the thermos",
     "@bringItemTermo": {
         "description": "Termo, as a thing to bring"
     },
@@ -2182,6 +2206,22 @@
     "settingsDataRow": "Your data",
     "@settingsDataRow": {
         "description": "Settings row and screen title: what Ronda keeps and how to change or delete it"
+    },
+    "settingsLanguageRow": "Language",
+    "@settingsLanguageRow": {
+        "description": "Settings row and sheet title: the language Ronda shows"
+    },
+    "languagePhone": "Same as the phone",
+    "@languagePhone": {
+        "description": "Language choice: follow the phone's own language"
+    },
+    "languageSpanish": "Español",
+    "@languageSpanish": {
+        "description": "Language choice, always written in Spanish so a Spanish speaker finds it"
+    },
+    "languageEnglish": "English",
+    "@languageEnglish": {
+        "description": "Language choice, always written in English so an English speaker finds it"
     },
     "settingsSignOutRow": "Sign out of this account",
     "@settingsSignOutRow": {

@@ -45,13 +45,17 @@ PRETEXTS = {
     "truco": "truco",
     "futbol5": "fútbol 5",
     "caminata": "caminata",
+    "conga": "conga (el juego de cartas)",
+    "merienda": "un café o merienda, de tarde",
+    "pajaros": "mirar pájaros",
 }
 BRINGS = {
     "pan": "pan",
     "yerba": "yerba",
-    "termo": "termo",
+    "termo": "mate y termo (quien lleva el mate lleva el termo)",
     "sillas": "sillas",
     "enseno-truco": "enseño truco",
+    "tortas-fritas": "tortas fritas si llueve",
     "tengo-ganas": "tengo ganas (no lleva nada, viene y listo)",
 }
 DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
@@ -97,9 +101,14 @@ KEYWORDS = [
     "truco",
     "fútbol 5",
     "caminata",
+    "conga",
+    "merienda",
+    "café",
+    "pájaros",
     "termo",
     "yerba",
     "bizcochos",
+    "tortas fritas",
 ]
 
 NOTE_PATH = re.compile(r"^audio/(?P<uid>[A-Za-z0-9_-]{1,128})/(?P<id>[A-Za-z0-9_-]{1,64})\.wav$")

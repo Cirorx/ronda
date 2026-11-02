@@ -36,7 +36,7 @@ OPEN_STATUSES = ("forming", "active")
 TAKING_A_SEAT = ("active", "paused")
 """A paused member's seat is held (docs/PRODUCT.md § The weekly loop); only leaving frees it."""
 
-PRETEXTS = ("mate", "truco", "futbol5", "caminata")
+PRETEXTS = ("mate", "truco", "futbol5", "caminata", "conga", "merienda", "pajaros")
 DAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 BANDS = ("morning", "afternoon", "evening")
 

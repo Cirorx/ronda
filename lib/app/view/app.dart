@@ -39,6 +39,10 @@ class const App({
   /// Whether this phone has shown "¿Cómo funciona?", read before the app
   /// starts so the first screen is already the right one.
   required final bool walkthroughSeen,
+
+  /// The language picked on this phone, read before the app starts;
+  /// `null` follows the phone's language.
+  final AppLanguage? language,
   super.key,
 }) extends StatelessWidget {
   @override
@@ -58,20 +62,31 @@ class const App({
         RepositoryProvider.value(value: rondaRepository),
         RepositoryProvider.value(value: smallPlanRepository),
       ],
-      child: BlocProvider(
-        create: (_) => AppBloc(
-          authRepository: authRepository,
-          profileRepository: profileRepository,
-          pushRepository: pushRepository,
-          walkthroughSeen: walkthroughSeen,
-        )..add(const AppUserSubscriptionRequested()),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) => AppBloc(
+              authRepository: authRepository,
+              profileRepository: profileRepository,
+              pushRepository: pushRepository,
+              walkthroughSeen: walkthroughSeen,
+            )..add(const AppUserSubscriptionRequested()),
+          ),
+          BlocProvider(
+            create: (_) => LanguageCubit(
+              profileRepository: profileRepository,
+              initial: language,
+            ),
+          ),
+        ],
         child: const AppView(),
       ),
     );
   }
 }
 
-/// Shows the router in Ronda's day and night themes, and opens the roll
+/// Shows the router in Ronda's day and night themes, in the language picked
+/// on this phone (else the phone's), and opens the roll
 /// when "¿Quién vino hoy?" is tapped on Android, whether the tap started the
 /// app or found it running. Tells the [ErrorReporter] bootstrap provides, if
 /// any, which route pattern is on screen, so error reports say where.
@@ -135,6 +150,9 @@ class _AppViewState extends State<AppView> {
       darkTheme: AppTheme.dark,
       localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      locale: context.select<LanguageCubit, Locale?>(
+        (cubit) => cubit.state.locale,
+      ),
       localeListResolutionCallback: (locales, _) => resolveAppLocale(locales),
       routerConfig: _router,
     );

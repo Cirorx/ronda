@@ -34,6 +34,9 @@ class ProfileRepository {
   /// The device-store key that says this phone has shown "¿Cómo funciona?".
   static const walkthroughSeenKey = 'walkthrough.seen';
 
+  /// The device-store key that holds the language picked for Ronda.
+  static const languageKey = 'app.language';
+
   /// The profile of [uid] now and on every change; `null` until onboarding
   /// has saved one (the document may already hold the accepted terms).
   Stream<Profile?> watchProfile(String uid) =>
@@ -186,6 +189,20 @@ class ProfileRepository {
   ///
   /// Throws a [HoldOnPhoneFailure] when the phone can't keep it.
   Future<void> markWalkthroughSeen() => _hold(walkthroughSeenKey, true);
+
+  /// The language picked for Ronda on this phone; `null` when none was
+  /// picked (the app follows the phone) or it can't be read.
+  Future<AppLanguage?> language() async =>
+      AppLanguage.fromId(await _held(languageKey));
+
+  /// Remembers [language] for Ronda on this phone, or, with `null`, goes
+  /// back to following the phone's language.
+  ///
+  /// Throws a [HoldOnPhoneFailure] when the phone can't keep it.
+  Future<void> holdLanguage(AppLanguage? language) => switch (language) {
+    final language? => _hold(languageKey, language.id),
+    null => _clear(languageKey),
+  };
 
   Future<void> _hold(String key, Object json) async {
     try {

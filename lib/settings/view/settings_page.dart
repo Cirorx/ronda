@@ -8,10 +8,12 @@ import 'package:ronda/my_data/my_data.dart';
 import 'package:ronda/settings/view/notifications_page.dart';
 import 'package:ronda/settings/view/report_page.dart';
 import 'package:ronda/settings/view/your_data_page.dart';
+import 'package:ronda/settings/widgets/language_sheet.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// The Ajustes tab: Mis datos, Avisos, "Contar algo que pasó" and "Tus
-/// datos", each on its own screen under [path], and, set apart by space,
+/// datos", each on its own screen under [path], the language in a sheet,
+/// and, set apart by space,
 /// "Salir de esta cuenta" after a confirmation. Every row presses in from
 /// touch-down.
 class const SettingsPage({super.key}) extends StatelessWidget {
@@ -22,6 +24,7 @@ class const SettingsPage({super.key}) extends StatelessWidget {
   static const notificationsIdentifier = 'settings.notifications';
   static const reportIdentifier = 'settings.report';
   static const dataIdentifier = 'settings.data';
+  static const languageIdentifier = 'settings.language';
   static const signOutIdentifier = 'settings.signOut';
 
   /// The sign-out confirmation's prefix: `signOut.primary` signs out,
@@ -38,6 +41,7 @@ class const SettingsPage({super.key}) extends StatelessWidget {
       String label,
       VoidCallback onTap, {
       bool opensScreen = true,
+      String? value,
     }) => MergeSemantics(
       child: Semantics(
         identifier: identifier,
@@ -47,6 +51,7 @@ class const SettingsPage({super.key}) extends StatelessWidget {
           child: ListTile(
             leading: Icon(icon),
             title: Text(label),
+            subtitle: value == null ? null : Text(value),
             trailing: opensScreen ? const Icon(Icons.chevron_right) : null,
             onTap: onTap,
           ),
@@ -82,6 +87,16 @@ class const SettingsPage({super.key}) extends StatelessWidget {
               Icons.description_outlined,
               l10n.settingsDataRow,
               () => context.go(YourDataPage.path),
+            ),
+            row(
+              languageIdentifier,
+              Icons.translate,
+              l10n.settingsLanguageRow,
+              () => LanguageSheet.show(context),
+              opensScreen: false,
+              value: context.select<LanguageCubit, String>(
+                (cubit) => l10n.languageName(cubit.state.language),
+              ),
             ),
             SizedBox(height: context.appSpacing.lg),
             row(

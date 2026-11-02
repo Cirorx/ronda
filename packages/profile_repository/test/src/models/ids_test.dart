@@ -67,7 +67,15 @@ void main() {
     test('uses the solver ids', () {
       expect(
         Pretext.values.map((pretext) => pretext.id),
-        equals(['mate', 'truco', 'futbol5', 'caminata']),
+        equals([
+          'mate',
+          'truco',
+          'futbol5',
+          'caminata',
+          'conga',
+          'merienda',
+          'pajaros',
+        ]),
       );
     });
 
@@ -89,6 +97,7 @@ void main() {
           'termo',
           'sillas',
           'enseno-truco',
+          'tortas-fritas',
           'tengo-ganas',
         ]),
       );

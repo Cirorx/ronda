@@ -10,7 +10,16 @@ enum Pretext {
   futbol5('futbol5'),
 
   /// Caminata.
-  caminata('caminata');
+  caminata('caminata'),
+
+  /// Conga, the card game.
+  conga('conga'),
+
+  /// Un café o merienda, in the afternoon.
+  merienda('merienda'),
+
+  /// Mirar pájaros.
+  pajaros('pajaros');
 
   new(this.id);
 

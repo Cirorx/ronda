@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 import pytest
 from google.api_core.exceptions import AlreadyExists
 
+import demo_data
 import flyer
 import seed
 from tests.invented_gtfs import write_invented_gtfs
@@ -69,7 +70,7 @@ class TestFlyerText:
 
     def test_every_barrio_and_pretext_has_its_words(self):
         assert set(flyer.BARRIO_NAMES) == set(flyer.CENTROIDS)
-        assert set(flyer.HEADLINES) == {"mate", "truco", "futbol5", "caminata"}
+        assert set(flyer.HEADLINES) == set(demo_data.PRETEXTS)
 
 
 class TestWhere:

@@ -41,6 +41,26 @@ void main() {
     });
 
     group('renders', () {
+      // On a phone they wrap under the name when the words don't fit (the
+      // test font is far wider than the app's); a wide window fits them.
+      testWidgets("the language and the link on the name's line", (
+        tester,
+      ) async {
+        await pumpSubject(tester, size: desktopSize);
+
+        final name = tester.getCenter(find.text('Ronda')).dy;
+        for (final identifier in [
+          LanguageToggle.identifier,
+          WelcomePage.howItWorksIdentifier,
+        ]) {
+          expect(
+            tester.getCenter(find.bySemanticsIdentifier(identifier)).dy,
+            closeTo(name, 4),
+            reason: identifier,
+          );
+        }
+      });
+
       testWidgets('the welcome copy, the buttons door and the terms note', (
         tester,
       ) async {
@@ -232,13 +252,14 @@ void main() {
               tester.getTopLeft(doorsHeading()).dy - copyBottom,
               closeTo(2 * AppSpacing.unit, 1),
             );
-            // The name's line, which "¿Cómo funciona?" shares.
+            // The name's line, which the language and "¿Cómo funciona?"
+            // share.
             final top = tester
                 .getTopLeft(
                   find
                       .ancestor(
                         of: find.text('Ronda'),
-                        matching: find.byType(Row),
+                        matching: find.byType(Wrap),
                       )
                       .first,
                 )

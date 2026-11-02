@@ -66,6 +66,9 @@ HEADLINES = {
     "truco": "¿Te sumás a un truco?",
     "futbol5": "¿Te sumás a un fútbol 5?",
     "caminata": "¿Te sumás a una caminata?",
+    "conga": "¿Te sumás a una conga?",
+    "merienda": "¿Te sumás a un café?",
+    "pajaros": "¿Te sumás a mirar pájaros?",
 }
 DAYS = {
     "mon": "Los lunes",

@@ -78,13 +78,17 @@ PRETEXT_LABELS = {
     "truco": "truco",
     "futbol5": "fútbol 5",
     "caminata": "caminata",
+    "conga": "conga",
+    "merienda": "café o merienda",
+    "pajaros": "mirar pájaros",
 }
 BRING_TURNS = {
     "pan": "Te toca llevar el pan.",
     "yerba": "Te toca llevar la yerba.",
-    "termo": "Te toca llevar el termo.",
+    "termo": "Te toca llevar el mate y el termo.",
     "sillas": "Te toca llevar las sillas.",
     "enseno-truco": "Te toca enseñar truco.",
+    "tortas-fritas": "Si llueve, te tocan las tortas fritas.",
 }
 """The es-419 push names what each member brings; `tengo-ganas` brings nothing to name."""
 
