@@ -45,7 +45,7 @@ AgentCard _card(List<Map<String, Object?>> messages) =>
     AgentCard(week: _week, messages: messages);
 
 /// The card the server stores for a rainy week with a host.
-final _rainyCard = _card([
+final AgentCard _rainyCard = _card([
   _create(),
   _update([
     _root(['rain', 'host', 'rsvp']),

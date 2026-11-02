@@ -398,7 +398,7 @@ void main() {
       testWidgets('starts with the switch on when it is', (tester) async {
         await open(
           tester,
-          RondaSetupState(
+          const RondaSetupState(
             status: RondaSetupStatus.ready,
             rondas: [
               RondaSetup(

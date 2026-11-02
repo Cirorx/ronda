@@ -241,7 +241,10 @@ class RondaRepository {
             ? Stream.value((null, null, null))
             : Rx.combineLatest2(
                 _rondasApi.watchDespues(rondaId, view.week),
-                _rondasApi.watchCardView(rondaId),
+                // A card that doesn't read is the template, not a broken week.
+                _rondasApi
+                    .watchCardView(rondaId)
+                    .onErrorReturnWith((_, _) => null),
                 (despues, card) => (view, despues, card),
               ),
       );

@@ -309,12 +309,21 @@ stdlib `wave` module (`audioop` is gone in 3.13).
 
 The weekly card (#62) adds `genui` 0.10.4 (BSD-3-Clause) with `a2ui_core` (Apache-2.0) and
 `json_schema_builder` (BSD-3-Clause) as direct dependencies, because the catalog names their
-types. genui pulls in `audioplayers`, `video_player` (both platforms' plugins), `flutter_markdown_plus`,
-`html` and `markdown`; none is imported, but the plugins register natively, which is the 0.64 MB
-on the Android release APK. The licence check skips `a2ui_core` (untagged on pub.dev) and
-`html` (MIT text pub.dev reads as unknown), with the reason in the workflow. Only Ronda's own
-catalog is registered (`lib/my_ronda/agent_card/ronda_card_catalog.dart`); genui's core catalog
-is never built.
+types. **Feasibility verdict (2026-11-01): it holds.** On Flutter 3.47.8 / Dart 3.13.7 the
+release builds pass for Android (`flutter build apk --release --flavor production`), the iOS
+simulator and web. genui brings 23 more packages, all MIT, BSD-3-Clause or Apache-2.0 by their
+LICENSE files: `audioplayers` (and its 6 platform packages), `video_player` (and its 5),
+`flutter_markdown_plus`, `markdown`, `html`, `csslib`, `genai_primitives`, `preact_signals`,
+`decimal`, `rational`, `email_validator` and `synchronized`. None is imported, but the audio and
+video plugins register natively: measured at 18ed14c the Android release APK grew by 0.64 MB
+(88.74 → 89.39 MB) and the web `main.dart.js` by 0.17 MB (4.72 → 4.89 MB); on the branch merged
+with main (2026-11-01) the APK is 95.9 MB and `main.dart.js` 4.90 MB. The licence check skips
+`a2ui_core` (untagged on pub.dev) and `html` (MIT text pub.dev reads as unknown), with the
+reason in the workflow. Only Ronda's own catalog is registered
+(`lib/my_ronda/agent_card/ronda_card_catalog.dart`): genui's `BasicCatalogItems` is never
+built, the "core catalogs" `SurfaceController` makes are `a2ui_core` copies of the catalogs it
+is given, and a `createSurface` for any other catalog id (which genui would accept with an
+empty stub) is refused before it reaches the controller, so the template shows.
 
 ## Algo chico esta semana (#56)
 

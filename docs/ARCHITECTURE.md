@@ -433,7 +433,7 @@ isn't set up).
   the template), messages (the A2UI messages, `agent` only: a `createSurface` for the catalog
   `uy.ronda.card` and one `updateComponents` with a `RondaCard` root, one component per block
   kept and the `Rsvp` block last), blocks (the kinds kept), dropped, model, runId, latencyMs,
-  updatedAt. Members read it through the `views/{view}` rule; `rondas/{id}.agentCard` (the
+  tokens ([{model, in, out}], what each model billed), updatedAt. Members read it through the `views/{view}` rule; `rondas/{id}.agentCard` (the
   admin's switch, `set_ronda_setup`) decides whether the phone uses it. One run per ronda and
   week, `agent_runs/{rondaId}_{isoWeek}_card`, claimed like the rain check's.
 - `places/{id}`: covered public places the organiser may offer when it rains: name (with its
@@ -783,10 +783,11 @@ code jobs with no model, § Data model, the weekly loop's code jobs):
     registered) also falls back on anything it can't draw: a message that doesn't parse, another
     catalog, a component outside the catalog, a block without its title, a surface error.
     Taps on the card's RSVP block go through the RSVP path, never back to the model.
-  - Measured on the build machine (2026-11-01): the Android release APK grew by 0.64 MB
-    (88.74 → 89.39 MB) from genui's audio and video player plugins, the web `main.dart.js` by
-    0.17 MB (4.72 → 4.89 MB); iOS simulator and web builds pass. `evals/card/` runs the job over
-    three demo rondas and reports schema validity, the gates and the fallbacks.
+  - Every model turn in a trace carries `tokensIn` and `tokensOut` (the endpoint's streamed
+    usage, `stream_options.include_usage`), for every organiser job, and the card sums them per
+    model. Measured live on three demo rondas (`evals/card/RESULTS.md`, 2026-11-01): Spark
+    Open answered every turn, 4 turns and about 7.8 s of model time per card, about 9,500
+    tokens in and 1,100 out, about $0.017 a card. Build sizes and the licences: docs/STACK.md.
 
 ## Data sources and licences
 

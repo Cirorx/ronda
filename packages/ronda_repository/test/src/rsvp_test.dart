@@ -136,7 +136,7 @@ void main() {
           agentCard: true,
         );
 
-        test('is this week\'s $AgentCard when the switch is on', () async {
+        test("is this week's $AgentCard when the switch is on", () async {
           when(() => rondasApi.watchRonda('r1'))
               .thenAnswer((_) => Stream.value(on));
           when(() => rondasApi.watchCardView('r1'))
@@ -195,6 +195,20 @@ void main() {
             ),
           ),
         );
+
+        test('is the template when the stored card does not read', () async {
+          when(() => rondasApi.watchRonda('r1'))
+              .thenAnswer((_) => Stream.value(on));
+          when(() => rondasApi.watchCardView('r1')).thenAnswer(
+            (_) => Stream.error(const FormatException('another shape')),
+          );
+          ids.add(['r1']);
+
+          final week = await subject.watchThisWeek('demo-001').first;
+
+          expect(week, isNotNull);
+          expect(week!.agentCard, isNull);
+        });
 
         test(
           'is the template without messages',
