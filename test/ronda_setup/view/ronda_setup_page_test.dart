@@ -61,6 +61,7 @@ void main() {
           hour: any(named: 'hour'),
           anfitrionUid: any(named: 'anfitrionUid'),
           colaUid: any(named: 'colaUid'),
+          agentCard: any(named: 'agentCard'),
         ),
       ).thenAnswer((_) async {});
     });
@@ -312,6 +313,7 @@ void main() {
             hour: any(named: 'hour'),
             anfitrionUid: any(named: 'anfitrionUid'),
             colaUid: any(named: 'colaUid'),
+            agentCard: any(named: 'agentCard'),
           ),
         ).thenAnswer((_) async {
           states
@@ -355,10 +357,67 @@ void main() {
             hour: '16:30',
             anfitrionUid: 'demo-101',
             colaUid: 'demo-102',
+            agentCard: false,
           ),
         ).called(1);
         expect(find.byType(RondaSetupSheet), findsNothing);
         verify(cubit.sheetClosed).called(1);
+      });
+
+      testWidgets("turns the organiser's weekly card on and sends it", (
+        tester,
+      ) async {
+        await open(tester, _ready);
+        final sheet = find.byType(RondaSetupSheet);
+        expect(
+          find.descendant(
+            of: sheet,
+            matching: find.text('La tarjeta de la semana la arma el programa'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+          isFalse,
+        );
+
+        await tester.ensureVisible(find.byType(SwitchListTile));
+        await tester.tap(find.byType(SwitchListTile));
+        await tester.pump();
+        expect(
+          tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+          isTrue,
+        );
+        await tester.ensureVisible(find.text('Guardar'));
+        await tester.tap(find.text('Guardar'));
+        await tester.pump();
+
+        verify(() => cubit.save(rondaId: 'r1', agentCard: true)).called(1);
+      });
+
+      testWidgets('starts with the switch on when it is', (tester) async {
+        await open(
+          tester,
+          const RondaSetupState(
+            status: RondaSetupStatus.ready,
+            rondas: [
+              RondaSetup(
+                rondaId: 'r1',
+                pretextId: 'mate',
+                barrioId: 'el-pinar-sur',
+                slotDayId: 'thu',
+                slotBandId: 'afternoon',
+                members: SetupFixtures.members,
+                agentCard: true,
+              ),
+            ],
+          ),
+        );
+
+        expect(
+          tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+          isTrue,
+        );
       });
 
       testWidgets('starts from what is set and can take it all away', (
@@ -388,7 +447,7 @@ void main() {
         await tester.tap(find.text('Guardar'));
         await tester.pumpAndSettle();
 
-        verify(() => cubit.save(rondaId: 'r1')).called(1);
+        verify(() => cubit.save(rondaId: 'r1', agentCard: false)).called(1);
       });
 
       String? errorOn(WidgetTester tester, String label) => tester
@@ -464,6 +523,7 @@ void main() {
             hour: any(named: 'hour'),
             anfitrionUid: any(named: 'anfitrionUid'),
             colaUid: any(named: 'colaUid'),
+            agentCard: any(named: 'agentCard'),
           ),
         ).thenAnswer((_) async {});
         await open(
@@ -542,7 +602,8 @@ void main() {
         await tester.tap(find.text('Guardar'));
         await tester.pumpAndSettle();
 
-        verify(() => cubit.save(rondaId: 'r1', hour: '13:00')).called(1);
+        verify(() => cubit.save(rondaId: 'r1', hour: '13:00', agentCard: false))
+            .called(1);
       });
     });
   });

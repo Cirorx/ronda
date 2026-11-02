@@ -65,6 +65,10 @@ class const RondaDocument({
 
   /// Their first name.
   final String? openerName,
+
+  /// Whether the organiser composes this ronda's weekly card (`agentCard`,
+  /// the admin's switch); off until the admin turns it on.
+  final bool agentCard = false,
 }) {
   /// {@macro ronda_document}
   this;
@@ -119,6 +123,7 @@ class const RondaDocument({
         openerWeek: _opener(json, 'week'),
         openerUid: _opener(json, 'uid'),
         openerName: _opener(json, 'firstName'),
+        agentCard: json['agentCard'] == true,
       );
     }
     throw FormatException('rondas/$id has another shape');

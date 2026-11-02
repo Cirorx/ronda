@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:ronda/my_ronda/agent_card/agent_card_surface.dart';
 import 'package:ronda/my_ronda/cubit/this_week_cubit.dart';
 import 'package:ronda/my_ronda/widgets/this_week_card.dart';
 import 'package:ronda_repository/ronda_repository.dart';
@@ -488,6 +489,92 @@ void main() {
         findsOneWidget,
       );
       handle.dispose();
+    });
+
+    group("with the organiser's card", () {
+      const surface = 'card-2026-W44';
+      const agentCard = AgentCard(
+        week: '2026-W44',
+        messages: [
+          {
+            'version': 'v0.9',
+            'createSurface': {
+              'surfaceId': surface,
+              'catalogId': 'uy.ronda.card',
+            },
+          },
+          {
+            'version': 'v0.9',
+            'updateComponents': {
+              'surfaceId': surface,
+              'components': [
+                {
+                  'id': 'root',
+                  'component': 'RondaCard',
+                  'children': ['rain', 'rsvp'],
+                },
+                {
+                  'id': 'rain',
+                  'component': 'RainNotice',
+                  'title': 'Puede llover',
+                  'text': 'El sábado hay 80% de lluvia. Si llueve, el club.',
+                },
+                {'id': 'rsvp', 'component': 'Rsvp'},
+              ],
+            },
+          },
+        ],
+      );
+
+      testWidgets('draws its notices with the same header, who is going '
+          'and ¿Venís?', (tester) async {
+        await pump(tester, ready(MyRondaFixtures.week(agentCard: agentCard)));
+        await tester.pump();
+
+        expect(find.byType(AgentCardSurface), findsOneWidget);
+        expect(find.text('Puede llover'), findsOneWidget);
+        expect(
+          find.text('Sábado 31/10 a la tarde · Mate en la rambla'),
+          findsOneWidget,
+        );
+        expect(find.text('¿Venís?'), findsOneWidget);
+        expect(find.text('Te toca llevar el pan.'), findsOneWidget);
+        expect(find.text('Raúl'), findsOneWidget);
+      });
+
+      testWidgets('answers through the cubit, never a model', (tester) async {
+        await pump(tester, ready(MyRondaFixtures.week(agentCard: agentCard)));
+        await tester.pump();
+
+        await tester.tap(find.text('Voy'));
+
+        verify(cubit.yesTapped).called(1);
+      });
+
+      testWidgets('shows the template when the card can not be drawn', (
+        tester,
+      ) async {
+        await pump(
+          tester,
+          ready(
+            MyRondaFixtures.week(
+              agentCard: const AgentCard(week: '2026-W44', messages: []),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(AgentCardSurface), findsOneWidget);
+        expect(find.byType(NoteBanner), findsNothing);
+        expect(find.text('¿Venís?'), findsOneWidget);
+      });
+
+      testWidgets('shows the template without a card', (tester) async {
+        await pump(tester, ready(MyRondaFixtures.week()));
+
+        expect(find.byType(AgentCardSurface), findsNothing);
+        expect(find.text('¿Venís?'), findsOneWidget);
+      });
     });
 
     testWidgets('reads in English', (tester) async {

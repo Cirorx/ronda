@@ -565,6 +565,8 @@
     "setupSaveError": "No se guardó. Probá de nuevo.",
     "setupNotPublic": "Eso parece una casa o una dirección. La ronda se junta solo en lugares públicos: escribí el lugar, sin número de puerta.",
     "setupSameHost": "Abre y cierra tienen que ser dos personas distintas.",
+    "setupAgentCard": "La tarjeta de la semana la arma el programa",
+    "setupAgentCardHint": "Apagado, los vecinos ven la tarjeta fija. Prendido, el programa agrega los avisos de la semana; si algo no le sale, vuelve a la tarjeta fija.",
     "dayWithDate": "{day, select, mon{lunes} tue{martes} wed{miércoles} thu{jueves} fri{viernes} sat{sábado} sun{domingo} other{}} {date}",
     "benchOfferTitle": "Se liberó un lugar",
     "benchOfferAsk": "Estabas en la lista de espera. ¿Lo tomás?",

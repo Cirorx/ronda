@@ -5,7 +5,8 @@
   Markdown stripped), stepCount and actaCount. Admin-only (firestore.rules).
 - `agent_runs/{runId}/steps/{n}` (`001`, `002`…): n, ts, kind, by (who decided it: `code`,
   `model` or `person`, `AUTHORS`) and what that kind carries:
-  - `model`: one answer of the model: model, latencyMs, toolCalls (names), content;
+  - `model`: one answer of the model: model, latencyMs, toolCalls (names), content,
+    tokensIn and tokensOut (what the endpoint billed; 0 when it sent no usage);
   - `tool`: one tool call: tool, argsSummary, reason, model, then resultSummary, latencyMs and
     status (`running` while it runs, then `ok`, `refused`, `held` or `invalid`), so the trace
     shows the call before what it sent;

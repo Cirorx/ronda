@@ -24,6 +24,7 @@ class RondaSetupSheet extends StatefulWidget {
   static const hourIdentifier = 'setup.hour';
   static const anfitrionIdentifier = 'setup.anfitrion';
   static const colaIdentifier = 'setup.cola';
+  static const agentCardIdentifier = 'setup.agentCard';
   static const saveIdentifier = 'setup.save';
 
   /// Lines a field's error may take before it is cut: enough for the
@@ -55,6 +56,7 @@ class _RondaSetupSheetState extends State<RondaSetupSheet> {
   late String? _hour = widget.ronda.hour;
   late String? _anfitrion = _known(widget.ronda.anfitrionUid);
   late String? _cola = _known(widget.ronda.colaUid);
+  late bool _agentCard = widget.ronda.agentCard;
 
   /// The place's words changed since the server last refused them, so its
   /// error no longer describes them.
@@ -84,6 +86,7 @@ class _RondaSetupSheetState extends State<RondaSetupSheet> {
       hour: _hour,
       anfitrionUid: _anfitrion,
       colaUid: _cola,
+      agentCard: _agentCard,
     );
   }
 
@@ -200,6 +203,16 @@ class _RondaSetupSheetState extends State<RondaSetupSheet> {
                   ),
                   items: members,
                   onChanged: (uid) => setState(() => _cola = uid),
+                ),
+              ),
+              field(
+                RondaSetupSheet.agentCardIdentifier,
+                SwitchListTile(
+                  value: _agentCard,
+                  onChanged: (on) => setState(() => _agentCard = on),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.setupAgentCard),
+                  subtitle: Text(l10n.setupAgentCardHint),
                 ),
               ),
               if (state.saveFailure case final reason?

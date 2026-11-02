@@ -48,6 +48,9 @@ class const RondaSetup({
 
   /// The upcoming meeting's "¿Abrís vos?", when the anfitrión can't open it.
   final HandoffSummary? handoff,
+
+  /// Whether the organiser composes this ronda's weekly card (the switch).
+  final bool agentCard = false,
 }) extends Equatable {
   /// {@macro ronda_setup}
   this;
@@ -67,6 +70,7 @@ class const RondaSetup({
     colaUid,
     roll,
     handoff,
+    agentCard,
   ];
 }
 

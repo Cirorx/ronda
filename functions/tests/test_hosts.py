@@ -50,6 +50,7 @@ class TestSetups:
             ],
             "roll": None,
             "handoff": None,
+            "agentCard": False,
         }
 
     def test_shows_what_is_set_and_the_latest_roll(self):
@@ -175,4 +176,25 @@ class TestSetSetup:
     def test_a_body_that_isnt_an_object_has_no_ronda(self):
         with pytest.raises(hosts.SetupError) as excinfo:
             hosts.set_setup(bare(), None, NOW)
+        assert excinfo.value.code == "invalid-argument"
+
+    def test_the_weekly_cards_switch_is_off_until_set_and_stays_when_absent(self):
+        db = bare()
+
+        untouched = setup(db)
+        assert untouched["agentCard"] is False
+        assert "agentCard" not in db.documents[f"rondas/{RONDA}"]
+        on = setup(db, agentCard=True)
+        kept = setup(db)
+        assert on["agentCard"] is True
+        assert kept["agentCard"] is True
+        assert db.documents[f"rondas/{RONDA}"]["agentCard"] is True
+        off = setup(db, agentCard=False)
+
+        assert off["agentCard"] is False
+        assert hosts.setups(db, NOW)[0]["agentCard"] is False
+
+    def test_the_switch_is_a_bool(self):
+        with pytest.raises(hosts.SetupError) as excinfo:
+            setup(bare(), agentCard="yes")
         assert excinfo.value.code == "invalid-argument"

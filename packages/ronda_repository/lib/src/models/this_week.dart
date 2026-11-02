@@ -89,6 +89,10 @@ class const ThisWeek({
 
   /// "¿Abrís vos?" for [week], while it is open to this member.
   final HandoffAsk? handoffAsk,
+
+  /// The card the organiser composed for [week], when the ronda's switch is
+  /// on and one is stored for this week; `null` means the fixed template.
+  final AgentCard? agentCard,
 }) extends Equatable {
   /// {@macro this_week}
   this;
@@ -118,7 +122,28 @@ class const ThisWeek({
     opener,
     despues,
     handoffAsk,
+    agentCard,
   ];
+}
+
+/// {@template agent_card}
+/// The weekly card the organiser agent composed, as the A2UI messages the
+/// phone draws with genui from Ronda's own catalog of blocks. The phone
+/// renders them and nothing else: a card it can't draw falls back to the
+/// template.
+/// {@endtemplate}
+class const AgentCard({
+  /// The ISO week the card is for.
+  required final String week,
+
+  /// The A2UI messages, in order: a `createSurface`, then the components.
+  required final List<Map<String, Object?>> messages,
+}) extends Equatable {
+  /// {@macro agent_card}
+  this;
+
+  @override
+  List<Object?> get props => [week, messages];
 }
 
 /// {@template host}

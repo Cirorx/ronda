@@ -346,6 +346,8 @@ ANSWER = Turn(
         ToolCall("call_2", "count_rsvps", json.dumps({"reason": "contar"})),
     ),
     model=model.SPARK_OPEN,
+    tokens_in=1200,
+    tokens_out=85,
 )
 
 
@@ -362,6 +364,7 @@ class TestChatModel:
                 "messages": [{"role": "user"}],
                 "tools": [{"t": 1}],
                 "stream": True,
+                "stream_options": {"include_usage": True},
                 "extra_body": {"reasoning_effort": "low"},
             }
         ]
@@ -383,6 +386,7 @@ class TestChatModel:
 
         answer = model.collect(chunks, "m")
 
+        assert (answer.tokens_in, answer.tokens_out) == (0, 0)
         assert answer.content == "**Hola**"
         assert answer.tool_calls == (
             ToolCall("call_0", "count_rsvps", '{"reason": "x"}'),
@@ -537,6 +541,7 @@ class TestLoop:
         assert second[3]["tool_call_id"] == "call_count_rsvps"
         assert [s["kind"] for s in steps] == ["model", "model"]
         assert steps[0]["toolCalls"] == ["count_rsvps"]
+        assert (steps[0]["tokensIn"], steps[0]["tokensOut"]) == (0, 0)
 
     def test_retries_once_with_the_validation_error(self):
         outcome, steps, scripted, _ = loop(

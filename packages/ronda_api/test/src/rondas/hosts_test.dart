@@ -221,6 +221,19 @@ void main() {
         expect(second.placeName, isNull);
         expect(second.anfitrionUid, isNull);
         expect(second.roll, isNull);
+        expect(first.agentCard, isFalse);
+      });
+
+      test("reads the weekly card's switch", () async {
+        answers({
+          'rondas': [
+            {..._row, 'agentCard': true},
+          ],
+        });
+
+        final [row] = await subject.rondaSetups();
+
+        expect(row.agentCard, isTrue);
       });
 
       test('throws a FormatException for another shape', () async {
@@ -257,6 +270,21 @@ void main() {
     });
 
     group('setRondaSetup', () {
+      test("sends the weekly card's switch only when it is given", () async {
+        await subject.setRondaSetup(rondaId: 'r1', agentCard: true);
+
+        verify(
+          () => callable.call<Object?>({
+            'rondaId': 'r1',
+            'place': null,
+            'hour': null,
+            'anfitrion': '',
+            'cola': '',
+            'agentCard': true,
+          }),
+        ).called(1);
+      });
+
       test('sends all three at once', () async {
         await subject.setRondaSetup(
           rondaId: 'r1',

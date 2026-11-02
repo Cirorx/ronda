@@ -99,6 +99,8 @@ void main() {
           .thenAnswer((_) => Stream.value(null));
       when(() => rondasApi.watchDespues('r1', '2026-W45'))
           .thenAnswer((_) => despues.stream);
+      when(() => rondasApi.watchCardView('r1'))
+          .thenAnswer((_) => Stream.value(null));
       when(() => rondasApi.watchHandoffAsk('r1', 'demo-104'))
           .thenAnswer((_) => asks.stream);
     });

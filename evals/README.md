@@ -12,3 +12,4 @@ invented notes and photos go in `fixtures/`: nothing a real person said or sent.
 | Eval | Measures | Run | Results |
 |---|---|---|---|
 | [`voice/`](voice/) | Voice Transcribe realtime vs batch on the same note: time to first words, time to the final transcript after the person stops, and word error rate between the two and against the reference text (#64) | `uv run --with pytest --with websockets --with httpx pytest evals/voice` (add `--live`, `--record`) | [`voice/RESULTS.md`](voice/RESULTS.md) |
+| [`card/`](card/) | The weekly card the organiser composes (#62): `compose_card` schema validity, gate pass rate per gate, blocks dropped, fallback rate, that two rondas in the same week get different cards, and cost and latency per card | `cd evals/card && uv run pytest` (add `--live`, `--record`) | [`card/RESULTS.md`](card/RESULTS.md) |

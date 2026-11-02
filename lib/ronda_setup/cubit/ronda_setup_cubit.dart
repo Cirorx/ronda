@@ -48,9 +48,10 @@ class RondaSetupCubit extends Cubit<RondaSetupState> {
   }
 
   /// Sets ronda [rondaId]'s place, hour and hosts, then reads every ronda
-  /// again; a `null` takes each one away. [RondaSetupState.saving] goes
-  /// back to `false` either way, with [RondaSetupState.saveFailure] when it
-  /// wasn't saved.
+  /// again; a `null` takes each one away. [agentCard] turns the organiser's
+  /// weekly card on or off (left `null`, the switch stays as it is).
+  /// [RondaSetupState.saving] goes back to `false` either way, with
+  /// [RondaSetupState.saveFailure] when it wasn't saved.
   Future<void> save({
     required String rondaId,
     String? placeName,
@@ -58,6 +59,7 @@ class RondaSetupCubit extends Cubit<RondaSetupState> {
     String? hour,
     String? anfitrionUid,
     String? colaUid,
+    bool? agentCard,
   }) async {
     if (state.saving) return;
     emit(state.copyWith(saving: true, saveFailure: () => null));
@@ -69,6 +71,7 @@ class RondaSetupCubit extends Cubit<RondaSetupState> {
         hour: hour,
         anfitrionUid: anfitrionUid,
         colaUid: colaUid,
+        agentCard: agentCard,
       );
       final rondas = await _rondaRepository.rondaSetups();
       emit(RondaSetupState(status: RondaSetupStatus.ready, rondas: rondas));

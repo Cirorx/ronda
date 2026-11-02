@@ -140,6 +140,12 @@ Results from Uruguay, 2026-10-28:
   `capurro-bella-vista`, "Malvín Norte" → `malvin-norte`, "Shangrilá" → `shangrila`, "Colón"
   alone → unknown. Voice Transcribe took all 109 keywords: a 7.5 s synthetic note (macOS
   `say`) transcribed in 2.7 s with "Barrio Sur" spelled right, then `barrio-sur`.
+- The weekly card (#62, `evals/card/`, 2026-11-01): Spark Open composed three demo rondas'
+  cards with the forecast and `compose_card` in 4 turns each, 6–10 s of model time, about 9,500
+  tokens in and 1,100 out (reasoning included), about $0.017 a card at $1.25 / $4.25 per million
+  (Baseten's listed Spark Open rate, the same as Spark 1.3). Every `compose_card` call fitted
+  the catalog and every block passed the gates. Both endpoints accept
+  `stream_options: {include_usage: true}` and send the tokens in the last chunk.
 - 3: a 10 s synthetic note in 3–5 s. `languageBias: ["Spanish"]` gave the cleaner transcript;
   auto-detect repeated words. Real rioplatense notes are still #21.
 - 4: `-1026` called the tool with valid arguments at low and xhigh, plain and streamed, 1–3 s,

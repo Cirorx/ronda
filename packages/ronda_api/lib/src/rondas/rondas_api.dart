@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:ronda_api/src/rondas/bench_documents.dart';
+import 'package:ronda_api/src/rondas/card_documents.dart';
 import 'package:ronda_api/src/rondas/cerca_document.dart';
 import 'package:ronda_api/src/rondas/hosts_documents.dart';
 import 'package:ronda_api/src/rondas/pilot_numbers_document.dart';
@@ -136,6 +137,11 @@ class const RondasApi({
   Stream<WeekViewDocument?> watchWeekView(String rondaId) =>
       _watch('rondas/$rondaId/views/week', WeekViewDocument.fromJson);
 
+  /// `rondas/{rondaId}/views/card`: the weekly card the organiser composed;
+  /// `null` until the server first writes it.
+  Stream<CardViewDocument?> watchCardView(String rondaId) =>
+      _watch('rondas/$rondaId/views/card', CardViewDocument.fromJson);
+
   /// `rondas/{rondaId}/answers/{uid}`; `null` until the member answers.
   Stream<AnswerDocument?> watchAnswer(String rondaId, String uid) =>
       _watch('rondas/$rondaId/answers/$uid', AnswerDocument.fromJson);
@@ -208,7 +214,8 @@ class const RondasApi({
 
   /// Sets ronda [rondaId]'s public place ([placeName] and [placeLandmark]),
   /// [hour] and hosts at once (`set_ronda_setup`); a `null` takes each one
-  /// away. Admin only.
+  /// away. [agentCard] turns the organiser's weekly card on or off; left
+  /// `null`, the switch stays as it is. Admin only.
   ///
   /// Throws a [FirebaseFunctionsException] when the call fails:
   /// `failed-precondition` when the place looks like a home or an address.
@@ -219,6 +226,7 @@ class const RondasApi({
     String? hour,
     String? anfitrionUid,
     String? colaUid,
+    bool? agentCard,
   }) async {
     await functions.httpsCallable(setRondaSetupCallable).call<Object?>({
       'rondaId': rondaId,
@@ -228,6 +236,7 @@ class const RondasApi({
       'hour': hour,
       'anfitrion': anfitrionUid ?? '',
       'cola': colaUid ?? '',
+      'agentCard': ?agentCard,
     });
   }
 

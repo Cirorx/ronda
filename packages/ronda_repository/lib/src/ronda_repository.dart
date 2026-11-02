@@ -206,7 +206,7 @@ class RondaRepository {
             : Rx.combineLatest5(
                 _rondasApi.watchRonda(rondaId),
                 _rondasApi.watchMember(rondaId, uid),
-                _viewAndDespues(rondaId),
+                _viewDespuesAndCard(rondaId),
                 _rondasApi.watchAnswer(rondaId, uid),
                 _rondasApi.watchHandoffAsk(rondaId, uid),
                 (ronda, member, week, answer, handoff) => _thisWeek(
@@ -216,6 +216,7 @@ class RondaRepository {
                   answer,
                   despues: week.$2,
                   handoff: handoff,
+                  card: week.$3,
                 ),
               ),
       )
@@ -230,17 +231,22 @@ class RondaRepository {
       .map((ids) => ids.isEmpty ? null : (ids.toList()..sort()).first)
       .distinct();
 
-  /// The week's view, and the después of the week it shows.
-  Stream<(WeekViewDocument?, DespuesDocument?)> _viewAndDespues(
-    String rondaId,
-  ) => _rondasApi
+  /// The week's view, the después of the week it shows, and the card the
+  /// organiser composed.
+  Stream<(WeekViewDocument?, DespuesDocument?, CardViewDocument?)>
+  _viewDespuesAndCard(String rondaId) => _rondasApi
       .watchWeekView(rondaId)
       .switchMap(
         (view) => view == null
-            ? Stream.value((null, null))
-            : _rondasApi
-                  .watchDespues(rondaId, view.week)
-                  .map((despues) => (view, despues)),
+            ? Stream.value((null, null, null))
+            : Rx.combineLatest2(
+                _rondasApi.watchDespues(rondaId, view.week),
+                // A card that doesn't read is the template, not a broken week.
+                _rondasApi
+                    .watchCardView(rondaId)
+                    .onErrorReturnWith((_, _) => null),
+                (despues, card) => (view, despues, card),
+              ),
       );
 
   static ThisWeek? _thisWeek(
@@ -250,9 +256,16 @@ class RondaRepository {
     AnswerDocument? answer, {
     DespuesDocument? despues,
     HandoffAskDocument? handoff,
+    CardViewDocument? card,
   }) {
     if (ronda == null || member == null) return null;
     return ThisWeek(
+      agentCard: switch (card) {
+        CardViewDocument(:final week, status: 'agent', :final messages)
+            when ronda.agentCard && week == view?.week && messages.isNotEmpty =>
+          AgentCard(week: week, messages: messages),
+        _ => null,
+      },
       rondaId: ronda.id,
       pretextId: ronda.pretext,
       barrioId: ronda.barrio,
@@ -586,6 +599,7 @@ class RondaRepository {
               ),
             _ => null,
           },
+          agentCard: row.agentCard,
         ),
     ];
   });
@@ -728,6 +742,7 @@ class RondaRepository {
     String? hour,
     String? anfitrionUid,
     String? colaUid,
+    bool? agentCard,
   }) => _hostsGuard(
     () => _rondasApi.setRondaSetup(
       rondaId: rondaId,
@@ -736,6 +751,7 @@ class RondaRepository {
       hour: hour,
       anfitrionUid: anfitrionUid,
       colaUid: colaUid,
+      agentCard: agentCard,
     ),
     refused: HostsFailureReason.notPublic,
   );

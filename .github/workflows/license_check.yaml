@@ -32,4 +32,8 @@ jobs:
       # image_picker_ios: via face_blur's image_picker. Its LICENSE is the same
       # BSD-3-Clause plus Apache-2.0 file as image_picker_android's, but pub.dev
       # has not classified 0.8.13+14 (no license tag on 2026-10-29).
-      skip_packages: "pubspec_lock_parse,dbus,image_picker_ios"
+      # a2ui_core: via genui (the weekly card). Its LICENSE is Apache-2.0, but
+      # pub.dev had not tagged 0.1.1 on 2026-11-01.
+      # html: via genui's flutter_markdown_plus. Its LICENSE is the MIT text
+      # (html5lib's), which pub.dev reads as "unknown".
+      skip_packages: "pubspec_lock_parse,dbus,image_picker_ios,a2ui_core,html"

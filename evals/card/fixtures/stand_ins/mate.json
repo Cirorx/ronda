@@ -1,0 +1,77 @@
+{
+  "note": "Hand-written stand-in, deliberately imperfect where the test says so (futbol5 slips into tú and names a host the ronda doesn't have); it exercises the gates offline. The real model's answers are in ../recorded/, written by --live --record.",
+  "turns": [
+    {
+      "content": "",
+      "tool_calls": [
+        {
+          "name": "get_forecast",
+          "arguments": {
+            "date": "2026-11-05",
+            "reason": "ver si llueve a la hora de la ronda"
+          }
+        }
+      ]
+    },
+    {
+      "content": "",
+      "tool_calls": [
+        {
+          "name": "count_rsvps",
+          "arguments": {
+            "reason": "saber cuántos van"
+          }
+        }
+      ]
+    },
+    {
+      "content": "",
+      "tool_calls": [
+        {
+          "name": "compose_card",
+          "arguments": {
+            "reason": "llueve 80% a las 16, hay anfitrión, se suma alguien y hay después",
+            "blocks": [
+              {
+                "kind": "rain",
+                "title": "Puede llover",
+                "text": "El jueves a las 16 hay 80% de lluvia y ráfagas de 50 km/h. Si llueve, Ronda le propone al anfitrión un lugar techado."
+              },
+              {
+                "kind": "host",
+                "title": "Quién abre",
+                "text": "Esta semana abre {anfitrion}: llega diez minutos antes y saluda a los que van llegando."
+              },
+              {
+                "kind": "newcomer",
+                "title": "Alguien nuevo",
+                "text": "Esta semana se suma {nuevo}. Si llegás temprano, contale cómo es la ronda."
+              },
+              {
+                "kind": "despues",
+                "title": "Después, si querés",
+                "text": "{despues}, unos 20 minutos."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "content": "",
+      "tool_calls": [
+        {
+          "name": "log_acta",
+          "arguments": {
+            "summary": "Armó la tarjeta de la semana con la lluvia, quién abre, alguien nuevo y el después.",
+            "reason": "anotar lo que hizo"
+          }
+        }
+      ]
+    },
+    {
+      "content": "**Listo**: la tarjeta de esta semana quedó armada.",
+      "tool_calls": []
+    }
+  ]
+}

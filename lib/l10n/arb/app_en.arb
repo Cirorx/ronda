@@ -2881,6 +2881,14 @@
     "@setupSameHost": {
         "description": "Setup sheet: the same person in both roles"
     },
+    "setupAgentCard": "The program composes the weekly card",
+    "@setupAgentCard": {
+        "description": "Setup sheet: the switch that lets the organiser agent compose the Mi ronda card from its catalog (genui)"
+    },
+    "setupAgentCardHint": "Off, members see the fixed card. On, the program adds this week's notices; anything it gets wrong falls back to the fixed card.",
+    "@setupAgentCardHint": {
+        "description": "Setup sheet: what the weekly card switch does"
+    },
     "dayWithDate": "{day, select, mon{Monday} tue{Tuesday} wed{Wednesday} thu{Thursday} fri{Friday} sat{Saturday} sun{Sunday} other{}} {date}",
     "@dayWithDate": {
         "description": "A weekday and a short date in a sentence: 'domingo 1/11'",
