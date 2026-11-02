@@ -104,7 +104,58 @@ fragments by index as `s4_baseten_tools.py` does. An SDK or connection error, or
 answer, moves the rest of the run to `muse-spark-1.3` on the Meta Model API (same request; no
 `tool_choice`, so "auto"). Every argument is validated with pydantic and retried once with the
 error; answers are Markdown-stripped. No paid call ran while building it: the tests play back
-scripted turns shaped like the smoke test's stream, and the first real run is the owner's.
+scripted turns shaped like the smoke test's stream. The first real runs, the weekly card on
+ronda-uy and the rain check over the Firestore stand-in, are in § Results on the current code.
+
+## Results on the current code (2026-11-02, #61)
+
+Measured from Uruguay on main at 7989262 by calling the functions' own code with the real keys
+(loaded by `scripts/smoke/_env.py`, never printed): `voice_signup.transcribe` and `read_fields`;
+`rain.run_rain_check` over the Firestore stand-in (`functions/tests/organiser_fakes.documents()`,
+Wednesday 18:00, the rainy stand-in forecast) with `organiser.model.from_environment()`;
+`weekly_card` through `evals/card` (`--live --record`); and `mate_flyer.run_models` with the real
+`MetaSam` and `MuseImage`. Nothing was written to ronda-uy, and the whole round cost about $0.15.
+The README's models table quotes these numbers.
+
+- **Voice Transcribe** (batch, the path the app takes): the invented 10.5 s note from
+  `evals/voice/make_note.sh`, 3 calls, 3.9, 2.3 and 2.4 s, $0.0005 each. Two transcripts had
+  every word; the third doubled "mate" and dropped two full stops. The keyword list is 114 long
+  now (109 on 11-01, before the new pretexts and brings).
+- **Spark 1.3** `read_fields` on those transcripts: 4.3, 2.8 and 2.5 s; 2,135–2,137 tokens in,
+  424–440 out; $0.0045 each. The same fields every time (Marta, 60-69, solymar-norte, mate,
+  sat-afternoon, termo and pan, since "bizcochos" counts as pan).
+- **Spark Open, the rain check**, 2 runs: both `done` on Spark Open with no fallback, one
+  proposal to the host and one push each. Turns took 1.2–2.5 s.
+  - Run 1: 6 turns, 11.0 s of model time, 15,675 in / 1,625 out, $0.027. `get_forecast`, then
+    `get_sunset`, `get_last_bus` and `count_rsvps` in one turn, `propose_move` (the covered
+    salon, or Friday), then `log_acta` twice: the first summary ran past 200 characters, the
+    pydantic check refused it, and the retry was shorter.
+  - Run 2: 5 turns, 8.1 s, 12,546 / 1,285, $0.021, the salon and no other day.
+- **Spark Open, the weekly card**: `evals/card` again, 3 cards, 7.5–7.9 s, 9,306–9,822 in /
+  907–1,293 out, $0.016–0.018, 2 from the model and 1 template, every call and block valid
+  ([`evals/card/RESULTS.md`](../evals/card/RESULTS.md)). On ronda-uy, the dispatcher's own run
+  for the demo ronda `demo-ronda-card62` (its `agent_runs` trace): 4 turns, 6.1 s of model time
+  (2.1, 1.5, 1.1 and 1.3 s), 7.9 s from start to end, 10,596 in / 1,011 out, $0.018.
+- **SAM 3.1 and Muse Image** through `run_models`, on a photo of a thermos, two mates and a deck
+  of cards that Muse Image painted for the test (17.3 s, $0.01):
+  - Side by side 17.9 s, which is Muse Image's background (17.9 s).
+  - SAM "thermos" 3.6 s (1 mask) and "deck of playing cards" 3.8 s (1), but "mate gourd" 5.3 s
+    and "gourd" 3.4 s found nothing, so the flyer came out with the termo and the mazo only.
+  - Asked alone: "cup" (4.7 s) and "bowl" (3.8 s) found nothing; **"pot" (3.6 s) found both
+    mates**; "thermos" 2.6 s. That was one painted photo: try "pot" in `mate_flyer.OBJECTS` on a
+    real one.
+  - 8 SAM calls at $0.0025, 2 images at $0.01.
+- **On ronda-uy**, read-only (Cloud Run request logs, Firestore, Storage):
+  - `extract` 3 × 200 on 11-01 (11.8, 12.5 and 19.1 s, the one-call path);
+  - `read_line` 1 × 200 on 11-02 (13.9 s: Voice Transcribe and Spark 1.3 for a cuaderno line);
+  - `propose_groups` 2 × 200 on 11-02 (4.1 and 0.9 s, the solver `optimal`, no group yet);
+  - never called: `read_transcript` and `make_mate_flyer` (no `flyers/` documents or objects);
+  - not deployed: the realtime relay.
+- **The functions' `log.info` timings don't reach Cloud Logging.** The `extract … transcribe N
+  ms, fields N ms`, `make_mate_flyer …` and `weekly_card: …` lines are dropped, because nothing
+  sets Python's logging level below WARNING in `main.py`, so only warnings show. Until it does,
+  production numbers per model come from the `agent_runs` traces, which keep each turn's
+  latency and tokens, and from request latencies.
 
 ## Meta tooling for building
 
