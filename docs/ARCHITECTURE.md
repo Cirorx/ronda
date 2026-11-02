@@ -347,6 +347,21 @@ isn't set up).
     transaction) sets `opener`, closes the other questions and says "voy" for them; a no moves
     it on at once when everyone asked said no. With nobody, `ronda_setups` carries the step
     for `/admin/rondas`.
+  - Así va a ser (`functions/first_visit.py`, job `first_visit`, #70): `rondas/{id}/welcomes/
+    {newcomerUid}`: week, date, hour, newcomerName, choices [{uid, firstName}] (the members in for
+    the meeting but the newcomer), status (open | set), waiterUid?, waiterName?, sign?, setBy?,
+    setByName?, declined [uids], declinedName?, createdAt, updatedAt. The hourly job (sends
+    nothing) writes one per newcomer (`first_visit.newcomers`, which the weekly card reads too)
+    for the upcoming meeting (`handoff.meeting_of`, so a rain move counts) until it starts, once
+    per newcomer, skipping one who said "esta no" or is paused, and keeps that meeting's
+    `choices` current as the answers come in; "Sumar a esta ronda" writes it at once. The waiter nobody picked isn't stored: the phone reads it live from `rondas/{id}`
+    (`opener` for that week, else `hosts.anfitrion`). `set_welcome {rondaId, newcomerUid,
+    waiterUid, sign?}` (the anfitrión or the cola, until the meeting starts): the sign through
+    `gates.check_words`, a held one refused with `details.reason` (emoji | voseo | money |
+    public_place). `decline_welcome {rondaId, newcomerUid}` (the picked waiter): clears the
+    pick and the sign, back to `open` with `declinedName`. No push. Rules: the newcomer `get`s
+    their own; the anfitrión and the cola `get` and list the ronda's; a picked waiter `get`s
+    theirs and lists by `waiterUid`; no client writes (`rules/first_visit.test.js`).
   - The turns (`functions/rotation.py`, job `assign_hosts`): when `hosts.month` is behind the
     current month in Montevideo, the cola opens and the next active member by `joinedAt`
     closes, once per month missed; `turns` is rewritten and the acta gets one line,

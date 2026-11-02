@@ -17,6 +17,7 @@ import buddy
 import despues
 import donde_queda
 import fcm
+import first_visit
 import handoff
 import rain
 import rotation
@@ -74,6 +75,8 @@ JOBS: dict[str, Callable[[object, datetime, Context], dict]] = {
         db, now, send=context.send, app_url=context.app_url, force=context.force
     ),
     "despues_sweep": lambda db, now, context: despues.run_despues_sweep(db, now),
+    # Así va a ser (#70): newcomers' welcomes for the upcoming meeting; sends nothing.
+    "first_visit": lambda db, now, context: first_visit.run_first_visit(db, now),
     # ¿Dónde queda? (#58): the weekly photo game's turns and reveal; sends nothing.
     "donde_queda": lambda db, now, context: donde_queda.run_donde_queda(db, now),
     # ¿Alguien se suma? (#57): deletes shared plans once their time has passed; sends nothing.

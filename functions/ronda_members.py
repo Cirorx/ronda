@@ -22,12 +22,14 @@ The rules, checked in `add`:
   server never knows).
 
 Nothing here sends anything: if the week's ¿Venís? already went out, the new member answers
-from the card; an open ¿seguimos? didn't ask them.
+from the card; an open ¿seguimos? didn't ask them. Their "Así va a ser" for the upcoming meeting
+is written at once (first_visit.py), so a late joiner sees it right away.
 """
 
 from datetime import datetime
 
 import demo_users
+import first_visit
 import member_barrios
 import rsvp
 from proposals import APPROVED, unseated_person
@@ -295,6 +297,7 @@ def add(db, ronda_id: str, uid: str, now: datetime, *, move: bool = False) -> di
             transaction.update(ref, regroup(proposal, ronda_id, uid, group_entry, plus_ones))
 
     rsvp._in_transaction(db, write)
+    first_visit.welcome_ronda(db, ronda_id, ronda, now)
     return {
         "rondaId": ronda_id,
         "uid": uid,

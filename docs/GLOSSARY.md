@@ -31,6 +31,10 @@ issues, docs, code, commit messages.
 | `Cola` | cierra ("se queda al final") | The co-host who closes; asked first when the anfitrión can't, and next month's anfitrión |
 | `HostTurn` | "Este mes abre Jorge y cierra Ana" | One month's anfitrión and cola; a ronda carries this month's and the next two (`turns`). The cola opens next month and the next member closes |
 | `Handoff` | ¿Abrís vos? | Finding someone to open one meeting when the anfitrión can't: the cola, then the others coming, then the admin. Whoever says yes is that week's `opener` |
+| `Newcomer` | alguien nuevo ("viene por primera vez") | An active member who joined a ronda that already had members within `NEWCOMER_DAYS` (7); their first meeting gets "Así va a ser" |
+| `Welcome` | Así va a ser · ¿Quién espera a Nico? | One newcomer's first visit (`rondas/{id}/welcomes/{newcomerUid}`): the meeting, who waits and how to recognise them. The newcomer's card on Mi ronda; the hosts' question |
+| `Waiter` | te espera | The member who waits for a newcomer: the host's pick, else whoever opens that week (the opener, else the anfitrión). A picked waiter can say "No puedo" |
+| `Sign` | cómo reconocer a quien espera | The host's few words after the dash in "Te espera Jorge — tiene el termo verde"; passes the word gates |
 | `Attendance` | ¿Quién vino hoy? | Who came to a meeting, by [Vino] / [No vino]: tapped by the anfitrión or the cola on the meeting's roll (`AttendanceRoll`), read by the admin only |
 | `Bench` | banco | Ordered neighbours who take a seat freed by an "esta no" that week: seated nowhere, same pretext and slot, within the walk (10 blocks, 15 in Montevideo), the seat passing their needs filter, longest waiting first |
 | `BenchOffer` | "se liberó un lugar" | One freed seat offered to one person on the bench, with a deadline: [Lo tomo] [Esta vez no] |

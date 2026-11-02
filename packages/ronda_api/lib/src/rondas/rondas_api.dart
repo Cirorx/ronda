@@ -7,7 +7,9 @@ import 'package:ronda_api/src/rondas/hosts_documents.dart';
 import 'package:ronda_api/src/rondas/pilot_numbers_document.dart';
 import 'package:ronda_api/src/rondas/ronda_documents.dart';
 import 'package:ronda_api/src/rondas/seguimos_documents.dart';
+import 'package:ronda_api/src/ronda_api_exceptions.dart';
 import 'package:ronda_api/src/rondas/weekly_loop_documents.dart';
+import 'package:ronda_api/src/rondas/welcome_documents.dart';
 
 /// {@template rondas_api}
 /// A member's side of their ronda: which ronda they are in, the ronda, their
@@ -308,6 +310,84 @@ class const RondasApi({
       'rondaId': rondaId,
       'week': week,
       'answer': yes ? 'yes' : 'no',
+    });
+  }
+
+  /// The callable a host picks who waits for a newcomer with.
+  static const setWelcomeCallable = 'set_welcome';
+
+  /// The callable the waiter a host picked says "No puedo" with.
+  static const declineWelcomeCallable = 'decline_welcome';
+
+  /// Newcomer [uid]'s own welcome in ronda [rondaId]
+  /// (`rondas/{id}/welcomes/{uid}`); `null` while they have none.
+  Stream<WelcomeDocument?> watchWelcome(String rondaId, String uid) => _watch(
+    'rondas/$rondaId/welcomes/$uid',
+    (json) => WelcomeDocument.fromJson(uid, json),
+  );
+
+  /// Every welcome of ronda [rondaId], now and on every change. Its
+  /// anfitrión and cola only.
+  Stream<List<WelcomeDocument>> watchWelcomes(String rondaId) =>
+      _welcomes(firestore.collection('rondas/$rondaId/welcomes'));
+
+  /// The welcomes of ronda [rondaId] whose newcomer a host picked
+  /// [waiterUid] to wait for, now and on every change.
+  Stream<List<WelcomeDocument>> watchWelcomesFor(
+    String rondaId,
+    String waiterUid,
+  ) => _welcomes(
+    firestore
+        .collection('rondas/$rondaId/welcomes')
+        .where('waiterUid', isEqualTo: waiterUid),
+  );
+
+  Stream<List<WelcomeDocument>> _welcomes(Query<Map<String, Object?>> query) =>
+      query.snapshots().map(
+        (snapshot) => [
+          for (final doc in snapshot.docs)
+            WelcomeDocument.fromJson(doc.id, doc.data()),
+        ],
+      );
+
+  /// Picks [waiterUid] to wait for newcomer [newcomerUid] in ronda
+  /// [rondaId], with [sign], how to recognise them (`set_welcome`). The
+  /// ronda's anfitrión or cola only.
+  ///
+  /// Throws a [WelcomeHeldException] when the gates held the sign, and a
+  /// [FirebaseFunctionsException] when the call fails otherwise.
+  Future<void> setWelcome({
+    required String rondaId,
+    required String newcomerUid,
+    required String waiterUid,
+    String? sign,
+  }) async {
+    try {
+      await functions.httpsCallable(setWelcomeCallable).call<Object?>({
+        'rondaId': rondaId,
+        'newcomerUid': newcomerUid,
+        'waiterUid': waiterUid,
+        'sign': sign ?? '',
+      });
+    } on FirebaseFunctionsException catch (error) {
+      if (error.details case {'reason': final String reason}) {
+        throw WelcomeHeldException(reason);
+      }
+      rethrow;
+    }
+  }
+
+  /// "No puedo" from the member picked to wait for newcomer [newcomerUid]
+  /// in ronda [rondaId] (`decline_welcome`).
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails.
+  Future<void> declineWelcome({
+    required String rondaId,
+    required String newcomerUid,
+  }) async {
+    await functions.httpsCallable(declineWelcomeCallable).call<Object?>({
+      'rondaId': rondaId,
+      'newcomerUid': newcomerUid,
     });
   }
 

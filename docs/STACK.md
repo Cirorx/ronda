@@ -62,7 +62,7 @@ Target package map (create each when its first feature needs it, with the Very G
 | Package | Layer | Wraps / owns | First issue |
 |---|---|---|---|
 | `ronda_ui` | UI (`app_ui_package`) | Tokens, `AppTheme` light + dark, `AppSpacing`, fonts, components; labels arrive as parameters | #17 |
-| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`, `answer_bench_offer`, `answer_waitlist`, `suggest_small_plans`, `shape_small_plan`, `share_small_plan`, `withdraw_small_plan`, `join_small_plan`, `leave_small_plan`, `post_donde_queda`, `pass_donde_queda`, `guess_donde_queda`, and `read_line` and `make_postcard` through `CuadernoApi`, which has no Firestore or Storage client) | #13 |
+| `ronda_api` | Data | Firestore, Storage and the callables (`extract`, `propose_groups`, `make_mate_flyer`, `answer_rsvp`, `answer_seguimos`, `run_job`, `answer_move`, `ronda_candidates`, `add_to_ronda`, `pilot_numbers`, `ronda_setups`, `set_ronda_setup`, `record_attendance`, `answer_bench_offer`, `answer_waitlist`, `suggest_small_plans`, `shape_small_plan`, `share_small_plan`, `withdraw_small_plan`, `join_small_plan`, `leave_small_plan`, `post_donde_queda`, `pass_donde_queda`, `guess_donde_queda`, `set_welcome`, `decline_welcome`, and `read_line` and `make_postcard` through `CuadernoApi`, which has no Firestore or Storage client) | #13 |
 | `device_store` | Data | flutter_secure_storage (needs, the terms and answers held until sign-in, and whether "¿Cómo funciona?" was shown); a flags API over shared_preferences is added when a feature needs one | #18 |
 | `voice_recorder` | Data | `record`, WAV 16 kHz mono | #19 |
 | `push_client` | Data | firebase_messaging + flutter_local_notifications | #27 |
@@ -166,6 +166,7 @@ band indexes (`onboarding.slots.6.1` is Sunday afternoon).
 |---|---|---|
 | `flows/onboarding_buttons.yaml` | a reset, signed out | Mi ronda (`myRonda`), with `users/{uid}` and its `private/eligible` written |
 | `flows/onboarding_voice.yaml` | a reset, signed out, the Functions emulator with `MODEL_API_KEY` | "¿Entendimos bien?" (or "No te entendimos bien" on a silent emulator mic), with no `audio/` object left |
+| `flows/first_visit.yaml` | a reset, signed out; it runs `onboarding_buttons.yaml`, then `flows/scripts/seed_first_visit.js` adds the account to an invented ronda (Jorge opens, tomorrow 16:00) as a newcomer | "Así va a ser" with "Te espera Jorge." (`firstVisit.waiter`) |
 | `flows/sign_in_phone.yaml` | a reset, signed out (any development build) | "Te escuchamos" after phone sign-in through the voice door; the code comes from the Auth emulator's `verificationCodes` endpoint (`flows/scripts/emulator_sms_code.js`) |
 
 Each flow runs the development flavor against the local emulators, on an Android emulator or a

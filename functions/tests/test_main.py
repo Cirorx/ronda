@@ -897,6 +897,8 @@ class TestWeeklyLoopCodeJobs:
             main.answer_handoff,
             main.buddy_options,
             main.set_buddy,
+            main.set_welcome,
+            main.decline_welcome,
         ],
     )
     def test_each_needs_a_signed_in_caller(self, function, loop_db):
@@ -933,6 +935,32 @@ class TestWeeklyLoopCodeJobs:
         with pytest.raises(https_fn.HttpsError) as excinfo:
             call(main.answer_handoff, self.ANA, answer)
         assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED
+
+    def test_a_host_picks_who_waits_and_the_waiter_can_say_no(self, loop_db):
+        import first_visit
+        from tests.organiser_fakes import at
+
+        loop_db.documents["rondas/ronda-rain/members/demo-105"] = {
+            "brings": [],
+            "state": "active",
+            "joinedAt": at(2, 12),
+        }
+        loop_db.documents["users/demo-105"] = {"firstName": "Nico"}
+        first_visit.run_first_visit(loop_db, at(4, 10))
+        data = {"rondaId": "ronda-rain", "newcomerUid": "demo-105", "waiterUid": "demo-102"}
+
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.set_welcome, self.MIRTA, {**data, "sign": "tienes el termo"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.FAILED_PRECONDITION
+        assert excinfo.value.details == {"reason": "voseo"}
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.set_welcome, self.ANA, data)
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED
+        assert excinfo.value.details is None
+
+        assert call(main.set_welcome, self.MIRTA, data)["status"] == "set"
+        no = {"rondaId": "ronda-rain", "newcomerUid": "demo-105"}
+        assert call(main.decline_welcome, self.JORGE, no) == {"status": "open"}
 
     def test_a_member_chooses_a_buddy(self, loop_db):
         data = {"rondaId": "ronda-rain", "buddyUid": "demo-101"}

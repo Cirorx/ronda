@@ -303,6 +303,19 @@ service cloud.firestore {
       allow get: if isOwner(uid) && isMemberOf(rondaId);
     }
 
+    // Así va a ser (#70, functions/first_visit.py): one welcome per newcomer, keyed by their uid.
+    // The newcomer gets only their own; the ronda's anfitrión and cola get and list the ronda's,
+    // since they choose who waits; the member a host picked gets theirs, and finds it with a
+    // query on `waiterUid`. Nobody else reads one, and no client writes any: the job and the
+    // set_welcome and decline_welcome callables do, with the admin SDK.
+    match /rondas/{rondaId}/welcomes/{uid} {
+      allow get: if isMemberOf(rondaId) && (isOwner(uid)
+          || isRondaHost(rondaId)
+          || resource.data.get('waiterUid', '') == request.auth.uid);
+      allow list: if isMemberOf(rondaId) && (isRondaHost(rondaId)
+          || resource.data.waiterUid == request.auth.uid);
+    }
+
     // A buddy's card ("Graciela no vino el jueves…"), read by that buddy only, who closes it
     // ([Le escribo] or [Ahora no]) and changes nothing else. Who was prompted
     // (rondas/{id}/buddy_prompts/{week}) stays closed, and the choice itself lives on the

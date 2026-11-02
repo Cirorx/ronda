@@ -85,6 +85,8 @@ void main() {
           uid: any(named: 'uid'),
         ),
       ).thenAnswer((_) => Stream.value(const DondeQuedaWeek()));
+      when(() => rondaRepository.watchFirstVisit(any()))
+          .thenAnswer((_) => Stream.value(null));
       when(() => rondaRepository.watchBuddyAsk(any()))
           .thenAnswer((_) => Stream.value(null));
       when(() => rondaRepository.buddyOptions(any())).thenAnswer(

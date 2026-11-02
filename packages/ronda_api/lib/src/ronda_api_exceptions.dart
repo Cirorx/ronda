@@ -116,6 +116,23 @@ class const SharedPlanHeldException(
   String toString() => 'SharedPlanHeldException($reason)';
 }
 
+/// {@template welcome_held_exception}
+/// The recognition line a host wrote for a newcomer did not pass the
+/// organiser's word gates: [reason] names the gate, in the words of
+/// `functions/first_visit.py`: `emoji`, `voseo`, `money` or
+/// `public_place`. Nothing was saved.
+/// {@endtemplate}
+class const WelcomeHeldException(
+  /// The gate that held it.
+  final String reason,
+) implements Exception {
+  /// {@macro welcome_held_exception}
+  this;
+
+  @override
+  String toString() => 'WelcomeHeldException($reason)';
+}
+
 /// {@template shared_plan_gone_exception}
 /// A plan someone tried to join is over or was withdrawn.
 /// {@endtemplate}

@@ -660,6 +660,137 @@ class RondaRepository {
     refused: HostsFailureReason.passed,
   );
 
+  /// What [uid]'s ronda asks of them about newcomers, now and on every
+  /// change: their own "Así va a ser" when they are new, the ronda's
+  /// newcomers while they are its anfitrión or cola, and the ones a host
+  /// picked them to wait for; `null` while they are in no ronda. The waiter
+  /// nobody picked is read live from the ronda: that week's opener, else the
+  /// anfitrión. The stream errors with a [WelcomeFailure].
+  Stream<FirstVisit?> watchFirstVisit(String uid) => _myRondaId(uid)
+      .switchMap((rondaId) {
+        if (rondaId == null) return Stream<FirstVisit?>.value(null);
+        // Whether they host decides whether the ronda's list is read at all:
+        // the rules let only its anfitrión and cola list it.
+        final hosted = _rondasApi
+            .watchRonda(rondaId)
+            .map((r) => uid == r?.anfitrionUid || uid == r?.colaUid)
+            .distinct()
+            .switchMap(
+              (hosts) => hosts
+                  ? _rondasApi.watchWelcomes(rondaId)
+                  : Stream.value(const <WelcomeDocument>[]),
+            );
+        return Rx.combineLatest4(
+          _rondasApi.watchRonda(rondaId),
+          _rondasApi.watchWelcome(rondaId, uid),
+          hosted,
+          _rondasApi.watchWelcomesFor(rondaId, uid),
+          (ronda, mine, toChoose, waitingFor) => ronda == null
+              ? null
+              : FirstVisit(
+                  rondaId: rondaId,
+                  mine: mine == null ? null : _welcome(ronda, mine),
+                  toChoose: [
+                    for (final welcome in toChoose)
+                      if (welcome.newcomerUid != uid) _welcome(ronda, welcome),
+                  ],
+                  waitingFor: [
+                    for (final welcome in waitingFor)
+                      if (welcome.status == 'set') _welcome(ronda, welcome),
+                  ],
+                ),
+        );
+      })
+      .handleError(
+        (Object error) =>
+            throw const WelcomeFailure(WelcomeFailureReason.other),
+        test: (error) => error is Exception,
+      );
+
+  static Welcome _welcome(RondaDocument ronda, WelcomeDocument welcome) {
+    final picked = welcome.status == 'set' && welcome.waiterUid != null;
+    final opener = ronda.openerWeek == welcome.week
+        ? _hostOf(ronda.openerUid, ronda.openerName)
+        : null;
+    final waiter = picked
+        ? Host(uid: welcome.waiterUid!, firstName: welcome.waiterName ?? '')
+        : opener ?? _hostOf(ronda.anfitrionUid, ronda.anfitrionName);
+    return Welcome(
+      rondaId: ronda.id,
+      newcomerUid: welcome.newcomerUid,
+      newcomerName: welcome.newcomerName,
+      week: welcome.week,
+      date: DateTime.tryParse(welcome.date) ?? DateTime(0),
+      choices: [
+        for (final choice in welcome.choices)
+          SetupMember(uid: choice.uid, firstName: choice.firstName),
+      ],
+      hour: welcome.hour,
+      placeName: ronda.placeName,
+      placeLandmark: ronda.placeLandmark,
+      waiter: waiter?.uid == welcome.newcomerUid ? null : waiter,
+      picked: picked,
+      sign: picked ? welcome.sign : null,
+      setBy: _hostOf(welcome.setByUid, welcome.setByName),
+      declinedName: picked ? null : welcome.declinedName,
+    );
+  }
+
+  /// Picks [waiterUid] to wait for newcomer [newcomerUid] in ronda
+  /// [rondaId], with [sign], how to recognise them. The ronda's anfitrión
+  /// or cola, until the meeting starts.
+  ///
+  /// Throws a [WelcomeFailure]: the gate that held [sign] (emoji, voseo,
+  /// money, notPublic), [WelcomeFailureReason.passed] once the meeting
+  /// started.
+  Future<void> setWelcome({
+    required String rondaId,
+    required String newcomerUid,
+    required String waiterUid,
+    String? sign,
+  }) => _welcomeGuard(
+    () => _rondasApi.setWelcome(
+      rondaId: rondaId,
+      newcomerUid: newcomerUid,
+      waiterUid: waiterUid,
+      sign: sign,
+    ),
+  );
+
+  /// "No puedo" from the member a host picked to wait for newcomer
+  /// [newcomerUid] in ronda [rondaId]: the choice goes back to the hosts.
+  ///
+  /// Throws a [WelcomeFailure]: [WelcomeFailureReason.passed] once the
+  /// meeting started or they are no longer the one picked.
+  Future<void> declineWelcome({
+    required String rondaId,
+    required String newcomerUid,
+  }) => _welcomeGuard(
+    () => _rondasApi.declineWelcome(rondaId: rondaId, newcomerUid: newcomerUid),
+  );
+
+  Future<void> _welcomeGuard(Future<void> Function() call) async {
+    try {
+      await call();
+    } on WelcomeHeldException catch (held) {
+      throw WelcomeFailure(switch (held.reason) {
+        'emoji' => WelcomeFailureReason.emoji,
+        'voseo' => WelcomeFailureReason.voseo,
+        'money' => WelcomeFailureReason.money,
+        'public_place' => WelcomeFailureReason.notPublic,
+        _ => WelcomeFailureReason.other,
+      });
+    } on FirebaseException catch (error) {
+      throw WelcomeFailure(switch (error.code) {
+        'failed-precondition' ||
+        'permission-denied' => WelcomeFailureReason.passed,
+        _ => WelcomeFailureReason.other,
+      });
+    } on Exception {
+      throw const WelcomeFailure(WelcomeFailureReason.other);
+    }
+  }
+
   /// [uid]'s open buddy card in their ronda, now and on every change;
   /// `null` while there is none. The stream errors with a [HostsFailure].
   Stream<BuddyAsk?> watchBuddyAsk(String uid) => _myRondaId(uid)

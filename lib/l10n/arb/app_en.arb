@@ -4658,5 +4658,302 @@
                 "type": "int"
             }
         }
+    },
+    "firstVisitTitle": "What it will be like",
+    "@firstVisitTitle": {
+        "description": "Así va a ser: the newcomer's card before their first meeting"
+    },
+    "firstVisitWaiter": "{name} will be waiting for you.",
+    "@firstVisitWaiter": {
+        "description": "Así va a ser: who waits, with no recognition line",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "firstVisitWaiterSign": "{name} will be waiting for you — {sign}.",
+    "@firstVisitWaiterSign": {
+        "description": "Así va a ser: who waits and how to recognise them, in the host's words",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "sign": {
+                "type": "String"
+            }
+        }
+    },
+    "firstVisitPlace": "It's at {place}.",
+    "@firstVisitPlace": {
+        "description": "Así va a ser: the public place",
+        "placeholders": {
+            "place": {
+                "type": "String"
+            }
+        }
+    },
+    "firstVisitLandmark": "To find it: {landmark}.",
+    "@firstVisitLandmark": {
+        "description": "Así va a ser: the place's landmark",
+        "placeholders": {
+            "landmark": {
+                "type": "String"
+            }
+        }
+    },
+    "firstVisitNoPlace": "The place is still to be confirmed. It will show here.",
+    "@firstVisitNoPlace": {
+        "description": "Así va a ser: no place yet"
+    },
+    "firstVisitFirstMinutesTitle": "The first five minutes",
+    "@firstVisitFirstMinutesTitle": {
+        "description": "Así va a ser: heading"
+    },
+    "firstVisitFirstMinutesWaiter": "Look for {name}, who introduces you to the others. You don't need to bring or know anything.",
+    "@firstVisitFirstMinutesWaiter": {
+        "description": "Así va a ser: the first five minutes, with someone waiting",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "firstVisitFirstMinutes": "Say hello and your name. You don't need to bring or know anything.",
+    "@firstVisitFirstMinutes": {
+        "description": "Así va a ser: the first five minutes, with nobody named to wait"
+    },
+    "firstVisitLeave": "Want to leave early? Say «me tengo que ir» (I have to go) and that's it. Nobody minds.",
+    "@firstVisitLeave": {
+        "description": "Así va a ser: leaving early"
+    },
+    "welcomeAskTitle": "Someone new is coming",
+    "@welcomeAskTitle": {
+        "description": "Mi ronda, the hosts: a newcomer's first meeting"
+    },
+    "welcomeAskQuestion": "{name} is coming for the first time on {day}. Who will wait for {name} at {place} at {time}?",
+    "@welcomeAskQuestion": {
+        "description": "Mi ronda, the hosts: who waits for the newcomer, ten minutes before the hour",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "day": {
+                "type": "String"
+            },
+            "place": {
+                "type": "String"
+            },
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "welcomeAskQuestionPlace": "{name} is coming for the first time on {day}. Who will wait for {name} at {place}?",
+    "@welcomeAskQuestionPlace": {
+        "description": "Mi ronda, the hosts: who waits, the ronda has no hour yet",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "day": {
+                "type": "String"
+            },
+            "place": {
+                "type": "String"
+            }
+        }
+    },
+    "welcomeAskQuestionTime": "{name} is coming for the first time on {day}. Who will wait for {name} at {time}?",
+    "@welcomeAskQuestionTime": {
+        "description": "Mi ronda, the hosts: who waits, the ronda has no place yet",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "day": {
+                "type": "String"
+            },
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "welcomeAskQuestionBare": "{name} is coming for the first time on {day}. Who will wait for {name}?",
+    "@welcomeAskQuestionBare": {
+        "description": "Mi ronda, the hosts: who waits, no place or hour yet",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "welcomeAskDefault": "If nobody chooses, {name} waits: whoever opens.",
+    "@welcomeAskDefault": {
+        "description": "Mi ronda, the hosts: the waiter while no host picked",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "welcomeAskDefaultYou": "If nobody chooses, you wait: you open.",
+    "@welcomeAskDefaultYou": {
+        "description": "Mi ronda, the hosts: the reader opens, so waits by default"
+    },
+    "welcomeAskNobody": "Nobody opens yet, so nobody waits.",
+    "@welcomeAskNobody": {
+        "description": "Mi ronda, the hosts: no anfitrión to wait by default"
+    },
+    "welcomeAskDeclined": "{name} said they can't.",
+    "@welcomeAskDeclined": {
+        "description": "Mi ronda, the hosts: the waiter picked said No puedo",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "welcomeAskPicked": "{name} waits.",
+    "@welcomeAskPicked": {
+        "description": "Mi ronda, the hosts: who a host picked",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "welcomeAskPickedYou": "You wait.",
+    "@welcomeAskPickedYou": {
+        "description": "Mi ronda, the hosts: the reader was picked"
+    },
+    "welcomeAskSign": "{name} sees: «{sign}»",
+    "@welcomeAskSign": {
+        "description": "Mi ronda, the hosts: the recognition line the newcomer sees",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "sign": {
+                "type": "String"
+            }
+        }
+    },
+    "welcomeAskChoose": "Choose who waits",
+    "@welcomeAskChoose": {
+        "description": "Mi ronda, the hosts: opens the sheet"
+    },
+    "welcomeAskChange": "Change",
+    "@welcomeAskChange": {
+        "description": "Mi ronda, the hosts: changes the waiter or the line"
+    },
+    "welcomeSheetTitle": "Who waits for {name}?",
+    "@welcomeSheetTitle": {
+        "description": "Who-waits sheet: title",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "welcomeSheetMyself": "I'll wait",
+    "@welcomeSheetMyself": {
+        "description": "Who-waits sheet: the host waits"
+    },
+    "welcomeSheetSign": "How to recognise whoever waits",
+    "@welcomeSheetSign": {
+        "description": "Who-waits sheet: the recognition line's label"
+    },
+    "welcomeSheetSignHint": "has the green termo",
+    "@welcomeSheetSignHint": {
+        "description": "Who-waits sheet: the recognition line's example, in lower case: it follows a dash"
+    },
+    "welcomeSheetPreview": "This is what {name} sees:",
+    "@welcomeSheetPreview": {
+        "description": "Who-waits sheet: above the preview of the newcomer's card",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "welcomeSheetSave": "Save",
+    "@welcomeSheetSave": {
+        "description": "Who-waits sheet: save"
+    },
+    "welcomeSheetSaving": "Saving…",
+    "@welcomeSheetSaving": {
+        "description": "Who-waits sheet: saving"
+    },
+    "welcomeHeldEmoji": "Not saved: it has an emoji. Write it without one.",
+    "@welcomeHeldEmoji": {
+        "description": "Who-waits sheet: the gates held the line, emoji"
+    },
+    "welcomeHeldVoseo": "Not saved: Ronda writes with vos («tenés», not «tienes»).",
+    "@welcomeHeldVoseo": {
+        "description": "Who-waits sheet: the gates held the line, voseo"
+    },
+    "welcomeHeldMoney": "Not saved: leave money out of it.",
+    "@welcomeHeldMoney": {
+        "description": "Who-waits sheet: the gates held the line, money"
+    },
+    "welcomeHeldNotPublic": "Not saved: it looks like an address or a home. Say how to recognise whoever waits, not where they live.",
+    "@welcomeHeldNotPublic": {
+        "description": "Who-waits sheet: the gates held the line, an address"
+    },
+    "welcomePassed": "The meeting has started: it can't change any more.",
+    "@welcomePassed": {
+        "description": "Who-waits: the meeting started"
+    },
+    "welcomeSaveError": "Not saved. Try again.",
+    "@welcomeSaveError": {
+        "description": "Who-waits: any other failure"
+    },
+    "waiterAskTitle": "You're waiting for someone new",
+    "@waiterAskTitle": {
+        "description": "Mi ronda, the waiter a host picked: heading"
+    },
+    "waiterAskBody": "{host} picked you to wait for {name}, who's coming for the first time on {day}.",
+    "@waiterAskBody": {
+        "description": "Mi ronda, the waiter a host picked",
+        "placeholders": {
+            "host": {
+                "type": "String"
+            },
+            "name": {
+                "type": "String"
+            },
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "waiterAskAt": "Get there at {time}, ten minutes early.",
+    "@waiterAskAt": {
+        "description": "Mi ronda, the waiter: when, ten minutes before the hour",
+        "placeholders": {
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "waiterAskSign": "{name} will recognise you by: {sign}.",
+    "@waiterAskSign": {
+        "description": "Mi ronda, the waiter: the recognition line",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "sign": {
+                "type": "String"
+            }
+        }
+    },
+    "waiterAskNo": "I can't",
+    "@waiterAskNo": {
+        "description": "Mi ronda, the waiter: hands the choice back to the hosts"
     }
 }

@@ -42,11 +42,12 @@ Where things live (docs/ARCHITECTURE.md § Data model):
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+import first_visit
 import rain
 import rsvp
 from organiser import gates, moves, outbox, text
@@ -74,8 +75,8 @@ TEMPLATE = "template"
 DAYS_AHEAD = 3
 """The card is composed from this many days before the meeting, before the RSVP push."""
 
-NEWCOMER_DAYS = 7
-"""A member who joined within this many days is new to the ronda."""
+NEWCOMER_DAYS = first_visit.NEWCOMER_DAYS
+"""A member who joined within this many days is new to the ronda (first_visit.newcomers)."""
 
 RAIN, HOST, NEWCOMER, DESPUES, BENCH, RSVP = "rain", "host", "newcomer", "despues", "bench", "rsvp"
 KINDS = (RAIN, HOST, NEWCOMER, DESPUES, BENCH)
@@ -467,18 +468,8 @@ def _task(meeting: Meeting, facts: Facts, now: datetime) -> str:
 def _facts(db, meeting: Meeting, now: datetime, *, host_name: str) -> Facts:
     """This week's facts: who opens, who is new, the después (never its address), the bench."""
     members = rsvp.counted(rsvp._members(db, meeting.ronda_id))
-    since = now - timedelta(days=NEWCOMER_DAYS)
-    new = [
-        uid
-        for uid, m in members.items()
-        if m.get("state", "active") == "active"
-        and isinstance(m.get("joinedAt"), datetime)
-        and m["joinedAt"] >= since
-    ]
-    newcomer = ""
-    if new and len(members) > len(new):
-        first = min(new, key=lambda u: (members[u]["joinedAt"], u))
-        newcomer = rsvp._first_names(db, [first])[first]
+    new = first_visit.newcomers(members, now)
+    newcomer = rsvp._first_names(db, new[:1])[new[0]] if new else ""
     despues = _read(db, f"rondas/{meeting.ronda_id}/despues/{meeting.week}")
     words = ""
     if despues.get("status") == "set" and despues.get("what"):

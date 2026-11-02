@@ -470,12 +470,29 @@ Ronda.
   nobody learns who joined but the author.
 
 ## First visit
-- **Así va a ser** (two days before): "Te espera Jorge — tiene el termo verde", how to get there
-  by landmarks, "Los primeros cinco minutos", and "¿Te querés ir antes? Decí «me tengo que ir»
-  y listo. Nadie se ofende."
-- **A named member waits:** the host is asked "Nico viene por primera vez el jueves. ¿Quién lo
-  espera en el quiosco a las 15:50?" and picks "Lo espero yo" or another member, with how to be
-  recognised ("Tengo el termo verde"); the screen previews what Nico will see.
+- **Así va a ser** (#70; a member who joined a ronda that already had members within the last
+  7 days, `NEWCOMER_DAYS`; from two days before their first meeting, or at once when they join
+  later): "Te espera Jorge — tiene el termo verde.", "Es en frente al quiosco." and "Para
+  encontrarlo: al lado de la parada." (the place's landmark), "Los primeros cinco minutos" —
+  "Buscás a Jorge, que te presenta al resto. No hace falta traer nada ni saber nada." — and
+  "¿Te querés ir antes? Decí «me tengo que ir» y listo. Nadie se ofende." No new push: the
+  newcomer gets the card and the RSVP push they already get.
+- **A named member waits:** the ronda's anfitrión and cola see "Viene alguien nuevo" — "Nico
+  viene por primera vez el jueves. ¿Quién espera a Nico en frente al quiosco a las 15:50?"
+  (ten minutes before the hour, like opening) — and, while nobody chose, "Si nadie elige,
+  espera Mirta: quien abre." (whoever opens that week: the opener after a handoff, else the
+  anfitrión). [Elegir quién espera] opens "¿Quién espera a Nico?": [Espero yo] or another
+  member in for the meeting, "Cómo reconocer a quien espera" ("tiene el termo verde", the words
+  after the dash), and "Esto es lo que ve Nico:" with the newcomer's card drawn as it is typed.
+  The line passes the organiser's word gates; a held one says why ("No se guardó: Ronda escribe
+  con vos («tenés», no «tienes»)."). The pick and the line can change until the meeting
+  ([Cambiar]), and the newcomer's card follows live. The copy names nobody's gender: "¿Quién
+  espera a Nico?", "Espero yo" (Ronda keeps no gender).
+- **"No puedo":** the member a host picked sees "Esperás a alguien nuevo" — "Mirta te eligió
+  para esperar a Nico, que viene por primera vez el jueves." "Llegá a las 15:50, diez minutos
+  antes." "Nico te va a reconocer así: tiene el termo verde." [No puedo] clears the pick and
+  its line, whoever opens waits again, and the hosts see "Jorge dijo que no puede." with the
+  question open again.
 - **Spot photo** the day before, 18:00, confirmed members only: "Es en este banco"; SAM 3.1
   outlines the bench; "La gente que pasaba sale borrosa. Esta foto la ven solo los que van."
 - **"No los encuentro"** → the host gets "Nico llegó y no los encuentra" [Voy a buscarlo] [Ya

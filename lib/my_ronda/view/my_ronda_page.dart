@@ -9,6 +9,7 @@ import 'package:ronda/app/app.dart';
 import 'package:ronda/buddy/buddy.dart';
 import 'package:ronda/cuaderno/cuaderno.dart';
 import 'package:ronda/donde_queda/donde_queda.dart';
+import 'package:ronda/first_visit/first_visit.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_data/my_data.dart';
 import 'package:ronda/my_ronda/cubit/bench_offer_cubit.dart';
@@ -184,6 +185,9 @@ class const MyRondaView({required final String uid, super.key})
           },
         ),
       ),
+      // Así va a ser and who waits for a newcomer, under the week's card.
+      if (state.status == ThisWeekStatus.ready && !state.week!.hasLeft)
+        FirstVisitSection(key: ValueKey(state.week!.rondaId), uid: uid),
       // Algo chico esta semana: under the week's card, once a week.
       if (state.status == ThisWeekStatus.ready && !state.week!.hasLeft)
         // ¿Alguien se suma?: the others' plans, then the member's own with

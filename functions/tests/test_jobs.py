@@ -87,5 +87,5 @@ def test_runs_the_attendance_ask_by_name():
 def test_the_weekly_loops_code_jobs_are_registered_and_run(monkeypatch):
     db = FakeFirestore(documents())
 
-    for name in ("assign_hosts", "handoff", "prompt_buddy", "despues_sweep"):
+    for name in ("assign_hosts", "handoff", "prompt_buddy", "despues_sweep", "first_visit"):
         assert isinstance(jobs.run(name, db, THU_19, CONTEXT), dict)

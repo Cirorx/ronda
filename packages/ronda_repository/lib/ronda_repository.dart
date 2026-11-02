@@ -10,3 +10,4 @@ export 'src/models/models.dart';
 export 'src/proposals_failure.dart';
 export 'src/ronda_repository.dart';
 export 'src/rsvp_failure.dart';
+export 'src/welcome_failure.dart';

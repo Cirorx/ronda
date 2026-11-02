@@ -803,6 +803,45 @@ def answer_handoff(req: https_fn.CallableRequest) -> dict:
     )
 
 
+def _welcome_call(req: https_fn.CallableRequest, run):
+    """Runs `run()` for a signed-in caller; a refusal keeps its code, and a recognition line
+    the gates held says which in `details.reason` (emoji, voseo, money, public_place)."""
+    import first_visit
+
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, "sign in first")
+    try:
+        return run()
+    except first_visit.WelcomeError as e:
+        details = {"reason": e.reason} if e.reason else None
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(e.code), str(e), details) from e
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def set_welcome(req: https_fn.CallableRequest) -> dict:
+    """A host picks who waits for a newcomer, `{rondaId, newcomerUid, waiterUid, sign?}`
+    (first_visit.py). The ronda's anfitrión or cola only."""
+    import first_visit
+
+    return _welcome_call(
+        req, lambda: first_visit.set_waiter(_firestore(), req.auth.uid, req.data, _now())
+    )
+
+
+@https_fn.on_call(
+    region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
+)
+def decline_welcome(req: https_fn.CallableRequest) -> dict:
+    """The member a host picked to wait says "No puedo", `{rondaId, newcomerUid}`."""
+    import first_visit
+
+    return _welcome_call(
+        req, lambda: first_visit.decline(_firestore(), req.auth.uid, req.data, _now())
+    )
+
+
 @https_fn.on_call(
     region=REGION, max_instances=2, memory=options.MemoryOption.MB_512, invoker="public"
 )

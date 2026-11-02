@@ -1,0 +1,36 @@
+# First visit, from the flyer to "Te espera Jorge" (#70): a tear-off flyer's QR opens "Cerca de
+# este volante", whose [Quiero sumarme] lands on the welcome doors; from there the neighbour signs
+# up by buttons (flows/onboarding_buttons.yaml, which ends on Mi ronda), the admin adds them to a
+# ronda that already meets (seeded below, as "Sumar a esta ronda" leaves it), and Mi ronda shows
+# "Así va a ser" with who waits for them.
+#
+# A phone can't scan a paper QR in a flow, so it starts where the scan leads: the welcome doors.
+# Needs what onboarding_buttons.yaml needs (the development flavor with
+# --dart-define=EMULATOR_GOOGLE_CREDENTIAL=true, the local emulators, a reset before every run):
+# docs/STACK.md § End-to-end flows (Maestro). flows/scripts/seed_first_visit.js writes the
+# invented ronda (meeting tomorrow at 16:00, Jorge opens) and the newcomer's welcome through the
+# Firestore emulator; nobody picked a waiter, so whoever opens waits, read live from the ronda.
+#
+# Every target is a Semantics(identifier:), never visible text; the last step checks the words.
+appId: com.ciroapps.ronda.dev
+name: First visit
+tags:
+  - first-visit
+---
+- runFlow: onboarding_buttons.yaml
+
+# The admin adds the new neighbour to a ronda that already meets; the welcome is written with it.
+- runScript: scripts/seed_first_visit.js
+
+# Mi ronda follows the ronda live: the week's card, then "Así va a ser" under it.
+- extendedWaitUntil:
+    visible:
+      id: firstVisit
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: firstVisit.waiter
+    direction: DOWN
+- assertVisible:
+    id: firstVisit.waiter
+    text: "Te espera Jorge."
