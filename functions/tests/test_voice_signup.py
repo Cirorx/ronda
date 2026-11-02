@@ -296,3 +296,45 @@ class TestReadVoiceNote:
         with pytest.raises(FileNotFoundError):
             self.read(blob)
         assert blob.deleted
+
+
+class TestReadTranscript:
+    def test_reads_the_fields_from_words_heard_live(self):
+        client, calls = spark_returning(GRACIELA)
+
+        fields = v.read_transcript(
+            uid=UID, text="  Hola,  soy\nGraciela ", user=USER, client=client
+        )
+
+        assert fields["firstName"] == "Graciela"
+        assert fields["barrio"] == "solymar-norte"
+        assert calls[0]["messages"][1]["content"] == "Hola, soy Graciela"
+
+    def test_cuts_a_transcript_longer_than_the_limit(self):
+        client, calls = spark_returning(GRACIELA)
+
+        v.read_transcript(uid=UID, text="a" * 3000, user=USER, client=client)
+
+        assert len(calls[0]["messages"][1]["content"]) == v.MAX_TRANSCRIPT_CHARS
+
+    def test_refuses_a_caller_who_has_not_accepted_the_terms(self):
+        client, calls = spark_returning(GRACIELA)
+
+        for user in (None, {}, {"terms": None}):
+            with pytest.raises(v.TermsMissing):
+                v.read_transcript(uid=UID, text="Hola", user=user, client=client)
+        assert calls == []
+
+    @pytest.mark.parametrize("text", [None, "", "   \n", 5, ["Hola"]])
+    def test_nothing_heard_is_a_bad_note(self, text):
+        client, calls = spark_returning(GRACIELA)
+
+        with pytest.raises(v.BadVoiceNote):
+            v.read_transcript(uid=UID, text=text, user=USER, client=client)
+        assert calls == []
+
+    def test_a_failing_model_is_unavailable(self):
+        client, _ = spark_returning(error=RuntimeError("down"))
+
+        with pytest.raises(v.ModelUnavailable):
+            v.read_transcript(uid=UID, text="Hola", user=USER, client=client)

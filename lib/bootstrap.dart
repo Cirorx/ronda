@@ -22,6 +22,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:flyer_repository/flyer_repository.dart';
 import 'package:link_opener/link_opener.dart';
+import 'package:live_transcript/live_transcript.dart';
 import 'package:needs_repository/needs_repository.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:organiser_repository/organiser_repository.dart';
@@ -85,6 +86,12 @@ class const FirebaseEmulators({
 /// design: browsers receive it to subscribe. Empty until the owner creates
 /// it in the console; without it web uses Firebase's default key, if any.
 const fcmVapidKey = String.fromEnvironment('FCM_VAPID_KEY');
+
+/// The live transcription relay (`relay/`, `docs/MODELS.md` § Realtime):
+/// `--dart-define=LIVE_TRANSCRIPT_URL=wss://…/v1/live`. Empty, the default,
+/// means no live words: every voice note takes the upload path as before.
+/// It is a URL, not a key; the relay holds the Meta key.
+const liveTranscriptUrl = String.fromEnvironment('LIVE_TRANSCRIPT_URL');
 
 const _contactEmailDefine = String.fromEnvironment('RONDA_CONTACT_EMAIL');
 
@@ -269,6 +276,13 @@ Future<void> bootstrap(
   final rondasApi = RondasApi(firestore: firestore, functions: functions);
   final organiserApi = OrganiserApi(firestore: firestore, functions: functions);
   final voiceRecorder = VoiceRecorder();
+  final liveTranscript = liveTranscriptUrl.isEmpty
+      ? null
+      : LiveTranscriptClient(
+          url: Uri.parse(liveTranscriptUrl),
+          idToken: () =>
+              firebaseAuth.currentUser?.getIdToken() ?? Future.value(),
+        );
   // ML Kit is built on the first detection, which never happens on web.
   final faceBlur = FaceBlur();
   final flyersApi = FlyersApi(storage: storage, functions: functions);
@@ -363,6 +377,7 @@ Future<void> bootstrap(
   final onboardingRepository = OnboardingRepository(
     voiceRecorder: voiceRecorder,
     rondaApi: rondaApi,
+    liveTranscript: liveTranscript,
   );
   final cuadernoRepository = CuadernoRepository(
     deviceStore: deviceStore,
@@ -370,6 +385,7 @@ Future<void> bootstrap(
     rondaApi: rondaApi,
     cuadernoApi: cuadernoApi,
     shareSheet: shareSheet,
+    liveTranscript: liveTranscript,
   );
   final organiserRepository = OrganiserRepository(organiserApi: organiserApi);
   final smallPlanRepository = SmallPlanRepository(
@@ -379,6 +395,7 @@ Future<void> bootstrap(
     smallPlansApi: smallPlansApi,
     sharedPlansApi: sharedPlansApi,
     calendarClient: calendarClient,
+    liveTranscript: liveTranscript,
   );
   final contactRepository = ContactRepository(
     linkOpener: linkOpener,

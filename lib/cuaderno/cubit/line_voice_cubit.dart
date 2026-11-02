@@ -33,6 +33,7 @@ class LineVoiceCubit extends Cubit<LineVoiceState> {
   final Stream<void> Function() _ticks;
   StreamSubscription<void>? _tick;
   StreamSubscription<double>? _levels;
+  StreamSubscription<String>? _words;
 
   static Stream<void> _everySecond() =>
       Stream<void>.periodic(const Duration(seconds: 1));
@@ -42,7 +43,7 @@ class LineVoiceCubit extends Cubit<LineVoiceState> {
     await _stopListening();
     emit(const LineVoiceState(status: LineVoiceStatus.starting));
     try {
-      await _cuadernoRepository.startVoiceNote();
+      await _cuadernoRepository.startVoiceNote(_uid);
     } on VoiceLineFailure catch (failure) {
       return _fail(failure);
     } on Exception {
@@ -59,6 +60,17 @@ class LineVoiceCubit extends Cubit<LineVoiceState> {
       // A level that can't be read is a bar that isn't drawn.
       onError: (Object _) {},
     );
+    _words = _cuadernoRepository.liveWords().listen(
+      _onWords,
+      // Live words are a bonus: without them the note is read at the end.
+      onError: (Object _) {},
+    );
+  }
+
+  void _onWords(String words) {
+    if (state.status == LineVoiceStatus.recording) {
+      emit(state.copyWith(words: words));
+    }
   }
 
   void _fail(VoiceLineFailure failure) {
@@ -122,8 +134,10 @@ class LineVoiceCubit extends Cubit<LineVoiceState> {
   Future<void> _stopListening() async {
     await _tick?.cancel();
     await _levels?.cancel();
+    await _words?.cancel();
     _tick = null;
     _levels = null;
+    _words = null;
   }
 
   /// Throws away a note still recording.

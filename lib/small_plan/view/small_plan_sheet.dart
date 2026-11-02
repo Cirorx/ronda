@@ -4,6 +4,7 @@ import 'package:error_reporter/error_reporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/view/my_ronda_page.dart';
+import 'package:ronda/onboarding/widgets/live_words.dart';
 import 'package:ronda/onboarding/widgets/voice_waveform.dart';
 import 'package:ronda/small_plan/cubit/small_plan_choose_cubit.dart';
 import 'package:ronda/small_plan/models/models.dart';
@@ -386,6 +387,7 @@ class const _Recording() extends StatelessWidget {
           heard: state.heard,
           length: SmallPlanChooseCubit.waveformLength,
         ),
+        if (state.words.isNotEmpty) LiveWords(words: state.words),
         SpringBuilder(
           value: state.elapsed.inSeconds / SmallPlanChooseCubit.limit.inSeconds,
           builder: (context, value, _) =>

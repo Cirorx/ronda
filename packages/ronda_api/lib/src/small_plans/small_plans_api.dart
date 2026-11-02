@@ -53,19 +53,28 @@ class const SmallPlansApi({
     };
   }
 
-  /// Shapes the words in [text], or in the voice note at [path], into a plan.
+  /// Shapes the words in [text] (typed), in [transcript] (what Voice
+  /// Transcribe heard live) or in the voice note at [path] into a plan.
   /// Pass one of them. The callable deletes the note before it answers.
   ///
   /// Throws an [UnreadableVoiceNoteException] when there was nothing to
   /// read, and passes any other failure through.
-  Future<SmallPlanAnswer> shape({String? text, String? path}) async {
+  Future<SmallPlanAnswer> shape({
+    String? text,
+    String? transcript,
+    String? path,
+  }) async {
     try {
       final result = await functions
           .httpsCallable(
             shapeCallable,
             options: HttpsCallableOptions(timeout: shapeTimeout),
           )
-          .call<Object?>({'text': ?text, 'path': ?path});
+          .call<Object?>({
+            'text': ?text,
+            'transcript': ?transcript,
+            'path': ?path,
+          });
       return SmallPlanAnswer.fromJson(result.data);
     } on FirebaseFunctionsException catch (error) {
       if (error.code == 'invalid-argument') {

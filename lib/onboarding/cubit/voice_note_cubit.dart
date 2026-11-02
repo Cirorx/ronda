@@ -39,6 +39,7 @@ class VoiceNoteCubit extends Cubit<VoiceNoteState> {
   final Stream<void> Function() _ticks;
   StreamSubscription<void>? _tick;
   StreamSubscription<double>? _levels;
+  StreamSubscription<String>? _words;
 
   /// Whether anything above [silenceLevel] was heard since the last tick.
   bool _heardThisSecond = false;
@@ -54,7 +55,7 @@ class VoiceNoteCubit extends Cubit<VoiceNoteState> {
     await _stopListening();
     emit(const VoiceNoteState(status: VoiceNoteStatus.starting));
     try {
-      await _onboardingRepository.startVoiceNote();
+      await _onboardingRepository.startVoiceNote(_uid);
     } on NoMicrophoneFailure {
       return _fail(VoiceNoteFailure.noMicrophone);
     } on MicrophoneDeniedFailure {
@@ -76,6 +77,17 @@ class VoiceNoteCubit extends Cubit<VoiceNoteState> {
       // A level that can't be read is a bar that isn't drawn.
       onError: (Object _) {},
     );
+    _words = _onboardingRepository.liveWords().listen(
+      _onWords,
+      // Live words are a bonus: without them the note is read at the end.
+      onError: (Object _) {},
+    );
+  }
+
+  void _onWords(String words) {
+    if (state.status == VoiceNoteStatus.recording) {
+      emit(state.copyWith(words: words));
+    }
   }
 
   void _fail(VoiceNoteFailure failure, {String? code}) {
@@ -131,7 +143,11 @@ class VoiceNoteCubit extends Cubit<VoiceNoteState> {
     if (state.status != VoiceNoteStatus.recording) return;
     await _stopListening();
     emit(
-      VoiceNoteState(status: VoiceNoteStatus.reading, elapsed: state.elapsed),
+      VoiceNoteState(
+        status: VoiceNoteStatus.reading,
+        elapsed: state.elapsed,
+        words: state.words,
+      ),
     );
     final read = await _read();
     if (!isClosed) emit(read);
@@ -169,8 +185,10 @@ class VoiceNoteCubit extends Cubit<VoiceNoteState> {
   Future<void> _stopListening() async {
     await _tick?.cancel();
     await _levels?.cancel();
+    await _words?.cancel();
     _tick = null;
     _levels = null;
+    _words = null;
   }
 
   /// Throws away a note still recording.

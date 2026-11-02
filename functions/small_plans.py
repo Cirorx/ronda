@@ -56,7 +56,7 @@ a walk at 07:00 is fine; nothing after 21:00."""
 SPAN_HOURS = 2
 """How long the forecast reads from the plan's hour."""
 WET_PROBABILITY, WET_MM = 40, 0.5
-MAX_ACTIVITY, MAX_PLACE, MAX_TYPED = 80, 60, 300
+MAX_ACTIVITY, MAX_PLACE, MAX_TYPED, MAX_SPOKEN = 80, 60, 300, 1_000
 
 KINDS = ["walk", "feria", "library", "call", "noPhone", "other"]
 DEFAULT_TIMES = {
@@ -447,7 +447,8 @@ def shape_request(
     client: Any,
     weather: Forecast,
 ) -> dict[str, Any]:
-    """The `shape_small_plan` callable: `data` is `{text}` or `{path}` (a voice note).
+    """The `shape_small_plan` callable: `data` is `{text}` (typed), `{transcript}` (what Voice
+    Transcribe heard live, `relay/`) or `{path}` (a voice note).
 
     Refuses callers who haven't accepted the terms. Raises `voice.TermsMissing`, `BadWords`
     and `voice.BadVoiceNote` for what can't be read, `PermissionError` for another person's
@@ -456,9 +457,11 @@ def shape_request(
     if not (user or {}).get("terms"):
         raise voice.TermsMissing(uid)
     data = data if isinstance(data, dict) else {}
-    typed, path = data.get("text"), data.get("path")
+    typed, spoken, path = data.get("text"), data.get("transcript"), data.get("path")
     if isinstance(typed, str):
         words = typed[:MAX_TYPED]
+    elif isinstance(spoken, str):
+        words = " ".join(spoken.split())[:MAX_SPOKEN]
     elif path is not None:
         words = words_of_note(uid=uid, path=path, blob=blob, api_key=api_key, http=http)
     else:

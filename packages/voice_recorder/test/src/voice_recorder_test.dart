@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -201,6 +203,176 @@ void main() {
 
         expect(await subject().stop(), isNull);
         expect(read, isEmpty);
+      });
+    });
+
+    group('startStreaming', () {
+      late StreamController<Uint8List> source;
+
+      /// [count] 16-bit samples of [value], little endian.
+      Uint8List samples(int count, int value) {
+        final data = ByteData(count * 2);
+        for (var i = 0; i < count; i++) {
+          data.setInt16(i * 2, value, Endian.little);
+        }
+        return data.buffer.asUint8List();
+      }
+
+      setUp(() {
+        source = StreamController<Uint8List>();
+        when(() => recorder.startStream(any()))
+            .thenAnswer((_) async => source.stream);
+        when(() => recorder.stop()).thenAnswer((_) async => null);
+        when(() => recorder.cancel()).thenAnswer((_) async {});
+      });
+
+      test('records raw 16 kHz mono 16-bit PCM', () {
+        expect(VoiceRecorder.streamConfig.encoder, AudioEncoder.pcm16bits);
+        expect(VoiceRecorder.streamConfig.sampleRate, equals(16000));
+        expect(VoiceRecorder.streamConfig.numChannels, equals(1));
+        expect(VoiceRecorder.streamConfig.autoGain, isFalse);
+        expect(VoiceRecorder.streamConfig.echoCancel, isFalse);
+        expect(VoiceRecorder.streamConfig.noiseSuppress, isFalse);
+      });
+
+      test('hands back each chunk as it is recorded', () async {
+        final chunks = await subject().startStreaming();
+        final heard = <Uint8List>[];
+        chunks.listen(heard.add);
+
+        source
+          ..add(Uint8List.fromList([1, 2]))
+          ..add(Uint8List.fromList([3, 4]));
+        await Future<void>.delayed(Duration.zero);
+
+        verify(() => recorder.startStream(VoiceRecorder.streamConfig))
+            .called(1);
+        expect(
+          heard,
+          equals([
+            [1, 2],
+            [3, 4],
+          ]),
+        );
+      });
+
+      test('stop returns the whole note as a WAV built from the samples, '
+          'reading and deleting no file', () async {
+        final voice = subject();
+        await voice.startStreaming();
+        source
+          ..add(Uint8List.fromList([1, 2, 3, 4]))
+          ..add(Uint8List.fromList([5, 6]));
+        await Future<void>.delayed(Duration.zero);
+
+        final wav = (await voice.stop())!;
+
+        expect(wav.length, equals(VoiceRecorder.wavHeaderBytes + 6));
+        expect(String.fromCharCodes(wav.sublist(0, 4)), equals('RIFF'));
+        expect(String.fromCharCodes(wav.sublist(8, 16)), equals('WAVEfmt '));
+        final header = ByteData.sublistView(wav);
+        expect(header.getUint32(4, Endian.little), equals(36 + 6));
+        expect(header.getUint16(20, Endian.little), equals(1), reason: 'PCM');
+        expect(header.getUint16(22, Endian.little), equals(1), reason: 'mono');
+        expect(header.getUint32(24, Endian.little), equals(16000));
+        expect(header.getUint32(28, Endian.little), equals(32000));
+        expect(header.getUint16(32, Endian.little), equals(2));
+        expect(header.getUint16(34, Endian.little), equals(16));
+        expect(String.fromCharCodes(wav.sublist(36, 40)), equals('data'));
+        expect(header.getUint32(40, Endian.little), equals(6));
+        expect(wav.sublist(44), equals([1, 2, 3, 4, 5, 6]));
+        expect(read, isEmpty);
+        expect(deleted, isEmpty);
+      });
+
+      test('a second stop returns null, the note being gone, and the chunks '
+          'are over', () async {
+        final voice = subject();
+        final chunks = await voice.startStreaming();
+        final done = chunks.toList();
+        source.add(Uint8List.fromList([1, 2]));
+        await Future<void>.delayed(Duration.zero);
+
+        await voice.stop();
+
+        expect(await voice.stop(), isNull);
+        expect(
+          await done,
+          equals([
+            [1, 2],
+          ]),
+        );
+      });
+
+      test(
+        'levels come from the samples, one per 40 ms, from the peak',
+        () async {
+          final voice = subject();
+          await voice.startStreaming();
+          final levels = <double>[];
+          voice.levels().listen(levels.add);
+          const window = VoiceRecorder.samplesPerLevel;
+
+          source
+            ..add(samples(window, 0))
+            ..add(samples(window ~/ 2, 32767))
+            ..add(samples(window ~/ 2, 0))
+            // Half a window: no level until the rest arrives.
+            ..add(samples(window ~/ 2, 0))
+            ..add(Uint8List.fromList([0])) // an odd byte is left aside
+            ..add(samples(window ~/ 2, 1036));
+          await Future<void>.delayed(Duration.zero);
+
+          expect(levels.length, equals(3));
+          expect(levels[0], equals(0));
+          expect(levels[1], equals(1));
+          expect(levels[2], closeTo(0.5, 0.01));
+          verifyNever(() => recorder.onAmplitudeChanged(any()));
+        },
+      );
+
+      test('cancel throws the samples away', () async {
+        final voice = subject();
+        await voice.startStreaming();
+        source.add(Uint8List.fromList([1, 2]));
+        await Future<void>.delayed(Duration.zero);
+
+        await voice.cancel();
+
+        expect(await voice.stop(), isNull);
+        verify(() => recorder.cancel()).called(1);
+      });
+
+      test('closes the chunks and the levels when the source ends', () async {
+        final voice = subject();
+        final chunks = await voice.startStreaming();
+        final done = chunks.toList();
+        final levelsDone = voice.levels().toList();
+
+        await source.close();
+
+        expect(await done, isEmpty);
+        expect(await levelsDone, isEmpty);
+      });
+
+      test('passes an error of the source on to the chunks', () async {
+        final chunks = await subject().startStreaming();
+        final errors = <Object>[];
+        chunks.listen((_) {}, onError: errors.add);
+
+        source.addError(StateError('mic gone'));
+        await Future<void>.delayed(Duration.zero);
+
+        expect(errors, [isA<StateError>()]);
+      });
+
+      test("turns a browser's error into a $VoiceRecorderException", () async {
+        when(() => recorder.startStream(any())).thenThrow(StateError('no'));
+
+        await expectLater(
+          subject().startStreaming(),
+          throwsA(isA<VoiceRecorderException>()),
+        );
       });
     });
 

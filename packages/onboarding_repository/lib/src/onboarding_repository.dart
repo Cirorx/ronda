@@ -1,6 +1,6 @@
 import 'dart:math';
-import 'dart:typed_data';
 
+import 'package:live_transcript/live_transcript.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:ronda_api/ronda_api.dart';
 import 'package:voice_recorder/voice_recorder.dart';
@@ -10,22 +10,35 @@ import 'package:voice_recorder/voice_recorder.dart';
 /// `audio/{uid}/{noteId}.wav`, awaits the `extract` callable and returns
 /// what it understood.
 ///
+/// With a [LiveTranscriptClient], the words show while the person talks
+/// ([liveWords]) and, when the live session saw the note through, the final
+/// transcript goes to `read_transcript` instead: no upload, only Spark's
+/// step is left. Any trouble with live falls back to the upload, unseen.
+///
 /// Nothing leaves the phone before `users/{uid}.terms` exists: the terms are
-/// read first and a note without them is thrown away (Storage rules and the
-/// callable check the same). The callable deletes the note once read; when
-/// it never got to read it, this repository deletes it.
+/// read first and a note without them is thrown away (Storage rules, the
+/// relay and the callables check the same). The callable deletes the note
+/// once read; when it never got to read it, this repository deletes it.
 /// {@endtemplate}
 class OnboardingRepository {
   /// {@macro onboarding_repository}
   new({
     required this._voiceRecorder,
     required this._rondaApi,
+    this._liveTranscript,
     String Function()? newNoteId,
   }) : _newNoteId = newNoteId ?? _randomNoteId;
 
   final VoiceRecorder _voiceRecorder;
   final RondaApi _rondaApi;
+  final LiveTranscriptClient? _liveTranscript;
   final String Function() _newNoteId;
+
+  /// The surface the relay picks Voice Transcribe's words for.
+  static const liveSurface = 'signup';
+
+  /// The note being recorded, if any.
+  LiveVoiceNote? _note;
 
   /// The size of a RIFF/WAVE header with no samples after it.
   static const _wavHeaderBytes = 44;
@@ -38,12 +51,13 @@ class OnboardingRepository {
     ].join();
   }
 
-  /// Starts a new voice note, asking for the microphone the first time.
+  /// Starts a new voice note for [uid], asking for the microphone the
+  /// first time. The words go live once `users/{uid}.terms` is seen.
   ///
   /// Throws a [NoMicrophoneFailure] when there is none to use, a
   /// [MicrophoneDeniedFailure] when it may not be used, and a
   /// [StartVoiceNoteFailure] when the recorder fails.
-  Future<void> startVoiceNote() async {
+  Future<void> startVoiceNote(String uid) async {
     final bool allowed;
     final bool present;
     try {
@@ -55,10 +69,23 @@ class OnboardingRepository {
     }
     if (!present) throw const NoMicrophoneFailure();
     if (!allowed) throw const MicrophoneDeniedFailure();
+    final note = LiveVoiceNote(
+      recorder: _voiceRecorder,
+      client: _liveTranscript,
+    );
     try {
-      await _voiceRecorder.start();
+      await note.start(surface: liveSurface, live: _termsAccepted(uid));
     } on Exception {
       throw const StartVoiceNoteFailure();
+    }
+    _note = note;
+  }
+
+  Future<bool> _termsAccepted(String uid) async {
+    try {
+      return (await _rondaApi.readUser(uid))?.terms != null;
+    } on Exception {
+      return false;
     }
   }
 
@@ -66,13 +93,30 @@ class OnboardingRepository {
   /// from 0 (silence) to 1. Only levels; never the audio.
   Stream<double> voiceLevels() => _voiceRecorder.levels();
 
+  /// What Voice Transcribe has heard so far, revised as the person talks.
+  /// Nothing comes without live transcription.
+  Stream<String> liveWords() => _note?.words ?? const Stream.empty();
+
   /// Stops and throws away the note being recorded, if any.
   Future<void> discardVoiceNote() async {
+    final note = _note;
+    _note = null;
     try {
-      await _voiceRecorder.cancel();
+      await (note?.cancel() ?? _voiceRecorder.cancel());
     } on Exception {
       // Nothing was recording; there is nothing to throw away.
     }
+  }
+
+  /// Ends the note: the WAV, and the transcript when live saw it through.
+  Future<LiveVoiceNoteResult> _stopNote() async {
+    final note = _note;
+    _note = null;
+    if (note != null) return await note.stop();
+    return LiveVoiceNoteResult(
+      wav: await _voiceRecorder.stop(),
+      transcript: null,
+    );
   }
 
   /// Stops the note and returns what [uid] said in it.
@@ -84,15 +128,20 @@ class OnboardingRepository {
   /// a [VoiceNoteNotUnderstoodFailure] when nothing could be understood, and
   /// a [ReadVoiceNoteFailure] when reading it failed.
   Future<VoiceSignup> readVoiceNote(String uid) async {
-    final Uint8List? wav;
+    final LiveVoiceNoteResult note;
     try {
-      wav = await _voiceRecorder.stop();
+      note = await _stopNote();
     } on Exception {
       throw const RecordVoiceNoteFailure();
     }
+    final wav = note.wav;
     // A WAV header alone (44 bytes) is a note with no sound in it.
     if (wav == null || wav.length <= _wavHeaderBytes) {
       throw const RecordVoiceNoteFailure();
+    }
+    if (note.transcript case final transcript?) {
+      final signup = await _readTranscript(transcript);
+      if (signup != null) return signup;
     }
 
     final UserDocument? user;
@@ -127,6 +176,26 @@ class OnboardingRepository {
       await _deleteUnread(path);
       throw const ReadVoiceNoteFailure();
     }
+    return _signup(fields);
+  }
+
+  /// What `read_transcript` understood of the words heard live, or `null`
+  /// when the call failed and the WAV should be read the usual way.
+  ///
+  /// Throws a [VoiceNoteNotUnderstoodFailure] when nothing came of them.
+  Future<VoiceSignup?> _readTranscript(String transcript) async {
+    final ExtractedFields fields;
+    try {
+      fields = await _rondaApi.readTranscript(transcript);
+    } on UnreadableVoiceNoteException {
+      throw const VoiceNoteNotUnderstoodFailure();
+    } on Exception {
+      return null;
+    }
+    return _signup(fields);
+  }
+
+  VoiceSignup _signup(ExtractedFields fields) {
     final signup = VoiceSignup(
       firstName: fields.firstName,
       ageBand: fields.ageBand,

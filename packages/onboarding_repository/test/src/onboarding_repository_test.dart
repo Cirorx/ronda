@@ -2,12 +2,17 @@ import 'dart:typed_data';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:live_transcript/live_transcript.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:ronda_api/ronda_api.dart';
 import 'package:voice_recorder/voice_recorder.dart';
 
 class _MockVoiceRecorder extends Mock implements VoiceRecorder;
+
+class _MockLiveTranscriptClient extends Mock implements LiveTranscriptClient;
+
+class _MockLiveTranscription extends Mock implements LiveTranscription;
 
 class _MockRondaApi extends Mock implements RondaApi;
 
@@ -86,11 +91,12 @@ void main() {
     group('startVoiceNote', () {
       test('starts the recorder when the microphone is allowed', () async {
         when(() => voiceRecorder.hasPermission()).thenAnswer((_) async => true);
-        when(() => voiceRecorder.start()).thenAnswer((_) async {});
+        when(() => voiceRecorder.startStreaming())
+            .thenAnswer((_) async => const Stream.empty());
 
-        await subject.startVoiceNote();
+        await subject.startVoiceNote(uid);
 
-        verify(() => voiceRecorder.start()).called(1);
+        verify(() => voiceRecorder.startStreaming()).called(1);
       });
 
       test('throws $MicrophoneDeniedFailure without the microphone', () {
@@ -99,10 +105,10 @@ void main() {
         when(() => voiceRecorder.hasMicrophone()).thenAnswer((_) async => true);
 
         expect(
-          subject.startVoiceNote(),
+          subject.startVoiceNote(uid),
           throwsA(isA<MicrophoneDeniedFailure>()),
         );
-        verifyNever(() => voiceRecorder.start());
+        verifyNever(() => voiceRecorder.startStreaming());
       });
 
       test('throws $NoMicrophoneFailure when there is none', () {
@@ -111,21 +117,30 @@ void main() {
         when(() => voiceRecorder.hasMicrophone())
             .thenAnswer((_) async => false);
 
-        expect(subject.startVoiceNote(), throwsA(isA<NoMicrophoneFailure>()));
-        verifyNever(() => voiceRecorder.start());
+        expect(
+          subject.startVoiceNote(uid),
+          throwsA(isA<NoMicrophoneFailure>()),
+        );
+        verifyNever(() => voiceRecorder.startStreaming());
       });
 
       test('throws $StartVoiceNoteFailure when asking fails', () {
         when(() => voiceRecorder.hasPermission()).thenThrow(Exception());
 
-        expect(subject.startVoiceNote(), throwsA(isA<StartVoiceNoteFailure>()));
+        expect(
+          subject.startVoiceNote(uid),
+          throwsA(isA<StartVoiceNoteFailure>()),
+        );
       });
 
       test('throws $StartVoiceNoteFailure when the recorder fails', () {
         when(() => voiceRecorder.hasPermission()).thenAnswer((_) async => true);
-        when(() => voiceRecorder.start()).thenThrow(Exception());
+        when(() => voiceRecorder.startStreaming()).thenThrow(Exception());
 
-        expect(subject.startVoiceNote(), throwsA(isA<StartVoiceNoteFailure>()));
+        expect(
+          subject.startVoiceNote(uid),
+          throwsA(isA<StartVoiceNoteFailure>()),
+        );
       });
     });
 
@@ -339,6 +354,186 @@ void main() {
           throwsA(isA<ReadVoiceNoteFailure>()),
         );
       });
+    });
+  });
+
+  group('$OnboardingRepository with live transcription', () {
+    late VoiceRecorder voiceRecorder;
+    late RondaApi rondaApi;
+    late LiveTranscriptClient liveTranscript;
+    late LiveTranscription session;
+    late OnboardingRepository subject;
+
+    const uid = 'demo-uid';
+    const path = 'audio/demo-uid/note-1.wav';
+    final wav = Uint8List(48);
+    final withTerms = UserDocument(
+      terms: TermsRecord(
+        version: '2026-10-27',
+        acceptedAt: DateTime(2026, 10, 28),
+      ),
+    );
+    const fields = ExtractedFields(firstName: 'Graciela', ageBand: '60-69');
+    const signup = VoiceSignup(firstName: 'Graciela', ageBand: '60-69');
+
+    setUpAll(() => registerFallbackValue(Uint8List(0)));
+
+    setUp(() {
+      voiceRecorder = _MockVoiceRecorder();
+      rondaApi = _MockRondaApi();
+      liveTranscript = _MockLiveTranscriptClient();
+      session = _MockLiveTranscription();
+      subject = OnboardingRepository(
+        voiceRecorder: voiceRecorder,
+        rondaApi: rondaApi,
+        liveTranscript: liveTranscript,
+        newNoteId: () => 'note-1',
+      );
+      when(() => voiceRecorder.hasPermission()).thenAnswer((_) async => true);
+      when(() => voiceRecorder.startStreaming())
+          .thenAnswer((_) async => const Stream.empty());
+      when(() => voiceRecorder.stop()).thenAnswer((_) async => wav);
+      when(() => voiceRecorder.cancel()).thenAnswer((_) async {});
+      when(() => rondaApi.readUser(uid)).thenAnswer((_) async => withTerms);
+      when(() => liveTranscript.start(OnboardingRepository.liveSurface))
+          .thenAnswer((_) async => session);
+      when(() => session.words).thenAnswer((_) => Stream.value('Hola'));
+      when(() => session.isOver).thenReturn(false);
+      when(() => session.finish()).thenAnswer((_) async => 'Hola, soy Marta.');
+      when(() => session.abandon()).thenAnswer((_) async {});
+      when(() => rondaApi.readTranscript('Hola, soy Marta.'))
+          .thenAnswer((_) async => fields);
+      when(
+        () => rondaApi.uploadVoiceNote(
+          uid: any(named: 'uid'),
+          noteId: any(named: 'noteId'),
+          wav: any(named: 'wav'),
+        ),
+      ).thenAnswer((_) async => path);
+      when(() => rondaApi.extract(path)).thenAnswer((_) async => fields);
+    });
+
+    Future<void> settle() => Future<void>.delayed(Duration.zero);
+
+    test('shows the words as they come and reads the final transcript with '
+        'read_transcript, uploading nothing', () async {
+      await subject.startVoiceNote(uid);
+      await settle();
+      final words = subject.liveWords().first;
+      await settle();
+
+      expect(await subject.readVoiceNote(uid), equals(signup));
+      expect(await words, equals('Hola'));
+      verify(() => liveTranscript.start('signup')).called(1);
+      verifyNever(
+        () => rondaApi.uploadVoiceNote(
+          uid: any(named: 'uid'),
+          noteId: any(named: 'noteId'),
+          wav: any(named: 'wav'),
+        ),
+      );
+      verifyNever(() => rondaApi.extract(any()));
+    });
+
+    test('liveWords is silent before a note starts', () {
+      expect(subject.liveWords(), emitsDone);
+    });
+
+    test('records without live while users/{uid}.terms is missing', () async {
+      when(() => rondaApi.readUser(uid)).thenAnswer((_) async => null);
+
+      await subject.startVoiceNote(uid);
+      await settle();
+
+      verifyNever(() => liveTranscript.start(any()));
+      await expectLater(
+        subject.readVoiceNote(uid),
+        throwsA(isA<TermsNotAcceptedFailure>()),
+      );
+    });
+
+    test('records without live when the terms read fails', () async {
+      when(() => rondaApi.readUser(uid)).thenThrow(Exception('offline'));
+
+      await subject.startVoiceNote(uid);
+      await settle();
+
+      verifyNever(() => liveTranscript.start(any()));
+    });
+
+    test('falls back to the upload when the session cannot open', () async {
+      when(() => liveTranscript.start(any()))
+          .thenThrow(const LiveTranscriptException());
+
+      await subject.startVoiceNote(uid);
+      await settle();
+
+      expect(await subject.readVoiceNote(uid), equals(signup));
+      verify(() => rondaApi.extract(path)).called(1);
+    });
+
+    test(
+      'falls back to the upload when the final transcript never comes',
+      () async {
+        when(() => session.finish()).thenAnswer((_) async => null);
+
+        await subject.startVoiceNote(uid);
+        await settle();
+
+        expect(await subject.readVoiceNote(uid), equals(signup));
+        verify(() => rondaApi.extract(path)).called(1);
+        verifyNever(() => rondaApi.readTranscript(any()));
+      },
+    );
+
+    test('falls back to the upload when read_transcript fails', () async {
+      when(() => rondaApi.readTranscript(any()))
+          .thenThrow(Exception('offline'));
+
+      await subject.startVoiceNote(uid);
+      await settle();
+
+      expect(await subject.readVoiceNote(uid), equals(signup));
+      verify(() => rondaApi.extract(path)).called(1);
+    });
+
+    test('throws $VoiceNoteNotUnderstoodFailure when read_transcript cannot '
+        'read the words', () async {
+      when(() => rondaApi.readTranscript(any()))
+          .thenThrow(const UnreadableVoiceNoteException());
+
+      await subject.startVoiceNote(uid);
+      await settle();
+
+      await expectLater(
+        subject.readVoiceNote(uid),
+        throwsA(isA<VoiceNoteNotUnderstoodFailure>()),
+      );
+      verifyNever(() => rondaApi.extract(any()));
+    });
+
+    test('throws $VoiceNoteNotUnderstoodFailure when nothing was understood '
+        'of the words', () async {
+      when(() => rondaApi.readTranscript(any()))
+          .thenAnswer((_) async => const ExtractedFields());
+
+      await subject.startVoiceNote(uid);
+      await settle();
+
+      await expectLater(
+        subject.readVoiceNote(uid),
+        throwsA(isA<VoiceNoteNotUnderstoodFailure>()),
+      );
+    });
+
+    test('discardVoiceNote drops the session with the note', () async {
+      await subject.startVoiceNote(uid);
+      await settle();
+
+      await subject.discardVoiceNote();
+
+      verify(() => voiceRecorder.cancel()).called(1);
+      verify(() => session.abandon()).called(1);
     });
   });
 

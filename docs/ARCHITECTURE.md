@@ -18,7 +18,8 @@
 ```
 Phone (Flutter: iOS, Android, web)
   ├─ welcome (terms accepted by continuing) → buttons: questions and payoff signed out, then
-  │    sign-in | voice: sign-in, then the recording → upload audio
+  │    sign-in | voice: sign-in, then the recording → upload audio; with the relay configured,
+  │    the samples also stream to it and the words show while the person talks
   ├─ needs → local filters → eligible seat ids → Firestore
   ├─ face blur (ML Kit) → upload blurred photo
   └─ FCM pushes in; RSVP / attendance / reports out
@@ -58,12 +59,16 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan; Google and
   ├─ Hosting: Flutter web app under /app; plain-HTML Cerca tuyo at / and /f/{id}
   ├─ Crashlytics: Android and iOS errors, release builds of production only
   └─ FCM → APNs (iOS only with the Apple Developer Program)
+Relay (Cloud Run, southamerica-east1, `relay/`): one WebSocket per voice note from the phone
+  (Firebase ID token + terms checked) ↔ Voice Transcribe realtime; the Meta key stays here.
+  Optional: the app only uses it when built with `LIVE_TRANSCRIPT_URL`.
 Meta Model API: Voice Transcribe, Spark 1.3, SAM 3.1, Muse Image
 Baseten: Muse Spark Open (agent)
 Public data: Open-Meteo, DNT GTFS, OpenStreetMap (cached per barrio)
 ```
 
-Keys live only in Functions config; the app never holds Meta or Baseten keys. Every callable
+Keys live only in Functions config and the relay's Secret Manager secret; the app never holds
+Meta or Baseten keys. Every callable
 requires `auth != null` and is pinned to `southamerica-east1` on both sides, except
 `report_client_error`: a sign-up that fails before sign-in must still be seen, so it takes
 signed-out callers, rate-limited per hashed uid or hashed IP with every field capped (App Check

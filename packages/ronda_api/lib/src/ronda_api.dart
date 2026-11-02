@@ -84,6 +84,9 @@ class const RondaApi({
   /// take a few seconds each, a cold start a few more.
   static const extractTimeout = Duration(seconds: 120);
 
+  /// How long `read_transcript` may take: Spark's step only.
+  static const readTranscriptTimeout = Duration(seconds: 60);
+
   /// Uploads a WAV voice note to `audio/{uid}/{noteId}.wav` and returns
   /// that path. Logs its size and how long the upload took, never the audio.
   ///
@@ -119,6 +122,32 @@ class const RondaApi({
 
   /// Deletes the voice note at [path], for when `extract` never read it.
   Future<void> deleteVoiceNote(String path) => storage.ref(path).delete();
+
+  /// Calls `read_transcript` with the words Voice Transcribe heard live
+  /// (`live_transcript`), which reads them into fields as `extract` does
+  /// after transcribing a note. Nothing is stored.
+  ///
+  /// Throws an [UnreadableVoiceNoteException] when the callable couldn't
+  /// read the words; any other failure passes through.
+  Future<ExtractedFields> readTranscript(String text) async {
+    try {
+      final result = await functions
+          .httpsCallable(
+            'read_transcript',
+            options: HttpsCallableOptions(timeout: readTranscriptTimeout),
+          )
+          .call<Object?>({'text': text});
+      return switch (result.data) {
+        final Map<Object?, Object?> json => ExtractedFields.fromJson(json),
+        _ => const ExtractedFields(),
+      };
+    } on FirebaseFunctionsException catch (error) {
+      if (error.code == 'invalid-argument') {
+        throw const UnreadableVoiceNoteException();
+      }
+      rethrow;
+    }
+  }
 
   /// Calls `extract` on the voice note at [path]. The callable deletes the
   /// note before it answers.

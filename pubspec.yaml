@@ -72,6 +72,8 @@ dependencies:
     path: packages/share_sheet
   small_plan_repository:
     path: packages/small_plan_repository
+  live_transcript:
+    path: packages/live_transcript
   voice_recorder:
     path: packages/voice_recorder
 

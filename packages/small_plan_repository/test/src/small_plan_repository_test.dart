@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:calendar_client/calendar_client.dart';
 import 'package:device_store/device_store.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:live_transcript/live_transcript.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ronda_api/ronda_api.dart';
 import 'package:small_plan_repository/small_plan_repository.dart';
@@ -12,6 +13,10 @@ import 'package:voice_recorder/voice_recorder.dart';
 class _MockDeviceStore extends Mock implements DeviceStore;
 
 class _MockVoiceRecorder extends Mock implements VoiceRecorder;
+
+class _MockLiveTranscriptClient extends Mock implements LiveTranscriptClient;
+
+class _MockLiveTranscription extends Mock implements LiveTranscription;
 
 class _MockRondaApi extends Mock implements RondaApi;
 
@@ -102,7 +107,8 @@ void main() {
       });
       when(() => voiceRecorder.hasPermission()).thenAnswer((_) async => true);
       when(() => voiceRecorder.hasMicrophone()).thenAnswer((_) async => true);
-      when(() => voiceRecorder.start()).thenAnswer((_) async {});
+      when(() => voiceRecorder.startStreaming())
+          .thenAnswer((_) async => const Stream.empty());
       when(() => voiceRecorder.cancel()).thenAnswer((_) async {});
       when(() => voiceRecorder.stop()).thenAnswer((_) async => wav);
       when(() => rondaApi.readUser(uid)).thenAnswer((_) async => withTerms);
@@ -447,9 +453,9 @@ void main() {
           throwsA(isA<SmallPlanFailure>().having((f) => f.kind, 'kind', kind));
 
       test('starts a note when the microphone may be used', () async {
-        await subject.startVoiceNote();
+        await subject.startVoiceNote(uid);
 
-        verify(() => voiceRecorder.start()).called(1);
+        verify(() => voiceRecorder.startStreaming()).called(1);
       });
 
       test('says there is no microphone, or it was refused', () async {
@@ -458,13 +464,13 @@ void main() {
         when(() => voiceRecorder.hasMicrophone())
             .thenAnswer((_) async => false);
         await expectLater(
-          subject.startVoiceNote(),
+          subject.startVoiceNote(uid),
           failure(SmallPlanFailureKind.noMicrophone),
         );
 
         when(() => voiceRecorder.hasMicrophone()).thenAnswer((_) async => true);
         await expectLater(
-          subject.startVoiceNote(),
+          subject.startVoiceNote(uid),
           failure(SmallPlanFailureKind.microphoneDenied),
         );
       });
@@ -472,16 +478,16 @@ void main() {
       test('says the recorder failed when it cannot be asked or started', () {
         when(() => voiceRecorder.hasPermission()).thenThrow(Exception('x'));
         expect(
-          subject.startVoiceNote(),
+          subject.startVoiceNote(uid),
           failure(SmallPlanFailureKind.recorderFailed),
         );
       });
 
       test('says the recorder failed when it will not start', () {
-        when(() => voiceRecorder.start()).thenThrow(Exception('x'));
+        when(() => voiceRecorder.startStreaming()).thenThrow(Exception('x'));
 
         expect(
-          subject.startVoiceNote(),
+          subject.startVoiceNote(uid),
           failure(SmallPlanFailureKind.recorderFailed),
         );
       });
@@ -503,6 +509,108 @@ void main() {
           verify(() => voiceRecorder.cancel()).called(2);
         },
       );
+
+      group('with live transcription', () {
+        late LiveTranscriptClient liveTranscript;
+        late LiveTranscription session;
+        late SmallPlanRepository live;
+
+        setUp(() {
+          liveTranscript = _MockLiveTranscriptClient();
+          session = _MockLiveTranscription();
+          live = SmallPlanRepository(
+            deviceStore: deviceStore,
+            voiceRecorder: voiceRecorder,
+            rondaApi: rondaApi,
+            smallPlansApi: smallPlansApi,
+            sharedPlansApi: sharedPlansApi,
+            calendarClient: calendarClient,
+            liveTranscript: liveTranscript,
+            newNoteId: () => 'note-1',
+          );
+          when(() => voiceRecorder.hasPermission())
+              .thenAnswer((_) async => true);
+          when(() => voiceRecorder.startStreaming())
+              .thenAnswer((_) async => const Stream.empty());
+          when(() => voiceRecorder.cancel()).thenAnswer((_) async {});
+          when(() => liveTranscript.start(SmallPlanRepository.liveSurface))
+              .thenAnswer((_) async => session);
+          when(() => session.words).thenAnswer((_) => Stream.value('mate'));
+          when(() => session.isOver).thenReturn(false);
+          when(() => session.finish())
+              .thenAnswer((_) async => 'Mate en la rambla el sábado.');
+          when(() => session.abandon()).thenAnswer((_) async {});
+          when(() => smallPlansApi.shape(transcript: any(named: 'transcript')))
+              .thenAnswer((_) async => shaped);
+        });
+
+        Future<void> settle() => Future<void>.delayed(Duration.zero);
+
+        test('shows the words and shapes the final transcript, uploading '
+            'nothing', () async {
+          await live.startVoiceNote(uid);
+          await settle();
+          final words = live.liveWords().first;
+          await settle();
+
+          expect(await live.shapeVoiceNote(uid), isA<SmallPlanRead>());
+          expect(await words, equals('mate'));
+          verify(() => liveTranscript.start('plan')).called(1);
+          verify(
+            () =>
+                smallPlansApi.shape(transcript: 'Mate en la rambla el sábado.'),
+          ).called(1);
+          verifyNever(
+            () => rondaApi.uploadVoiceNote(
+              uid: any(named: 'uid'),
+              noteId: any(named: 'noteId'),
+              wav: any(named: 'wav'),
+            ),
+          );
+        });
+
+        test('still requires the terms before shaping', () async {
+          await live.startVoiceNote(uid);
+          await settle();
+          when(() => rondaApi.readUser(uid)).thenAnswer((_) async => null);
+
+          await expectLater(
+            live.shapeVoiceNote(uid),
+            failure(SmallPlanFailureKind.termsMissing),
+          );
+          verifyNever(
+            () => smallPlansApi.shape(transcript: any(named: 'transcript')),
+          );
+        });
+
+        test('records without live while the terms are missing', () async {
+          when(() => rondaApi.readUser(uid)).thenAnswer((_) async => null);
+
+          await live.startVoiceNote(uid);
+          await settle();
+
+          verifyNever(() => liveTranscript.start(any()));
+          expect(live.liveWords(), emitsDone);
+        });
+
+        test('falls back to the upload when live failed', () async {
+          when(() => session.finish()).thenAnswer((_) async => null);
+          await live.startVoiceNote(uid);
+          await settle();
+
+          expect(await live.shapeVoiceNote(uid), isA<SmallPlanRead>());
+          verify(() => smallPlansApi.shape(path: path)).called(1);
+        });
+
+        test('discardVoiceNote drops the session with the note', () async {
+          await live.startVoiceNote(uid);
+          await settle();
+
+          await live.discardVoiceNote();
+
+          verify(() => session.abandon()).called(1);
+        });
+      });
 
       test('uploads the note and shapes it into a plan', () async {
         final reading = await subject.shapeVoiceNote(uid);

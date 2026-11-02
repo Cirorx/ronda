@@ -40,7 +40,7 @@ leave or switch without explaining · free: **Ronda nunca pide plata**.
 
 | Model | Where it runs | What it does in Ronda |
 |---|---|---|
-| Muse Voice Transcribe | Meta Model API | Turns a sign-up voice note in rioplatense Spanish into text |
+| Muse Voice Transcribe | Meta Model API | Turns a sign-up voice note in rioplatense Spanish into text; in **realtime mode** (`wss://…/asr/realtime`, through a relay of ours that holds the key) the words show while the neighbour talks, so only Spark's step is left when they stop. Measured in [`evals/voice`](evals/voice/RESULTS.md) |
 | Muse Spark 1.3 | Meta Model API | Turns that text into fields the member checks and edits |
 | Muse Spark Open | Baseten | The organiser agent: forecast, sunset, last bus, RSVPs, the bench, proposals to the host |
 | SAM 3.1 | Meta Model API | Cuts the group's things (termo, mate, mazo) out of a photo for a flyer |

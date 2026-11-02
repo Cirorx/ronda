@@ -27,6 +27,8 @@ FIELDS_MODEL = "muse-spark-1.3"
 MAX_SECONDS = 65
 MIN_SECONDS = 1
 MAX_BYTES = 3_000_000
+# A minute of speech is well under this; a live transcript longer than it is cut.
+MAX_TRANSCRIPT_CHARS = 2_000
 
 log = logging.getLogger(__name__)
 
@@ -223,6 +225,35 @@ def read_fields(transcript: str, *, client: Any) -> dict[str, Any]:
         "slots": list(dict.fromkeys(str(s) for s in signup.slots)),
         "brings": list(dict.fromkeys(str(b) for b in signup.brings)),
     }
+
+
+def read_transcript(
+    *,
+    uid: str,
+    text: object,
+    user: dict[str, Any] | None,
+    client: Any,
+) -> dict[str, Any]:
+    """The `read_transcript` callable: the sign-up fields from words Voice Transcribe already
+    heard live (`relay/`), the same way `read_voice_note` reads them after transcribing.
+
+    `user` is `users/{uid}`; the terms must be accepted, as for a note. Raises `BadVoiceNote`
+    when there are no words to read. Nothing is stored and the words are never logged.
+    """
+    if not (user or {}).get("terms"):
+        raise TermsMissing(uid)
+    words = " ".join(text.split()) if isinstance(text, str) else ""
+    if not words:
+        raise BadVoiceNote("nothing heard")
+    started = time.perf_counter()
+    fields = read_fields(words[:MAX_TRANSCRIPT_CHARS], client=client)
+    log.info(
+        "read_transcript %s: %d chars, fields %d ms",
+        uid,
+        len(words),
+        (time.perf_counter() - started) * 1000,
+    )
+    return fields
 
 
 def note_uid(path: object) -> str:
