@@ -69,7 +69,7 @@ def blocks(from_barrio: str, to_barrio: str) -> int | None:
 
 def warnings(ronda: dict, user: dict, eligible: list[str] | None) -> list[str]:
     """What about `user` doesn't match `ronda`, in the order the screen shows it."""
-    from ronda_solver.rules import MAX_WALK_BLOCKS
+    from ronda_solver.rules import max_walk_blocks
 
     found = []
     if slot_id(ronda) not in user.get("slots", []):
@@ -77,7 +77,7 @@ def warnings(ronda: dict, user: dict, eligible: list[str] | None) -> list[str]:
     if ronda.get("pretext") not in user.get("pretexts", []):
         found.append(PRETEXT)
     walk = blocks(user.get("barrio", ""), ronda.get("barrio", ""))
-    if walk is None or walk > MAX_WALK_BLOCKS:
+    if walk is None or walk > max_walk_blocks(ronda.get("barrio", "")):
         found.append(BARRIO)
     if seat_id(ronda) not in (eligible or []):
         found.append(SEAT)

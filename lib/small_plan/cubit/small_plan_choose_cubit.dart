@@ -42,6 +42,7 @@ class SmallPlanChooseCubit extends Cubit<SmallPlanChooseState> {
   final Stream<void> Function() _ticks;
   StreamSubscription<void>? _tick;
   StreamSubscription<double>? _levels;
+  StreamSubscription<String>? _words;
   bool _heardThisSecond = false;
   int _quietSeconds = 0;
 
@@ -114,13 +115,14 @@ class SmallPlanChooseCubit extends Cubit<SmallPlanChooseState> {
         levels: const [],
         heard: 0,
         silent: false,
+        words: '',
         dropped: () => null,
         failure: () => null,
         failureCode: () => null,
       ),
     );
     try {
-      await _smallPlanRepository.startVoiceNote();
+      await _smallPlanRepository.startVoiceNote(_uid);
     } on SmallPlanFailure catch (failure) {
       _failed(failure);
       return;
@@ -139,6 +141,17 @@ class SmallPlanChooseCubit extends Cubit<SmallPlanChooseState> {
       // A level that can't be read is a bar that isn't drawn.
       onError: (Object _) {},
     );
+    _words = _smallPlanRepository.liveWords().listen(
+      _onWords,
+      // Live words are a bonus: without them the note is read at the end.
+      onError: (Object _) {},
+    );
+  }
+
+  void _onWords(String words) {
+    if (state.step == SmallPlanStep.recording) {
+      emit(state.copyWith(words: words));
+    }
   }
 
   void _onLevel(double level) {
@@ -223,8 +236,10 @@ class SmallPlanChooseCubit extends Cubit<SmallPlanChooseState> {
   Future<void> _stopListening() async {
     await _tick?.cancel();
     await _levels?.cancel();
+    await _words?.cancel();
     _tick = null;
     _levels = null;
+    _words = null;
   }
 
   /// Throws away a note still recording.

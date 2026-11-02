@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/cuaderno/cuaderno.dart';
+import 'package:ronda/onboarding/widgets/live_words.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 import '../../helpers/helpers.dart';
@@ -123,7 +124,7 @@ void main() {
     });
 
     group("today's line", () {
-      testWidgets('asks "¿Qué viste hoy?" under the title', (tester) async {
+      testWidgets("asks the day's hook under the title", (tester) async {
         await pump(tester);
 
         expect(
@@ -133,8 +134,53 @@ void main() {
           ),
           findsOneWidget,
         );
-        expect(find.text('¿Qué viste hoy?'), findsOneWidget);
+        // A Friday with no ronda.
+        expect(
+          find.text('¿Tenés algo para contarle a la ronda? Anotalo y llevalo.'),
+          findsOneWidget,
+        );
+        expect(find.text('¿Qué viste hoy?'), findsNothing);
         expect(find.text('Anotar'), findsOneWidget);
+      });
+
+      testWidgets('asks about the meeting the day after it', (tester) async {
+        when(() => cubit.state).thenReturn(
+          ready.copyWith(
+            today: DateTime(2026, 11),
+            meetingDate: () => saturday,
+          ),
+        );
+        await pump(tester);
+
+        expect(
+          find.text(
+            '¿De qué charlaron en la ronda? Guardalo antes de que se te '
+            'olvide.',
+          ),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets('asks for the postcard once the week has three lines', (
+        tester,
+      ) async {
+        when(() => cubit.state).thenReturn(
+          ready.copyWith(
+            cuaderno: Cuaderno(
+              entries: [...entries, _line(26, 'Sol en la rambla.')],
+            ),
+            meetingDate: () => saturday,
+          ),
+        );
+        await pump(tester);
+
+        expect(
+          find.text(
+            '¿Querés que tu postal salga más completa? Cada línea de la '
+            'semana le suma algo.',
+          ),
+          findsOneWidget,
+        );
       });
 
       testWidgets('keeps "Anotar" off until something is written', (
@@ -259,6 +305,31 @@ void main() {
 
         await tester.tap(find.text('Terminé'));
         verify(() => voice.finish()).called(1);
+      });
+
+      testWidgets('shows the words heard so far, with their caption', (
+        tester,
+      ) async {
+        when(() => voice.state).thenReturn(
+          const LineVoiceState(
+            status: LineVoiceStatus.recording,
+            words: 'El jacarandá',
+          ),
+        );
+        await pump(tester);
+
+        expect(find.byType(LiveWords), findsOneWidget);
+        expect(find.text('Lo que vamos escuchando'), findsOneWidget);
+        expect(find.text('El jacarandá'), findsOneWidget);
+      });
+
+      testWidgets('shows no words before any is heard', (tester) async {
+        when(
+          () => voice.state,
+        ).thenReturn(const LineVoiceState(status: LineVoiceStatus.recording));
+        await pump(tester);
+
+        expect(find.byType(LiveWords), findsNothing);
       });
 
       testWidgets('"Cancelar" throws the recording away', (tester) async {
@@ -605,7 +676,12 @@ void main() {
     testWidgets('in English', (tester) async {
       await pump(tester, locale: const Locale('en'));
 
-      expect(find.text('What did you see today?'), findsOneWidget);
+      expect(
+        find.text(
+          'Got something to tell the ronda? Write it down and bring it.',
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('keeps to a readable column on a desktop window', (

@@ -4,6 +4,7 @@ import 'package:error_reporter/error_reporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:ronda/onboarding/widgets/live_words.dart';
 import 'package:ronda/small_plan/small_plan.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 import 'package:small_plan_repository/small_plan_repository.dart';
@@ -19,6 +20,7 @@ void main() {
     late SmallPlanRepository repository;
     late ErrorReporter reporter;
     late StreamController<double> levels;
+    late StreamController<String> words;
     SmallPlan? chosen;
     var closedWithoutPlan = false;
 
@@ -53,11 +55,14 @@ void main() {
       repository = _MockSmallPlanRepository();
       reporter = _MockErrorReporter();
       levels = StreamController<double>.broadcast();
+      words = StreamController<String>.broadcast();
       addTearDown(() => unawaited(levels.close()));
+      addTearDown(() => unawaited(words.close()));
       when(() => repository.suggestions())
           .thenAnswer((_) async => [walk, call]);
-      when(() => repository.startVoiceNote()).thenAnswer((_) async {});
+      when(() => repository.startVoiceNote('uid')).thenAnswer((_) async {});
       when(() => repository.voiceLevels()).thenAnswer((_) => levels.stream);
+      when(() => repository.liveWords()).thenAnswer((_) => words.stream);
       when(() => repository.discardVoiceNote()).thenAnswer((_) async {});
       when(() => repository.shapeVoiceNote('uid'))
           .thenAnswer((_) async => said);
@@ -413,6 +418,24 @@ void main() {
         await tester.pumpAndSettle();
       });
 
+      testWidgets('shows the words heard so far once there are some', (
+        tester,
+      ) async {
+        await open(tester);
+        await sayIt(tester);
+        await startRecording(tester);
+        expect(find.byType(LiveWords), findsNothing);
+
+        words.add('mate en la rambla');
+        await tester.pump();
+
+        expect(find.text('Lo que vamos escuchando'), findsOneWidget);
+        expect(find.text('mate en la rambla'), findsOneWidget);
+        await press(tester, 'Cancelar');
+        await letRecorderStop(tester);
+        await tester.pumpAndSettle();
+      });
+
       testWidgets('throws the note away on cancel', (tester) async {
         await open(tester);
         await sayIt(tester);
@@ -428,7 +451,7 @@ void main() {
 
       testWidgets('says the microphone is not available, without telling '
           'the error log', (tester) async {
-        when(() => repository.startVoiceNote()).thenThrow(
+        when(() => repository.startVoiceNote('uid')).thenThrow(
           const SmallPlanFailure(SmallPlanFailureKind.microphoneDenied),
         );
         await open(tester);

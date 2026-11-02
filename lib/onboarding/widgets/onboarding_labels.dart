@@ -22,17 +22,13 @@ extension OnboardingLabels on AppLocalizations {
     Bring.tengoGanas => bringTengoGanas,
   };
 
-  /// "Solymar Norte".
-  String barrio(Barrio barrio) => switch (barrio) {
-    Barrio.shangrila => barrioShangrila,
-    Barrio.sanJoseDeCarrasco => barrioSanJoseDeCarrasco,
-    Barrio.lagomarSur => barrioLagomarSur,
-    Barrio.lagomarNorte => barrioLagomarNorte,
-    Barrio.solymarSur => barrioSolymarSur,
-    Barrio.solymarNorte => barrioSolymarNorte,
-    Barrio.lomasDeSolymar => barrioLomasDeSolymar,
-    Barrio.elPinarSur => barrioElPinarSur,
-    Barrio.elPinarNorte => barrioElPinarNorte,
+  /// "Solymar Norte": a proper noun, the same in every language.
+  String barrio(Barrio barrio) => barrio.label;
+
+  /// "Montevideo".
+  String barrioArea(BarrioArea area) => switch (area) {
+    BarrioArea.costa => barrioAreaCosta,
+    BarrioArea.montevideo => barrioAreaMontevideo,
   };
 
   /// "Sesenta y pico".

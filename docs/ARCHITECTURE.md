@@ -18,7 +18,8 @@
 ```
 Phone (Flutter: iOS, Android, web)
   ├─ welcome (terms accepted by continuing) → buttons: questions and payoff signed out, then
-  │    sign-in | voice: sign-in, then the recording → upload audio
+  │    sign-in | voice: sign-in, then the recording → upload audio; with the relay configured,
+  │    the samples also stream to it and the words show while the person talks
   ├─ needs → local filters → eligible seat ids → Firestore
   ├─ face blur (ML Kit) → upload blurred photo
   └─ FCM pushes in; RSVP / attendance / reports out
@@ -58,12 +59,16 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan; Google and
   ├─ Hosting: Flutter web app under /app; plain-HTML Cerca tuyo at / and /f/{id}
   ├─ Crashlytics: Android and iOS errors, release builds of production only
   └─ FCM → APNs (iOS only with the Apple Developer Program)
+Relay (Cloud Run, southamerica-east1, `relay/`): one WebSocket per voice note from the phone
+  (Firebase ID token + terms checked) ↔ Voice Transcribe realtime; the Meta key stays here.
+  Optional: the app only uses it when built with `LIVE_TRANSCRIPT_URL`.
 Meta Model API: Voice Transcribe, Spark 1.3, SAM 3.1, Muse Image
 Baseten: Muse Spark Open (agent)
 Public data: Open-Meteo, DNT GTFS, OpenStreetMap (cached per barrio)
 ```
 
-Keys live only in Functions config; the app never holds Meta or Baseten keys. Every callable
+Keys live only in Functions config and the relay's Secret Manager secret; the app never holds
+Meta or Baseten keys. Every callable
 requires `auth != null` and is pinned to `southamerica-east1` on both sides, except
 `report_client_error`: a sign-up that fails before sign-in must still be seen, so it takes
 signed-out callers, rate-limited per hashed uid or hashed IP with every field capped (App Check
@@ -96,7 +101,8 @@ isn't set up).
   - **Walk distance is per member, so the phone computes it.** It depends on the member's barrio
     and the seat's, so the document carries `blocksFrom`: the haversine walk from every barrio's
     centroid to the seat's (a block is 100 m, as in the solver), and the phone reads its own
-    barrio's entry: near ≤ 5 blocks, medium ≤ 10, far beyond (`WalkDistance.forMember` in
+    barrio's entry: near ≤ half the walk, medium ≤ the walk (`Barrio.walkBlocks`: 10 blocks, 15
+    in Montevideo), far beyond (`WalkDistance.forMember` in
     `needs_repository`). A barrio missing from the table reads as far. The server already holds
     the member's barrio in the profile, so this sends nothing new.
   - `hasStairs` and `needsCar` describe the place, so they are false until a host sets one; the
@@ -109,10 +115,15 @@ isn't set up).
     the needs are saved on the phone and before the profile. The phone filters by needs only (pretext and slot are the solver's match). If
     reading the seats or writing the ids fails, the save fails and no profile is written, so
     the person retries from the read-back and nobody reaches the tabs without eligible ids.
-  - Known limits: the solver's hard `withinTenBlocks` already drops far seats, so "caminar mucho"
-    changes no grouping today and only keeps far ids from leaving the phone. And the server holds
-    both the facts it published and the ids that came back, so it could infer a need from which
-    ids are missing (all evening seats gone → "volver de noche"). The need itself is never sent.
+  - Far seats never leave the phone, need or not (2026-11-01): the solver's hard
+    `withinTenBlocks` drops them anyway, and with 71 barrios they alone would pass the 1000 ids
+    the rules accept. So "caminar mucho" changes nothing today, and a missing far id says
+    nothing about it.
+  - Known limits: the server holds both the facts it published and the ids that came back, so
+    it could infer a need from which ids are missing (all evening seats gone → "volver de
+    noche"). The need itself is never sent. Every phone reads every seat fact at the save: with
+    Montevideo that is 1,136 documents for the demo slots, worth a query by the member's barrio
+    if it gets slow.
   - Demo data: `data/demo/invented_seat_facts.json` (invented: 14 hand-made seats, two with a
     place an invented host has set) over seats generated the same way for every barrio ×
     pretext × slot the demo people pick, loaded by `scripts/seed.py` (§ Demo data).
@@ -245,7 +256,7 @@ isn't set up).
     meetings from the one the push is for, the ronda becomes `active`, and the RSVP body opens
     with "Seguimos los jueves, hasta el jueves 26/11. Nadie sabe qué contestó cada uno."
     (members the RSVP skips get those words alone). Each "no" leaves (`state: left`) and gets
-    "Gracias por venir." with up to two open rondas within the solver's ten blocks that have
+    "Gracias por venir." with up to two open rondas within the solver's walk (10 blocks, 15 in Montevideo) that have
     places, same pretext first. Below the floor: no season, `status` unchanged, and everyone
     still in gets the didn't-fill words instead of the RSVP; their pick is recorded for the
     admin. The waiting list's own didn't-fill (#48) is below.
@@ -254,7 +265,7 @@ isn't set up).
   a time.
   - Who is on it and in what order is code's (`bench_order`): sign-ups with a profile who count
     (`demo_users.counts`), seated in no ronda that still meets, who picked the ronda's pretext
-    and slot, live within the solver's ten blocks, have the ronda's seat id among their
+    and slot, live within the solver's walk, have the ronda's seat id among their
     `private/eligible` ids (the needs filter), and hold no other pending offer nor a seat taken
     elsewhere that day; by profile `createdAt`, then blocks, then uid.
   - `rondas/{id}/bench/{isoWeek}` (server only): offers [{offerId, uid, firstName, status}] in
@@ -483,7 +494,8 @@ isn't set up).
   - `propose_groups` (admin only, 2 GiB, 4 vCPU, max 1 instance, no min instances) reads
     `users`, `users/{uid}/private/eligible` and `avoid`, keeps people with a profile in a known
     barrio and eligible ids, solves, joins first names and writes a pending proposal. The
-    barrio centroids are the solver's demo table (`ronda_solver.demo.DEMO_BARRIOS`).
+    barrio centroids are `ronda_solver.barrios`: Ciudad de la Costa's nine (invented, approximate)
+    and Montevideo's 62 (OpenStreetMap, `scripts/montevideo_barrios.py`).
   - `approve_proposal {proposalId}` writes one `rondas/{autoId}` (seatId, pretext, barrio,
     slot {day, time}, size, status forming, openSeatFromWeek 4, createdAt; no place, hosts or
     season yet) and `rondas/{id}/members/{uid}` (brings, state active, joinedAt) per group in one
@@ -538,7 +550,7 @@ isn't set up).
   domain, and the id is eight of `[a-z0-9]` (`scripts/flyer.py`'s alphabet) for both.
   - `tearOff` (built in #43, `scripts/flyer.py`, which writes `kind: "tearOff"`): label (the
     spot, for the admin's scans per spot; never public), pretext, slot, barrio, nearBarrios[] (the barrios whose centroid is within
-    the solver's ten blocks of where it hangs, its own first), stop {id, name}, lastBus {weekday,
+    the solver's walk of where it hangs, its own first), stop {id, name}, lastBus {weekday,
     saturday, sunday: {time, estimated, route, published {time, stop}} or null}, scans, createdAt,
     lastScanAt. No coordinates: the spot picks the barrio, the near barrios and the stop when the
     flyer is made, and is dropped. The last bus is computed then, once, from the DNT timetable
@@ -617,12 +629,14 @@ project checklist. Everything seeded is invented:
   exactly `solver/fixtures/invented_demo_30.json`. `scripts/demo_data.py` adds a first name and
   brings per uid, deterministically. Every uid starts with `demo-`: the rules leave no room for a
   label field on `users/{uid}`, so the id is the label.
-- Documents: `seat_facts/{seatId}` (144: 9 barrios × 4 pretexts × the 4 demo slots);
+- Documents: `seat_facts/{seatId}` (1,136: 71 barrios × 4 pretexts × the 4 demo slots, so a
+  real member in any barrio has seats; a seat's `blocksFrom` lists its own area's barrios,
+  Ciudad de la Costa's or Montevideo's, and the Costa's 144 are unchanged since #22);
   `places/demo-*` (5 invented covered public places, `data/demo/invented_places.json`);
   `users/{uid}` with the profile, `plusOneUid` on whoever brings a +1 (as the generator gives
   it) and the accepted terms; `users/{uid}/private/eligible` = `{seatIds, updatedAt}`; and
   `avoid/{uidA}_{uidB}` per report-apart pair, uids in order (one pair in the 30 set). Needs are
-  never seeded. The 30 set is 210 documents.
+  never seeded. The 30 set is 1,220 documents, the free places included.
 - Every timestamp is one fixed demo moment (`DEMO_TIME`), never the server's, so two resets leave
   identical documents (Firestore's own create and update times aside).
 - Reset deletes every Auth account and document of the project through the emulators' clear
@@ -656,7 +670,8 @@ weights and limits are in `solver/README.md`; every rule name and number is in
 - Candidate rondas are barrio × pretext × slot, one per key. A seat id is that key,
   `{barrio}_{pretext}_{slot}`, so the phone can send eligible ids before any ronda exists.
 - Hard: a person only in seats from their eligible set; slot and pretext match; distance by
-  barrio centroid ≤ 10 blocks; avoid pairs never together; one ronda each; a ronda opens only
+  barrio centroid ≤ 10 blocks (15 when the ronda is in Montevideo, chosen 2026-11-01 because its
+  barrios' centroids are 12 to 20 blocks apart); avoid pairs never together; one ronda each; a ronda opens only
   within its size bounds (fútbol 8–10, every other pretext 4–6).
 - Soft (weighted): nobody the only one of their age group (under 30, 30–59, 60+); shortfall from
   the target size (fútbol 10, truco 6, others 5); +1 pair together; ≤ 1 +1 pair per ronda;

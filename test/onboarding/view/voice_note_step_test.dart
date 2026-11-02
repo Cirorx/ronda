@@ -51,9 +51,11 @@ void main() {
         ),
       );
       final repository = _MockOnboardingRepository();
-      when(repository.startVoiceNote).thenAnswer((_) async {});
+      when(() => repository.startVoiceNote('demo-uid'))
+          .thenAnswer((_) async {});
       when(repository.discardVoiceNote).thenAnswer((_) async {});
       when(repository.voiceLevels).thenAnswer((_) => const Stream.empty());
+      when(repository.liveWords).thenAnswer((_) => const Stream.empty());
 
       await tester.pumpApp(
         RepositoryProvider<OnboardingRepository>.value(
@@ -70,11 +72,11 @@ void main() {
       await tester.pump();
 
       expect(find.byType(VoiceNoteView), findsOneWidget);
-      verifyNever(repository.startVoiceNote);
+      verifyNever(() => repository.startVoiceNote(any()));
 
       await tester.tap(find.text('Grabar'));
       await tester.pump();
-      verify(repository.startVoiceNote).called(1);
+      verify(() => repository.startVoiceNote('demo-uid')).called(1);
       await tester.pumpWidget(const SizedBox());
       verify(repository.discardVoiceNote).called(1);
     });
@@ -89,6 +91,7 @@ void main() {
       reporter = _MockErrorReporter();
       when(repository.discardVoiceNote).thenAnswer((_) async {});
       when(repository.voiceLevels).thenAnswer((_) => const Stream.empty());
+      when(repository.liveWords).thenAnswer((_) => const Stream.empty());
       when(
         () => reporter.reportFailure(
           screen: any(named: 'screen'),
@@ -125,7 +128,8 @@ void main() {
     }
 
     testWidgets('reports a recorder that fails, once', (tester) async {
-      when(repository.startVoiceNote).thenThrow(Exception('no recorder'));
+      when(() => repository.startVoiceNote(any()))
+          .thenThrow(Exception('no recorder'));
       await pumpStep(tester);
 
       await tester.tap(find.text('Grabar'));
@@ -156,7 +160,7 @@ void main() {
       (const NoMicrophoneFailure(), 'a missing microphone'),
     ]) {
       testWidgets('does not report $name', (tester) async {
-        when(repository.startVoiceNote).thenThrow(thrown);
+        when(() => repository.startVoiceNote(any())).thenThrow(thrown);
         await pumpStep(tester);
 
         await tester.tap(find.text('Grabar'));
@@ -291,6 +295,29 @@ void main() {
           find.text('No te escuchamos. Revisá el micrófono.'),
           findsNothing,
         );
+      });
+
+      testWidgets('shows the words heard so far, with their caption', (
+        tester,
+      ) async {
+        await pumpSubject(
+          tester,
+          const VoiceNoteState(
+            status: VoiceNoteStatus.recording,
+            words: 'Hola, soy Marta',
+          ),
+        );
+
+        expect(find.byType(LiveWords), findsOneWidget);
+        expect(find.text('Lo que vamos escuchando'), findsOneWidget);
+        expect(find.text('Hola, soy Marta'), findsOneWidget);
+      });
+
+      testWidgets('shows no words before any is heard', (tester) async {
+        await pumpSubject(tester, recording);
+
+        expect(find.byType(LiveWords), findsNothing);
+        expect(find.text('Lo que vamos escuchando'), findsNothing);
       });
 
       testWidgets('says when it hears nothing', (tester) async {

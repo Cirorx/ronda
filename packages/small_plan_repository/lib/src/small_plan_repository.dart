@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:calendar_client/calendar_client.dart';
 import 'package:device_store/device_store.dart';
+import 'package:live_transcript/live_transcript.dart';
 import 'package:ronda_api/ronda_api.dart';
 import 'package:small_plan_repository/src/models/models.dart';
 import 'package:small_plan_repository/src/small_plan_failure.dart';
@@ -37,6 +37,7 @@ class SmallPlanRepository {
     required this._smallPlansApi,
     required this._sharedPlansApi,
     required this._calendarClient,
+    this._liveTranscript,
     DateTime Function()? now,
     String Function()? newNoteId,
   }) : _now = now ?? DateTime.now,
@@ -48,8 +49,15 @@ class SmallPlanRepository {
   final SmallPlansApi _smallPlansApi;
   final SharedPlansApi _sharedPlansApi;
   final CalendarClient _calendarClient;
+  final LiveTranscriptClient? _liveTranscript;
   final DateTime Function() _now;
   final String Function() _newNoteId;
+
+  /// The surface the relay picks Voice Transcribe's words for.
+  static const liveSurface = 'plan';
+
+  /// The note being recorded, if any.
+  LiveVoiceNote? _note;
 
   /// The size of a RIFF/WAVE header with no samples after it.
   static const _wavHeaderBytes = 44;
@@ -204,10 +212,18 @@ class SmallPlanRepository {
     }
   }
 
-  Future<SmallPlanReading> _shape({String? text, String? path}) async {
+  Future<SmallPlanReading> _shape({
+    String? text,
+    String? transcript,
+    String? path,
+  }) async {
     final SmallPlanAnswer answer;
     try {
-      answer = await _smallPlansApi.shape(text: text, path: path);
+      answer = await _smallPlansApi.shape(
+        text: text,
+        transcript: transcript,
+        path: path,
+      );
     } on UnreadableVoiceNoteException {
       throw const SmallPlanFailure(SmallPlanFailureKind.notUnderstood);
     } on Exception {
@@ -243,12 +259,13 @@ class SmallPlanRepository {
 
   // --- By voice -----------------------------------------------------------
 
-  /// Starts a new voice note, asking for the microphone the first time.
+  /// Starts a new voice note for [uid], asking for the microphone the first
+  /// time. The words go live once `users/{uid}.terms` is seen.
   ///
   /// Throws a [SmallPlanFailure]: [SmallPlanFailureKind.noMicrophone],
   /// [SmallPlanFailureKind.microphoneDenied] or
   /// [SmallPlanFailureKind.recorderFailed].
-  Future<void> startVoiceNote() async {
+  Future<void> startVoiceNote(String uid) async {
     final bool allowed;
     final bool present;
     try {
@@ -264,10 +281,23 @@ class SmallPlanRepository {
     if (!allowed) {
       throw const SmallPlanFailure(SmallPlanFailureKind.microphoneDenied);
     }
+    final note = LiveVoiceNote(
+      recorder: _voiceRecorder,
+      client: _liveTranscript,
+    );
     try {
-      await _voiceRecorder.start();
+      await note.start(surface: liveSurface, live: _termsAccepted(uid));
     } on Exception {
       throw const SmallPlanFailure(SmallPlanFailureKind.recorderFailed);
+    }
+    _note = note;
+  }
+
+  Future<bool> _termsAccepted(String uid) async {
+    try {
+      return (await _rondaApi.readUser(uid))?.terms != null;
+    } on Exception {
+      return false;
     }
   }
 
@@ -275,13 +305,30 @@ class SmallPlanRepository {
   /// levels; never the audio.
   Stream<double> voiceLevels() => _voiceRecorder.levels();
 
+  /// What Voice Transcribe has heard so far, revised as the person talks.
+  /// Nothing comes without live transcription.
+  Stream<String> liveWords() => _note?.words ?? const Stream.empty();
+
   /// Stops and throws away the note being recorded, if any.
   Future<void> discardVoiceNote() async {
+    final note = _note;
+    _note = null;
     try {
-      await _voiceRecorder.cancel();
+      await (note?.cancel() ?? _voiceRecorder.cancel());
     } on Exception {
       // Nothing was recording; there is nothing to throw away.
     }
+  }
+
+  /// Ends the note: the WAV, and the transcript when live saw it through.
+  Future<LiveVoiceNoteResult> _stopNote() async {
+    final note = _note;
+    _note = null;
+    if (note != null) return await note.stop();
+    return LiveVoiceNoteResult(
+      wav: await _voiceRecorder.stop(),
+      transcript: null,
+    );
   }
 
   /// Stops the note and shapes what [uid] said in it into a plan.
@@ -294,17 +341,22 @@ class SmallPlanRepository {
   /// [SmallPlanFailureKind.notUnderstood] and
   /// [SmallPlanFailureKind.readFailed].
   Future<SmallPlanReading> shapeVoiceNote(String uid) async {
-    final Uint8List? wav;
+    final LiveVoiceNoteResult note;
     try {
-      wav = await _voiceRecorder.stop();
+      note = await _stopNote();
     } on Exception {
       throw const SmallPlanFailure(SmallPlanFailureKind.recorderFailed);
     }
+    final wav = note.wav;
     // A WAV header alone (44 bytes) is a note with no sound in it.
     if (wav == null || wav.length <= _wavHeaderBytes) {
       throw const SmallPlanFailure(SmallPlanFailureKind.recorderFailed);
     }
     await _requireTerms(uid);
+    // Heard live: no upload, the words go straight to be shaped.
+    if (note.transcript case final transcript?) {
+      return await _shape(transcript: transcript);
+    }
     final String path;
     try {
       path = await _rondaApi.uploadVoiceNote(

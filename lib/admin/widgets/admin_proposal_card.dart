@@ -90,15 +90,19 @@ class const AdminProposalCard({required final ProposedRonda ronda, super.key})
     );
   }
 
+  /// The farthest walk the solver allows in the ronda's barrio.
+  int get _walkBlocks =>
+      Barrio.fromId(ronda.barrioId)?.walkBlocks ?? Barrio.defaultWalkBlocks;
+
   /// The checks the approval copy names, each with whether it holds: the
   /// walk, "nadie es el único de su edad" for every age group the solver
   /// compares (always, with how many are in it), and one +1 line per member
   /// whose +1 signed up.
   List<(bool, String)> _checks(AppLocalizations l10n) => [
-    if (ronda.allWithinTenBlocks)
-      (true, l10n.adminCheckWithinTen)
+    if (ronda.allWithin(_walkBlocks))
+      (true, l10n.adminCheckWithinWalk(_walkBlocks))
     else
-      (false, l10n.adminCheckFarther),
+      (false, l10n.adminCheckFarther(_walkBlocks)),
     for (final check in ronda.ageChecks)
       if (check.kept)
         (

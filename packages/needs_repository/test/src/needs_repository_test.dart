@@ -150,14 +150,15 @@ void main() {
         seat('car', needsCar: true),
       ];
 
-      test('keeps every seat, in order, when there are no needs', () {
+      test('keeps every seat in walking distance, in order, when there are '
+          'no needs', () {
         expect(
           subject.eligibleSeatIds(Needs.none, seats),
-          equals(['near', 'medium', 'far', 'stairs', 'after-dark', 'car']),
+          equals(['near', 'medium', 'stairs', 'after-dark', 'car']),
         );
       });
 
-      test('drops far seats only when walking a lot is hard', () {
+      test('drops far seats when walking a lot is hard too', () {
         expect(
           subject.eligibleSeatIds(const Needs({Need.walkALot}), seats),
           equals(['near', 'medium', 'stairs', 'after-dark', 'car']),
@@ -167,7 +168,7 @@ void main() {
       test('drops seats with stairs when climbing stairs is hard', () {
         expect(
           subject.eligibleSeatIds(const Needs({Need.climbStairs}), seats),
-          equals(['near', 'medium', 'far', 'after-dark', 'car']),
+          equals(['near', 'medium', 'after-dark', 'car']),
         );
       });
 
@@ -175,14 +176,14 @@ void main() {
           'is hard', () {
         expect(
           subject.eligibleSeatIds(const Needs({Need.returnAfterDark}), seats),
-          equals(['near', 'medium', 'far', 'stairs', 'car']),
+          equals(['near', 'medium', 'stairs', 'car']),
         );
       });
 
       test('drops seats that need a car when the member has none', () {
         expect(
           subject.eligibleSeatIds(const Needs({Need.noCar}), seats),
-          equals(['near', 'medium', 'far', 'stairs', 'after-dark']),
+          equals(['near', 'medium', 'stairs', 'after-dark']),
         );
       });
 
@@ -280,26 +281,23 @@ void main() {
           );
         });
 
-        test('keeps far seats when only coming back at night is hard', () {
-          expect(
-            subject.eligibleSeatIds(
-              const Needs({Need.returnAfterDark}),
-              seatsFor('solymar-sur'),
-            ),
-            equals([
-              'solymar-sur_mate_sat-afternoon',
-              'solymar-sur_caminata_sat-morning',
-              'solymar-norte_mate_sun-afternoon',
-              'solymar-norte_truco_sat-afternoon',
-              'lomas-de-solymar_futbol5_sat-afternoon',
-              'lagomar-sur_mate_sat-afternoon',
-              'san-jose-de-carrasco_caminata_sun-afternoon',
-              'shangrila_mate_sat-morning',
-              'el-pinar-sur_futbol5_sat-afternoon',
-              'el-pinar-norte_caminata_sun-afternoon',
-            ]),
-          );
-        });
+        test(
+          'keeps no far seat even when only coming back at night is hard',
+          () {
+            expect(
+              subject.eligibleSeatIds(
+                const Needs({Need.returnAfterDark}),
+                seatsFor('solymar-sur'),
+              ),
+              equals([
+                'solymar-sur_mate_sat-afternoon',
+                'solymar-sur_caminata_sat-morning',
+                'solymar-norte_mate_sun-afternoon',
+                'solymar-norte_truco_sat-afternoon',
+              ]),
+            );
+          },
+        );
 
         test("measures the walk from the member's own barrio", () {
           expect(

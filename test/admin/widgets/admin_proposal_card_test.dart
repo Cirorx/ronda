@@ -88,6 +88,18 @@ void main() {
         );
       });
 
+      testWidgets('a Montevideo walk of up to 15 blocks', (tester) async {
+        await pump(
+          tester,
+          ronda([member('Ana', '60-69', blocks: 13)], barrio: 'barrio-sur'),
+        );
+
+        expect(
+          find.text('Todos viven a menos de 15 cuadras del punto'),
+          findsOneWidget,
+        );
+      });
+
       testWidgets('the checks it breaks', (tester) async {
         await pump(
           tester,
@@ -139,13 +151,13 @@ void main() {
           tester,
           ronda(
             [member('Beto', '90-99')],
-            barrio: 'pocitos',
+            barrio: 'las-piedras',
             pretext: 'ajedrez',
             slot: 'someday',
           ),
         );
 
-        expect(find.text('ajedrez · pocitos'), findsOneWidget);
+        expect(find.text('ajedrez · las-piedras'), findsOneWidget);
         expect(find.text('someday'), findsOneWidget);
         expect(find.textContaining('90-99'), findsOneWidget);
       });

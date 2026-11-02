@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
+from ronda_solver.montevideo import MONTEVIDEO_BARRIOS
+
 if TYPE_CHECKING:  # pragma: no cover
     from ronda_solver.problem import Candidate, Person, Problem
 
@@ -51,13 +53,26 @@ def same_pretext(problem: Problem, person: Person, candidate: Candidate) -> bool
 
 
 MAX_WALK_BLOCKS = 10
-NEAR_BLOCKS = 5
-"""WalkDistance: near ≤ 5 blocks, medium ≤ 10, far beyond."""
+"""The farthest walk to a ronda in Ciudad de la Costa, and anywhere not in Montevideo."""
+MONTEVIDEO_WALK_BLOCKS = 15
+"""Montevideo's barrios are small and their centroids 12 to 20 blocks apart, so at 10 hardly
+any two would meet; the owner chose 15 there (2026-11-01). A member near a border walks less."""
+
+
+def max_walk_blocks(barrio: str) -> int:
+    """The farthest walk, between barrio centroids, to a ronda in `barrio`."""
+    return MONTEVIDEO_WALK_BLOCKS if barrio in MONTEVIDEO_BARRIOS else MAX_WALK_BLOCKS
+
+
+def near_blocks(barrio: str) -> float:
+    """WalkDistance near: half the farthest walk (5 blocks, 7.5 in Montevideo)."""
+    return max_walk_blocks(barrio) / 2
 
 
 def within_ten_blocks(problem: Problem, person: Person, candidate: Candidate) -> bool:
-    """Measured between barrio centroids."""
-    return problem.blocks(person.barrio, candidate.barrio) <= MAX_WALK_BLOCKS
+    """Within the ronda's barrio's walk (`max_walk_blocks`), measured between barrio centroids.
+    The rule keeps its wire name, `withinTenBlocks`, from before Montevideo's 15."""
+    return problem.blocks(person.barrio, candidate.barrio) <= max_walk_blocks(candidate.barrio)
 
 
 SEAT_RULES = {

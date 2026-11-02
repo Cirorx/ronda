@@ -85,7 +85,7 @@ void main() {
             UserDocument(
               firstName: 'Marta',
               ageBand: '60-69',
-              barrio: 'pocitos',
+              barrio: 'las-piedras',
             ),
           ]),
         );

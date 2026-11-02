@@ -106,6 +106,15 @@ void main() {
             .called(1);
       });
 
+      test('sends the transcript heard live', () async {
+        when(() => result.data).thenReturn({'rejected': 'diet'});
+
+        await subject.shape(transcript: 'mate el sábado');
+
+        verify(() => callable.call<Object?>({'transcript': 'mate el sábado'}))
+            .called(1);
+      });
+
       test('throws an $UnreadableVoiceNoteException when nothing could be '
           'read', () {
         when(() => callable.call<Object?>(any<Object?>())).thenThrow(

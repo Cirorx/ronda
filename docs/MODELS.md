@@ -41,6 +41,38 @@ Notes:
 - Standard mode doesn't train on our data. Zero data retention needs Meta's sales team.
 - Uruguay isn't on the restricted list; the first paid call confirms access.
 
+## Voice Transcribe in real time (#64, `relay/`, `packages/live_transcript`)
+
+Measured 2026-11-01 from Uruguay with `scripts/smoke/s9_realtime.py` on an invented 10.5 s
+note streamed at real time in 80 ms frames (`PCM_16KHZ`, `PUSH_TO_TALK`, `CUMULATIVE`,
+Spanish bias, Ronda's keywords); the eval in `evals/voice/` repeats it and keeps the numbers:
+- connect 1.2 s (TLS handshake from Montevideo), ack right after the handshake frame;
+- **first words 0.7–0.8 s after the first audio frame**, then a revised cumulative partial every
+  0.2–0.6 s (24–27 per note);
+- **final transcript 0.24 s after `endStream`**, close code 1000; the transcript matched the
+  reference word for word, batch missed one word (WER 0.06).
+- Batch (`POST /v1/asr/transcribe`, same note): 3.2 s for the whole round trip. So live cuts the
+  wait after "Terminé" from ~4 s + upload to ~0.3 s, leaving Spark's ~2 s.
+
+Protocol as observed (docs: dev.meta.ai/docs/speech-to-text): the key goes **only** in the first
+JSON frame (`authorization.accessToken: "Bearer …"`; the HTTP header is ignored); audio as
+binary frames paced at real time (no more than 5 s ahead, idle input closes the session);
+`{"type":"endStream"}` ends input and the server flushes, then closes. Close codes: 1000 done,
+1008 bad request or pacing, 1011 backend (retry), 1013 rate limited (256 concurrent streams,
+16,000 per hour per tenant). Sessions last up to 60 min. Billing $0.18/h, same as batch.
+
+**Decision: a relay, not a client token.** Meta offers no short-lived client credential for the
+realtime endpoint: the only thing it accepts is the Model API key inside the handshake frame, so
+a phone that spoke to Meta directly would hold the key. Python Functions are WSGI and can't hold
+a WebSocket, so the relay is a small Cloud Run service (`relay/main.py`, `websockets` +
+`firebase-admin`, `southamerica-east1`, `scripts/deploy_relay.sh`): it verifies the member's
+Firebase ID token and `users/{uid}.terms`, opens the Meta session with the key from Secret
+Manager, pipes the PCM one way and only `transcript` events the other, caps a note at 65 s of
+audio, stores nothing and logs session ids, bytes and timings only. The app reaches it through
+`--dart-define=LIVE_TRANSCRIPT_URL`; with no URL (the default) nothing changes: the note is
+uploaded and read by `extract` as before, which is also the fallback whenever live fails
+(connect, ready, backlog, a dropped socket, a late final) and when `read_transcript` fails.
+
 ## Open weights
 
 | Model | Where | Use |
@@ -83,8 +115,8 @@ Counts toward "Use of Meta AI tooling" (25% of the score); mention what was used
 ## Smoke tests (day 1, tests 1–5; day 2, tests 6–7)
 Scripted in `scripts/smoke/` (`uv run scripts/smoke/s1_access.py`, `s2_structured.py`,
 `s3_transcribe.py note.wav`, `s4_baseten_tools.py`, `s5_sam.py photo.png out/`, `s6_image.py`,
-`s7_public_data.py`, and `s8_donde_queda.py`, run with `functions/venv/bin/python`). They read keys
-from the environment or `.env` and never print them. Log latency and cost of each in
+`s7_public_data.py`, and `s8_donde_queda.py` and `s10_barrios.py`, run with
+`functions/venv/bin/python`). They read keys from the environment or `.env` and never print them. Log latency and cost of each in
 `notes/NOW.md`.
 
 Results from Uruguay, 2026-10-28:
@@ -95,6 +127,13 @@ Results from Uruguay, 2026-10-28:
   `reasoning_effort: "low"` filled the strict sign-up schema (app ids as enums, `unknown` for
   what wasn't said) right on a 13 s invented note in ~2 s, against ~6 s at the default. The
   whole callable on the emulator: 7 s (transcribe ~4 s, fields ~2 s, upload and delete).
+- 10 (`s10_barrios.py [note.wav]`, 2026-11-01): Montevideo's 62 barrios next to the Costa's
+  nine. The strict `Signup` with a 72-value barrio enum (71 ids and `unknown`) still parsed on
+  every call, at `reasoning_effort: "low"` in 2–5 s (the longer prompt costs about a second over
+  the nine-barrio one). Typed: "Barrio Sur" → `barrio-sur`, "Bella Vista" →
+  `capurro-bella-vista`, "Malvín Norte" → `malvin-norte`, "Shangrilá" → `shangrila`, "Colón"
+  alone → unknown. Voice Transcribe took all 109 keywords: a 7.5 s synthetic note (macOS
+  `say`) transcribed in 2.7 s with "Barrio Sur" spelled right, then `barrio-sur`.
 - 3: a 10 s synthetic note in 3–5 s. `languageBias: ["Spanish"]` gave the cleaner transcript;
   auto-detect repeated words. Real rioplatense notes are still #21.
 - 4: `-1026` called the tool with valid arguments at low and xhigh, plain and streamed, 1–3 s,

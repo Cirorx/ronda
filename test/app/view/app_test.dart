@@ -820,7 +820,8 @@ void main() {
 
       testWidgets('by recording the terms and opening $OnboardingPage once '
           'someone without a profile signs in', (tester) async {
-        when(onboardingRepository.startVoiceNote).thenAnswer((_) async {});
+        when(() => onboardingRepository.startVoiceNote(any()))
+            .thenAnswer((_) async {});
         when(onboardingRepository.discardVoiceNote).thenAnswer((_) async {});
         await pumpSignedOut(tester);
         await tester.tap(voiceDoor());

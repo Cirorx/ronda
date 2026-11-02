@@ -27,7 +27,7 @@ callable refused), `full` or `alreadyIn` (`add_to_ronda` only), or `other`.
   (`UnseatedPerson`: first name, barrio, slots, pretexts), `createdAt`, and `rejectedReason`, the
   solver's es-419 sentence on why the next-best grouping lost.
 - `ProposedRonda`: seat, barrio, pretext and slot ids, the members and, once approved, `rondaId`;
-  `allWithinTenBlocks` and `ageChecks` (one `AgeGroupCheck` per `AgeGroup`, the solver's three)
+  `allWithin(maxBlocks)` and `ageChecks` (one `AgeGroupCheck` per `AgeGroup`, the solver's three)
   back the approval checks.
 - `RondaCandidates`, `Candidate` (with `CandidateWarning`s) and `AddedToRonda`: "Sumar a esta
   ronda".

@@ -174,7 +174,7 @@ void main() {
                 UnseatedPerson(
                   uid: 'x',
                   firstName: 'Xime',
-                  barrioId: 'pocitos',
+                  barrioId: 'las-piedras',
                   slotIds: ['someday'],
                   pretextIds: [],
                 ),
@@ -188,7 +188,7 @@ void main() {
           find.text('El Pinar Norte · Sábado a la tarde, Martes a la noche'),
           findsOneWidget,
         );
-        expect(find.text('pocitos · someday'), findsOneWidget);
+        expect(find.text('las-piedras · someday'), findsOneWidget);
       });
 
       testWidgets("the pilot's numbers at the bottom", (tester) async {

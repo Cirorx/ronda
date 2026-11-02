@@ -193,6 +193,72 @@ void main() {
       });
     });
 
+    group('readTranscript', () {
+      test(
+        'calls read_transcript with the text and a one-minute timeout',
+        () async {
+          when(() => result.data).thenReturn(<Object?, Object?>{});
+
+          await subject.readTranscript('Hola, soy Marta.');
+
+          final options =
+              verify(
+                    () => functions.httpsCallable(
+                      'read_transcript',
+                      options: captureAny(named: 'options'),
+                    ),
+                  ).captured.single
+                  as HttpsCallableOptions;
+          expect(options.timeout, equals(RondaApi.readTranscriptTimeout));
+          verify(() => callable.call<Object?>({'text': 'Hola, soy Marta.'}))
+              .called(1);
+        },
+      );
+
+      test('returns the fields the callable read', () async {
+        when(() => result.data).thenReturn(<Object?, Object?>{
+          'firstName': 'Marta',
+          'ageBand': '60-69',
+        });
+
+        expect(
+          await subject.readTranscript('Hola, soy Marta.'),
+          equals(const ExtractedFields(firstName: 'Marta', ageBand: '60-69')),
+        );
+      });
+
+      test('returns no fields when the answer is not a map', () async {
+        when(() => result.data).thenReturn(null);
+
+        expect(
+          await subject.readTranscript('x'),
+          equals(const ExtractedFields()),
+        );
+      });
+
+      test('throws $UnreadableVoiceNoteException on invalid-argument', () {
+        when(() => callable.call<Object?>(any<Object?>())).thenThrow(
+          FirebaseFunctionsException(message: 'm', code: 'invalid-argument'),
+        );
+
+        expect(
+          () => subject.readTranscript('x'),
+          throwsA(isA<UnreadableVoiceNoteException>()),
+        );
+      });
+
+      test('passes any other callable failure through', () {
+        when(() => callable.call<Object?>(any<Object?>())).thenThrow(
+          FirebaseFunctionsException(message: 'm', code: 'unavailable'),
+        );
+
+        expect(
+          () => subject.readTranscript('x'),
+          throwsA(isA<FirebaseFunctionsException>()),
+        );
+      });
+    });
+
     group('extract', () {
       test('calls extract with the path and a two-minute timeout', () async {
         when(() => result.data).thenReturn(<Object?, Object?>{});

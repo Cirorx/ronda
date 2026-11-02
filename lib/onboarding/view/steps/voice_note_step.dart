@@ -327,6 +327,9 @@ class const _Recording() extends StatelessWidget {
     final silent = context.select<VoiceNoteCubit, bool>(
       (cubit) => cubit.state.silent,
     );
+    final words = context.select<VoiceNoteCubit, String>(
+      (cubit) => cubit.state.words,
+    );
     String clock(Duration duration) =>
         '${duration.inMinutes}:'
         '${(duration.inSeconds % 60).toString().padLeft(2, '0')}';
@@ -373,6 +376,7 @@ class const _Recording() extends StatelessWidget {
               heard: heard,
               length: VoiceNoteCubit.waveformLength,
             ),
+            if (words.isNotEmpty) LiveWords(words: words),
             // Each second's tick fills on, rather than stepping.
             SpringBuilder(
               value: elapsed.inSeconds / VoiceNoteCubit.limit.inSeconds,

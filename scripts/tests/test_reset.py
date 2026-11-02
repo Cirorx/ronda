@@ -96,9 +96,9 @@ def test_resetting_twice_with_the_documented_command_leaves_identical_state():
     first, second = states
     assert first == second
     assert first == demo_data.documents(30)
-    # 144 seat facts, 30 profiles, 30 eligible documents, 1 avoid pair, 5 covered places and
+    # 1,136 seat facts, 30 profiles, 30 eligible documents, 1 avoid pair, 5 covered places and
     # 18 free ones
-    assert len(first) == 228
+    assert len(first) == 1220
 
 
 def test_reset_after_the_two_hundred_set_leaves_only_the_thirty():

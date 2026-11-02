@@ -49,9 +49,9 @@ import last_bus
 import seed
 
 sys.path.append(str(demo_data.ROOT / "solver"))
-from ronda_solver.demo import DEMO_BARRIOS
+from ronda_solver.barrios import BARRIO_NAMES, CENTROIDS
 from ronda_solver.geo import blocks_between
-from ronda_solver.rules import MAX_WALK_BLOCKS
+from ronda_solver.rules import max_walk_blocks
 
 URUGUAY = ZoneInfo("America/Montevideo")
 ID_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyz"
@@ -60,18 +60,6 @@ can't be mistaken. functions/cerca_tuyo.py accepts exactly eight of `[a-z0-9]`."
 ID_LENGTH = 8
 SLOT = re.compile(r"(mon|tue|wed|thu|fri|sat|sun)-(morning|afternoon|evening)")
 
-BARRIO_NAMES = {
-    "shangrila": "Shangrilá",
-    "san-jose-de-carrasco": "San José de Carrasco",
-    "lagomar-sur": "Lagomar Sur",
-    "lagomar-norte": "Lagomar Norte",
-    "solymar-sur": "Solymar Sur",
-    "solymar-norte": "Solymar Norte",
-    "lomas-de-solymar": "Lomas de Solymar",
-    "el-pinar-sur": "El Pinar Sur",
-    "el-pinar-norte": "El Pinar Norte",
-}
-"""The app's barrio names (lib/l10n/arb/app_es.arb)."""
 
 HEADLINES = {
     "mate": "¿Te sumás a un mate?",
@@ -116,18 +104,18 @@ def flyer_text(pretext: str, slot: str | None, barrio: str) -> flyer_pdf.FlyerTe
 
 def barrio_at(spot: tuple[float, float]) -> str:
     """The barrio whose centroid is nearest `spot`."""
-    return min(DEMO_BARRIOS, key=lambda barrio: blocks_between(spot, DEMO_BARRIOS[barrio]))
+    return min(CENTROIDS, key=lambda barrio: blocks_between(spot, CENTROIDS[barrio]))
 
 
 def near_barrios(spot: tuple[float, float], barrio: str) -> list[str]:
     """`barrio`, then every other barrio whose centroid is within walking distance of `spot`
-    (the solver's ten blocks), nearest first."""
+    (the solver's walk to a ronda there: ten blocks, fifteen in Montevideo), nearest first."""
     others = sorted(
-        (b for b in DEMO_BARRIOS if b != barrio),
-        key=lambda b: blocks_between(spot, DEMO_BARRIOS[b]),
+        (b for b in CENTROIDS if b != barrio),
+        key=lambda b: blocks_between(spot, CENTROIDS[b]),
     )
     return [barrio] + [
-        b for b in others if blocks_between(spot, DEMO_BARRIOS[b]) <= MAX_WALK_BLOCKS
+        b for b in others if blocks_between(spot, CENTROIDS[b]) <= max_walk_blocks(barrio)
     ]
 
 
@@ -196,7 +184,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--label", required=True, help="the spot, for the admin only")
     parser.add_argument("--pretext", default="mate", choices=list(HEADLINES))
     parser.add_argument("--slot", help="the day and band it announces, as in sat-afternoon")
-    parser.add_argument("--barrio", choices=list(DEMO_BARRIOS), help="default: the nearest")
+    parser.add_argument("--barrio", choices=list(CENTROIDS), help="default: the nearest")
     parser.add_argument("--stop", help="a GTFS stop_id; default: the nearest stop")
     parser.add_argument("--gtfs", default=last_bus.DNT_GTFS, help="the timetable: URL or zip")
     parser.add_argument("--base-url", help="default: https://{project}.firebaseapp.com")

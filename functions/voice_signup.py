@@ -19,6 +19,8 @@ from typing import Any, Protocol
 import httpx
 from pydantic import BaseModel, ConfigDict
 
+from ronda_solver.barrios import BARRIO_NAMES
+
 META_BASE = "https://api.meta.ai/v1"
 TRANSCRIBE_MODEL = "muse-voice-transcribe-1.0"
 FIELDS_MODEL = "muse-spark-1.3"
@@ -27,21 +29,14 @@ FIELDS_MODEL = "muse-spark-1.3"
 MAX_SECONDS = 65
 MIN_SECONDS = 1
 MAX_BYTES = 3_000_000
+# A minute of speech is well under this; a live transcript longer than it is cut.
+MAX_TRANSCRIPT_CHARS = 2_000
 
 log = logging.getLogger(__name__)
 
-# The ids the app and the solver store (packages/profile_repository/lib/src/models/).
-BARRIOS = {
-    "shangrila": "Shangrilá",
-    "san-jose-de-carrasco": "San José de Carrasco",
-    "lagomar-sur": "Lagomar Sur",
-    "lagomar-norte": "Lagomar Norte",
-    "solymar-sur": "Solymar Sur",
-    "solymar-norte": "Solymar Norte",
-    "lomas-de-solymar": "Lomas de Solymar",
-    "el-pinar-sur": "El Pinar Sur",
-    "el-pinar-norte": "El Pinar Norte",
-}
+# The ids the app and the solver store (packages/profile_repository/lib/src/models/barrio.dart),
+# Ciudad de la Costa's and Montevideo's.
+BARRIOS = BARRIO_NAMES
 AGE_BANDS = ["18-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80+"]
 PRETEXTS = {
     "mate": "mate en la rambla",
@@ -67,6 +62,34 @@ KEYWORDS = [
     "Solymar",
     "Lagomar",
     "El Pinar",
+    # The places Montevideo's barrios join two of, said on their own.
+    "Parque Batlle",
+    "Villa Dolores",
+    "Maroñas",
+    "Parque Guaraní",
+    "Punta de Rieles",
+    "Bella Italia",
+    "Mercado Modelo",
+    "Bolívar",
+    "Pérez Castellanos",
+    "Toledo Chico",
+    "Peñarol",
+    "Casabó",
+    "Pajas Blancas",
+    "Tomkinson",
+    "Prado",
+    "Nueva Savona",
+    "Capurro",
+    "Bella Vista",
+    "Villa Muñoz",
+    "Tres Ombúes",
+    "Pueblo Victoria",
+    "Abayubá",
+    "Colón",
+    "Lezica",
+    "Melilla",
+    "Villa García",
+    "Montevideo",
     "rambla",
     "mate",
     "truco",
@@ -111,7 +134,10 @@ vacía.
 - first_name: solo el nombre de pila, como lo dijo. Vacío si no lo dijo.
 - age_band: la década. "sesenta y pico" o "tengo 64" es 60-69. Menos de 18 es unknown.
 - barrio: uno de estos: {", ".join(f"{k} ({v})" for k, v in BARRIOS.items())}.
-  Si dice solo "Solymar", "Lagomar" o "El Pinar" sin Norte o Sur, unknown.
+  Si nombra uno de los dos lugares de un barrio ("Bella Vista" es capurro-bella-vista,
+  "Bolívar" es mercado-modelo-bolivar), ese barrio. "Malvín" y "Carrasco" solos son malvin y
+  carrasco. Si dice solo "Solymar", "Lagomar" o "El Pinar" sin Norte o Sur, o solo "Colón",
+  unknown.
 - pretexts: lo que le gustaría hacer: {", ".join(f"{k} ({v})" for k, v in PRETEXTS.items())}.
 - slots: día y franja, como día-franja. Días: mon lun, tue mar, wed mié, thu jue, fri vie,
   sat sáb, sun dom. Franjas: morning (mañana, de 9 a 12), afternoon (tarde o tardecita, de 14
@@ -223,6 +249,35 @@ def read_fields(transcript: str, *, client: Any) -> dict[str, Any]:
         "slots": list(dict.fromkeys(str(s) for s in signup.slots)),
         "brings": list(dict.fromkeys(str(b) for b in signup.brings)),
     }
+
+
+def read_transcript(
+    *,
+    uid: str,
+    text: object,
+    user: dict[str, Any] | None,
+    client: Any,
+) -> dict[str, Any]:
+    """The `read_transcript` callable: the sign-up fields from words Voice Transcribe already
+    heard live (`relay/`), the same way `read_voice_note` reads them after transcribing.
+
+    `user` is `users/{uid}`; the terms must be accepted, as for a note. Raises `BadVoiceNote`
+    when there are no words to read. Nothing is stored and the words are never logged.
+    """
+    if not (user or {}).get("terms"):
+        raise TermsMissing(uid)
+    words = " ".join(text.split()) if isinstance(text, str) else ""
+    if not words:
+        raise BadVoiceNote("nothing heard")
+    started = time.perf_counter()
+    fields = read_fields(words[:MAX_TRANSCRIPT_CHARS], client=client)
+    log.info(
+        "read_transcript %s: %d chars, fields %d ms",
+        uid,
+        len(words),
+        (time.perf_counter() - started) * 1000,
+    )
+    return fields
 
 
 def note_uid(path: object) -> str:

@@ -1,0 +1,179 @@
+{
+ "note": {
+  "seconds": 10.4624375,
+  "rate": 16000,
+  "frameMs": 80
+ },
+ "audioStartMs": 1560,
+ "endStreamMs": 12319,
+ "events": [
+  {
+   "type": "transcript",
+   "transcript": "Hola,",
+   "final": false,
+   "audioProcessedMs": 560,
+   "atMs": 2286
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta,",
+   "final": false,
+   "audioProcessedMs": 1360,
+   "atMs": 3132
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo",
+   "final": false,
+   "audioProcessedMs": 2000,
+   "atMs": 3729
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y",
+   "final": false,
+   "audioProcessedMs": 2480,
+   "atMs": 4236
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro",
+   "final": false,
+   "audioProcessedMs": 2720,
+   "atMs": 4468
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y",
+   "final": false,
+   "audioProcessedMs": 3440,
+   "atMs": 5231
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en",
+   "final": false,
+   "audioProcessedMs": 3760,
+   "atMs": 5541
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar",
+   "final": false,
+   "audioProcessedMs": 4080,
+   "atMs": 5956
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte.",
+   "final": false,
+   "audioProcessedMs": 4320,
+   "atMs": 6114
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me",
+   "final": false,
+   "audioProcessedMs": 4880,
+   "atMs": 6675
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me gustaría",
+   "final": false,
+   "audioProcessedMs": 5360,
+   "atMs": 7168
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me gustaría juntarme",
+   "final": false,
+   "audioProcessedMs": 5920,
+   "atMs": 7760
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me gustaría juntarme a tomar",
+   "final": false,
+   "audioProcessedMs": 6320,
+   "atMs": 8165
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me gustaría juntarme a tomar mate en",
+   "final": false,
+   "audioProcessedMs": 6640,
+   "atMs": 8566
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me gustaría juntarme a tomar mate en la",
+   "final": false,
+   "audioProcessedMs": 6960,
+   "atMs": 8806
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me gustaría juntarme a tomar mate en la rambla los",
+   "final": false,
+   "audioProcessedMs": 7360,
+   "atMs": 9244
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me gustaría juntarme a tomar mate en la rambla los sábados",
+   "final": false,
+   "audioProcessedMs": 7600,
+   "atMs": 9486
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me gustaría juntarme a tomar mate en la rambla los sábados de",
+   "final": false,
+   "audioProcessedMs": 8000,
+   "atMs": 9950
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me gustaría juntarme a tomar mate en la rambla los sábados de tarde.",
+   "final": false,
+   "audioProcessedMs": 8240,
+   "atMs": 10186
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me gustaría juntarme a tomar mate en la rambla los sábados de tarde. Puedo",
+   "final": false,
+   "audioProcessedMs": 9040,
+   "atMs": 10999
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me gustaría juntarme a tomar mate en la rambla los sábados de tarde. Puedo llevar el",
+   "final": false,
+   "audioProcessedMs": 9280,
+   "atMs": 11216
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me gustaría juntarme a tomar mate en la rambla los sábados de tarde. Puedo llevar el termo y unos",
+   "final": false,
+   "audioProcessedMs": 10000,
+   "atMs": 11955
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me gustaría juntarme a tomar mate en la rambla los sábados de tarde. Puedo llevar el termo y unos bizcochos.",
+   "final": false,
+   "audioProcessedMs": 10240,
+   "atMs": 12261
+  },
+  {
+   "type": "transcript",
+   "transcript": "Hola, soy Marta, tengo sesenta y cuatro años y vivo en Solymar Norte. Me gustaría juntarme a tomar mate en la rambla los sábados de tarde. Puedo llevar el termo y unos bizcochos.",
+   "final": true,
+   "audioProcessedMs": 10480,
+   "atMs": 12569
+  }
+ ]
+}

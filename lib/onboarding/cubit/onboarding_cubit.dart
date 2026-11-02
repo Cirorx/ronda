@@ -242,6 +242,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
           walkDistance: WalkDistance.forMember(
             memberBarrio: barrio.id,
             blocksFrom: seat.blocksFrom,
+            maxBlocks: barrio.walkBlocks,
           ),
           hasStairs: seat.hasStairs,
           endsAfterDark: seat.endsAfterDark,

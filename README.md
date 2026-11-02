@@ -5,7 +5,7 @@
 *Five neighbours a few blocks from home, the same day every week. You say "voy"; Ronda does the rest.*
 
 Ronda keeps the same small group of neighbours meeting every week around one pretext: mate on the
-rambla, truco, fútbol 5. It is built in Ciudad de la Costa, Uruguay, for the
+rambla, truco, fútbol 5. It is built in Ciudad de la Costa and Montevideo, Uruguay, for the
 [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon)
 (indie track, "Build for Your World"), 27 October – 4 November 2026.
 
@@ -33,14 +33,14 @@ long enough for neighbours to become people you'd miss.
    plan, the bench when someone can't come, and the person you chose writing to you if you miss one.
 5. **Then Ronda goes quiet.** The group should outlive the app.
 
-Within 10 blocks · 5–6 people (10 for fútbol 5) · bring one friend · same slot all season ·
+Within 10 blocks (15 in Montevideo) · 5–6 people (10 for fútbol 5) · bring one friend · same slot all season ·
 leave or switch without explaining · free: **Ronda nunca pide plata**.
 
 ## Meta models in the product
 
 | Model | Where it runs | What it does in Ronda |
 |---|---|---|
-| Muse Voice Transcribe | Meta Model API | Turns a sign-up voice note in rioplatense Spanish into text |
+| Muse Voice Transcribe | Meta Model API | Turns a sign-up voice note in rioplatense Spanish into text; in **realtime mode** (`wss://…/asr/realtime`, through a relay of ours that holds the key) the words show while the neighbour talks, so only Spark's step is left when they stop. Measured in [`evals/voice`](evals/voice/RESULTS.md) |
 | Muse Spark 1.3 | Meta Model API | Turns that text into fields the member checks and edits |
 | Muse Spark Open | Baseten | The organiser agent: forecast, sunset, last bus, RSVPs, the bench, proposals to the host |
 | SAM 3.1 | Meta Model API | Cuts the group's things (termo, mate, mazo) out of a photo for a flyer |
@@ -112,7 +112,8 @@ Setup instructions arrive with the first code on 27 October.
 - Weather: [Open-Meteo](https://open-meteo.com/) (CC BY 4.0)
 - Bus timetables: Dirección Nacional de Transporte, metropolitan GTFS, via
   [catalogodatos.gub.uy](https://catalogodatos.gub.uy/) ("Licencia de DAG de Uruguay")
-- Places: © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL)
+- Places, and the point of each Montevideo barrio (`scripts/montevideo_barrios.py`): ©
+  [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL)
 - All people and data in the mockups and seeds are invented.
 
 ## Sources

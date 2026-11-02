@@ -167,7 +167,7 @@ void main() {
 
       for (final (name, change) in [
         ('an unknown age band', {'ageBand': '20s'}),
-        ('an unknown barrio', {'barrio': 'pocitos'}),
+        ('an unknown barrio', {'barrio': 'las-piedras'}),
         ('an empty first name', {'firstName': ''}),
         ('a missing list', {'brings': null}),
       ]) {

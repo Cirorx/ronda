@@ -59,7 +59,7 @@ from pydantic import BaseModel, ConfigDict
 import mate_flyer
 import rsvp
 from organiser import gates
-from ronda_solver.demo import DEMO_BARRIOS
+from ronda_solver.barrios import CENTROIDS
 from ronda_solver.geo import metres_between
 from voice_signup import META_BASE
 
@@ -341,7 +341,7 @@ def came_close(pin: dict, guesses: dict[str, dict]) -> tuple[int, int]:
 
 def area(ronda: dict) -> dict | None:
     """The map's centre and zoom: the ronda's barrio centroid, never a member's place."""
-    centroid = DEMO_BARRIOS.get(ronda.get("barrio") or "")
+    centroid = CENTROIDS.get(ronda.get("barrio") or "")
     if centroid is None:
         return None
     return {"lat": centroid[0], "lng": centroid[1], "zoom": MAP_ZOOM}

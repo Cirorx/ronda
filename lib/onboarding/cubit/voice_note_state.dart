@@ -70,6 +70,10 @@ final class const VoiceNoteState({
   /// [VoiceNoteCubit.silentAfter].
   final bool silent = false,
 
+  /// What Voice Transcribe has heard so far, live, revised as the person
+  /// talks. Empty without live transcription.
+  final String words = '',
+
   /// What failed, once [VoiceNoteStatus.failed].
   final VoiceNoteFailure? failure,
 
@@ -83,6 +87,7 @@ final class const VoiceNoteState({
     List<double>? levels,
     int? heard,
     bool? silent,
+    String? words,
   }) => VoiceNoteState(
     status: status,
     elapsed: elapsed ?? this.elapsed,
@@ -90,6 +95,7 @@ final class const VoiceNoteState({
     levels: levels ?? this.levels,
     heard: heard ?? this.heard,
     silent: silent ?? this.silent,
+    words: words ?? this.words,
     failure: failure,
     failureCode: failureCode,
   );
@@ -102,6 +108,7 @@ final class const VoiceNoteState({
     levels,
     heard,
     silent,
+    words,
     failure,
     failureCode,
   ];

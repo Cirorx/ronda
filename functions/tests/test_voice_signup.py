@@ -219,6 +219,17 @@ class TestSchema:
         assert len(v.SlotId) == 21
         assert {a.value for a in v.AgeBand} == {*v.AGE_BANDS, v.UNKNOWN}
 
+    def test_offers_montevideo_s_barrios_next_to_the_costa_s(self):
+        assert len(v.Barrio) == 72
+        assert v.Barrio("barrio-sur") in v.Barrio
+        assert "barrio-sur (Barrio Sur)" in v.INSTRUCTIONS
+        assert {"Barrio Sur", "Shangrilá", "Bella Vista"} <= set(v.KEYWORDS)
+
+    def test_reads_a_montevideo_barrio_into_its_id(self):
+        client, _ = spark_returning(GRACIELA.model_copy(update={"barrio": v.Barrio("barrio-sur")}))
+
+        assert v.read_fields("Vivo en Barrio Sur", client=client)["barrio"] == "barrio-sur"
+
 
 class TestNoteUid:
     def test_reads_the_uid_of_a_note_path(self):
@@ -296,3 +307,45 @@ class TestReadVoiceNote:
         with pytest.raises(FileNotFoundError):
             self.read(blob)
         assert blob.deleted
+
+
+class TestReadTranscript:
+    def test_reads_the_fields_from_words_heard_live(self):
+        client, calls = spark_returning(GRACIELA)
+
+        fields = v.read_transcript(
+            uid=UID, text="  Hola,  soy\nGraciela ", user=USER, client=client
+        )
+
+        assert fields["firstName"] == "Graciela"
+        assert fields["barrio"] == "solymar-norte"
+        assert calls[0]["messages"][1]["content"] == "Hola, soy Graciela"
+
+    def test_cuts_a_transcript_longer_than_the_limit(self):
+        client, calls = spark_returning(GRACIELA)
+
+        v.read_transcript(uid=UID, text="a" * 3000, user=USER, client=client)
+
+        assert len(calls[0]["messages"][1]["content"]) == v.MAX_TRANSCRIPT_CHARS
+
+    def test_refuses_a_caller_who_has_not_accepted_the_terms(self):
+        client, calls = spark_returning(GRACIELA)
+
+        for user in (None, {}, {"terms": None}):
+            with pytest.raises(v.TermsMissing):
+                v.read_transcript(uid=UID, text="Hola", user=user, client=client)
+        assert calls == []
+
+    @pytest.mark.parametrize("text", [None, "", "   \n", 5, ["Hola"]])
+    def test_nothing_heard_is_a_bad_note(self, text):
+        client, calls = spark_returning(GRACIELA)
+
+        with pytest.raises(v.BadVoiceNote):
+            v.read_transcript(uid=UID, text=text, user=USER, client=client)
+        assert calls == []
+
+    def test_a_failing_model_is_unavailable(self):
+        client, _ = spark_returning(error=RuntimeError("down"))
+
+        with pytest.raises(v.ModelUnavailable):
+            v.read_transcript(uid=UID, text="Hola", user=USER, client=client)

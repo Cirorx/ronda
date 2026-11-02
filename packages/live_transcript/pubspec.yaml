@@ -1,0 +1,21 @@
+name: live_transcript
+description: "Shows a neighbour's words while they talk: streams the recorder's samples to Ronda's relay in front of Voice Transcribe's realtime mode and hands back the transcript as it grows."
+version: 0.1.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ^3.47.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  voice_recorder:
+    path: ../voice_recorder
+  web_socket_channel: ^3.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+  very_good_analysis: ^11.0.0

@@ -107,11 +107,9 @@ class const ProposedRonda({
   /// {@macro proposed_ronda}
   this;
 
-  /// The walk the solver allows at most, in blocks.
-  static const maxBlocks = 10;
-
-  /// Whether every member lives within [maxBlocks] of the ronda's barrio.
-  bool get allWithinTenBlocks =>
+  /// Whether every member lives within [maxBlocks] of the ronda's barrio:
+  /// the walk the solver allows there (10 blocks, 15 in Montevideo).
+  bool allWithin(num maxBlocks) =>
       members.every((member) => member.distanceBlocks <= maxBlocks);
 
   /// "Nadie es el único de su edad", for every [AgeGroup] the solver

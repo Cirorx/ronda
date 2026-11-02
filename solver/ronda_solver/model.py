@@ -62,7 +62,7 @@ class RondaModel:
         )
 
     def _seat_variables(self):
-        """Every hard seat rule (eligible seat, slot, pretext, ≤ 10 blocks), applied in one place:
+        """Every hard seat rule (eligible seat, slot, pretext, walk), applied in one place:
         a seat variable exists only where all of them pass. A candidate that fewer people may join
         than its floor can never open, so it gets no variables at all."""
         for c in self.problem.candidates:

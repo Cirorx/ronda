@@ -1,5 +1,6 @@
 export 'cubit/cuaderno_card_cubit.dart';
 export 'cubit/cuaderno_cubit.dart';
+export 'cubit/cuaderno_hook.dart';
 export 'cubit/erase_cuaderno_cubit.dart';
 export 'cubit/line_voice_cubit.dart';
 export 'view/cuaderno_page.dart';
