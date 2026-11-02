@@ -69,4 +69,12 @@ void main() {
       expect(es.languageName(null), 'Como el teléfono');
     });
   });
+
+  group('AppLanguageLocale', () {
+    test('pins rioplatense Spanish, English, or nothing', () {
+      expect(AppLanguage.spanish.locale, const Locale('es', '419'));
+      expect(AppLanguage.english.locale, const Locale('en'));
+      expect((null as AppLanguage?).locale, isNull);
+    });
+  });
 }

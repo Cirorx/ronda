@@ -1,6 +1,5 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/widgets.dart';
 import 'package:profile_repository/profile_repository.dart';
 
 /// The language Ronda shows: the one picked on this phone, or, with none
@@ -9,13 +8,6 @@ class const LanguageState({
   /// The picked language; `null` follows the phone.
   final AppLanguage? language,
 }) extends Equatable {
-  /// The locale the app is pinned to, or `null` to follow the phone.
-  Locale? get locale => switch (language) {
-    AppLanguage.spanish => const Locale('es', '419'),
-    AppLanguage.english => const Locale('en'),
-    null => null,
-  };
-
   @override
   List<Object?> get props => [language];
 }

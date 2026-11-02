@@ -174,9 +174,9 @@ class _AppViewState extends State<AppView> {
       darkTheme: AppTheme.dark,
       localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      locale: context.select<LanguageCubit, Locale?>(
-        (cubit) => cubit.state.locale,
-      ),
+      locale: context
+          .select<LanguageCubit, AppLanguage?>((cubit) => cubit.state.language)
+          .locale,
       localeListResolutionCallback: (locales, _) => resolveAppLocale(locales),
       routerConfig: _router,
     );

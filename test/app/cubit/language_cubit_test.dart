@@ -1,5 +1,4 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:profile_repository/profile_repository.dart';
@@ -60,19 +59,5 @@ void main() {
       act: (cubit) => cubit.languagePicked(AppLanguage.english),
       expect: () => [const LanguageState(language: AppLanguage.english)],
     );
-  });
-
-  group(LanguageState, () {
-    test('pins rioplatense Spanish, English, or nothing', () {
-      expect(
-        const LanguageState(language: AppLanguage.spanish).locale,
-        const Locale('es', '419'),
-      );
-      expect(
-        const LanguageState(language: AppLanguage.english).locale,
-        const Locale('en'),
-      );
-      expect(const LanguageState().locale, isNull);
-    });
   });
 }
