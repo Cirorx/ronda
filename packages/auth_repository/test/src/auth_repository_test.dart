@@ -17,6 +17,10 @@ class _MockUserCredential extends Mock implements firebase_auth.UserCredential;
 
 class _MockLinkOpener extends Mock implements LinkOpener;
 
+class _MockFirebaseUser extends Mock implements firebase_auth.User;
+
+class _MockIdTokenResult extends Mock implements firebase_auth.IdTokenResult;
+
 const _uid = 'demo-uid';
 
 void main() {
@@ -98,6 +102,133 @@ void main() {
         );
 
         expect(subject.currentUser, equals(const User(id: _uid)));
+      });
+    });
+
+    group('tokenChanges', () {
+      test('emits ${User.empty} when nobody is signed in', () {
+        final subject = AuthRepository(
+          firebaseAuth: MockFirebaseAuth(mockUser: mockUser),
+          googleSignInFlow: GoogleSignInFlow.popup,
+          linkOpener: linkOpener,
+          phoneSignInFlow: PhoneSignInFlow.verify,
+        );
+
+        expect(subject.tokenChanges, emits(User.empty));
+      });
+
+      test('emits the signed-in $User on each new ID token', () {
+        final firebaseAuth = _MockFirebaseAuth();
+        final firebaseUser = _MockFirebaseUser();
+        when(() => firebaseUser.uid).thenReturn(_uid);
+        when(firebaseAuth.idTokenChanges).thenAnswer(
+          (_) => Stream.fromIterable([firebaseUser, firebaseUser, null]),
+        );
+        final subject = AuthRepository(
+          firebaseAuth: firebaseAuth,
+          googleSignInFlow: GoogleSignInFlow.popup,
+          linkOpener: linkOpener,
+          phoneSignInFlow: PhoneSignInFlow.verify,
+        );
+
+        expect(
+          subject.tokenChanges,
+          emitsInOrder([
+            const User(id: _uid),
+            const User(id: _uid),
+            User.empty,
+            emitsDone,
+          ]),
+        );
+      });
+    });
+
+    group('hasAdminClaim', () {
+      late firebase_auth.FirebaseAuth firebaseAuth;
+      late firebase_auth.User firebaseUser;
+      late firebase_auth.IdTokenResult token;
+
+      setUp(() {
+        firebaseAuth = _MockFirebaseAuth();
+        firebaseUser = _MockFirebaseUser();
+        token = _MockIdTokenResult();
+        when(() => firebaseAuth.currentUser).thenReturn(firebaseUser);
+        when(() => firebaseUser.getIdTokenResult(any()))
+            .thenAnswer((_) async => token);
+      });
+
+      AuthRepository build() => AuthRepository(
+        firebaseAuth: firebaseAuth,
+        googleSignInFlow: GoogleSignInFlow.popup,
+        linkOpener: linkOpener,
+        phoneSignInFlow: PhoneSignInFlow.verify,
+      );
+
+      test('is true when the token carries admin: true', () async {
+        when(() => token.claims).thenReturn({'admin': true});
+
+        expect(await build().hasAdminClaim(forceRefresh: false), isTrue);
+      });
+
+      for (final claims in <Map<String, dynamic>?>[
+        null,
+        {},
+        {'admin': false},
+        {'admin': 'true'},
+        {'admin': 1},
+        {'role': 'admin'},
+      ]) {
+        test('is false when the claims are $claims', () async {
+          when(() => token.claims).thenReturn(claims);
+
+          expect(await build().hasAdminClaim(forceRefresh: false), isFalse);
+        });
+      }
+
+      test('fetches the token again when forced', () async {
+        when(() => token.claims).thenReturn({'admin': true});
+
+        await build().hasAdminClaim(forceRefresh: true);
+
+        verify(() => firebaseUser.getIdTokenResult(true)).called(1);
+      });
+
+      test('reads the token it has when not forced', () async {
+        when(() => token.claims).thenReturn({});
+
+        await build().hasAdminClaim(forceRefresh: false);
+
+        verify(() => firebaseUser.getIdTokenResult()).called(1);
+      });
+
+      test('is false when nobody is signed in', () async {
+        when(() => firebaseAuth.currentUser).thenReturn(null);
+
+        expect(await build().hasAdminClaim(forceRefresh: true), isFalse);
+      });
+
+      test('throws $AdminClaimFailure when the token cannot be read', () {
+        when(() => firebaseUser.getIdTokenResult(any()))
+            .thenThrow(firebase_auth.FirebaseAuthException(code: 'network'));
+
+        expect(
+          () => build().hasAdminClaim(forceRefresh: true),
+          throwsA(isA<AdminClaimFailure>()),
+        );
+      });
+
+      test('reads a claim from a real-shaped token', () async {
+        final subject = AuthRepository(
+          firebaseAuth: MockFirebaseAuth(
+            signedIn: true,
+            mockUser: MockUser(uid: _uid, customClaim: {'admin': true}),
+          ),
+          googleSignInFlow: GoogleSignInFlow.popup,
+          linkOpener: linkOpener,
+          phoneSignInFlow: PhoneSignInFlow.verify,
+        );
+
+        expect(await subject.hasAdminClaim(forceRefresh: true), isTrue);
       });
     });
 

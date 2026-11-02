@@ -99,9 +99,13 @@ void main() {
     late OnboardingRepository onboardingRepository;
     late StreamController<User> users;
     late StreamController<Profile?> profiles;
+    late StreamController<User> tokens;
 
     /// The answers held on this phone, as `ProfileRepository` holds them.
     Profile? held;
+
+    /// Whether the signed-in account's token carries the admin claim.
+    late bool adminClaim;
 
     setUpAll(() {
       registerFallbackValue(
@@ -171,6 +175,22 @@ void main() {
       addTearDown(profiles.close);
       when(() => authRepository.currentUser).thenReturn(_user);
       when(() => authRepository.user).thenAnswer((_) => users.stream);
+      // A token comes with every sign-in and sign-out, and alone when it
+      // is renewed.
+      tokens = StreamController<User>.broadcast();
+      addTearDown(tokens.close);
+      when(() => authRepository.tokenChanges).thenAnswer((_) {
+        // Listened to inside the test's own zone, so pumps deliver it.
+        final mirror = users.stream.listen(tokens.add);
+        addTearDown(mirror.cancel);
+        return tokens.stream;
+      });
+      adminClaim = false;
+      when(
+        () => authRepository.hasAdminClaim(
+          forceRefresh: any(named: 'forceRefresh'),
+        ),
+      ).thenAnswer((_) async => adminClaim);
       when(() => profileRepository.watchProfile(any()))
           .thenAnswer((_) => profiles.stream);
       when(() => profileRepository.acceptTerms(any(), any()))
@@ -966,7 +986,8 @@ void main() {
         }
       });
 
-      testWidgets('by opening $AdminPage for anyone signed in', (tester) async {
+      testWidgets('by opening $AdminPage for the admin', (tester) async {
+        adminClaim = true;
         await pumpSignedIn(tester);
 
         GoRouter.of(tester.element(find.byType(MyRondaPage)))
@@ -980,11 +1001,132 @@ void main() {
           ),
           same(rondaRepository),
         );
+        verify(() => authRepository.hasAdminClaim(forceRefresh: true))
+            .called(1);
+      });
+
+      testWidgets('by showing the admin an Admin tab that opens $AdminPage', (
+        tester,
+      ) async {
+        tester.platformDispatcher.localesTestValue = const [Locale('es', 'UY')];
+        addTearDown(tester.platformDispatcher.clearLocalesTestValue);
+        adminClaim = true;
+        await pumpSignedIn(tester);
+
+        await tester.tap(_tab('Admin'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AdminPage), findsOneWidget);
+        expect(find.byType(AppShell), findsOneWidget);
+      });
+
+      testWidgets('by showing a member no Admin tab', (tester) async {
+        await pumpSignedIn(tester);
+
+        expect(_tab('My ronda'), findsOneWidget);
+        expect(_tab('Admin'), findsNothing);
+      });
+
+      for (final (name, location) in [
+        ('', AdminPage.path),
+        (' trace', AgentTracePage.path),
+        (' setup', RondaSetupPage.path),
+        (' errors', ErrorLogPage.path),
+        (' roll', AttendancePage.location('ronda-1', '2026-W45', admin: true)),
+      ]) {
+        testWidgets('by sending a member who opens the admin$name screen '
+            'to $MyRondaPage, reading nothing for it', (tester) async {
+          when(rondaRepository.rondaSetups).thenAnswer((_) async => const []);
+          when(() => rondaRepository.watchRoll(any(), any()))
+              .thenAnswer((_) => Stream.value(null));
+          await pumpSignedIn(tester);
+
+          GoRouter.of(tester.element(find.byType(MyRondaPage))).go(location);
+          await tester.pumpAndSettle();
+
+          expect(find.byType(MyRondaPage), findsOneWidget);
+          expect(find.byType(AdminPage), findsNothing);
+          expect(find.byType(AdminGate), findsNothing);
+          verifyNever(rondaRepository.watchLatestProposal);
+          verifyNever(rondaRepository.watchSeguimosCounts);
+          verifyNever(rondaRepository.pilotNumbers);
+          verifyNever(rondaRepository.rondaSetups);
+          verifyNever(organiserRepository.watchRuns);
+          verifyNever(() => rondaRepository.watchRoll(any(), any()));
+        });
+      }
+
+      testWidgets('by sending a member without a profile who opens '
+          '$AdminPage to onboarding', (tester) async {
+        await tester.pumpWidget(buildSubject());
+        users.add(_user);
+        await tester.pump();
+        profiles.add(null);
+        await tester.pumpAndSettle();
+
+        GoRouter.of(tester.element(find.byType(OnboardingPage)))
+            .go(AdminPage.path);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnboardingPage), findsOneWidget);
+        expect(find.byType(AdminPage), findsNothing);
+        verifyNever(rondaRepository.watchLatestProposal);
+      });
+
+      testWidgets('by waiting on $AdminPage while the claim is read', (
+        tester,
+      ) async {
+        final claim = Completer<bool>();
+        when(
+          () => authRepository.hasAdminClaim(
+            forceRefresh: any(named: 'forceRefresh'),
+          ),
+        ).thenAnswer((_) => claim.future);
+        await tester.pumpWidget(buildSubject());
+        users.add(_user);
+        await tester.pump();
+        profiles.add(_profile);
+        await tester.pump();
+        GoRouter.of(tester.element(find.byType(MyRondaPage)))
+            .go(AdminPage.path);
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.byType(AdminGate), findsOneWidget);
+        expect(find.byType(AdminPage), findsNothing);
+        verifyNever(rondaRepository.watchLatestProposal);
+
+        claim.complete(true);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AdminPage), findsOneWidget);
+      });
+
+      testWidgets('by hiding the Admin tab and leaving $AdminPage when a '
+          'renewed token loses the claim', (tester) async {
+        tester.platformDispatcher.localesTestValue = const [Locale('en')];
+        addTearDown(tester.platformDispatcher.clearLocalesTestValue);
+        adminClaim = true;
+        await pumpSignedIn(tester);
+        await tester.tap(_tab('Admin'));
+        await tester.pumpAndSettle();
+        expect(find.byType(AdminPage), findsOneWidget);
+
+        adminClaim = false;
+        tokens.add(_user);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(MyRondaPage), findsOneWidget);
+        expect(find.byType(AdminPage), findsNothing);
+        expect(_tab('Admin'), findsNothing);
+        verify(() => authRepository.hasAdminClaim(forceRefresh: false))
+            .called(1);
       });
 
       testWidgets('by opening $AdminPage without a profile too', (
         tester,
       ) async {
+        adminClaim = true;
         await tester.pumpWidget(buildSubject());
         users.add(_user);
         await tester.pump();
@@ -1035,6 +1177,7 @@ void main() {
       testWidgets('by opening the trace under $AdminPage without a profile', (
         tester,
       ) async {
+        adminClaim = true;
         await tester.pumpWidget(buildSubject());
         users.add(_user);
         await tester.pump();
@@ -1051,6 +1194,7 @@ void main() {
 
       testWidgets('by opening the errors under $AdminPage, telling the '
           'reporter each route pattern', (tester) async {
+        adminClaim = true;
         final reporter = _MockErrorReporter();
         final log = _MockClientErrorLog();
         when(log.watchRecent).thenAnswer((_) => Stream.value(const []));
@@ -1162,6 +1306,7 @@ void main() {
 
       testWidgets('by opening the setup and the roll under $AdminPage '
           'without a profile', (tester) async {
+        adminClaim = true;
         when(rondaRepository.rondaSetups).thenAnswer((_) async => const []);
         when(() => rondaRepository.watchRoll(any(), any()))
             .thenAnswer((_) => Stream.value(null));
@@ -1202,7 +1347,9 @@ void main() {
           WidgetTester tester,
           String location, {
           Profile? profile,
+          bool admin = true,
         }) async {
+          adminClaim = admin;
           await pumpSignedOut(tester);
           GoRouter.of(tester.element(find.byType(WelcomePage))).go(location);
           await tester.pumpAndSettle();
@@ -1252,6 +1399,29 @@ void main() {
 
           expect(find.byType(AdminPage), findsOneWidget);
           expect(find.byType(OnboardingPage), findsNothing);
+        });
+
+        testWidgets('but on to $MyRondaPage after sign-in without the claim', (
+          tester,
+        ) async {
+          await signInFrom(
+            tester,
+            AdminPage.path,
+            profile: _profile,
+            admin: false,
+          );
+
+          expect(find.byType(MyRondaPage), findsOneWidget);
+          expect(find.byType(AdminPage), findsNothing);
+          verifyNever(rondaRepository.watchLatestProposal);
+        });
+
+        testWidgets('but on to onboarding after sign-in without the claim or '
+            'a profile', (tester) async {
+          await signInFrom(tester, AdminPage.path, admin: false);
+
+          expect(find.byType(OnboardingPage), findsOneWidget);
+          expect(find.byType(AdminPage), findsNothing);
         });
 
         testWidgets('by keeping the ask when sign-in is opened too early', (

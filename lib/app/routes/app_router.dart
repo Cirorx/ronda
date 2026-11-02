@@ -5,6 +5,7 @@ import 'package:ronda/acta/acta.dart';
 import 'package:ronda/admin/admin.dart';
 import 'package:ronda/agent_trace/agent_trace.dart';
 import 'package:ronda/app/bloc/app_bloc.dart';
+import 'package:ronda/app/cubit/admin_access_cubit.dart';
 import 'package:ronda/app/view/app_shell.dart';
 import 'package:ronda/attendance/attendance.dart';
 import 'package:ronda/cerca/cerca.dart';
@@ -32,10 +33,13 @@ const returnToParameter = 'from';
 /// Builds the app's router: "¿Cómo funciona?", the welcome screen with
 /// sign-in and the terms under it, onboarding, the payoff with its sign-in
 /// under it, each sign-in with its phone sign-in (`…/entrar/celular`) under
-/// it, and one shell with a branch per tab.
+/// it, and one shell with a branch per tab: Mi ronda, Cerca, Ajustes and,
+/// last so the other tabs keep their places, Admin, whose tab only the
+/// admin sees ([AppShell]).
 ///
-/// Where people may be follows [appBloc]'s state, and [refreshListenable]
-/// fires when it changes, so the redirect runs again on every change:
+/// Where people may be follows [appBloc]'s and [adminAccess]'s states, and
+/// [refreshListenable] fires when either changes, so the redirect runs again
+/// on every change:
 /// - signed out, the first time on this phone: "¿Cómo funciona?"
 ///   (`/como-funciona`) before the welcome doors, but only from the app's
 ///   own entrance (`/`, Mi ronda); a link to a screen, the welcome screen
@@ -50,12 +54,16 @@ const returnToParameter = 'from';
 ///   on the phone straight away when there are some;
 /// - signed in with a profile: the tabs, never welcome, onboarding or the
 ///   payoff;
-/// - the admin screen, its trace (`/admin/programa`) and the app's errors
-///   (`/admin/errores`): anyone signed in, with or without a profile (the
-///   owner need not onboard); the server decides who sees a proposal.
-///   Signed-out people sent from it to the welcome screen carry
-///   `?from=/admin`, and sign-in returns them there instead of
-///   to Mi ronda or onboarding.
+/// - the Admin tab (`/admin`) and everything under it (`/admin/programa`,
+///   `/admin/rondas`, `/admin/errores`, the admin's roll): only the account
+///   whose ID token carries the admin claim, with or without a profile (the
+///   owner need not onboard). While the claim is read the screen waits
+///   ([AdminGate]); without it, a signed-in person goes to Mi ronda, or to
+///   onboarding without a profile. The server checks the claim again on
+///   every admin read and call. Signed-out people sent from it to the
+///   welcome screen carry `?from=/admin`, and sign-in returns them there
+///   instead of to Mi ronda or onboarding (and on to Mi ronda without the
+///   claim).
 /// - a ronda's flyer (`/volante/{rondaId}`) and its ¿Dónde queda? screens
 ///   (`/donde-queda/{rondaId}` to guess, `/donde-queda/{rondaId}/foto` for
 ///   the photo): like the tabs; the server decides who may.
@@ -79,6 +87,7 @@ const returnToParameter = 'from';
 /// stack, so switching tabs doesn't slide.
 GoRouter createAppRouter({
   required AppBloc appBloc,
+  required AdminAccessCubit adminAccess,
   required Listenable refreshListenable,
 }) {
   return GoRouter(
@@ -108,6 +117,8 @@ GoRouter createAppRouter({
           ? '${WelcomePage.path}?$returnToParameter=${AdminPage.path}'
           : WelcomePage.path;
       final app = appBloc.state;
+      // Read and refused: the token has no admin claim.
+      final adminRefused = onAdmin && adminAccess.state == AdminAccess.member;
       // Past a welcome door: the terms are accepted, on this phone.
       final pastDoor =
           location == LoginPage.path ||
@@ -123,7 +134,10 @@ GoRouter createAppRouter({
           welcome,
         AppStatus.unauthenticated || AppStatus.loadingProfile => null,
         AppStatus.onboarding =>
-          onOnboarding || onAdmin ? null : returnTo ?? OnboardingPage.path,
+          onOnboarding || (onAdmin && !adminRefused)
+              ? null
+              : returnTo ?? OnboardingPage.path,
+        AppStatus.authenticated when adminRefused => MyRondaPage.path,
         AppStatus.authenticated =>
           onWelcome || onWalkthrough || onOnboarding || onPayoff
               ? returnTo ?? MyRondaPage.path
@@ -184,31 +198,6 @@ GoRouter createAppRouter({
                 builder: (_, _) => const PhoneLoginPage(),
               ),
             ],
-          ),
-        ],
-      ),
-      GoRoute(
-        path: AdminPage.path,
-        builder: (_, _) => const AdminPage(),
-        routes: [
-          GoRoute(
-            path: AgentTracePage.segment,
-            builder: (_, _) => const AgentTracePage(),
-          ),
-          GoRoute(
-            path: RondaSetupPage.segment,
-            builder: (_, _) => const RondaSetupPage(),
-          ),
-          GoRoute(
-            path: ErrorLogPage.segment,
-            builder: (_, _) => const ErrorLogPage(),
-          ),
-          GoRoute(
-            path: AttendancePage.adminSegment,
-            builder: (_, state) => AttendancePage(
-              rondaId: state.pathParameters['rondaId']!,
-              week: state.pathParameters['week']!,
-            ),
           ),
         ],
       ),
@@ -297,6 +286,37 @@ GoRouter createAppRouter({
                   GoRoute(
                     path: YourDataPage.segment,
                     builder: (_, _) => const YourDataPage(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AdminPage.path,
+                builder: (_, _) => const AdminGate(child: AdminPage()),
+                routes: [
+                  GoRoute(
+                    path: AgentTracePage.segment,
+                    builder: (_, _) => const AdminGate(child: AgentTracePage()),
+                  ),
+                  GoRoute(
+                    path: RondaSetupPage.segment,
+                    builder: (_, _) => const AdminGate(child: RondaSetupPage()),
+                  ),
+                  GoRoute(
+                    path: ErrorLogPage.segment,
+                    builder: (_, _) => const AdminGate(child: ErrorLogPage()),
+                  ),
+                  GoRoute(
+                    path: AttendancePage.adminSegment,
+                    builder: (_, state) => AdminGate(
+                      child: AttendancePage(
+                        rondaId: state.pathParameters['rondaId']!,
+                        week: state.pathParameters['week']!,
+                      ),
+                    ),
                   ),
                 ],
               ),

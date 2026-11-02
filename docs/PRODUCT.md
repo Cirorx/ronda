@@ -51,7 +51,10 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   - Still to come: "Tomarme unas semanas", "Cambiarme de grupo", "Dejar Ronda", "Lo que te
     complica ir" (on the phone only). "Tu persona de confianza" is chosen and changed on Mi
     ronda for now (§ The weekly loop, Buddy).
-- **Admin** (Ciro only): this week's numbers, grupos propuestos, reportes, "Lo que mandó el
+- **Admin** (Ciro only; #69): a fourth tab, "Admin", after Ajustes, shown only when the
+  signed-in account carries the admin claim, so the owner reaches it as a member too. Without
+  the claim nobody sees the tab, and opening `/admin` lands on Mi ronda (onboarding without a
+  profile). It holds this week's numbers, grupos propuestos, reportes, "Lo que mandó el
   programa", flyer scans per spot, and "Lugar, hora y anfitriones" (each ronda's public place,
   hour and hosts, its latest "¿Quién vino?", and how the coming meeting's "¿Abrís vos?" is going:
   "Buscando quién abre el 5/11: Mirta no puede.", "El 5/11 abre Facu en lugar de Mirta." or

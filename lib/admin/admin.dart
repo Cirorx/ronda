@@ -3,6 +3,7 @@ export 'cubit/pilot_numbers_cubit.dart';
 export 'cubit/proposals_cubit.dart';
 export 'cubit/rsvp_push_cubit.dart';
 export 'cubit/seguimos_counts_cubit.dart';
+export 'view/admin_gate.dart';
 export 'view/admin_page.dart';
 export 'view/admin_view.dart';
 export 'widgets/add_to_ronda_sheet.dart';

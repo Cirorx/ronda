@@ -514,6 +514,12 @@ isn't set up).
     back to pending ([Deshacer]; nothing has been sent yet: the Tuesday push is the agent's).
     One batch holds 500 writes, enough for about 240 members.
   - The admin claim is set by `scripts/set_admin.py <email>` after the owner signs in once.
+    The app reads it from a forced-refreshed ID token (`AuthRepository.hasAdminClaim`, then
+    each token renewal; `AdminAccessCubit`) to show the Admin tab and to let `/admin` open
+    (#69). That is only what the app shows: `firestore.rules`' `isAdmin()` and the callables'
+    `_require_admin` check `admin == true` on every admin read and call, and
+    `rules/admin.test.js` and `TestEveryAdminCallable` (`functions/tests/test_main.py`) hold
+    every admin path and callable to it. Storage has no admin path.
 - "Sumar a esta ronda" (#55, `functions/ronda_members.py`), both admin only:
   - `ronda_candidates {rondaId}`: the ronda's line, its members' first names, seats taken
     (active and paused) and its cap (`size_rule(pretext).cap`), and every sign-up who counts

@@ -124,4 +124,10 @@ void main() {
       );
     });
   });
+
+  group(AdminClaimFailure, () {
+    test('is an $Exception', () {
+      expect(const AdminClaimFailure(), isA<Exception>());
+    });
+  });
 }

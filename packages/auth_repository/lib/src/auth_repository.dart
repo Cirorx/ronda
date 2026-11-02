@@ -55,6 +55,36 @@ class AuthRepository {
   /// Who is signed in right now; [User.empty] when nobody is.
   User get currentUser => _firebaseAuth.currentUser.toUser;
 
+  /// The signed-in [User], or [User.empty] when nobody is; emits on every
+  /// sign-in and sign-out and each time Firebase Auth renews the ID token
+  /// (about once an hour while the app is open), so a custom claim set or
+  /// removed on the server is read again.
+  Stream<User> get tokenChanges =>
+      _firebaseAuth.idTokenChanges().map((user) => user.toUser);
+
+  /// Whether the signed-in person's ID token carries the `admin` custom
+  /// claim (`scripts/set_admin.py` sets it), exactly `true`. False when
+  /// nobody is signed in.
+  ///
+  /// With [forceRefresh] the token is fetched again from Firebase Auth
+  /// first, so a claim set since the last renewal shows; that fetch makes
+  /// [tokenChanges] emit once more, so never force it from a listener of
+  /// [tokenChanges] for every event. The claim only decides what the app
+  /// shows: the rules and the callables check it again on every admin read
+  /// and call.
+  ///
+  /// Throws an [AdminClaimFailure] when the token can't be read.
+  Future<bool> hasAdminClaim({required bool forceRefresh}) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return false;
+    try {
+      final token = await user.getIdTokenResult(forceRefresh);
+      return token.claims?['admin'] == true;
+    } on Exception {
+      throw const AdminClaimFailure();
+    }
+  }
+
   /// Signs in with Google through [GoogleSignInFlow].
   ///
   /// Throws a [SignInWithGoogleFailure] when sign-in does not finish,

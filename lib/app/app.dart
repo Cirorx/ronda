@@ -1,4 +1,5 @@
 export 'bloc/app_bloc.dart';
+export 'cubit/admin_access_cubit.dart';
 export 'cubit/language_cubit.dart';
 export 'models/permission_place.dart';
 export 'routes/app_router.dart';

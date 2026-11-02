@@ -781,6 +781,90 @@ class TestHostsAndAttendance:
             call(main.record_attendance, member, self.TAP)
         assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED
 
+    @pytest.mark.parametrize(
+        "token", [{"admin": False}, {"admin": "true"}, {"admin": 1}, {"role": "admin"}]
+    )
+    def test_a_claim_that_only_looks_like_admin_is_no_admin_for_a_tap(self, rain_db, token):
+        member = SimpleNamespace(uid="demo-102", token=token)
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.record_attendance, member, self.TAP)
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED
+        assert "attendance" not in rain_db.documents.get("rondas/ronda-rain/weeks/2026-W45", {})
+
+
+def _callables() -> dict:
+    """Every callable main.py deploys, by name."""
+    return {
+        name: function
+        for name, function in vars(main).items()
+        if getattr(getattr(function, "__firebase_endpoint__", None), "callableTrigger", None)
+        is not None
+    }
+
+
+def _source(function) -> str:
+    return inspect.getsource(inspect.unwrap(function))
+
+
+class TestEveryAdminCallable:
+    """The app shows the Admin tab from the token's claim, which is only what it shows (#69):
+    every admin callable checks `admin == True` itself, before it reads or writes anything."""
+
+    ADMIN_ONLY: ClassVar = {
+        "propose_groups",
+        "approve_proposal",
+        "run_job",
+        "ronda_candidates",
+        "add_to_ronda",
+        "pilot_numbers",
+        "ronda_setups",
+        "set_ronda_setup",
+    }
+
+    LOOKALIKES: ClassVar = [
+        {},
+        {"admin": False},
+        {"admin": "true"},
+        {"admin": 1},
+        {"admin": "yes"},
+        {"role": "admin"},
+    ]
+
+    def test_the_list_names_every_callable_that_requires_the_claim(self):
+        requiring = {
+            name
+            for name, function in _callables().items()
+            if "_require_admin(" in _source(function) or "_setup_call(" in _source(function)
+        }
+        assert requiring == self.ADMIN_ONLY
+
+    def test_only_record_attendance_reads_the_claim_itself(self):
+        reading = {
+            name for name, function in _callables().items() if "auth.token" in _source(function)
+        }
+        assert reading == {"record_attendance"}
+
+    @pytest.fixture
+    def untouched(self, monkeypatch):
+        def refuse():
+            raise AssertionError("read Firestore before checking the claim")
+
+        monkeypatch.setattr(main, "_firestore", refuse)
+
+    @pytest.mark.parametrize("name", sorted(ADMIN_ONLY))
+    @pytest.mark.parametrize("token", LOOKALIKES)
+    def test_refuses_a_claim_that_is_not_exactly_true(self, untouched, name, token):
+        caller = SimpleNamespace(uid="demo-001", token=token)
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(getattr(main, name), caller, {"proposalId": "p1", "rondaId": "r1", "uid": "u"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.PERMISSION_DENIED
+
+    @pytest.mark.parametrize("name", sorted(ADMIN_ONLY))
+    def test_refuses_a_signed_out_caller(self, untouched, name):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(getattr(main, name), None, {"proposalId": "p1", "rondaId": "r1"})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
+
 
 class TestWeeklyLoopCodeJobs:
     """The después, "¿Abrís vos?" and the buddy (#47, #50): despues.py, handoff.py and buddy.py

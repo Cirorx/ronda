@@ -20,8 +20,9 @@ import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 import 'package:small_plan_repository/small_plan_repository.dart';
 
-/// The app's root: provides the repositories bootstrap built and the
-/// [AppBloc] that follows who is signed in and whether they have a profile.
+/// The app's root: provides the repositories bootstrap built, the [AppBloc]
+/// that follows who is signed in and whether they have a profile, and the
+/// [AdminAccessCubit] that reads whether they are the admin.
 class const App({
   required final AuthRepository authRepository,
   required final ContactRepository contactRepository,
@@ -78,6 +79,10 @@ class const App({
               initial: language,
             ),
           ),
+          BlocProvider(
+            create: (_) =>
+                AdminAccessCubit(authRepository: authRepository)..subscribe(),
+          ),
         ],
         child: const AppView(),
       ),
@@ -98,12 +103,16 @@ class AppView extends StatefulWidget {
 }
 
 class _AppViewState extends State<AppView> {
-  late final BlocRefreshListenable _refresh = BlocRefreshListenable(
+  late final BlocRefreshListenable _appRefresh = BlocRefreshListenable(
     context.read<AppBloc>().stream,
+  );
+  late final BlocRefreshListenable _adminRefresh = BlocRefreshListenable(
+    context.read<AdminAccessCubit>().stream,
   );
   late final GoRouter _router = createAppRouter(
     appBloc: context.read<AppBloc>(),
-    refreshListenable: _refresh,
+    adminAccess: context.read<AdminAccessCubit>(),
+    refreshListenable: Listenable.merge([_appRefresh, _adminRefresh]),
   );
 
   StreamSubscription<OpenedRoll>? _rolls;
@@ -137,7 +146,8 @@ class _AppViewState extends State<AppView> {
     unawaited(_rolls?.cancel());
     _router.routerDelegate.removeListener(_reportScreen);
     _router.dispose();
-    _refresh.dispose();
+    _appRefresh.dispose();
+    _adminRefresh.dispose();
     super.dispose();
   }
 

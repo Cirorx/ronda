@@ -3,10 +3,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:ronda/admin/admin.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
-/// The owner's approval screen, opened by its URL on web, with the weekly
-/// RSVP's "Mandarlo ahora" and the ¿seguimos? counts. Anyone signed in may
-/// load it; only the admin claim gets a proposal back, sends anything or
-/// reads the counts.
+/// The owner's approval screen, the Admin tab, with the weekly RSVP's
+/// "Mandarlo ahora" and the ¿seguimos? counts. The app builds it only for
+/// the account whose token carries the admin claim ([AdminGate]); the
+/// server checks the claim again for every proposal, send and count.
 class const AdminPage({super.key}) extends StatelessWidget {
   static const path = '/admin';
 

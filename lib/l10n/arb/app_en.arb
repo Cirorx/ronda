@@ -16,6 +16,14 @@
     "@settingsTabLabel": {
         "description": "Label of the settings tab"
     },
+    "adminTabLabel": "Admin",
+    "@adminTabLabel": {
+        "description": "Label of the admin tab, shown only to the admin (the owner, by the admin claim on their sign-in)"
+    },
+    "adminChecking": "Checking this account…",
+    "@adminChecking": {
+        "description": "Line under the ring while the app reads whether the signed-in account is the admin, before any admin screen shows"
+    },
     "myRondaNoGroupTitle": "You don't have a group yet",
     "@myRondaNoGroupTitle": {
         "description": "Mi ronda before the member is in a group: title"

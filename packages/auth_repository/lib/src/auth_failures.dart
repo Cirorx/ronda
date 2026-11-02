@@ -55,6 +55,15 @@ class const SignOutFailure() implements Exception {
   this;
 }
 
+/// {@template admin_claim_failure}
+/// Thrown by `AuthRepository.hasAdminClaim` when the ID token can't be read,
+/// offline say, while forcing a refresh.
+/// {@endtemplate}
+class const AdminClaimFailure() implements Exception {
+  /// {@macro admin_claim_failure}
+  this;
+}
+
 /// {@template open_create_account_failure}
 /// Thrown by `AuthRepository.openCreateAccount` when no browser opens
 /// Google's page to make an account.

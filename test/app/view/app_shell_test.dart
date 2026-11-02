@@ -1,15 +1,28 @@
+import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:ronda/app/cubit/admin_access_cubit.dart';
 import 'package:ronda/app/view/app_shell.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 import '../../helpers/helpers.dart';
 
+class _MockAdminAccessCubit extends MockCubit<AdminAccess>
+    implements AdminAccessCubit;
+
 void main() {
   group(AppShell, () {
     late GoRouter router;
+    late AdminAccessCubit adminAccess;
+
+    setUp(() {
+      adminAccess = _MockAdminAccessCubit();
+      when(() => adminAccess.state).thenReturn(AdminAccess.member);
+    });
 
     Widget page(String name) => Scaffold(
       body: Column(
@@ -28,14 +41,16 @@ void main() {
       WidgetTester tester, {
       Size size = phoneSize,
       double textScale = 1,
+      Locale locale = rioplatense,
+      String initialLocation = '/ronda',
     }) {
       router = GoRouter(
-        initialLocation: '/ronda',
+        initialLocation: initialLocation,
         routes: [
           StatefulShellRoute.indexedStack(
             builder: (_, _, shell) => AppShell(navigationShell: shell),
             branches: [
-              for (final name in ['ronda', 'cerca', 'ajustes'])
+              for (final name in ['ronda', 'cerca', 'ajustes', 'admin'])
                 StatefulShellBranch(
                   routes: [
                     GoRoute(
@@ -60,20 +75,127 @@ void main() {
         ..devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       return tester.pumpWidget(
-        MaterialApp.router(
-          theme: AppTheme.light,
-          locale: rioplatense,
-          localizationsDelegates: appLocalizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          routerConfig: router,
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context)
-                .copyWith(textScaler: TextScaler.linear(textScale)),
-            child: child!,
+        BlocProvider.value(
+          value: adminAccess,
+          child: MaterialApp.router(
+            theme: AppTheme.light,
+            locale: locale,
+            localizationsDelegates: appLocalizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: router,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(textScale)),
+              child: child!,
+            ),
           ),
         ),
       );
     }
+
+    Finder barTab(String label) => find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text(label),
+    );
+
+    group('the Admin tab', () {
+      for (final (locale, labels) in [
+        (rioplatense, ['Mi ronda', 'Cerca', 'Ajustes']),
+        (const Locale('en'), ['My ronda', 'Nearby', 'Settings']),
+      ]) {
+        testWidgets('shows after the others for the admin in $locale', (
+          tester,
+        ) async {
+          when(() => adminAccess.state).thenReturn(AdminAccess.admin);
+
+          await pumpShell(tester, locale: locale);
+          await tester.pumpAndSettle();
+
+          final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
+          expect(bar.destinations, hasLength(4));
+          for (final label in [...labels, 'Admin']) {
+            expect(barTab(label), findsOneWidget, reason: label);
+          }
+
+          await tester.tap(barTab('Admin'));
+          await tester.pumpAndSettle();
+          expect(find.text('admin'), findsOneWidget);
+          expect(
+            tester
+                .widget<NavigationBar>(find.byType(NavigationBar))
+                .selectedIndex,
+            AppShell.adminBranch,
+          );
+        });
+
+        for (final access in [
+          AdminAccess.member,
+          AdminAccess.checking,
+          AdminAccess.signedOut,
+        ]) {
+          testWidgets('stays hidden while $access in $locale', (tester) async {
+            when(() => adminAccess.state).thenReturn(access);
+
+            await pumpShell(tester, locale: locale);
+            await tester.pumpAndSettle();
+
+            final bar = tester.widget<NavigationBar>(
+              find.byType(NavigationBar),
+            );
+            expect(bar.destinations, hasLength(3));
+            for (final label in labels) {
+              expect(barTab(label), findsOneWidget, reason: label);
+            }
+            expect(barTab('Admin'), findsNothing);
+          });
+        }
+      }
+
+      testWidgets('goes when a renewed token loses the claim', (tester) async {
+        whenListen(
+          adminAccess,
+          Stream.value(AdminAccess.member),
+          initialState: AdminAccess.admin,
+        );
+
+        await pumpShell(tester);
+        expect(barTab('Admin'), findsOneWidget);
+        await tester.pumpAndSettle();
+
+        expect(barTab('Admin'), findsNothing);
+      });
+
+      testWidgets('stays while it is the open tab, until the router moves '
+          'away', (tester) async {
+        await pumpShell(tester, initialLocation: '/admin');
+        await tester.pumpAndSettle();
+
+        expect(barTab('Admin'), findsOneWidget);
+        expect(
+          tester
+              .widget<NavigationBar>(find.byType(NavigationBar))
+              .selectedIndex,
+          AppShell.adminBranch,
+        );
+      });
+
+      testWidgets('stands in the rail for the admin on a desktop', (
+        tester,
+      ) async {
+        when(() => adminAccess.state).thenReturn(AdminAccess.admin);
+
+        await pumpShell(tester, size: desktopSize);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.descendant(
+            of: find.byType(NavigationRail),
+            matching: find.text('Admin'),
+          ),
+          findsOneWidget,
+        );
+      });
+    });
 
     for (final size in [phoneSize, tabletSize]) {
       testWidgets('keeps the tabs in the bottom bar at ${size.width} px', (

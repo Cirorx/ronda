@@ -4,6 +4,8 @@
     "myRondaTabLabel": "Mi ronda",
     "cercaTabLabel": "Cerca",
     "settingsTabLabel": "Ajustes",
+    "adminTabLabel": "Admin",
+    "adminChecking": "Revisando esta cuenta…",
     "myRondaNoGroupTitle": "Todavía no tenés grupo",
     "myRondaNoGroupBody": "Armamos cada grupo con vecinos que viven cerca y buscan lo mismo que vos. Puede tardar, según cuántos se anoten. Cuando haya uno para vos, te avisamos y lo vas a ver acá.",
     "cercaPlaceholder": "Pronto vas a ver acá los grupos cerca tuyo que tienen lugar. Mientras tanto, si tenés grupo, lo ves en Mi ronda.",
