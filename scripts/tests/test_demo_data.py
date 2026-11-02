@@ -171,7 +171,7 @@ def test_every_seat_anyone_lists_has_seat_facts_with_a_walk_from_every_barrio(st
 def test_seat_facts_cover_every_barrio_pretext_and_demo_slot():
     seats = _collection(demo_data.documents(30), r"seat_facts/.+")
 
-    assert len(seats) == 9 * 4 * 4
+    assert len(seats) == (9 + 62) * 4 * 4
     for path, facts in seats.items():
         assert path == f"seat_facts/{facts['barrio']}_{facts['pretext']}_{facts['slot']}"
         assert set(facts) == {
@@ -191,6 +191,15 @@ def test_generated_seats_follow_the_hand_made_file_formula():
         twin = demo_data.generated_seat_facts([facts["pretext"]], [facts["slot"]])[seat_id]
         for field in ("barrio", "pretext", "slot", "blocksFrom", "endsAfterDark"):
             assert twin[field] == facts[field], (seat_id, field)
+
+
+def test_a_montevideo_seat_lists_the_walk_from_montevideo_barrios_only(thirty):
+    seat = thirty["seat_facts/barrio-sur_mate_sat-afternoon"]
+
+    assert len(seat["blocksFrom"]) == 62
+    assert seat["blocksFrom"]["barrio-sur"] == 0.0
+    assert seat["blocksFrom"]["centro"] == 7.3
+    assert "shangrila" not in seat["blocksFrom"]
 
 
 def test_a_generated_evening_seat_ends_after_dark_and_has_no_place_yet(thirty):

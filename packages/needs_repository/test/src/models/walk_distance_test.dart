@@ -20,6 +20,23 @@ void main() {
       });
     });
 
+    group('fromBlocks with a farther walk', () {
+      test('scales the bands to 15 blocks', () {
+        expect(
+          WalkDistance.fromBlocks(7.5, maxBlocks: 15),
+          equals(WalkDistance.near),
+        );
+        expect(
+          WalkDistance.fromBlocks(13, maxBlocks: 15),
+          equals(WalkDistance.medium),
+        );
+        expect(
+          WalkDistance.fromBlocks(15.1, maxBlocks: 15),
+          equals(WalkDistance.far),
+        );
+      });
+    });
+
     group('forMember', () {
       const blocksFrom = {'solymar-sur': 9.1, 'solymar-norte': 0};
 
@@ -37,6 +54,17 @@ void main() {
             blocksFrom: blocksFrom,
           ),
           equals(WalkDistance.near),
+        );
+      });
+
+      test('bands the walk by the farthest one given', () {
+        expect(
+          WalkDistance.forMember(
+            memberBarrio: 'palermo',
+            blocksFrom: const {'palermo': 13},
+            maxBlocks: 15,
+          ),
+          equals(WalkDistance.medium),
         );
       });
 

@@ -88,3 +88,22 @@ def test_a_neighbour_missing_from_the_result_is_named():
     broken = rules_broken(data, [ronda(REGULAR_UIDS)], unseated=[])
 
     assert broken == [("oneRondaEach", None, ["demo-x"])]
+
+
+def test_montevideo_walks_fifteen_blocks_where_the_costa_walks_ten():
+    from ronda_solver.barrios import CENTROIDS
+
+    barrios = {b: {"lat": lat, "lng": lng} for b, (lat, lng) in CENTROIDS.items()}
+    seat = "barrio-sur_mate_sat-afternoon"
+    sur = [person(f"demo-{i}", barrio="barrio-sur", eligible=[seat]) for i in range(5)]
+    palermo = person("demo-p", barrio="palermo", eligible=[seat])  # 13 blocks
+    aguada = person("demo-a", barrio="aguada", eligible=[seat])  # 17 blocks
+    data = problem([*sur, palermo, aguada], barrios=barrios)
+    uids = [p["uid"] for p in sur]
+
+    assert rules_broken(data, [ronda([*uids, "demo-p"], barrio="barrio-sur")]) == []
+    assert rules_broken(data, [ronda([*uids, "demo-a"], barrio="barrio-sur")])[0] == (
+        "withinTenBlocks",
+        seat,
+        ["demo-a"],
+    )

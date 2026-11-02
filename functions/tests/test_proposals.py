@@ -46,7 +46,7 @@ class TestSolverInput:
         users = {
             "a": {"firstName": "Ana", "ageBand": "60-69", "barrio": "solymar-sur"},
             "terms-only": {"terms": {}},
-            "elsewhere": {"firstName": "Bea", "ageBand": "30-39", "barrio": "pocitos"},
+            "elsewhere": {"firstName": "Bea", "ageBand": "30-39", "barrio": "las-piedras"},
             "no-ids": {"firstName": "Cris", "ageBand": "30-39", "barrio": "solymar-sur"},
         }
         eligible = {"a": ["solymar-sur_mate_sat-afternoon"], "elsewhere": ["x"], "terms-only": []}

@@ -44,9 +44,15 @@ class NeedsRepository {
   Future<void> clear() => _deviceStore.delete(storageKey);
 
   /// The ids of the [seats] that [needs] allow, in the order given.
+  ///
+  /// A [WalkDistance.far] seat never leaves the phone, need or not: the
+  /// solver can't seat anyone beyond the walk (`Barrio.walkBlocks`), and with
+  /// 71 barrios the far ones alone would pass the 1000 ids the rules accept.
+  /// It also means a missing far id says nothing about "caminar mucho".
   List<String> eligibleSeatIds(Needs needs, List<SeatFacts> seats) => [
     for (final seat in seats)
-      if (_fits(needs.values, seat)) seat.seatId,
+      if (seat.walkDistance != WalkDistance.far && _fits(needs.values, seat))
+        seat.seatId,
   ];
 
   static Needs _decode(Object? json) {
@@ -63,6 +69,8 @@ class NeedsRepository {
       !needs.any((need) => _excludes(need, seat));
 
   static bool _excludes(Need need, SeatFacts seat) => switch (need) {
+    // Far seats are already gone (eligibleSeatIds); the need keeps its
+    // place for when "caminar mucho" asks for less than the whole walk.
     Need.walkALot => seat.walkDistance == WalkDistance.far,
     Need.climbStairs => seat.hasStairs,
     Need.returnAfterDark => seat.endsAfterDark,

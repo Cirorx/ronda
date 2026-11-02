@@ -9,14 +9,15 @@ issues, docs, code, commit messages.
 | `Ronda` | ronda | A standing group of 5–6 neighbours (10 for fútbol 5) with one pretext, one slot and one place, for a season |
 | `Pretext` | actividad | What the ronda does: mate on the rambla, truco, fútbol 5, caminata |
 | `Slot` | día y horario | Weekday plus a time band (mañana / tarde / noche), and once the admin sets it the hour it starts (`slot.hour`, "16:00") |
-| `Barrio` | barrio | The neighbourhood; distance is measured between barrio centroids |
+| `Barrio` | barrio | The neighbourhood: Ciudad de la Costa's nine and Montevideo's 62 (`ronda_solver.barrios`); distance is measured between barrio centroids. Names are proper nouns, the same in every language |
+| `BarrioArea` | Ciudad de la Costa · Montevideo | Where a barrio is; the picker groups barrios by it, and a seat's walk table lists its own area's barrios |
 | `AgeBand` | edad ("sesenta y pico") | The only age data Ronda keeps; never a birth date. Values: `18-29`, `30-39`, `40-49`, `50-59`, `60-69`, `70-79`, `80+` |
 | `Brings` | lo que traés | What a member brings or teaches (pan, termo, enseño truco, tengo ganas); how people are known |
 | `Needs` | lo que te complica ir | What makes taking part hard (caminar mucho, subir escaleras, volver de noche, no tengo auto). Lives only on the phone |
 | `Seat` | lugar | One place in a ronda. A seat is *eligible* for a member when it passes their needs filter. Its id is the ronda's key, `{barrio}_{pretext}_{slot}` |
 | `Need` | (one item of lo que te complica ir) | `walkALot`, `climbStairs`, `returnAfterDark`, `noCar`; stored by these names on the phone |
 | `SeatFacts` | (none) | What the filter knows about a seat: `walkDistance`, `hasStairs`, `endsAfterDark`, `needsCar` |
-| `WalkDistance` | a pocas cuadras | `near` ≤ 5 blocks, `medium` ≤ 10, `far` beyond; "caminar mucho" drops far |
+| `WalkDistance` | a pocas cuadras | `near` ≤ half the walk, `medium` ≤ the walk (10 blocks, 15 in Montevideo), `far` beyond; "caminar mucho" drops far |
 | `Waitlist` | lista de espera | Neighbours seated nowhere waiting for the same seat id (barrio × pretext × slot) that passes their needs filter; opens a ronda at the threshold |
 | `Threshold` | "hay 4 anotados y hacen falta 6" | The pretext's largest ronda (6; fútbol 10) on a waitlist by its deadline, a Sunday; the ronda would start on its slot's day the week after |
 | `Proposal` | propuesta | The solver's grouping, waiting for the owner's approval, with a rejected alternative |
@@ -29,7 +30,7 @@ issues, docs, code, commit messages.
 | `HostTurn` | "Este mes abre Jorge y cierra Ana" | One month's anfitrión and cola; a ronda carries this month's and the next two (`turns`). The cola opens next month and the next member closes |
 | `Handoff` | ¿Abrís vos? | Finding someone to open one meeting when the anfitrión can't: the cola, then the others coming, then the admin. Whoever says yes is that week's `opener` |
 | `Attendance` | ¿Quién vino hoy? | Who came to a meeting, by [Vino] / [No vino]: tapped by the anfitrión or the cola on the meeting's roll (`AttendanceRoll`), read by the admin only |
-| `Bench` | banco | Ordered neighbours who take a seat freed by an "esta no" that week: seated nowhere, same pretext and slot, within ten blocks, the seat passing their needs filter, longest waiting first |
+| `Bench` | banco | Ordered neighbours who take a seat freed by an "esta no" that week: seated nowhere, same pretext and slot, within the walk (10 blocks, 15 in Montevideo), the seat passing their needs filter, longest waiting first |
 | `BenchOffer` | "se liberó un lugar" | One freed seat offered to one person on the bench, with a deadline: [Lo tomo] [Esta vez no] |
 | `Guest` | (vas esta vez) | Who took a freed seat: goes to that one meeting, listed in "who's coming" and on the roll, never a member |
 | `Despues` | después | The optional 20-minute after-spot the host sets each week; may be a member's home (asked first when it isn't the host's), shown only to that ronda; its address is deleted when the day ends |
@@ -45,7 +46,8 @@ issues, docs, code, commit messages.
 | `Gate` | (none) | A rule in code that every outgoing message passes (quiet hours, no emoji, voseo, no money, bot disclosure, one routine push a week) |
 | `Walkthrough` | ¿Cómo funciona? | The three cards a signed-out person sees before the welcome doors on a phone's first open (`/como-funciona`); `walkthroughSeen` is whether this phone has shown them |
 | `Cuaderno` | el cuaderno del barrio | The member's private noticing log: one line a day about what they saw in the barrio, kept only on the phone (`device_store`, `cuaderno.{uid}`); never a mood log, a streak or a count |
-| `CuadernoEntry` | línea ("¿Qué viste hoy?") | One line of the cuaderno, at most one a day; typed, or said and read back by Voice Transcribe before it is written |
+| `CuadernoEntry` | línea | One line of the cuaderno, at most one a day; typed, or said and read back by Voice Transcribe before it is written |
+| `CardHook`, `EntryHook` | (the cuaderno's question) | The specific question heading the cuaderno: `CardHook` on Mi ronda's card, turning by weekday; `EntryHook` over today's line, about the meeting the two days after it, about the postcard from three lines in the week, otherwise by weekday |
 | `Postcard` | postal de la semana | The picture Muse Image draws, on the day before the meeting, from a week's lines: objects and places, never people. Held in memory, saved through the share sheet, stored nowhere by the server |
 | `Bring` (a line) | Llevar esta línea | The one line a member picks to see on their own card as a reminder; not shared with the ronda |
 | `Flyer` | volante | Paper growth: the tear-off flyer and "Hay un mate de más" |

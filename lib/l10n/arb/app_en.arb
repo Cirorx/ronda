@@ -594,41 +594,21 @@
     "@barrioBody": {
         "description": "Text under the barrio question"
     },
-    "barrioShangrila": "Shangrilá",
-    "@barrioShangrila": {
-        "description": "Barrio name"
+    "barrioSearchLabel": "Find your barrio",
+    "@barrioSearchLabel": {
+        "description": "Label of the search field on the barrio question"
     },
-    "barrioSanJoseDeCarrasco": "San José de Carrasco",
-    "@barrioSanJoseDeCarrasco": {
-        "description": "Barrio name"
+    "barrioNoMatch": "No barrio by that name. Try writing it another way.",
+    "@barrioNoMatch": {
+        "description": "Shown under the barrio search when nothing matches"
     },
-    "barrioLagomarSur": "Lagomar Sur",
-    "@barrioLagomarSur": {
-        "description": "Barrio name"
+    "barrioAreaCosta": "Ciudad de la Costa",
+    "@barrioAreaCosta": {
+        "description": "Heading of the Ciudad de la Costa barrios on the barrio question"
     },
-    "barrioLagomarNorte": "Lagomar Norte",
-    "@barrioLagomarNorte": {
-        "description": "Barrio name"
-    },
-    "barrioSolymarSur": "Solymar Sur",
-    "@barrioSolymarSur": {
-        "description": "Barrio name"
-    },
-    "barrioSolymarNorte": "Solymar Norte",
-    "@barrioSolymarNorte": {
-        "description": "Barrio name"
-    },
-    "barrioLomasDeSolymar": "Lomas de Solymar",
-    "@barrioLomasDeSolymar": {
-        "description": "Barrio name"
-    },
-    "barrioElPinarSur": "El Pinar Sur",
-    "@barrioElPinarSur": {
-        "description": "Barrio name"
-    },
-    "barrioElPinarNorte": "El Pinar Norte",
-    "@barrioElPinarNorte": {
-        "description": "Barrio name"
+    "barrioAreaMontevideo": "Montevideo",
+    "@barrioAreaMontevideo": {
+        "description": "Heading of the Montevideo barrios on the barrio question"
     },
     "ageBandTitle": "How old are you, roughly?",
     "@ageBandTitle": {
@@ -899,13 +879,23 @@
             }
         }
     },
-    "adminCheckWithinTen": "Everyone lives less than 10 blocks from the spot",
-    "@adminCheckWithinTen": {
-        "description": "Check on a proposed ronda"
+    "adminCheckWithinWalk": "Everyone lives less than {blocks} blocks from the spot",
+    "@adminCheckWithinWalk": {
+        "description": "Check on a proposed ronda: the walk the solver allows in its barrio",
+        "placeholders": {
+            "blocks": {
+                "type": "int"
+            }
+        }
     },
-    "adminCheckFarther": "Someone lives more than 10 blocks from the spot",
+    "adminCheckFarther": "Someone lives more than {blocks} blocks from the spot",
     "@adminCheckFarther": {
-        "description": "Failed check on a proposed ronda"
+        "description": "Failed check on a proposed ronda",
+        "placeholders": {
+            "blocks": {
+                "type": "int"
+            }
+        }
     },
     "adminCheckPlusOneTogether": "{name} and their guest go together",
     "@adminCheckPlusOneTogether": {
@@ -2370,7 +2360,7 @@
     "@addToRondaWarnPretext": {
         "description": "Add-to-ronda warning"
     },
-    "addToRondaWarnBarrio": "Lives more than 10 blocks away",
+    "addToRondaWarnBarrio": "Lives too far to walk",
     "@addToRondaWarnBarrio": {
         "description": "Add-to-ronda warning"
     },
@@ -3824,9 +3814,61 @@
     "@cuadernoTitle": {
         "description": "Cuaderno screen title"
     },
-    "cuadernoAsk": "What did you see today?",
-    "@cuadernoAsk": {
-        "description": "Cuaderno: the question, on Mi ronda and on its screen"
+    "cuadernoCardHookSunset": "Saw a lovely sunset on the rambla? Write it in the notebook.",
+    "@cuadernoCardHookSunset": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookBizcochos": "Want to remember who brought the pastries? That's what the notebook is for.",
+    "@cuadernoCardHookBizcochos": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookPostcard": "Want a postcard of your week? Write a few lines and we'll draw it.",
+    "@cuadernoCardHookPostcard": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookCorner": "Found a new corner of the barrio? Note it down in the notebook.",
+    "@cuadernoCardHookCorner": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookLearned": "Did someone teach you something? Write it in the notebook for next time.",
+    "@cuadernoCardHookLearned": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookTalk": "Remember what you talked about at the ronda? Keep it in the notebook before you forget.",
+    "@cuadernoCardHookTalk": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookBring": "Got something to tell the ronda? Write it down and your card will remind you.",
+    "@cuadernoCardHookBring": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoEntryHookAfterMeeting": "What did you talk about at the ronda? Keep it before you forget.",
+    "@cuadernoEntryHookAfterMeeting": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookPostcard": "Want a fuller postcard? Every line this week adds something to it.",
+    "@cuadernoEntryHookPostcard": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookRambla": "Saw something nice on the rambla or in the plaza? Tell it in one line.",
+    "@cuadernoEntryHookRambla": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookCorner": "Found a new corner of the barrio? Note it down.",
+    "@cuadernoEntryHookCorner": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookLearned": "Did someone teach you something? Write it down for next time.",
+    "@cuadernoEntryHookLearned": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookBizcochos": "Who brought what last time? Write it down so you don't forget.",
+    "@cuadernoEntryHookBizcochos": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookBring": "Got something to tell the ronda? Write it down and bring it.",
+    "@cuadernoEntryHookBring": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
     },
     "cuadernoEntryBody": "One line about your barrio. Only you see it, and it stays on this phone.",
     "@cuadernoEntryBody": {

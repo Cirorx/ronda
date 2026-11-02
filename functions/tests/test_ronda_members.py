@@ -72,7 +72,7 @@ def world(**extra) -> dict[str, dict]:
         "users/dani/rondas/r1": {"joinedAt": EARLIER},
         "users/demo-007": user("Vecina"),
         "users/hugo": {"terms": {}},
-        "users/ines": user("Inés", "pocitos"),
+        "users/ines": user("Inés", "las-piedras"),
         "proposals/p1": {
             "status": "approved",
             "rondaIds": ["r1", "r2"],
@@ -106,9 +106,15 @@ class TestWarnings:
         assert found == ["slot", "pretext", "barrio", "seat"]
 
     def test_an_unknown_barrio_is_far(self):
-        assert ronda_members.blocks("pocitos", "el-pinar-sur") is None
+        assert ronda_members.blocks("las-piedras", "el-pinar-sur") is None
         ronda = {"barrio": "el-pinar-sur", "pretext": "mate", "slot": {"day": "sat"}}
-        assert "barrio" in ronda_members.warnings(ronda, {"barrio": "pocitos"}, [])
+        assert "barrio" in ronda_members.warnings(ronda, {"barrio": "las-piedras"}, [])
+
+    def test_montevideo_takes_fifteen_blocks_where_the_costa_takes_ten(self):
+        ronda = {"barrio": "barrio-sur", "pretext": "mate", "slot": {"day": "sat"}}
+        assert ronda_members.blocks("palermo", "barrio-sur") == 13
+        assert "barrio" not in ronda_members.warnings(ronda, {"barrio": "palermo"}, [])
+        assert "barrio" in ronda_members.warnings(ronda, {"barrio": "aguada"}, [])
 
     def test_the_seat_id_falls_back_to_the_rondas_key(self):
         ronda = {"barrio": "b", "pretext": "mate", "slot": {"day": "sat", "time": "afternoon"}}

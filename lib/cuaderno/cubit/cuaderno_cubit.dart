@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:cuaderno_repository/cuaderno_repository.dart';
 import 'package:equatable/equatable.dart';
+import 'package:ronda/cuaderno/cubit/cuaderno_hook.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'cuaderno_state.dart';

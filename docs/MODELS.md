@@ -115,8 +115,8 @@ Counts toward "Use of Meta AI tooling" (25% of the score); mention what was used
 ## Smoke tests (day 1, tests 1–5; day 2, tests 6–7)
 Scripted in `scripts/smoke/` (`uv run scripts/smoke/s1_access.py`, `s2_structured.py`,
 `s3_transcribe.py note.wav`, `s4_baseten_tools.py`, `s5_sam.py photo.png out/`, `s6_image.py`,
-`s7_public_data.py`, and `s8_donde_queda.py`, run with `functions/venv/bin/python`). They read keys
-from the environment or `.env` and never print them. Log latency and cost of each in
+`s7_public_data.py`, and `s8_donde_queda.py` and `s10_barrios.py`, run with
+`functions/venv/bin/python`). They read keys from the environment or `.env` and never print them. Log latency and cost of each in
 `notes/NOW.md`.
 
 Results from Uruguay, 2026-10-28:
@@ -127,6 +127,13 @@ Results from Uruguay, 2026-10-28:
   `reasoning_effort: "low"` filled the strict sign-up schema (app ids as enums, `unknown` for
   what wasn't said) right on a 13 s invented note in ~2 s, against ~6 s at the default. The
   whole callable on the emulator: 7 s (transcribe ~4 s, fields ~2 s, upload and delete).
+- 10 (`s10_barrios.py [note.wav]`, 2026-11-01): Montevideo's 62 barrios next to the Costa's
+  nine. The strict `Signup` with a 72-value barrio enum (71 ids and `unknown`) still parsed on
+  every call, at `reasoning_effort: "low"` in 2–5 s (the longer prompt costs about a second over
+  the nine-barrio one). Typed: "Barrio Sur" → `barrio-sur`, "Bella Vista" →
+  `capurro-bella-vista`, "Malvín Norte" → `malvin-norte`, "Shangrilá" → `shangrila`, "Colón"
+  alone → unknown. Voice Transcribe took all 109 keywords: a 7.5 s synthetic note (macOS
+  `say`) transcribed in 2.7 s with "Barrio Sur" spelled right, then `barrio-sur`.
 - 3: a 10 s synthetic note in 3–5 s. `languageBias: ["Spanish"]` gave the cleaner transcript;
   auto-detect repeated words. Real rioplatense notes are still #21.
 - 4: `-1026` called the tool with valid arguments at low and xhigh, plain and streamed, 1–3 s,

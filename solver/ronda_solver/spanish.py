@@ -4,6 +4,7 @@ from ronda_solver.rules import (
     FEWER_SEATED,
     FROM_30_TO_59,
     MAX_WALK_BLOCKS,
+    MONTEVIDEO_WALK_BLOCKS,
     SIXTY_PLUS,
     TRUCO_OLD,
     TRUCO_YOUNG,
@@ -95,7 +96,8 @@ PHRASES = {
     HardRule.SAME_SLOT: _fixed("pone a alguien en un día y horario que no eligió"),
     HardRule.SAME_PRETEXT: _fixed("pone a alguien en una actividad que no eligió"),
     HardRule.WITHIN_TEN_BLOCKS: _fixed(
-        f"pone a alguien a más de {MAX_WALK_BLOCKS} cuadras de su barrio"
+        f"pone a alguien a más de {MAX_WALK_BLOCKS} cuadras de su barrio "
+        f"({MONTEVIDEO_WALK_BLOCKS} en Montevideo)"
     ),
     HardRule.AVOID_PAIR_APART: _fixed("junta a dos personas que separaste"),
     HardRule.ONE_RONDA_EACH: _one_ronda_each,

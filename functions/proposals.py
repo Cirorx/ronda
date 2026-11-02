@@ -17,11 +17,11 @@ from datetime import datetime
 
 import demo_users
 from ronda_solver import solve
-from ronda_solver.demo import DEMO_BARRIOS
+from ronda_solver.barrios import CENTROIDS
 
-BARRIOS = {barrio: {"lat": lat, "lng": lng} for barrio, (lat, lng) in DEMO_BARRIOS.items()}
-"""The barrio centroids distance is measured between: the app's `Barrio` ids, with the solver's
-approximate centroids (no other table exists yet)."""
+BARRIOS = {barrio: {"lat": lat, "lng": lng} for barrio, (lat, lng) in CENTROIDS.items()}
+"""The barrio centroids distance is measured between: the app's `Barrio` ids, Ciudad de la
+Costa's and Montevideo's (`ronda_solver.barrios`)."""
 
 PENDING = "pending"
 APPROVED = "approved"

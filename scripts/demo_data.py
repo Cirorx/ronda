@@ -27,8 +27,16 @@ INVENTED_OSM_PLACES = ROOT / "data" / "demo" / "invented_osm_places.json"
 # ronda_solver is not an installable package (solver/pyproject.toml: package = false), so the
 # generator is imported from its folder.
 sys.path.append(str(ROOT / "solver"))
-from ronda_solver.demo import DEMO_BARRIOS, invented_problem  # noqa: E402
+from ronda_solver.barrios import COSTA_BARRIOS  # noqa: E402
+from ronda_solver.demo import invented_problem  # noqa: E402
 from ronda_solver.geo import blocks_between  # noqa: E402
+from ronda_solver.montevideo import MONTEVIDEO_BARRIOS  # noqa: E402
+
+AREAS = tuple(
+    {barrio: (lat, lng) for barrio, (_, lat, lng) in table.items()}
+    for table in (COSTA_BARRIOS, MONTEVIDEO_BARRIOS)
+)
+"""Ciudad de la Costa's and Montevideo's centroids: a seat's walk table lists its own area's."""
 
 SET_SIZES = (30, 200)
 """The invented sign-up sets: 30 for the golden path and the solver's tests, 200 for scale."""
@@ -77,7 +85,8 @@ def documents(people: int) -> Documents:
 
 
 def seat_facts_documents(problem: dict) -> Documents:
-    """`seat_facts/{seatId}` for every barrio × pretext × slot the demo people pick.
+    """`seat_facts/{seatId}` for every barrio, Montevideo's too, × pretext × slot the demo people
+    pick, so a real member anywhere has seats to be matched in.
 
     The hand-made seats in data/demo/invented_seat_facts.json replace their generated twins,
     which keeps the two places an invented host has set.
@@ -93,24 +102,26 @@ def seat_facts_documents(problem: dict) -> Documents:
 
 
 def generated_seat_facts(pretexts: list[str], slots: list[str]) -> dict[str, dict]:
-    """Facts for every demo barrio × `pretexts` × `slots`, by seat id, the way
+    """Facts for every barrio × `pretexts` × `slots`, by seat id, the way
     data/demo/invented_seat_facts.json was made: `blocksFrom` is the haversine walk in blocks from
-    each barrio's centroid to the seat's, rounded to 0.1; evening slots end after dark; no host
-    has set a place yet, so no stairs and no car."""
+    each barrio's centroid in the seat's area (Ciudad de la Costa or Montevideo, `AREAS`) to the
+    seat's, rounded to 0.1; a barrio of the other area reads as far on the phone. Evening slots
+    end after dark; no host has set a place yet, so no stairs and no car."""
     return {
         f"{barrio}_{pretext}_{slot}": {
             "barrio": barrio,
             "pretext": pretext,
             "slot": slot,
             "blocksFrom": {
-                origin: round(blocks_between(centroid, DEMO_BARRIOS[barrio]), 1)
-                for origin, centroid in DEMO_BARRIOS.items()
+                origin: round(blocks_between(centroid, area[barrio]), 1)
+                for origin, centroid in area.items()
             },
             "hasStairs": False,
             "endsAfterDark": slot.endswith("-evening"),
             "needsCar": False,
         }
-        for barrio, pretext, slot in product(DEMO_BARRIOS, pretexts, slots)
+        for area in AREAS
+        for barrio, pretext, slot in product(area, pretexts, slots)
     }
 
 

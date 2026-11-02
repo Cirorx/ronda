@@ -246,7 +246,7 @@ def hard_reasons(data, alternative):
         (
             person("demo-x", barrio="el-pinar-sur"),
             "withinTenBlocks",
-            "pone a alguien a más de 10 cuadras de su barrio",
+            "pone a alguien a más de 10 cuadras de su barrio (15 en Montevideo)",
         ),
     ],
 )

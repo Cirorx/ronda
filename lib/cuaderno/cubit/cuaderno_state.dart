@@ -80,6 +80,17 @@ final class const CuadernoState({
     null => const [],
   };
 
+  /// The question over today's line, from the day, the meeting and the
+  /// week's lines ([EntryHook.pick]).
+  EntryHook get hook => switch (today) {
+    final today? => EntryHook.pick(
+      today: today,
+      meetingDate: meetingDate,
+      weekLines: weekLines.length,
+    ),
+    null => EntryHook.rotation.first,
+  };
+
   /// Whether the postcard can be drawn now: on the day before the ronda's
   /// meeting or on the day itself, with at least one line this week.
   bool get postcardOffered {

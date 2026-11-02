@@ -18,16 +18,17 @@ void main() {
   );
 
   group(ProposedRonda, () {
-    group('allWithinTenBlocks', () {
-      test('is true when nobody walks more than ten blocks', () {
+    group('allWithin', () {
+      test('is true when nobody walks more than the blocks given', () {
         expect(
-          ronda([member('60-69', 0), member('30-39', 10)]).allWithinTenBlocks,
+          ronda([member('60-69', 0), member('30-39', 10)]).allWithin(10),
           isTrue,
         );
+        expect(ronda([member('60-69', 13)]).allWithin(15), isTrue);
       });
 
       test('is false when someone walks further', () {
-        expect(ronda([member('60-69', 10.5)]).allWithinTenBlocks, isFalse);
+        expect(ronda([member('60-69', 10.5)]).allWithin(10), isFalse);
       });
     });
 
