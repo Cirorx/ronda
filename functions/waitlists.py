@@ -12,14 +12,14 @@ date and start date). Each answer ends with the next date: never limbo.
 - `answer(db, uid, choice, now)`: the `answer_waitlist` callable's body: the person's pick after
   a round that didn't fill.
 
-Who waits where: a sign-up with a profile who counts here (demo_users.counts), sits in no ronda
-that still meets, and picked a barrio × pretext × slot whose seat id passes their needs filter
-(their eligible ids) waits on that seat's list. A list's threshold is the pretext's largest
-ronda (`SizeRule.cap`: 6, fútbol 10). A round runs to a Sunday (`deadline`, the whole day) and
-the ronda would start on its slot's day the week after (`start`). At a deadline: a list at its
-threshold rolls one week on (the admin's solver and approval make the ronda, as for any
-sign-ups); one short of it closes as didn't-fill, and the next round is two weeks later, the
-"Esperar dos semanas más" dates. Choices reset with each round.
+Who waits where: a sign-up with a profile who counts here (demo_users.counts), sits in no ronda that
+still meets, and picked a pretext × slot whose seat id in their casa or trabajo barrio
+(member_barrios.py) passes their needs filter (their eligible ids) waits on that seat's list. A
+list's threshold is the pretext's largest ronda (`SizeRule.cap`: 6, fútbol 10). A round runs to a
+Sunday (`deadline`, the whole day) and the ronda would start on its slot's day the week after
+(`start`). At a deadline: a list at its threshold rolls one week on (the admin's solver and approval
+make the ronda, as for any sign-ups); one short of it closes as didn't-fill, and the next round is
+two weeks later, the "Esperar dos semanas más" dates. Choices reset with each round.
 
 Where things live (docs/ARCHITECTURE.md § Data model):
 - `waitlists/{seatId}`: barrio, pretext, slot, threshold, entries [{uid, at}] (who waited
@@ -36,6 +36,7 @@ import logging
 from datetime import date, datetime, timedelta
 
 import demo_users
+import member_barrios
 import rsvp
 import seguimos
 
@@ -83,9 +84,7 @@ def later(round_: dict, weeks: int) -> dict:
 
 def waiting_people(db) -> dict[str, dict]:
     """Every seat id someone waits for: its barrio, pretext and slot, and who waits (uid and
-    when they signed up), longest waiting first."""
-    from proposals import BARRIOS
-
+    when they signed up), longest waiting first. Someone with a trabajo waits in both barrios."""
     seated = set()
     for snapshot in db.collection("rondas").stream():
         if (snapshot.to_dict() or {}).get("status") not in rsvp.OPEN_STATUSES:
@@ -98,19 +97,21 @@ def waiting_people(db) -> dict[str, dict]:
         uid, user = snapshot.id, snapshot.to_dict() or {}
         if uid in seated or not demo_users.counts(uid) or "firstName" not in user:
             continue
-        barrio = user.get("barrio")
-        if barrio not in BARRIOS:
+        barrios = member_barrios.barrios(user)
+        if not barrios:
             continue
         eligible = db.document(f"users/{uid}/private/eligible").get()
         seats = set((eligible.to_dict() or {}).get("seatIds", [])) if eligible.exists else set()
-        for pretext in user.get("pretexts", []):
-            for slot in user.get("slots", []):
-                seat = f"{barrio}_{pretext}_{slot}"
-                if seat in seats:
-                    row = lists.setdefault(
-                        seat, {"barrio": barrio, "pretext": pretext, "slot": slot, "entries": []}
-                    )
-                    row["entries"].append((uid, user.get("createdAt")))
+        for barrio in barrios:
+            for pretext in user.get("pretexts", []):
+                for slot in user.get("slots", []):
+                    seat = f"{barrio}_{pretext}_{slot}"
+                    if seat in seats:
+                        row = lists.setdefault(
+                            seat,
+                            {"barrio": barrio, "pretext": pretext, "slot": slot, "entries": []},
+                        )
+                        row["entries"].append((uid, user.get("createdAt")))
     for row in lists.values():
         row["entries"].sort(key=lambda entry: (str(entry[1] or "~"), entry[0]))
     return lists

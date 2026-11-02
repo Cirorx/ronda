@@ -49,6 +49,7 @@ from datetime import UTC, date, datetime, time, timedelta
 from pydantic import Field
 
 import demo_users
+import member_barrios
 import rain
 import rsvp
 from organiser import gates, moves, outbox
@@ -229,18 +230,15 @@ def seat_id(ronda: dict) -> str:
 
 
 def bench_order(db, ronda: dict, day: date, skip: set[str]) -> list[Candidate]:
-    """The ronda's bench for the meeting on `day`, in order: sign-ups with a profile who count
-    here, sit in no ronda, picked this pretext and slot, live within the solver's walking
-    distance, for whom the seat passes their needs filter, and who hold no other offer nor a
-    seat elsewhere that day; `skip` (already offered this seat this week) left out. Who waited
+    """The ronda's bench for the meeting on `day`, in order: sign-ups with a profile who count here,
+    sit in no ronda, picked this pretext and slot, live or work within the solver's walking distance
+    (member_barrios.py), for whom the seat passes their needs filter, and who hold no other offer
+    nor a seat elsewhere that day; `skip` (already offered this seat this week) left out. Who waited
     longest comes first, then the nearest."""
     # Both import the solver package, and with it OR-Tools: only a bench with a seat pays.
     from proposals import BARRIOS
-    from ronda_solver.geo import blocks_between
-    from ronda_solver.rules import max_walk_blocks
 
-    here = BARRIOS.get(ronda.get("barrio"))
-    if here is None:
+    if ronda.get("barrio") not in BARRIOS:
         return []
     slot = ronda.get("slot") or {}
     slot_id, seat = f"{slot.get('day')}-{slot.get('time')}", seat_id(ronda)
@@ -248,24 +246,23 @@ def bench_order(db, ronda: dict, day: date, skip: set[str]) -> list[Candidate]:
     found = []
     for snapshot in db.collection("users").stream():
         uid, user = snapshot.id, snapshot.to_dict() or {}
-        there = BARRIOS.get(user.get("barrio"))
         if (
             uid in skip
             or uid in seated
             or not demo_users.counts(uid)
             or "firstName" not in user
-            or there is None
+            or not member_barrios.anchors(user)
             or ronda.get("pretext") not in user.get("pretexts", [])
             or slot_id not in user.get("slots", [])
         ):
             continue
-        blocks = blocks_between((here["lat"], here["lng"]), (there["lat"], there["lng"]))
         if (
-            blocks > max_walk_blocks(ronda["barrio"])
+            not member_barrios.reaches(user, ronda["barrio"])
             or seat not in _eligible(db, uid)
             or _busy(db, uid, day)
         ):
             continue
+        blocks = member_barrios.nearest_blocks(user, ronda["barrio"])
         since = user.get("createdAt")
         found.append(
             Candidate(

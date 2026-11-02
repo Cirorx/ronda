@@ -51,13 +51,22 @@ service cloud.firestore {
 
       function isUserDocument(data) {
         return data.keys().hasOnly([
-              'firstName', 'ageBand', 'barrio', 'slots', 'pretexts', 'brings',
-              'plusOneUid', 'buddyUid', 'terms', 'createdAt'])
+              'firstName', 'ageBand', 'barrio', 'barrioNeighbours', 'workBarrio',
+              'workBarrioNeighbours', 'slots', 'pretexts', 'brings', 'plusOneUid',
+              'buddyUid', 'terms', 'createdAt'])
           && isOptional(data, 'firstName', data.firstName is string
               && data.firstName.size() > 0 && data.firstName.size() <= 30)
           && isOptional(data, 'ageBand', data.ageBand in [
               '18-29', '30-39', '40-49', '50-59', '60-69', '70-79', '80+'])
           && isOptional(data, 'barrio', data.barrio is string)
+          // Casa's neighbours, and trabajo with its own: a second barrio id,
+          // never casa again (docs/GLOSSARY.md, Anchor).
+          && isOptional(data, 'barrioNeighbours', data.barrioNeighbours is bool)
+          && isOptional(data, 'workBarrio', data.workBarrio is string
+              && data.workBarrio.matches(idPattern())
+              && data.workBarrio != data.get('barrio', ''))
+          && isOptional(data, 'workBarrioNeighbours',
+              data.workBarrioNeighbours is bool)
           && isOptional(data, 'slots', isIdList(data.slots, slotPattern()))
           && isOptional(data, 'pretexts', isIdList(data.pretexts, idPattern()))
           && isOptional(data, 'brings', isIdList(data.brings, idPattern()))

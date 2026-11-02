@@ -169,6 +169,21 @@ class TestCercaDocuments:
         ]
         assert documents["cerca/el-pinar-sur"]["waiting"] == []
 
+    def test_who_works_in_another_barrio_counts_in_both_and_neighbours_count_in_neither(self):
+        users = {
+            "demo-1": user("el-pinar-norte", pretexts=("mate",)) | {"workBarrio": "el-pinar-sur"},
+            "demo-2": user("el-pinar-norte", pretexts=("mate",)) | {"barrioNeighbours": True},
+        }
+        rondas = [(ronda("el-pinar-sur"), [])]
+
+        documents = cerca_tuyo.cerca_documents(
+            ["el-pinar-norte", "el-pinar-sur"], rondas, users, six, NOW
+        )
+
+        assert documents["cerca/el-pinar-norte"]["waiting"] == [{"pretext": "mate", "count": 2}]
+        assert documents["cerca/el-pinar-sur"]["waiting"] == [{"pretext": "mate", "count": 1}]
+        assert documents["cerca/el-pinar-sur"]["rondas"][0]["waiting"] == 1
+
     def test_no_uid_name_or_place_reaches_a_document(self):
         users = {"demo-a": user("solymar-sur", name="Graciela"), "demo-b": user("solymar-sur")}
         rondas = [(ronda("solymar-sur") | {"place": {"name": "Quiosco"}}, ["demo-a"])]

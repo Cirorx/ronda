@@ -21,6 +21,7 @@ from collections.abc import Callable, Iterable
 from datetime import datetime
 
 import demo_users
+import member_barrios
 
 FLYER_ID = re.compile(r"[a-z0-9]{8}")
 """scripts/flyer.py's and mate_flyer.py's ids: eight lowercase letters and digits. Anything else
@@ -48,6 +49,9 @@ AGE_BANDS = {
     "70-79": (70, 79),
     "80+": (80, None),
 }
+
+WAITS_IN = "_waitsIn"
+"""Where a waiting neighbour counts, added to their profile for the counting only."""
 
 DAY_TYPES = ("weekday", "saturday", "sunday")
 LAST_BUS_FIELDS = ("time", "estimated", "route", "published")
@@ -105,16 +109,19 @@ def cerca_documents(
     """`cerca/{barrio}` for every barrio, keyed by document path, from the open rondas (each
     with the uids taking a seat in it) and the `users/{uid}` documents.
 
-    A neighbour waits when they saved a profile in a known barrio and no open ronda seats
-    them. A ronda's `waiting` counts those who picked its barrio, pretext and slot; the
+    A neighbour waits when they saved a profile in a known barrio and no open ronda seats them; they
+    count in their casa's barrio and, with a trabajo, in that one too (counts only, so nobody reads
+    which is which). A ronda's `waiting` counts those who picked its barrio, pretext and slot; the
     barrio's `waiting` counts them by pretext. `cap(pretext)` is a ronda's most seats.
     """
     barrios = list(barrios)
     seated = {uid for _, members in rondas for uid in members}
     waiting = [
-        user
+        {**user, WAITS_IN: places}
         for uid, user in users.items()
-        if "firstName" in user and user.get("barrio") in barrios and uid not in seated
+        if "firstName" in user
+        and uid not in seated
+        and (places := [b for b in member_barrios.barrios(user) if b in barrios])
     ]
     documents = {}
     for barrio in barrios:
@@ -131,7 +138,7 @@ def cerca_documents(
                 count := sum(
                     1
                     for user in waiting
-                    if user["barrio"] == barrio and pretext in user.get("pretexts", [])
+                    if barrio in user[WAITS_IN] and pretext in user.get("pretexts", [])
                 )
             )
         ]
@@ -162,7 +169,7 @@ def _ronda_row(
         "waiting": sum(
             1
             for user in waiting
-            if user["barrio"] == ronda["barrio"]
+            if ronda["barrio"] in user[WAITS_IN]
             and pretext in user.get("pretexts", [])
             and slot in user.get("slots", [])
         ),

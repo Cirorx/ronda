@@ -70,9 +70,12 @@ def near_blocks(barrio: str) -> float:
 
 
 def within_ten_blocks(problem: Problem, person: Person, candidate: Candidate) -> bool:
-    """Within the ronda's barrio's walk (`max_walk_blocks`), measured between barrio centroids.
-    The rule keeps its wire name, `withinTenBlocks`, from before Montevideo's 15."""
-    return problem.blocks(person.barrio, candidate.barrio) <= max_walk_blocks(candidate.barrio)
+    """Within the ronda's barrio's walk (`max_walk_blocks`) of one of the person's anchors,
+    measured between barrio centroids; an anchor with its neighbours reaches 1.5 times as far
+    (anchors.py). The rule keeps its wire name, `withinTenBlocks`, from before Montevideo's 15."""
+    from ronda_solver.anchors import within_reach
+
+    return within_reach(person.places, candidate.barrio, problem.blocks)
 
 
 SEAT_RULES = {

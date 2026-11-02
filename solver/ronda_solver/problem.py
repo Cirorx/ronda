@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from itertools import product
 
+from ronda_solver.anchors import Anchor, anchors_of, nearest_blocks
 from ronda_solver.geo import blocks_between
 from ronda_solver.rules import WEIGHTS, SoftRule
 
@@ -21,10 +22,18 @@ class Person:
     uid: str
     age_band: str
     barrio: str
+    """Casa: the barrio the admin sees."""
     pretexts: frozenset[str]
     slots: frozenset[str]
     eligible_seat_ids: frozenset[str]
     plus_one_uid: str | None = None
+    anchors: tuple[Anchor, ...] = ()
+    """Casa, and trabajo when set, each maybe with its neighbours (anchors.py). Empty means
+    casa alone, without them."""
+
+    @property
+    def places(self) -> tuple[Anchor, ...]:
+        return self.anchors or (Anchor(self.barrio),)
 
 
 @dataclass(frozen=True)
@@ -62,8 +71,8 @@ class Problem:
         return self._blocks[from_barrio, to_barrio]
 
     def walk(self, person: Person, candidate: Candidate) -> int:
-        """Whole blocks from the person's barrio centroid to the ronda's."""
-        return round(self.blocks(person.barrio, candidate.barrio))
+        """Whole blocks to the ronda's barrio centroid from the nearest of the person's."""
+        return round(nearest_blocks(person.places, candidate.barrio, self.blocks))
 
     def person(self, uid: str) -> Person:
         return self._by_uid[uid]
@@ -110,6 +119,7 @@ def _parse_person(p: dict) -> Person:
         slots=frozenset(p["slots"]),
         eligible_seat_ids=frozenset(p["eligibleSeatIds"]),
         plus_one_uid=p.get("plusOneUid"),
+        anchors=anchors_of(p),
     )
 
 
@@ -137,8 +147,9 @@ def parse_problem(data: dict) -> Problem:
         if person.uid in seen:
             raise ValueError(f"uid {person.uid!r} appears twice")
         seen.add(person.uid)
-        if person.barrio not in barrios:
-            raise ValueError(f"{person.uid!r} is in barrio {person.barrio!r}, not in barrios")
+        for anchor in person.places:
+            if anchor.barrio not in barrios:
+                raise ValueError(f"{person.uid!r} is in barrio {anchor.barrio!r}, not in barrios")
     ids = {*barrios, *(i for p in people for i in (*p.pretexts, *p.slots))}
     if joined := sorted(i for i in ids if "_" in i):
         raise ValueError(f"{joined[0]!r}: ids must not contain '_', which joins seat ids")

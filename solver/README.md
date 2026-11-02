@@ -53,7 +53,11 @@ people; barrio names are real places in Ciudad de la Costa with approximate cent
   `waitlists/{barrio_pretext_slot}`). Every seat of a candidate shares its facts, so the phone's
   filter works per candidate. Barrio, pretext and slot ids must not contain `_`
   (`ValueError`).
-- `barrio` must be a key of `barrios`; uids are unique (otherwise `ValueError`).
+- `barrio` is casa. Optional `workBarrio` (trabajo) and `barrioNeighbours` /
+  `workBarrioNeighbours` (true widens that barrio's reach to 1.5 times the walk,
+  `ronda_solver.anchors`): a person may take a seat within reach of either, and the walk is from
+  the nearer. Every one of them must be a key of `barrios`; uids are unique (otherwise
+  `ValueError`).
 - `plusOneUid` and `avoidPairs` naming someone not in `people` are ignored.
 - `slots` and `pretexts` are opaque strings; `ageBand` is a decade (`18-29`, `30-39`, …, `80+`).
 - `options` and every key in it are optional; `weights` overrides the table below by rule name
@@ -119,7 +123,7 @@ hard rules, `score.py` for soft) that returns its violations.
 | `eligibleSeat` | Only seats whose id the phone sent |
 | `sameSlot` | The ronda's slot is one of the person's slots |
 | `samePretext` | The ronda's pretext is one of the person's pretexts |
-| `withinTenBlocks` | ≤ 10 blocks between barrio centroids, 15 when the ronda is in Montevideo (`rules.max_walk_blocks`; haversine; a block is 100 m). The name predates Montevideo |
+| `withinTenBlocks` | ≤ 10 blocks between barrio centroids, 15 when the ronda is in Montevideo (`rules.max_walk_blocks`; haversine; a block is 100 m), from casa or trabajo, 1.5 times that with the barrio's neighbours. The name predates Montevideo |
 | `avoidPairApart` | A report-apart pair is never in the same ronda |
 | `oneRondaEach` | Each person is in one ronda or in `unseated`, exactly once |
 | `sizeBounds` | An open ronda has floor..cap members (below) |
