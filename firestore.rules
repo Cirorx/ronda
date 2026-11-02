@@ -38,8 +38,9 @@ service cloud.firestore {
     }
 
     // A member reads and writes only their own profile. Subcollections are
-    // not matched here: private/eligible and tokens have their own blocks
-    // below, and any other stays closed.
+    // not matched here: private/eligible, tokens, rondas, offers and the
+    // report receipts (reports) have their own blocks below, and any other
+    // stays closed.
     //
     // Only the fields docs/ARCHITECTURE.md § Data model names, each optional
     // (the terms arrive first, when a welcome door is tapped; the profile

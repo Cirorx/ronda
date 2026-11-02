@@ -631,7 +631,7 @@ rates anything, keeps a streak or counts days, and never says "ánimo", "bienest
   above it, and the helplines under it. [Mandar] needs someone picked and a tag or some words
   ("Elegí con quién fue, y una etiqueta o unas palabras."); five a day at most ("Por hoy ya
   mandaste varios. Si es urgente, llamá al 911.").
-  - The receipt: "Lo recibimos. Lo lee una persona." and "Lo contaste el 2/11.", with [Agregar
+  - The receipt: "Lo recibimos. Lo lee una persona." and "Lo contaste el 2 nov.", with [Agregar
     algo] ("¿Qué querés agregar?") and [Retirar] ("¿Retirás lo que contaste?", "La persona que
     lo lee va a ver que lo retiraste.", [Retirar] [Mejor no]). A withdrawn report leaves the
     screen. The receipt never says what the admin did (telling the reporter the outcome is out).
@@ -639,7 +639,7 @@ rates anything, keeps a streak or counts days, and never says "ánimo", "bienest
 - **The queue** (Admin, "Reportes", `/admin/reportes`; the admin only): [Abiertos (n)]
   [Archivados]. Anyone reported by two or more different people goes on top ("2 personas
   contaron sobre Beto"), then the newest. Each report: "Ana contó sobre Beto" (or "sobre alguien
-  de afuera"), the day and the ronda, the tags, the words, "Agregó el 3/11: …", and the marks
+  de afuera"), the day and the ronda, the tags, the words, "Agregó el 3 nov: …", and the marks
   "Nuevo" (unread when the screen opened) and "Retirado" (a withdrawn report stays in the queue).
   Opening the queue marks what it shows read. No push goes to the admin on a new report: the
   Admin tab's unread count (and the count on the link to "Reportes") is the alert; an addition or
