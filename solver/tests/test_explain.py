@@ -13,19 +13,15 @@ from tests.builders import BARRIOS, grouping, person, problem, ronda
 FIXTURE = Path(__file__).parent.parent / "fixtures" / "invented_demo_30.json"
 
 
-def test_on_the_thirty_person_fixture_the_alternative_is_rejected_for_18_more_blocks_walked():
-    # The winner and the alternative both leave three people alone in their age group; only the
-    # walk differs: the truco ronda moves nine blocks for four people instead of for two.
+def test_on_the_thirty_person_fixture_rondas_of_two_seat_all_but_three():
+    # With a floor of 4 the same fixture seated 18; with 2, small rondas open where few match.
     data = json.loads(FIXTURE.read_text())
 
-    alternative = solve(data)["rejectedAlternative"]
+    result = solve(data)
 
-    assert alternative["reason"] == "Alternativa B rechazada: hace caminar 18 cuadras más."
-    [reason] = alternative["reasons"]
-    assert reason["rule"] == "nearbyFirst"
-    assert reason["hard"] is False
-    assert reason["units"] == 18
-    assert reason["loss"] == 90
+    assert result["status"] == "optimal"
+    assert len(result["unseated"]) == 3
+    assert min(len(r["members"]) for r in result["proposals"]) == 2
 
 
 def is_broken_more(data, result, alternative, reason):
@@ -55,8 +51,13 @@ def test_every_rejected_alternative_of_thirty_invented_neighbours_names_a_rule_i
 
 
 def test_an_alternative_that_leaves_a_60_plus_alone_says_so_and_names_who():
-    thirties = [person(f"demo-t{i}", age_band="30-39") for i in range(5)]
-    sixties = [person(f"demo-s{i}", age_band="60-69", barrio="solymar-norte") for i in range(2)]
+    # One seat all seven can take, so they compete for its six places.
+    sur = ("solymar-sur_mate_sat-afternoon",)
+    thirties = [person(f"demo-t{i}", age_band="30-39", eligible=sur) for i in range(5)]
+    sixties = [
+        person(f"demo-s{i}", age_band="60-69", barrio="solymar-norte", eligible=sur)
+        for i in range(2)
+    ]
 
     alternative = solve(problem([*thirties, *sixties]))["rejectedAlternative"]
 
@@ -282,7 +283,7 @@ def test_a_report_apart_pair_seated_together_is_the_reason_even_if_it_seats_one_
 @pytest.mark.parametrize(
     ("size", "sentence", "params"),
     [
-        (3, "abre una ronda de mate con 3 y hacen falta 4", {"members": 3}),
+        (1, "abre una ronda de mate con 1 y hacen falta 2", {"members": 1}),
         (7, "una ronda de mate queda con 7 y el máximo es 6", {"members": 7}),
     ],
 )
@@ -294,7 +295,7 @@ def test_a_ronda_outside_its_size_bounds_says_its_size_and_the_bound(size, sente
     assert explained["reason"] == f"Alternativa B rechazada: {sentence}."
     [reason] = explained["reasons"]
     assert reason["rule"] == "sizeBounds"
-    assert reason["violations"][0]["params"] == {"pretext": "mate", "floor": 4, "cap": 6, **params}
+    assert reason["violations"][0]["params"] == {"pretext": "mate", "floor": 2, "cap": 6, **params}
 
 
 def test_a_neighbour_in_two_rondas_at_once_is_the_reason():

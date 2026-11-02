@@ -46,6 +46,20 @@ PAUSE_WEEKS = 2
 OPEN_STATUSES = ("forming", "active")
 """Rondas that still meet; `paused` and `ended` get no push."""
 
+
+def seated_uids(db) -> set[str]:
+    """Everyone with a seat (active or paused) in a ronda that still meets: they wait on no list
+    and the solver doesn't place them again."""
+    seated = set()
+    for snapshot in db.collection("rondas").stream():
+        if (snapshot.to_dict() or {}).get("status") not in OPEN_STATUSES:
+            continue
+        for member in db.collection(f"rondas/{snapshot.id}/members").stream():
+            if (member.to_dict() or {}).get("state") in ("active", "paused"):
+                seated.add(member.id)
+    return seated
+
+
 RSVP_TYPE = "rsvp"
 """`data.type` of the push, which the phone draws with [Voy] [Esta no]."""
 

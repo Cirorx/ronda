@@ -101,12 +101,13 @@ class SizeRule:
 
 
 SIZES = {
-    "futbol5": SizeRule(floor=8, target=10, cap=10),
-    "truco": SizeRule(floor=4, target=6, cap=6),
+    "futbol5": SizeRule(floor=4, target=10, cap=10),
+    "truco": SizeRule(floor=2, target=6, cap=6),
 }
-DEFAULT_SIZE = SizeRule(floor=4, target=5, cap=6)
-"""A ronda at 3 is merged and one at 4 is refilled (docs/ARCHITECTURE.md § Solver), so 4 is the
-smallest ronda the solver opens."""
+DEFAULT_SIZE = SizeRule(floor=2, target=5, cap=6)
+"""A ronda opens with two, so Cerca shows its open places and neighbours fill it to the cap; the
+owner chose 2 (fútbol 4) on 2026-11-02. The target still makes the solver fill a ronda before it
+opens another, and the same floor decides whether a season starts (functions/seguimos.py)."""
 
 
 def size_rule(pretext: str) -> SizeRule:

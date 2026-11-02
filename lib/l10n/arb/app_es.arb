@@ -598,7 +598,7 @@
     "waitingMissing": "{missing, plural, =1{Falta uno.} other{Faltan {missing}.}}",
     "waitingIfJoin": "{missing, plural, =1{Si se suma uno más antes del {deadline}, empieza el {start}.} other{Si se suman {missing} más antes del {deadline}, empieza el {start}.}}",
     "waitingIfNot": "Si no llegamos, te damos a elegir: sumarte a otro grupo o esperar dos semanas más.",
-    "waitingFull": "Ya son {threshold}: alcanza para arrancar. Armamos el grupo y te avisamos antes del {start}.",
+    "waitingFull": "Ya son {count}: alcanza para arrancar. Armamos el grupo y te avisamos antes del {start}.",
     "waitingDidntFillTitle": "Esta vez no llegamos a {threshold}.",
     "traceByCode": "Código",
     "traceByModel": "Modelo",

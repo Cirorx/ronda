@@ -103,11 +103,19 @@ def sizes(result):
     return sorted(len(r["members"]) for r in result["proposals"])
 
 
-def test_three_neighbours_are_too_few_to_open_a_ronda():
-    result = solve_checked(problem(five_regulars()[:3], barrios=SOLYMAR_SUR_ONLY))
+def test_one_neighbour_is_too_few_to_open_a_ronda():
+    result = solve_checked(problem(five_regulars()[:1], barrios=SOLYMAR_SUR_ONLY))
 
     assert result["proposals"] == []
-    assert result["unseated"] == ["demo-0", "demo-1", "demo-2"]
+    assert result["unseated"] == ["demo-0"]
+
+
+def test_two_neighbours_open_a_ronda():
+    result = solve_checked(problem(five_regulars()[:2], barrios=SOLYMAR_SUR_ONLY))
+
+    [ronda] = result["proposals"]
+    assert [m["uid"] for m in ronda["members"]] == ["demo-0", "demo-1"]
+    assert result["unseated"] == []
 
 
 def test_futbol_5_seats_ten_and_waitlists_the_rest():
@@ -119,8 +127,8 @@ def test_futbol_5_seats_ten_and_waitlists_the_rest():
     assert len(result["unseated"]) == 2
 
 
-def test_seven_futbol_players_are_too_few_for_a_match():
-    players = [person(f"demo-{i}", pretexts=("futbol5",)) for i in range(7)]
+def test_three_futbol_players_are_too_few_for_a_match():
+    players = [person(f"demo-{i}", pretexts=("futbol5",)) for i in range(3)]
 
     result = solve_checked(problem(players, barrios=SOLYMAR_SUR_ONLY))
 
@@ -136,10 +144,18 @@ def test_ten_mate_neighbours_split_five_and_five_rather_than_six_and_four():
     assert sizes(result) == [5, 5]
 
 
+# One seat all seven can take, so they compete for its six places (with a floor of 2, a second
+# candidate would seat the seventh).
+SUR_SATURDAY = ("solymar-sur_mate_sat-afternoon",)
+
+
 def test_nobody_is_the_only_one_of_their_age_band_even_if_a_neighbour_walks_further():
-    thirties = [person(f"demo-t{i}", age_band="30-39") for i in range(5)]
+    thirties = [person(f"demo-t{i}", age_band="30-39", eligible=SUR_SATURDAY) for i in range(5)]
     # Nine blocks away: seating one of them instead of a fifth thirty-something walks less.
-    sixties = [person(f"demo-s{i}", age_band="60-69", barrio="solymar-norte") for i in range(2)]
+    sixties = [
+        person(f"demo-s{i}", age_band="60-69", barrio="solymar-norte", eligible=SUR_SATURDAY)
+        for i in range(2)
+    ]
 
     result = solve_checked(problem([*thirties, *sixties]))
 
@@ -231,8 +247,11 @@ def test_each_ronda_says_which_soft_rules_it_keeps():
 
 
 def test_the_rejected_alternative_is_the_best_grouping_that_breaks_a_soft_rule_and_names_it():
-    thirties = [person(f"demo-t{i}", age_band="30-39") for i in range(5)]
-    sixties = [person(f"demo-s{i}", age_band="60-69", barrio="solymar-norte") for i in range(2)]
+    thirties = [person(f"demo-t{i}", age_band="30-39", eligible=SUR_SATURDAY) for i in range(5)]
+    sixties = [
+        person(f"demo-s{i}", age_band="60-69", barrio="solymar-norte", eligible=SUR_SATURDAY)
+        for i in range(2)
+    ]
     data = problem([*thirties, *sixties])
 
     alternative = solve_checked(data)["rejectedAlternative"]
@@ -245,7 +264,7 @@ def test_the_rejected_alternative_is_the_best_grouping_that_breaks_a_soft_rule_a
 
 
 def test_there_is_no_rejected_alternative_when_nobody_can_be_seated():
-    result = solve_checked(problem(five_regulars()[:3], barrios=SOLYMAR_SUR_ONLY))
+    result = solve_checked(problem(five_regulars()[:1], barrios=SOLYMAR_SUR_ONLY))
 
     assert result["rejectedAlternative"] is None
 

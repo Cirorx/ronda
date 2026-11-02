@@ -107,17 +107,17 @@ void main() {
       expect(find.text('Con vos son 3 de 6. Faltan 3.'), findsOneWidget);
     });
 
-    testWidgets('says a full list is being put together, with its date', (
+    testWidgets('says a full list is being put together, with how many wait', (
       tester,
     ) async {
       await pump(
         tester,
-        ready(MyRondaFixtures.waiting(status: WaitingStatus.full, count: 6)),
+        ready(MyRondaFixtures.waiting(status: WaitingStatus.full, count: 7)),
       );
 
       expect(
         find.text(
-          'Ya son 6: alcanza para arrancar. Armamos el grupo y te avisamos '
+          'Ya son 7: alcanza para arrancar. Armamos el grupo y te avisamos '
           'antes del sábado 7/11.',
         ),
         findsOneWidget,

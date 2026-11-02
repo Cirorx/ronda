@@ -266,7 +266,7 @@ isn't set up).
     in one transaction.
   - The close runs inside the next RSVP push for that ronda (`rsvp.run_rsvp_push` →
     `seguimos.close`), with the ronda read at send time. Yeses from members still in ≥ the
-    pretext's floor (`SizeRule.floor`: 4; fútbol 8): `season` is set for `SEASON_WEEKS` (4)
+    pretext's floor (`SizeRule.floor`: 2; fútbol 4): `season` is set for `SEASON_WEEKS` (4)
     meetings from the one the push is for, the ronda becomes `active`, and the RSVP body opens
     with "Seguimos los jueves, hasta el jueves 26/11. Nadie sabe qué contestó cada uno."
     (members the RSVP skips get those words alone). Each "no" leaves (`state: left`) and gets
@@ -304,7 +304,7 @@ isn't set up).
     or told 21:00–09:00 (the run waits for the 09:00 one), nor less than two hours before the
     meeting.
 - The waiting list (built in #48, `functions/waitlists.py`; the `waitlists` job, hourly):
-  - `waitlists/{seatId}` (server only): barrio, pretext, slot, threshold (`SizeRule.cap`),
+  - `waitlists/{seatId}` (server only): barrio, pretext, slot, threshold (`SizeRule.floor`),
     entries [{uid, at}] (sign-ups seated nowhere with that seat id among their eligible ids,
     longest waiting first), round {deadline, start} (to a Sunday; the slot's day the week
     after), last {deadline, start, outcome full | didntFill, closedAt}, choices {uid: join |
@@ -742,14 +742,16 @@ Built in `solver/` (#23): pure Python, JSON in and out, no Firebase imports. The
 weights and limits are in `solver/README.md`; every rule name and number is in
 `solver/ronda_solver/rules.py`.
 
-- Runs per season and on refill (ronda at 4) or merge (ronda at 3), never weekly. Only the season
-  run is built: there is no input for existing rondas yet.
+- Runs per season, never weekly. Only the season run is built: there is no input for existing
+  rondas yet, so it takes only people with no seat in a ronda that still meets
+  (`functions/proposals.py`); a ronda grows through Cerca and the admin's "Sumar a esta ronda".
 - Candidate rondas are barrio × pretext × slot, one per key. A seat id is that key,
   `{barrio}_{pretext}_{slot}`, so the phone can send eligible ids before any ronda exists.
 - Hard: a person only in seats from their eligible set; slot and pretext match; distance by
   barrio centroid ≤ 10 blocks (15 when the ronda is in Montevideo, chosen 2026-11-01 because its
   barrios' centroids are 12 to 20 blocks apart); avoid pairs never together; one ronda each; a ronda opens only
-  within its size bounds (fútbol 8–10, every other pretext 4–6).
+  within its size bounds (fútbol 4–10, every other pretext 2–6; the owner lowered the floors from
+  8 and 4 on 2026-11-02 so a ronda opens early and Cerca shows its places).
 - Soft (weighted): nobody the only one of their age group (under 30, 30–59, 60+); shortfall from
   the target size (fútbol 10, truco 6, others 5); +1 pair together; ≤ 1 +1 pair per ronda;
   cross-age truco partners (kept by #9); open a nearby ronda before seating far.

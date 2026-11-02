@@ -1,7 +1,7 @@
 """seguimos.py with a fixed clock, over the in-memory Firestore stand-in.
 
 The test ronda is a mate ronda in El Pinar sur, Saturday afternoons, six members; its first
-meeting is Saturday 2026-10-31 (ISO week 44). The pretext's floor is 4 yeses. After that
+meeting is Saturday 2026-10-31 (ISO week 44). The pretext's floor is 2 yeses. After that
 meeting the admin may move it to Tuesday, with the RSVP push the day before at 19:00.
 """
 
@@ -410,7 +410,7 @@ class TestClose:
     def test_below_the_floor_there_is_no_season_and_everyone_still_in_gets_the_choices(self):
         db = FakeFirestore(documents())
         ask(db)
-        answer_all(db, {"demo-001": "yes", "demo-002": "yes", "demo-003": "yes"})
+        answer_all(db, {"demo-001": "yes"})
         answer_all(db, {"demo-004": "no"})
         to_tuesday(db)
         sender = Sender()
@@ -423,12 +423,12 @@ class TestClose:
         assert {m["data"]["type"] for m in sender.messages if "data" in m} == {"seguimosResult"}
         body = next(m for m in sender.messages if m["token"] == "tok-6")["data"]["body"]
         assert body == (
-            "Esta vez no llegamos a 4 para seguir los martes. "
+            "Esta vez no llegamos a 2 para seguir los martes. "
             "Elegí en Ronda: sumarte a otro grupo ya, o esperar hasta el lunes 16/11."
         )
         assert own(db, "demo-006")["outcome"] == "didntFill"
         assert own(db, "demo-006")["wait"] == {"until": "2026-11-16", "start": "2026-11-17"}
-        assert own(db, "demo-006")["floor"] == 4
+        assert own(db, "demo-006")["floor"] == 2
         assert own(db, "demo-004")["outcome"] == "gracias"
         assert counts(db)["status"] == "didntFill"
 

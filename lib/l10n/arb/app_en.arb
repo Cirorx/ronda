@@ -3048,11 +3048,11 @@
     "@waitingIfNot": {
         "description": "Waiting card: what happens if it doesn't fill"
     },
-    "waitingFull": "There are {threshold} of you: that's enough to start. We put the group together and let you know before {start}.",
+    "waitingFull": "There are {count} of you: that's enough to start. We put the group together and let you know before {start}.",
     "@waitingFull": {
-        "description": "Waiting card: the list reached its threshold",
+        "description": "Waiting card: the list reached its threshold; count is how many wait on it",
         "placeholders": {
-            "threshold": {
+            "count": {
                 "type": "int"
             },
             "start": {

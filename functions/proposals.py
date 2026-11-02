@@ -17,6 +17,7 @@ from datetime import datetime
 
 import demo_users
 import member_barrios
+import rsvp
 import safety
 from ronda_solver import solve
 from ronda_solver.barrios import CENTROIDS
@@ -178,13 +179,15 @@ def ronda_documents(
 
 
 def _read_sign_ups(db) -> tuple[dict[str, dict], dict[str, list[str]], list[dict]]:
-    """The users who count here (demo_users.counts) and aren't out of Ronda (safety.removed),
-    their eligible seat ids and the avoid pairs between two of them."""
+    """The users who count here (demo_users.counts), aren't out of Ronda (safety.removed) and have
+    no seat in a ronda that still meets (they'd be placed twice), their eligible seat ids and the
+    avoid pairs between two of them."""
     out = safety.removed(db)
+    seated = rsvp.seated_uids(db)
     users = {
         snapshot.id: snapshot.to_dict()
         for snapshot in db.collection("users").stream()
-        if demo_users.counts(snapshot.id) and snapshot.id not in out
+        if demo_users.counts(snapshot.id) and snapshot.id not in out and snapshot.id not in seated
     }
     eligible = {}
     for uid in users:

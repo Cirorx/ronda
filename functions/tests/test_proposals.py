@@ -144,6 +144,24 @@ class TestPropose:
         seated = [m["uid"] for g in proposal["groups"] for m in g["members"]]
         assert "demo-001" not in seated + proposal["unseated"]
 
+    def test_leaves_out_who_already_sits_in_a_ronda_that_still_meets(self):
+        sign_ups = invented_sign_ups()
+        sign_ups["rondas/r-1"] = {"status": "active"}
+        sign_ups["rondas/r-1/members/demo-001"] = {"state": "active"}
+        sign_ups["rondas/r-1/members/demo-002"] = {"state": "paused"}
+        sign_ups["rondas/r-1/members/demo-003"] = {"state": "left"}
+        sign_ups["rondas/r-old"] = {"status": "ended"}
+        sign_ups["rondas/r-old/members/demo-004"] = {"state": "active"}
+        db = FakeFirestore(sign_ups)
+
+        proposals.propose(db, ADMIN, NOW)
+
+        proposal = db.documents[proposal_path(db)]
+        placed = {m["uid"] for g in proposal["groups"] for m in g["members"]}
+        considered = placed | set(proposal["unseated"])
+        assert not {"demo-001", "demo-002"} & considered
+        assert {"demo-003", "demo-004"} <= considered
+
     def test_writes_no_ronda(self):
         db = FakeFirestore(invented_sign_ups())
 

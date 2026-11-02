@@ -1,6 +1,6 @@
 # Ronda
 
-Weekly groups of the same 5–6 neighbours, a few blocks from home, around one pretext (mate on
+Weekly groups of the same neighbours (they open with 2 and fill to 6), a few blocks from home, around one pretext (mate on
 the rambla, truco, fútbol 5). Flutter app (Android, iOS, web) on Firebase, with Meta models at
 runtime, built for the Meta Global AI Developer Hackathon.
 

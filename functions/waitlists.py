@@ -15,11 +15,11 @@ date and start date). Each answer ends with the next date: never limbo.
 Who waits where: a sign-up with a profile who counts here (demo_users.counts), sits in no ronda that
 still meets, and picked a pretext × slot whose seat id in their casa or trabajo barrio
 (member_barrios.py) passes their needs filter (their eligible ids) waits on that seat's list. A
-list's threshold is the pretext's largest ronda (`SizeRule.cap`: 6, fútbol 10). A round runs to a
-Sunday (`deadline`, the whole day) and the ronda would start on its slot's day the week after
-(`start`). At a deadline: a list at its threshold rolls one week on (the admin's solver and approval
-make the ronda, as for any sign-ups); one short of it closes as didn't-fill, and the next round is
-two weeks later, the "Esperar dos semanas más" dates. Choices reset with each round.
+list's threshold is the smallest ronda the solver opens (`SizeRule.floor`: 2, fútbol 4). A round
+runs to a Sunday (`deadline`, the whole day) and the ronda would start on its slot's day the week
+after (`start`). At a deadline: a list at its threshold rolls one week on (the admin's solver and
+approval make the ronda, as for any sign-ups); one short of it closes as didn't-fill, and the next
+round is two weeks later, the "Esperar dos semanas más" dates. Choices reset with each round.
 
 Where things live (docs/ARCHITECTURE.md § Data model):
 - `waitlists/{seatId}`: barrio, pretext, slot, threshold, entries [{uid, at}] (who waited
@@ -86,13 +86,7 @@ def later(round_: dict, weeks: int) -> dict:
 def waiting_people(db) -> dict[str, dict]:
     """Every seat id someone waits for: its barrio, pretext and slot, and who waits (uid and
     when they signed up), longest waiting first. Someone with a trabajo waits in both barrios."""
-    seated = set()
-    for snapshot in db.collection("rondas").stream():
-        if (snapshot.to_dict() or {}).get("status") not in rsvp.OPEN_STATUSES:
-            continue
-        for member in db.collection(f"rondas/{snapshot.id}/members").stream():
-            if (member.to_dict() or {}).get("state") in ("active", "paused"):
-                seated.add(member.id)
+    seated = rsvp.seated_uids(db)
     out = safety.removed(db)
     lists: dict[str, dict] = {}
     for snapshot in db.collection("users").stream():
@@ -135,7 +129,7 @@ def run_waitlists(db, now: datetime) -> dict:
             db.document(f"waitlists/{snapshot.id}").delete()
     for seat, found in lists.items():
         entries, slot = found["entries"], found["slot"]
-        threshold = size_rule(found["pretext"]).cap
+        threshold = size_rule(found["pretext"]).floor
         snapshot = db.document(f"waitlists/{seat}").get()
         current = (snapshot.to_dict() or {}) if snapshot.exists else {}
         round_ = current.get("round") or first_round(today, slot.split("-")[0])
