@@ -874,8 +874,77 @@ void main() {
             step: OnboardingStep.review,
             pretexts: {Pretext.truco},
             fromVoice: true,
+            gaps: [
+              OnboardingStep.brings,
+              OnboardingStep.slots,
+              OnboardingStep.barrio,
+              OnboardingStep.ageBand,
+              OnboardingStep.firstName,
+            ],
           ),
         ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'voiceRead asks only for the one answer the note left out',
+        build: buildCubit,
+        seed: () => const OnboardingState(recording: true),
+        act: (cubit) => cubit.voiceRead(
+          const VoiceSignup(
+            firstName: 'Ana',
+            barrio: 'barrio-sur',
+            pretexts: ['mate'],
+            slots: ['sat-morning'],
+            brings: ['termo'],
+          ),
+        ),
+        verify: (cubit) =>
+            expect(cubit.state.gaps, equals([OnboardingStep.ageBand])),
+      );
+
+      group('gapsFilled', () {
+        final gapped = _answered.copyWith(
+          fromVoice: true,
+          gaps: [OnboardingStep.ageBand],
+        );
+
+        blocTest<OnboardingCubit, OnboardingState>(
+          'opens the read-back once every gap is answered',
+          build: buildCubit,
+          seed: () => gapped,
+          act: (cubit) => cubit.gapsFilled(),
+          expect: () => [gapped.copyWith(gaps: const [])],
+        );
+
+        blocTest<OnboardingCubit, OnboardingState>(
+          'does nothing while a gap is unanswered',
+          build: buildCubit,
+          seed: () => const OnboardingState(
+            step: OnboardingStep.review,
+            pretexts: {Pretext.mate},
+            fromVoice: true,
+            gaps: [OnboardingStep.brings],
+          ),
+          act: (cubit) => cubit.gapsFilled(),
+          expect: () => const <OnboardingState>[],
+        );
+
+        blocTest<OnboardingCubit, OnboardingState>(
+          'does nothing without gaps',
+          build: buildCubit,
+          seed: () => _answered,
+          act: (cubit) => cubit.gapsFilled(),
+          expect: () => const <OnboardingState>[],
+        );
+      });
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'recordAgain from the gaps opens the recorder and closes them',
+        build: buildCubit,
+        seed: () =>
+            _answered.copyWith(fromVoice: true, gaps: [OnboardingStep.ageBand]),
+        act: (cubit) => cubit.recordAgain(),
+        expect: () => [_answered.copyWith(fromVoice: true, recording: true)],
       );
 
       blocTest<OnboardingCubit, OnboardingState>(
@@ -934,15 +1003,20 @@ void main() {
       expect(OnboardingStep.questions, hasLength(7));
       expect(OnboardingStep.questions, isNot(contains(OnboardingStep.review)));
     });
-    test('coveredIdeas ticks every idea of a complete answer', () {
-      expect(_answered.coveredIdeas, equals([true, true, true, true]));
+    test('unanswered is empty for a complete answer', () {
+      expect(_answered.copyWith(needs: const {}).unanswered, isEmpty);
     });
 
-    test('coveredIdeas needs both the name and the barrio first', () {
+    test('unanswered lists what is missing in order, never the needs', () {
       expect(
-        const OnboardingState(firstName: FirstName.dirty('Graciela'))
-            .coveredIdeas,
-        equals([false, false, false, false]),
+        const OnboardingState(pretexts: {Pretext.mate}).unanswered,
+        equals([
+          OnboardingStep.brings,
+          OnboardingStep.slots,
+          OnboardingStep.barrio,
+          OnboardingStep.ageBand,
+          OnboardingStep.firstName,
+        ]),
       );
     });
   });

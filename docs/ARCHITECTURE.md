@@ -28,7 +28,8 @@ Firebase (southamerica-east1; Auth itself runs in the US; Blaze plan; Google and
   │    client_errors, osm_places
   ├─ Storage: audio + blurred photos; deleted on success, hourly sweeper, lifecycle as backstop
   ├─ Functions (Python 3.13, 2nd gen):
-  │    callables  extract (Transcribe → Spark), read_line (Transcribe only, the cuaderno's voice
+  │    callables  extract (Transcribe → Spark; stage "listen": Transcribe only), read_transcript
+  │               (Spark on words already heard), read_line (Transcribe only, the cuaderno's voice
   │               line), make_postcard (Spark strips, Muse Image draws; stores nothing), propose_groups (CP-SAT, admin), answer_rsvp,
   │               answer_seguimos, run_job(name, now?, force?) (admin, for tests and the
   │               demo), make_mate_flyer (SAM → cutouts, Muse Image background → text + QR

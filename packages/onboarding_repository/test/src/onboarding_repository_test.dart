@@ -42,6 +42,8 @@ void main() {
       brings: ['termo'],
     );
 
+    const heard = 'Soy Graciela, tengo 64, vivo en Solymar Norte';
+
     setUpAll(() => registerFallbackValue(Uint8List(0)));
 
     setUp(() {
@@ -61,7 +63,10 @@ void main() {
           wav: any(named: 'wav'),
         ),
       ).thenAnswer((_) async => path);
-      when(() => rondaApi.extract(path)).thenAnswer((_) async => fields);
+      when(() => rondaApi.listenToVoiceNote(path))
+          .thenAnswer((_) async => heard);
+      when(() => rondaApi.readTranscript(heard))
+          .thenAnswer((_) async => fields);
       when(() => rondaApi.deleteVoiceNote(path)).thenAnswer((_) async {});
     });
 
@@ -82,8 +87,8 @@ void main() {
         rondaApi: rondaApi,
       );
 
-      await random.readVoiceNote(uid);
-      await random.readVoiceNote(uid);
+      await random.readVoiceNote(uid).drain<void>();
+      await random.readVoiceNote(uid).drain<void>();
 
       expect(ids.first, matches(RegExp(r'^[0-9a-f]{32}$')));
       expect(ids.first, isNot(equals(ids.last)));
@@ -169,20 +174,30 @@ void main() {
     });
 
     group('readVoiceNote', () {
-      test('uploads the note, awaits extract and returns the fields', () async {
+      test('uploads the note, listens, then reads the words, step by step', () {
         expect(
-          await subject.readVoiceNote(uid),
-          equals(
-            const VoiceSignup(
-              firstName: 'Graciela',
-              ageBand: '60-69',
-              barrio: 'solymar-norte',
-              pretexts: ['mate'],
-              slots: ['tue-afternoon'],
-              brings: ['termo'],
+          subject.readVoiceNote(uid),
+          emitsInOrder(<Object>[
+            const VoiceNoteUploading(),
+            const VoiceNoteListening(),
+            const VoiceNoteHeard(heard),
+            const VoiceNoteUnderstood(
+              VoiceSignup(
+                firstName: 'Graciela',
+                ageBand: '60-69',
+                barrio: 'solymar-norte',
+                pretexts: ['mate'],
+                slots: ['tue-afternoon'],
+                brings: ['termo'],
+              ),
             ),
-          ),
+            emitsDone,
+          ]),
         );
+      });
+
+      test('uploads the note it recorded and deletes nothing', () async {
+        await subject.readVoiceNote(uid).drain<void>();
         verify(
           () => rondaApi.uploadVoiceNote(uid: uid, noteId: 'note-1', wav: wav),
         ).called(1);
@@ -194,7 +209,7 @@ void main() {
             .thenAnswer((_) async => const UserDocument(firstName: 'Graciela'));
 
         await expectLater(
-          subject.readVoiceNote(uid),
+          subject.readVoiceNote(uid).drain<void>(),
           throwsA(isA<TermsNotAcceptedFailure>()),
         );
         verifyNever(
@@ -204,14 +219,14 @@ void main() {
             wav: any(named: 'wav'),
           ),
         );
-        verifyNever(() => rondaApi.extract(any()));
+        verifyNever(() => rondaApi.listenToVoiceNote(any()));
       });
 
       test('refuses to upload while users/{uid} does not exist', () async {
         when(() => rondaApi.readUser(uid)).thenAnswer((_) async => null);
 
         await expectLater(
-          subject.readVoiceNote(uid),
+          subject.readVoiceNote(uid).drain<void>(),
           throwsA(isA<TermsNotAcceptedFailure>()),
         );
         verifyNever(
@@ -227,7 +242,7 @@ void main() {
         when(() => voiceRecorder.stop()).thenAnswer((_) async => null);
 
         expect(
-          subject.readVoiceNote(uid),
+          subject.readVoiceNote(uid).drain<void>(),
           throwsA(isA<RecordVoiceNoteFailure>()),
         );
       });
@@ -236,7 +251,7 @@ void main() {
         when(() => voiceRecorder.stop()).thenAnswer((_) async => Uint8List(44));
 
         expect(
-          subject.readVoiceNote(uid),
+          subject.readVoiceNote(uid).drain<void>(),
           throwsA(isA<RecordVoiceNoteFailure>()),
         );
         verifyNever(() => rondaApi.readUser(any()));
@@ -246,7 +261,7 @@ void main() {
         when(() => voiceRecorder.stop()).thenThrow(Exception());
 
         expect(
-          subject.readVoiceNote(uid),
+          subject.readVoiceNote(uid).drain<void>(),
           throwsA(isA<RecordVoiceNoteFailure>()),
         );
       });
@@ -255,7 +270,7 @@ void main() {
         when(() => rondaApi.readUser(uid)).thenThrow(Exception());
 
         expect(
-          subject.readVoiceNote(uid),
+          subject.readVoiceNote(uid).drain<void>(),
           throwsA(
             isA<UploadVoiceNoteFailure>()
                 .having((f) => f.refused, 'refused', isFalse)
@@ -276,21 +291,21 @@ void main() {
         uploadThrows(const VoiceNoteRefusedException('unauthorized'));
 
         expect(
-          subject.readVoiceNote(uid),
+          subject.readVoiceNote(uid).drain<void>(),
           throwsA(
             isA<UploadVoiceNoteFailure>()
                 .having((f) => f.refused, 'refused', isTrue)
                 .having((f) => f.code, 'code', 'unauthorized'),
           ),
         );
-        verifyNever(() => rondaApi.extract(any()));
+        verifyNever(() => rondaApi.listenToVoiceNote(any()));
       });
 
       test('throws $UploadVoiceNoteFailure when the upload fails', () {
         uploadThrows(const VoiceNoteUploadException('retry-limit-exceeded'));
 
         expect(
-          subject.readVoiceNote(uid),
+          subject.readVoiceNote(uid).drain<void>(),
           throwsA(
             isA<UploadVoiceNoteFailure>()
                 .having((f) => f.refused, 'refused', isFalse)
@@ -303,7 +318,7 @@ void main() {
         uploadThrows(Exception());
 
         expect(
-          subject.readVoiceNote(uid),
+          subject.readVoiceNote(uid).drain<void>(),
           throwsA(
             isA<UploadVoiceNoteFailure>()
                 .having((f) => f.refused, 'refused', isFalse)
@@ -313,47 +328,76 @@ void main() {
       });
 
       test('throws $VoiceNoteNotUnderstoodFailure for an unreadable note', () {
-        when(() => rondaApi.extract(path))
+        when(() => rondaApi.listenToVoiceNote(path))
             .thenThrow(const UnreadableVoiceNoteException());
 
         expect(
-          subject.readVoiceNote(uid),
+          subject.readVoiceNote(uid).drain<void>(),
           throwsA(isA<VoiceNoteNotUnderstoodFailure>()),
         );
       });
 
       test('throws $VoiceNoteNotUnderstoodFailure when nothing was '
           'understood', () {
-        when(() => rondaApi.extract(path))
+        when(() => rondaApi.readTranscript(heard))
             .thenAnswer((_) async => const ExtractedFields());
 
         expect(
-          subject.readVoiceNote(uid),
+          subject.readVoiceNote(uid).drain<void>(),
           throwsA(isA<VoiceNoteNotUnderstoodFailure>()),
         );
       });
 
-      test('deletes the note and throws $ReadVoiceNoteFailure when extract '
+      test('deletes the note and throws $ReadVoiceNoteFailure when listening '
           'fails', () async {
-        when(() => rondaApi.extract(path)).thenThrow(
+        when(() => rondaApi.listenToVoiceNote(path)).thenThrow(
           FirebaseFunctionsException(message: 'm', code: 'unavailable'),
         );
 
         await expectLater(
-          subject.readVoiceNote(uid),
+          subject.readVoiceNote(uid).drain<void>(),
           throwsA(isA<ReadVoiceNoteFailure>()),
         );
         verify(() => rondaApi.deleteVoiceNote(path)).called(1);
       });
 
       test('still throws $ReadVoiceNoteFailure when that delete fails', () {
-        when(() => rondaApi.extract(path)).thenThrow(Exception());
+        when(() => rondaApi.listenToVoiceNote(path)).thenThrow(Exception());
         when(() => rondaApi.deleteVoiceNote(path)).thenThrow(Exception());
 
         expect(
-          subject.readVoiceNote(uid),
+          subject.readVoiceNote(uid).drain<void>(),
           throwsA(isA<ReadVoiceNoteFailure>()),
         );
+      });
+
+      test('throws $VoiceNoteNotUnderstoodFailure when the words are '
+          'refused', () async {
+        when(() => rondaApi.readTranscript(heard))
+            .thenThrow(const UnreadableVoiceNoteException());
+
+        await expectLater(
+          subject.readVoiceNote(uid),
+          emitsThrough(emitsError(isA<VoiceNoteNotUnderstoodFailure>())),
+        );
+      });
+
+      test('throws $ReadVoiceNoteFailure when reading the words fails, '
+          'with nothing left to delete', () async {
+        when(() => rondaApi.readTranscript(heard)).thenThrow(
+          FirebaseFunctionsException(message: 'm', code: 'unavailable'),
+        );
+
+        await expectLater(
+          subject.readVoiceNote(uid),
+          emitsInOrder(<Object>[
+            const VoiceNoteUploading(),
+            const VoiceNoteListening(),
+            const VoiceNoteHeard(heard),
+            emitsError(isA<ReadVoiceNoteFailure>()),
+          ]),
+        );
+        verifyNever(() => rondaApi.deleteVoiceNote(any()));
       });
     });
   });
@@ -377,6 +421,8 @@ void main() {
     );
     const fields = ExtractedFields(firstName: 'Graciela', ageBand: '60-69');
     const signup = VoiceSignup(firstName: 'Graciela', ageBand: '60-69');
+    // What Voice Transcribe heard in the uploaded note, after live failed.
+    const uploaded = 'Hola, soy Marta, otra vez.';
 
     setUpAll(() => registerFallbackValue(Uint8List(0)));
 
@@ -413,8 +459,15 @@ void main() {
           wav: any(named: 'wav'),
         ),
       ).thenAnswer((_) async => path);
-      when(() => rondaApi.extract(path)).thenAnswer((_) async => fields);
+      when(() => rondaApi.listenToVoiceNote(path))
+          .thenAnswer((_) async => uploaded);
+      when(() => rondaApi.readTranscript(uploaded))
+          .thenAnswer((_) async => fields);
     });
+
+    /// What reading the note came to.
+    Future<VoiceSignup> read() async =>
+        (await subject.readVoiceNote(uid).last as VoiceNoteUnderstood).signup;
 
     tearDown(() => heard.close());
 
@@ -428,7 +481,15 @@ void main() {
       await settle();
       heard.add('Hola');
 
-      expect(await subject.readVoiceNote(uid), equals(signup));
+      expect(
+        subject.readVoiceNote(uid),
+        emitsInOrder(<Object>[
+          const VoiceNoteHeard('Hola, soy Marta.'),
+          const VoiceNoteUnderstood(signup),
+          emitsDone,
+        ]),
+      );
+      await settle();
       expect(await words, equals('Hola'));
       verify(() => liveTranscript.start('signup')).called(1);
       verifyNever(
@@ -438,7 +499,7 @@ void main() {
           wav: any(named: 'wav'),
         ),
       );
-      verifyNever(() => rondaApi.extract(any()));
+      verifyNever(() => rondaApi.listenToVoiceNote(any()));
     });
 
     test('liveWords is silent before a note starts', () {
@@ -453,7 +514,7 @@ void main() {
 
       verifyNever(() => liveTranscript.start(any()));
       await expectLater(
-        subject.readVoiceNote(uid),
+        subject.readVoiceNote(uid).drain<void>(),
         throwsA(isA<TermsNotAcceptedFailure>()),
       );
     });
@@ -474,8 +535,8 @@ void main() {
       await subject.startVoiceNote(uid);
       await settle();
 
-      expect(await subject.readVoiceNote(uid), equals(signup));
-      verify(() => rondaApi.extract(path)).called(1);
+      expect(await read(), equals(signup));
+      verify(() => rondaApi.listenToVoiceNote(path)).called(1);
     });
 
     test(
@@ -486,21 +547,21 @@ void main() {
         await subject.startVoiceNote(uid);
         await settle();
 
-        expect(await subject.readVoiceNote(uid), equals(signup));
-        verify(() => rondaApi.extract(path)).called(1);
-        verifyNever(() => rondaApi.readTranscript(any()));
+        expect(await read(), equals(signup));
+        verify(() => rondaApi.listenToVoiceNote(path)).called(1);
+        verifyNever(() => rondaApi.readTranscript('Hola, soy Marta.'));
       },
     );
 
     test('falls back to the upload when read_transcript fails', () async {
-      when(() => rondaApi.readTranscript(any()))
+      when(() => rondaApi.readTranscript('Hola, soy Marta.'))
           .thenThrow(Exception('offline'));
 
       await subject.startVoiceNote(uid);
       await settle();
 
-      expect(await subject.readVoiceNote(uid), equals(signup));
-      verify(() => rondaApi.extract(path)).called(1);
+      expect(await read(), equals(signup));
+      verify(() => rondaApi.listenToVoiceNote(path)).called(1);
     });
 
     test('throws $VoiceNoteNotUnderstoodFailure when read_transcript cannot '
@@ -512,10 +573,10 @@ void main() {
       await settle();
 
       await expectLater(
-        subject.readVoiceNote(uid),
+        subject.readVoiceNote(uid).drain<void>(),
         throwsA(isA<VoiceNoteNotUnderstoodFailure>()),
       );
-      verifyNever(() => rondaApi.extract(any()));
+      verifyNever(() => rondaApi.listenToVoiceNote(any()));
     });
 
     test('throws $VoiceNoteNotUnderstoodFailure when nothing was understood '
@@ -527,7 +588,7 @@ void main() {
       await settle();
 
       await expectLater(
-        subject.readVoiceNote(uid),
+        subject.readVoiceNote(uid).drain<void>(),
         throwsA(isA<VoiceNoteNotUnderstoodFailure>()),
       );
     });

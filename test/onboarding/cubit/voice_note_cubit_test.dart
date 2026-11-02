@@ -10,6 +10,23 @@ class _MockOnboardingRepository extends Mock implements OnboardingRepository;
 
 const _signup = VoiceSignup(firstName: 'Graciela', pretexts: ['mate']);
 
+const _heard = 'Soy Graciela, me copa el mate';
+
+/// Every step of a reading that goes well.
+const _steps = <VoiceNoteReading>[
+  VoiceNoteUploading(),
+  VoiceNoteListening(),
+  VoiceNoteHeard(_heard),
+  VoiceNoteUnderstood(_signup),
+];
+
+const _read = VoiceNoteState(
+  status: VoiceNoteStatus.read,
+  signup: _signup,
+  stage: VoiceNoteStage.understanding,
+  transcript: _heard,
+);
+
 const _recording = VoiceNoteState(status: VoiceNoteStatus.recording);
 
 const _starting = VoiceNoteState(status: VoiceNoteStatus.starting);
@@ -42,7 +59,7 @@ void main() {
       when(() => repository.voiceLevels()).thenAnswer((_) => levels.stream);
       when(() => repository.liveWords()).thenAnswer((_) => words.stream);
       when(() => repository.readVoiceNote(any()))
-          .thenAnswer((_) async => _signup);
+          .thenAnswer((_) => Stream.fromIterable(_steps));
     });
 
     VoiceNoteCubit buildCubit() => VoiceNoteCubit(
@@ -164,7 +181,18 @@ void main() {
             status: VoiceNoteStatus.reading,
             elapsed: VoiceNoteCubit.limit,
           ),
-          VoiceNoteState(status: VoiceNoteStatus.read, signup: _signup),
+          VoiceNoteState(
+            status: VoiceNoteStatus.reading,
+            elapsed: VoiceNoteCubit.limit,
+            stage: VoiceNoteStage.listening,
+          ),
+          VoiceNoteState(
+            status: VoiceNoteStatus.reading,
+            elapsed: VoiceNoteCubit.limit,
+            stage: VoiceNoteStage.understanding,
+            transcript: _heard,
+          ),
+          _read,
         ],
       );
     });
@@ -330,7 +358,18 @@ void main() {
         skip: 3,
         expect: () => const [
           VoiceNoteState(status: VoiceNoteStatus.reading, words: 'Hola'),
-          VoiceNoteState(status: VoiceNoteStatus.read, signup: _signup),
+          VoiceNoteState(
+            status: VoiceNoteStatus.reading,
+            words: 'Hola',
+            stage: VoiceNoteStage.listening,
+          ),
+          VoiceNoteState(
+            status: VoiceNoteStatus.reading,
+            words: 'Hola',
+            stage: VoiceNoteStage.understanding,
+            transcript: _heard,
+          ),
+          _read,
         ],
       );
 
@@ -391,7 +430,7 @@ void main() {
 
     group('finish', () {
       blocTest<VoiceNoteCubit, VoiceNoteState>(
-        'reads the note and stops counting',
+        'reads the note step by step, the words first, and stops counting',
         build: buildCubit,
         act: (cubit) async {
           await cubit.start();
@@ -405,16 +444,82 @@ void main() {
             status: VoiceNoteStatus.reading,
             elapsed: Duration(seconds: 1),
           ),
-          VoiceNoteState(status: VoiceNoteStatus.read, signup: _signup),
+          VoiceNoteState(
+            status: VoiceNoteStatus.reading,
+            elapsed: Duration(seconds: 1),
+            stage: VoiceNoteStage.listening,
+          ),
+          VoiceNoteState(
+            status: VoiceNoteStatus.reading,
+            elapsed: Duration(seconds: 1),
+            stage: VoiceNoteStage.understanding,
+            transcript: _heard,
+          ),
+          _read,
         ],
         verify: (_) => verify(() => repository.readVoiceNote('demo-uid')),
       );
 
+      test('counts the seconds it waits, then stops', () async {
+        final steps = StreamController<VoiceNoteReading>();
+        addTearDown(steps.close);
+        when(() => repository.readVoiceNote(any()))
+            .thenAnswer((_) => steps.stream);
+        final cubit = buildCubit();
+        addTearDown(cubit.close);
+        await cubit.start();
+        final finishing = cubit.finish();
+        await Future<void>.delayed(Duration.zero);
+
+        await tick(4);
+        expect(cubit.state.waited, equals(const Duration(seconds: 4)));
+        steps
+          ..add(const VoiceNoteHeard(_heard))
+          ..add(const VoiceNoteUnderstood(_signup));
+        await finishing;
+        await tick();
+
+        expect(cubit.state.status, equals(VoiceNoteStatus.read));
+        expect(cubit.state.transcript, equals(_heard));
+      });
+
       blocTest<VoiceNoteCubit, VoiceNoteState>(
-        'says so when nothing was understood',
+        'says readFailed when the reading ends without an answer',
         setUp: () =>
             when(() => repository.readVoiceNote(any()))
-                .thenThrow(const VoiceNoteNotUnderstoodFailure()),
+                .thenAnswer((_) => Stream.fromIterable(_steps.take(3))),
+        build: buildCubit,
+        act: (cubit) async {
+          await cubit.start();
+          await cubit.finish();
+        },
+        skip: 5,
+        expect: () => [_failed(VoiceNoteFailure.readFailed)],
+      );
+
+      blocTest<VoiceNoteCubit, VoiceNoteState>(
+        'drops the words it showed when a later step fails',
+        setUp: () =>
+            when(() => repository.readVoiceNote(any())).thenAnswer((_) async* {
+              yield* Stream.fromIterable(_steps.take(3));
+              throw const VoiceNoteNotUnderstoodFailure();
+            }),
+        build: buildCubit,
+        act: (cubit) async {
+          await cubit.start();
+          await cubit.finish();
+        },
+        skip: 5,
+        expect: () => const [
+          VoiceNoteState(status: VoiceNoteStatus.notUnderstood),
+        ],
+      );
+
+      blocTest<VoiceNoteCubit, VoiceNoteState>(
+        'says so when nothing was understood',
+        setUp: () => when(() => repository.readVoiceNote(any())).thenAnswer(
+          (_) => Stream.error(const VoiceNoteNotUnderstoodFailure()),
+        ),
         build: buildCubit,
         act: (cubit) async {
           await cubit.start();
@@ -443,7 +548,8 @@ void main() {
         blocTest<VoiceNoteCubit, VoiceNoteState>(
           'says ${failed.failure!.name} on ${thrown.runtimeType}',
           setUp: () =>
-              when(() => repository.readVoiceNote(any())).thenThrow(thrown),
+              when(() => repository.readVoiceNote(any()))
+                  .thenAnswer((_) => Stream.error(thrown)),
           build: buildCubit,
           act: (cubit) async {
             await cubit.start();
@@ -455,9 +561,9 @@ void main() {
       }
 
       test('drops the answer once closed while reading (Cancelar)', () async {
-        final answer = Completer<VoiceSignup>();
+        final answer = StreamController<VoiceNoteReading>();
         when(() => repository.readVoiceNote(any()))
-            .thenAnswer((_) => answer.future);
+            .thenAnswer((_) => answer.stream);
         final cubit = buildCubit();
         await cubit.start();
         final finishing = cubit.finish();
@@ -465,7 +571,8 @@ void main() {
         expect(cubit.state.status, equals(VoiceNoteStatus.reading));
 
         await cubit.close();
-        answer.complete(_signup);
+        answer.add(const VoiceNoteUnderstood(_signup));
+        unawaited(answer.close());
 
         await expectLater(finishing, completes);
         expect(cubit.state.status, equals(VoiceNoteStatus.reading));

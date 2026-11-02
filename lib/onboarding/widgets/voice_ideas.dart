@@ -1,27 +1,41 @@
+import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/onboarding/widgets/onboarding_labels.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
-/// "Ideas de qué contar": a plain list while recording, and on the voice
-/// read-back each idea ticked when the recording covered it.
-class const VoiceIdeas({
-  /// Per idea, in order, whether the recording covered it; `null` while
-  /// recording, when nothing is ticked.
-  final List<bool>? covered,
-  super.key,
-}) extends StatelessWidget {
+/// "Qué contar": a sentence the person can almost read aloud, then what it
+/// must not leave out, one line for each answer the sign-up needs. A note
+/// that says all of them goes straight to the read-back.
+class const VoiceIdeas({super.key}) extends StatelessWidget {
+  /// One line for each answer, in the order the example says them. The
+  /// options are the pickers' own labels, mid-sentence; "Tengo ganas" is
+  /// left out, since it is what bringing nothing already means.
+  static List<String> checklist(AppLocalizations l10n) {
+    String options(Iterable<String> labels) =>
+        labels.map((label) => label.toLowerCase()).join(', ');
+    return [
+      l10n.voiceIdeaName,
+      l10n.voiceIdeaAge,
+      l10n.voiceIdeaBarrio,
+      l10n.voiceIdeaPretexts(options(Pretext.values.map(l10n.pretext))),
+      l10n.voiceIdeaSlots,
+      l10n.voiceIdeaBrings(
+        options([
+          for (final bring in Bring.values)
+            if (bring != Bring.tengoGanas) l10n.bring(bring),
+        ]),
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final ideas = [
-      l10n.voiceIdeaNameAndBarrio,
-      l10n.voiceIdeaPretexts,
-      l10n.voiceIdeaSlots,
-      l10n.voiceIdeaBrings,
-    ];
+    final spacing = context.appSpacing;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: context.appSpacing.xs,
+      spacing: spacing.xs,
       children: [
         Semantics(
           header: true,
@@ -30,43 +44,27 @@ class const VoiceIdeas({
             style: theme.textTheme.titleMedium,
           ),
         ),
-        for (final (index, idea) in ideas.indexed)
-          _Idea(idea: idea, covered: covered?.elementAtOrNull(index)),
-      ],
-    );
-  }
-}
-
-class const _Idea({required final String idea, final bool? covered})
-    extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final (icon, color, state) = switch (covered) {
-      true => (
-        Icons.check_circle,
-        theme.colorScheme.tertiary,
-        l10n.voiceIdeaCovered,
-      ),
-      false => (
-        Icons.radio_button_unchecked,
-        theme.colorScheme.onSurfaceVariant,
-        l10n.voiceIdeaNotCovered,
-      ),
-      null => (Icons.circle_outlined, theme.colorScheme.onSurfaceVariant, null),
-    };
-    return MergeSemantics(
-      child: Semantics(
-        value: state,
-        child: Row(
-          spacing: context.appSpacing.sm,
-          children: [
-            ExcludeSemantics(child: Icon(icon, color: color)),
-            Expanded(child: Text(idea, style: theme.textTheme.bodyLarge)),
-          ],
+        Text(l10n.voiceIdeasExample, style: theme.textTheme.bodyLarge),
+        SizedBox(height: spacing.xs),
+        Text(
+          l10n.voiceIdeasChecklistHeading,
+          style: theme.textTheme.titleSmall,
         ),
-      ),
+        for (final idea in checklist(l10n))
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: spacing.sm,
+            children: [
+              ExcludeSemantics(
+                child: Icon(
+                  Icons.check,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              Expanded(child: Text(idea, style: theme.textTheme.bodyMedium)),
+            ],
+          ),
+      ],
     );
   }
 }

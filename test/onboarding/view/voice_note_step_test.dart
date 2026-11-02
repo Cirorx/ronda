@@ -236,12 +236,24 @@ void main() {
 
         expect(find.text('Te escuchamos'), findsOneWidget);
         expect(find.text('0:23 de 1:00'), findsOneWidget);
-        expect(find.text('Ideas de qué contar'), findsOneWidget);
-        expect(
-          find.text('Cómo te llamás y en qué barrio estás'),
-          findsOneWidget,
-        );
-        expect(find.text('Qué podés llevar o enseñar'), findsOneWidget);
+        expect(find.text('Qué contar'), findsOneWidget);
+        expect(find.textContaining('«Soy Ana, tengo 34'), findsOneWidget);
+        const pretexts =
+            'Qué te gustaría hacer: mate en la rambla, truco, fútbol 5, '
+            'caminata';
+        const brings =
+            'Qué podés llevar o enseñar: pan, yerba, termo, sillas, enseño '
+            'truco';
+        for (final idea in [
+          'Tu nombre',
+          'Tu edad, más o menos',
+          'Tu barrio',
+          pretexts,
+          'Qué días, y si de mañana, tarde o noche',
+          brings,
+        ]) {
+          expect(find.text(idea), findsOneWidget);
+        }
         expect(
           find.text('El audio se borra apenas lo leemos.'),
           findsOneWidget,
@@ -387,7 +399,8 @@ void main() {
           ),
           findsOneWidget,
         );
-        expect(find.text('Ideas de qué contar'), findsOneWidget);
+        expect(find.text('Qué contar'), findsOneWidget);
+        expect(find.text('Que no falte'), findsOneWidget);
         expect(find.byType(VoiceWaveform), findsNothing);
         expect(_byId(VoiceNoteView.doneIdentifier), findsNothing);
         verifyNever(() => cubit.start());
@@ -425,14 +438,160 @@ void main() {
       });
     });
 
-    testWidgets('says the note is being read', (tester) async {
-      await pumpSubject(
-        tester,
-        const VoiceNoteState(status: VoiceNoteStatus.reading),
+    group('while reading', () {
+      const uploading = VoiceNoteState(status: VoiceNoteStatus.reading);
+      const heard = VoiceNoteState(
+        status: VoiceNoteStatus.reading,
+        stage: VoiceNoteStage.understanding,
+        transcript: 'Soy Ana, tengo 34, vivo en Barrio Sur',
       );
 
-      expect(find.text('Estamos leyendo tu audio'), findsOneWidget);
-      expect(find.text('· Borramos el audio'), findsOneWidget);
+      String? valueOf(WidgetTester tester, String label) =>
+          tester.getSemantics(find.text(label)).getSemanticsData().value;
+
+      testWidgets('says the note is being read, step by step', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await pumpSubject(tester, uploading);
+
+        expect(find.text('Estamos leyendo tu audio'), findsOneWidget);
+        expect(valueOf(tester, 'Mandando tu audio'), equals('Ahora'));
+        expect(valueOf(tester, 'Escuchándolo'), equals('Falta'));
+        expect(valueOf(tester, 'Entendiendo lo que contaste'), equals('Falta'));
+        expect(
+          tester.getSemantics(find.text('Mandando tu audio')),
+          isSemantics(isLiveRegion: true),
+        );
+        expect(find.text('Esto escuchamos'), findsNothing);
+        semantics.dispose();
+      });
+
+      testWidgets('ticks the steps done', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await pumpSubject(
+          tester,
+          const VoiceNoteState(
+            status: VoiceNoteStatus.reading,
+            stage: VoiceNoteStage.listening,
+          ),
+        );
+
+        expect(valueOf(tester, 'Mandando tu audio'), equals('Listo'));
+        expect(valueOf(tester, 'Escuchándolo'), equals('Ahora'));
+        expect(find.byIcon(Icons.check_circle), findsOneWidget);
+        semantics.dispose();
+      });
+
+      testWidgets('shows the words as soon as they are back', (tester) async {
+        await pumpSubject(tester, heard);
+        await tester.pump(AppMotion.standardDuration);
+
+        expect(find.text('Esto escuchamos'), findsOneWidget);
+        expect(
+          find.text('«Soy Ana, tengo 34, vivo en Barrio Sur»'),
+          findsOneWidget,
+        );
+        expect(find.text('Tu audio ya se borró.'), findsOneWidget);
+        expect(find.byIcon(Icons.check_circle), findsNWidgets(2));
+      });
+
+      testWidgets('ticks every step once read', (tester) async {
+        await pumpSubject(
+          tester,
+          const VoiceNoteState(
+            status: VoiceNoteStatus.read,
+            signup: _signup,
+            stage: VoiceNoteStage.understanding,
+            transcript: 'Soy Ana',
+          ),
+        );
+
+        expect(find.byIcon(Icons.check_circle), findsNWidgets(3));
+        expect(find.text('Estamos leyendo tu audio'), findsOneWidget);
+      });
+
+      testWidgets('changes the barrio line every few seconds', (tester) async {
+        await pumpSubject(
+          tester,
+          uploading,
+          states: Stream.value(
+            uploading.copyWith(waited: const Duration(seconds: 3)),
+          ),
+        );
+        expect(find.text('Cebando el mate…'), findsOneWidget);
+
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+
+        expect(find.text('Cebando el mate…'), findsNothing);
+        expect(find.text('Buscando quién trae los bizcochos…'), findsOneWidget);
+      });
+
+      testWidgets('comes round to the first line again', (tester) async {
+        await pumpSubject(
+          tester,
+          uploading.copyWith(
+            waited: const Duration(seconds: VoiceReading.lineSeconds * 8),
+          ),
+        );
+
+        expect(find.text('Cebando el mate…'), findsOneWidget);
+      });
+
+      testWidgets('breathes the step under way', (tester) async {
+        await pumpSubject(tester, uploading);
+        double scale() => tester
+            .widget<ScaleTransition>(
+              find
+                  .ancestor(
+                    of: find.byIcon(Icons.radio_button_checked),
+                    matching: find.byType(ScaleTransition),
+                  )
+                  .first,
+            )
+            .scale
+            .value;
+
+        await tester.pump(const Duration(milliseconds: 500));
+
+        expect(scale(), lessThan(1));
+      });
+
+      testWidgets('holds still with reduced motion', (tester) async {
+        await pumpSubject(tester, uploading, reduced: true);
+        double scale() => tester
+            .widget<ScaleTransition>(
+              find
+                  .ancestor(
+                    of: find.byIcon(Icons.radio_button_checked),
+                    matching: find.byType(ScaleTransition),
+                  )
+                  .first,
+            )
+            .scale
+            .value;
+
+        await tester.pump(const Duration(milliseconds: 500));
+
+        expect(scale(), equals(1));
+      });
+
+      testWidgets('holds 200% text', (tester) async {
+        tester.platformDispatcher.textScaleFactorTestValue = 2;
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        await pumpSubject(tester, heard);
+        await tester.pump(AppMotion.standardDuration);
+
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('in English', (tester) async {
+        await pumpSubject(tester, heard, locale: const Locale('en'));
+        await tester.pump(AppMotion.standardDuration);
+
+        expect(find.text('Working out your answers'), findsOneWidget);
+        expect(find.text("Here's what we heard"), findsOneWidget);
+        expect(find.text('Brewing the mate…'), findsOneWidget);
+      });
     });
 
     testWidgets('reads out that the note is being read', (tester) async {

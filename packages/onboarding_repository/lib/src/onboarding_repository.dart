@@ -7,8 +7,9 @@ import 'package:voice_recorder/voice_recorder.dart';
 
 /// {@template onboarding_repository}
 /// Onboarding by voice: records the note, and once it's done uploads it to
-/// `audio/{uid}/{noteId}.wav`, awaits the `extract` callable and returns
-/// what it understood.
+/// `audio/{uid}/{noteId}.wav`, has `extract` listen to it and
+/// `read_transcript` read the words, and says what it understood, step by
+/// step.
 ///
 /// With a [LiveTranscriptClient], the words show while the person talks
 /// ([liveWords]) and, when the live session saw the note through, the final
@@ -119,7 +120,10 @@ class OnboardingRepository {
     );
   }
 
-  /// Stops the note and returns what [uid] said in it.
+  /// Stops the note and reads what [uid] said in it, one step at a time:
+  /// [VoiceNoteUploading], [VoiceNoteListening], [VoiceNoteHeard] with the
+  /// words, then [VoiceNoteUnderstood] with the fields, and done. Words
+  /// heard live skip straight to [VoiceNoteHeard].
   ///
   /// Each step fails with its own failure, so the person is told what went
   /// wrong: a [RecordVoiceNoteFailure] when the recorder gave back no note,
@@ -127,7 +131,7 @@ class OnboardingRepository {
   /// is missing, an [UploadVoiceNoteFailure] when the note couldn't be sent,
   /// a [VoiceNoteNotUnderstoodFailure] when nothing could be understood, and
   /// a [ReadVoiceNoteFailure] when reading it failed.
-  Future<VoiceSignup> readVoiceNote(String uid) async {
+  Stream<VoiceNoteReading> readVoiceNote(String uid) async* {
     final LiveVoiceNoteResult note;
     try {
       note = await _stopNote();
@@ -139,11 +143,15 @@ class OnboardingRepository {
     if (wav == null || wav.length <= _wavHeaderBytes) {
       throw const RecordVoiceNoteFailure();
     }
-    if (note.transcript case final transcript?) {
-      final signup = await _readTranscript(transcript);
-      if (signup != null) return signup;
+    if (note.transcript case final heard?) {
+      yield VoiceNoteHeard(heard);
+      if (await _readTranscript(heard) case final signup?) {
+        yield VoiceNoteUnderstood(signup);
+        return;
+      }
     }
 
+    yield const VoiceNoteUploading();
     final UserDocument? user;
     try {
       user = await _rondaApi.readUser(uid);
@@ -167,16 +175,28 @@ class OnboardingRepository {
       throw const UploadVoiceNoteFailure();
     }
 
-    final ExtractedFields fields;
+    yield const VoiceNoteListening();
+    final String transcript;
     try {
-      fields = await _rondaApi.extract(path);
+      transcript = await _rondaApi.listenToVoiceNote(path);
     } on UnreadableVoiceNoteException {
       throw const VoiceNoteNotUnderstoodFailure();
     } on Exception {
       await _deleteUnread(path);
       throw const ReadVoiceNoteFailure();
     }
-    return _signup(fields);
+
+    // The note is gone now: only the words are left.
+    yield VoiceNoteHeard(transcript);
+    final ExtractedFields fields;
+    try {
+      fields = await _rondaApi.readTranscript(transcript);
+    } on UnreadableVoiceNoteException {
+      throw const VoiceNoteNotUnderstoodFailure();
+    } on Exception {
+      throw const ReadVoiceNoteFailure();
+    }
+    yield VoiceNoteUnderstood(_signup(fields));
   }
 
   /// What `read_transcript` understood of the words heard live, or `null`

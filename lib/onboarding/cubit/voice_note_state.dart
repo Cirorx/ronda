@@ -12,7 +12,8 @@ enum VoiceNoteStatus {
   /// [VoiceNoteState.levels] follows the voice.
   recording,
 
-  /// "Terminé": uploading, transcribing and reading the fields.
+  /// "Terminé": uploading, transcribing and reading the fields, step by
+  /// step in [VoiceNoteState.stage].
   reading,
 
   /// Read; [VoiceNoteState.signup] holds what was understood.
@@ -23,6 +24,18 @@ enum VoiceNoteStatus {
 
   /// Something failed; [VoiceNoteState.failure] says what.
   failed,
+}
+
+/// Which step of reading the note is under way, in order.
+enum VoiceNoteStage {
+  /// The note is on its way to Storage.
+  uploading,
+
+  /// Voice Transcribe is turning it into words.
+  listening,
+
+  /// Spark 1.3 is reading the words into the answers.
+  understanding,
 }
 
 /// What failed, so the screen can say it and the error log can count it.
@@ -58,6 +71,16 @@ final class const VoiceNoteState({
   /// What the note said, once [VoiceNoteStatus.read].
   final VoiceSignup? signup,
 
+  /// The step under way while [VoiceNoteStatus.reading].
+  final VoiceNoteStage stage = VoiceNoteStage.uploading,
+
+  /// The words Voice Transcribe heard, once they are back: shown while the
+  /// answers are still being read.
+  final String? transcript,
+
+  /// How long the reading has taken so far, in whole seconds.
+  final Duration waited = Duration.zero,
+
   /// The last [VoiceNoteCubit.waveformLength] levels heard, newest last,
   /// each from 0 (silence) to 1.
   final List<double> levels = const [],
@@ -88,10 +111,16 @@ final class const VoiceNoteState({
     int? heard,
     bool? silent,
     String? words,
+    VoiceNoteStage? stage,
+    String? transcript,
+    Duration? waited,
   }) => VoiceNoteState(
     status: status,
     elapsed: elapsed ?? this.elapsed,
     signup: signup,
+    stage: stage ?? this.stage,
+    transcript: transcript ?? this.transcript,
+    waited: waited ?? this.waited,
     levels: levels ?? this.levels,
     heard: heard ?? this.heard,
     silent: silent ?? this.silent,
@@ -105,6 +134,9 @@ final class const VoiceNoteState({
     status,
     elapsed,
     signup,
+    stage,
+    transcript,
+    waited,
     levels,
     heard,
     silent,

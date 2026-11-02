@@ -70,8 +70,14 @@ Firebase ID token and `users/{uid}.terms`, opens the Meta session with the key f
 Manager, pipes the PCM one way and only `transcript` events the other, caps a note at 65 s of
 audio, stores nothing and logs session ids, bytes and timings only. The app reaches it through
 `--dart-define=LIVE_TRANSCRIPT_URL`; with no URL (the default) nothing changes: the note is
-uploaded and read by `extract` as before, which is also the fallback whenever live fails
-(connect, ready, backlog, a dropped socket, a late final) and when `read_transcript` fails.
+uploaded and read as before, which is also the fallback whenever live fails (connect, ready,
+backlog, a dropped socket, a late final) and when `read_transcript` fails.
+
+**The upload path in two calls (2026-11-02).** So the wait screen can show real steps and the
+words before the fields, the app no longer calls `extract` with `{path}` alone: it calls
+`extract` with `{path, stage: "listen"}`, which runs Voice Transcribe, deletes the note and
+answers `{transcript}`, then `read_transcript` with those words, the same callable the live path
+uses. `{path}` alone still does both in one call, for builds that predate this.
 
 ## Open weights
 
