@@ -172,7 +172,7 @@ Counts toward "Use of Meta AI tooling" (25% of the score); mention what was used
 ## Smoke tests (day 1, tests 1–5; day 2, tests 6–7)
 Scripted in `scripts/smoke/` (`uv run scripts/smoke/s1_access.py`, `s2_structured.py`,
 `s3_transcribe.py note.wav`, `s4_baseten_tools.py`, `s5_sam.py photo.png out/`, `s6_image.py`,
-`s7_public_data.py`, and `s8_donde_queda.py` and `s10_barrios.py`, run with
+`s7_public_data.py`, `s11_mvd_bus.py`, and `s8_donde_queda.py` and `s10_barrios.py`, run with
 `functions/venv/bin/python`). They read keys from the environment or `.env` and never print them. Log latency and cost of each in
 `notes/NOW.md`.
 
@@ -222,6 +222,20 @@ Results from Uruguay, 2026-10-28:
   (`shared_plans.SparkPlan`) has only played back scripted answers; it needs a real run with a
   plan at a plaza (allowed), "en mi casa" and a phone number (held) before the pilot. Skipped:
   the key lives in `.env`, which agents don't open.
+- 11 (`s11_mvd_bus.py`, #65, 2026-11-02 around 16:40, a Monday): the Intendencia de
+  Montevideo's public-transport API (no model; it feeds the organiser's `get_next_buses` and the
+  city's last bus). The OAuth2 token (client credentials, `MVD_API_CLIENT_ID` and
+  `MVD_API_SECRET_ID`) came in 0.2 s, `Bearer`, **`expires_in` 300 s**, no refresh token, so
+  `functions/mvd_buses.py` renews it 30 s early. `/buses/busstops` answered all 4,973 stops
+  (0.87 MB) in 0.1 s; the stop nearest Plaza Gomensoro (4078, 26 de Marzo y José Ellauri,
+  29 m) had 8 lines in 0.2 s; five `upcomingbuses` calls in a row took 0.2, 0.5, 0.6, 0.7 and
+  0.7 s, all 200. **No rate-limit header** came back on any answer, and the burst wasn't refused.
+  The ETAs can't all be believed: one bus came "2 s" away at 20.5 km and another at 86 km/h, so
+  the code drops any arrival above 50 km/h implied. **The static GTFS needs the token too**
+  (403 "Authentication parameters missing" without it, unlike the issue assumed): 16.9 MB in
+  1.0 s, version `20261102` (regenerated daily), a time at every one of its 2.2 million
+  `stop_times` rows, stop ids equal to the API's `busstopId`, and no `calendar_dates.txt`.
+  `scripts/last_bus.py` reads it unchanged in about 5 s.
 
 1. **Access from Uruguay.**
    `curl -s https://api.meta.ai/v1/responses -H "Authorization: Bearer $MODEL_API_KEY" -H "Content-Type: application/json" -d '{"model":"muse-spark-1.3","input":"Decí hola en rioplatense."}'`

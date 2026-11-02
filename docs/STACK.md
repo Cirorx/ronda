@@ -212,6 +212,11 @@ pass it everywhere, so nothing lands on another attached device.
   environment variables and are never logged. The app ships Firebase's web/app
   config, which is public by design: restrict those API keys to the Firebase APIs and the app ids
   in the Google Cloud console.
+- The Intendencia de Montevideo's bus API credentials, `MVD_API_CLIENT_ID` and
+  `MVD_API_SECRET_ID`, live the same way: Secret Manager, bound to `dispatch` and `run_job`
+  (the day-of reminder's next buses), never in the app. A functions deploy fails until both
+  are set. Locally the smoke test and scripts/flyer.py read them from `.env` through
+  `scripts/smoke/_env.py`, which never prints a value.
 - Needs, tokens and anything personal go to flutter_secure_storage; shared_preferences holds
   only flags such as "onboarding seen".
 - Logs carry ids and type names: phone numbers, names, transcripts, needs and FCM tokens stay

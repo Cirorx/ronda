@@ -9,7 +9,11 @@ so no tool takes a ronda or a barrio.
 - `get_forecast(date)`: the meeting hours' worst rain probability, rain and gusts (Open-Meteo).
 - `get_sunset(date)`: the sunset at the ronda's place.
 - `get_last_bus(date)`: the last bus from the stop a tear-off flyer of the barrio stored
-  (`flyers/{id}.lastBus`, computed once from the DNT timetable by scripts/last_bus.py).
+  (`flyers/{id}.lastBus`, computed once by scripts/last_bus.py from the DNT timetable, or from
+  the Intendencia's for a Montevideo barrio).
+- `get_next_buses()`: the next city buses at the stop nearest the meeting place, live from the
+  Intendencia de Montevideo (mvd_buses.py), only within the hour before the meeting. Not in
+  `TOOLS`: only the day-of reminder (day_of.py) hands it to the model.
 - `count_rsvps()`: going, can't and unanswered for the meeting (`rondas/{id}/views/week`).
 - `propose_move(place_id, postpone_to)`: the rain options to the host, only when the forecast
   makes rain likely; once per meeting (`rondas/{id}/moves/{week}`).
@@ -26,6 +30,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+import mvd_buses
 import rsvp
 from organiser import gates, moves, outbox, text
 from organiser.model import ToolCall
@@ -42,6 +47,10 @@ POSTPONE_DAYS = 3
 """A meeting moves at most this many days later."""
 
 DAY_TYPES = ("weekday",) * 5 + ("saturday", "sunday")
+
+NEXT_BUSES_WITHIN = timedelta(hours=1)
+"""`get_next_buses` answers only this close to the meeting's start: live arrivals say nothing
+about a meeting further off."""
 
 
 class Args(BaseModel):
@@ -167,6 +176,10 @@ class Toolbox:
     )
     """What the model may call in this run: the rain check's `TOOLS` unless a job hands its own
     (bench.py)."""
+    buses: mvd_buses.CityBuses | None = None
+    """The city's live buses, for `get_next_buses`; None where the job has none."""
+    next_buses: mvd_buses.NextBuses | None = None
+    """What `get_next_buses` last found with at least one arrival, for code to write from."""
 
     def specs(self) -> list[dict]:
         """The tools as Chat Completions `tools`."""
@@ -317,6 +330,56 @@ def get_last_bus(box: Toolbox, args: DateArgs) -> Result:
         {"dayType": day_type, "time": None},
         "Buscó el último ómnibus: no hay horario guardado para este barrio.",
     )
+
+
+def get_next_buses(box: Toolbox, args: Args) -> Result:
+    meeting = box.meeting
+    if meeting.hour is None:
+        return _refused("La reunión no tiene hora: no hay próximos ómnibus que mirar.")
+    start = datetime.combine(
+        meeting.day, datetime.strptime(meeting.hour, "%H:%M").time(), tzinfo=rsvp.MONTEVIDEO
+    )
+    if not timedelta(0) < start - rsvp.local(box.now) <= NEXT_BUSES_WITHIN:
+        return _refused("La reunión no es dentro de la hora: no hay próximos ómnibus que mirar.")
+    place = meeting.ronda.get("place")
+    if not (isinstance(place, dict) and isinstance(place.get("lat"), int | float)):
+        return _refused("La ronda no tiene un lugar con ubicación.")
+    if box.buses is None:
+        return _refused("No tiene acceso a los ómnibus en vivo de la Intendencia.")
+    try:
+        found = box.buses.next_buses(float(place["lat"]), float(place["lng"]))
+    except mvd_buses.BusesUnavailable:
+        return _refused("La Intendencia no contestó a tiempo los próximos ómnibus.")
+    if found is None:
+        return Result(
+            {"stop": None, "buses": []},
+            "Buscó los próximos ómnibus: no hay una parada de la Intendencia cerca del lugar.",
+        )
+    buses = [
+        {"line": a.line, "destination": a.destination, "minutes": a.minutes} for a in found.arrivals
+    ]
+    data = {"stop": found.stop.name, "metres": found.metres, "buses": buses}
+    if not buses:
+        return Result(
+            data,
+            f"Miró los próximos ómnibus en {found.stop.name}: no viene ninguno en la próxima "
+            "media hora.",
+        )
+    box.next_buses = found
+    listed = ", ".join(f"el {a.line} en {a.minutes} min" for a in found.arrivals)
+    return Result(
+        {**data, "source": mvd_buses.SOURCE},
+        f"Miró los próximos ómnibus en {found.stop.name}: {listed} ({mvd_buses.SOURCE}).",
+    )
+
+
+NEXT_BUSES_TOOL = (
+    "Los próximos ómnibus en la parada más cercana al lugar de la reunión, en vivo, de la "
+    "Intendencia de Montevideo. Solo dentro de la hora antes de la reunión.",
+    Args,
+    get_next_buses,
+)
+"""`get_next_buses` as a `tools` entry, for a job that hands it to the model (day_of.py)."""
 
 
 def count_rsvps(box: Toolbox, args: Args) -> Result:
@@ -506,7 +569,8 @@ TOOLS: dict[str, tuple[str, type[Args], Callable[[Toolbox, Any], Result]]] = {
     ),
     "get_sunset": ("A qué hora atardece ese día en el lugar de la ronda.", DateArgs, get_sunset),
     "get_last_bus": (
-        "El último ómnibus de ese día desde la parada del barrio (horario publicado).",
+        "El último ómnibus de ese día desde la parada del barrio (horario publicado de la DNT "
+        "o de la Intendencia).",
         DateArgs,
         get_last_bus,
     ),

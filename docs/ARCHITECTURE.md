@@ -866,12 +866,60 @@ code jobs with no model, § Data model, the weekly loop's code jobs):
     Open answered every turn, 4 turns and about 7.8 s of model time per card, about 9,500
     tokens in and 1,100 out, about $0.017 a card. Build sizes and the licences: docs/STACK.md.
 
+## Montevideo's city buses and the day-of reminder (#65)
+
+The DNT timetable covers only intercity lines, enough for Ciudad de la Costa but not for
+Montevideo's 62 barrios. The Intendencia de Montevideo's public-transport API
+(https://api.montevideo.gub.uy/apidocs/publictransport, the data behind Cómo Ir) fills the
+gap. It is free with an account at a "reasonable" rate, states no reuse licence and asks for no
+attribution; the README names it anyway.
+
+- **Access.** Every call needs a token: OAuth2 client credentials at
+  `https://mvdapi-auth.montevideo.gub.uy/token`, from `MVD_API_CLIENT_ID` and
+  `MVD_API_SECRET_ID`. On the server they are Cloud Functions secrets bound to `dispatch` and
+  `run_job`; locally, `.env`, read only through `scripts/smoke/_env.py`. They never reach the
+  phone. Smoke test 11 (docs/MODELS.md): the token lives 300 s, calls answer in 0.1 to 0.7 s,
+  no rate-limit header, and the static GTFS needs the token too.
+- **Last bus in Montevideo** (`scripts/flyer.py`, `scripts/last_bus.py`). A tear-off flyer in a
+  Montevideo barrio (`ronda_solver.montevideo`) reads the city's GTFS
+  (`/buses/gtfs/static/latest/google_transit.zip`, regenerated daily); every other barrio still
+  reads the DNT's. Both feeds have the same shape, so `last_bus.py` reads either. The city feed
+  times every stop, so its `lastBus` entries are never `estimated`. `flyers/{id}` keeps the same
+  fields, so the QR page and the organiser's `get_last_bus` work for both.
+- **`get_next_buses`** (`functions/organiser/tools.py`, `functions/mvd_buses.py`). Given the
+  ronda's place (its coordinates, set by the admin), it finds the nearest stop among the API's
+  ~5,000 (read once per run), but only within 400 m, so a Costa ronda has none. It reads the
+  stop's lines and asks `upcomingbuses` for one arrival per line. It keeps up to three arrivals
+  within 30 minutes, dropping any whose ETA implies more than 50 km/h (the API sends some that
+  can't be true). All of this fits in 4 s, or the tool answers "La Intendencia no contestó a
+  tiempo". It refuses, without calling the API, outside the hour before the meeting, for a
+  meeting with no hour, and for a place with no coordinates. It is not in the rain check's
+  `TOOLS`, only in the reminder's. No map and no bus positions: the product has no map pins.
+- **The day-of reminder** (`functions/day_of.py`, job `day_of`). On by default: every ronda
+  gets it unless `rondas/{id}.dayOfReminder` is `false` (absent or `true` is on). The switch has
+  no screen yet; to turn it off, set the field to `false` on the ronda's document. It runs on the dispatcher's hourly pass within the hour before
+  the meeting's `slot.hour`, inside the hours gate, once per ronda and week
+  (`agent_runs/{rondaId}_{week}_dayof`, claimed in a transaction). The model (the organiser
+  loop, 20 s per request, at most 5 turns) calls `get_next_buses`, then
+  `send_reminder(include_buses)`, then `log_acta`.
+  - Code writes every word: "Hoy nos vemos a las 16:00 en la Plaza Gomensoro." and, when asked
+    for and found, "Próximos ómnibus en 26 de Marzo y Jose Ellauri, según la Intendencia: el
+    191 en 6 minutos, el 192 en 15."
+  - The bus line passes the word gates on its own first and is dropped (with a `note` step)
+    when it doesn't. The message then passes every gate as kind `reminder`.
+  - It goes only to members who said "voy" and aren't paused. It is its own kind, not the
+    week's routine message: it answers their own "voy" (the owner's decision, 2026-11-02).
+  - Without the model's reminder (no model, an error, the turn cap, a run that never sends),
+    code sends it without buses and a `note` says why. The run always ends `done`, so no later
+    run sends it twice.
+
 ## Data sources and licences
 
 | Source | Licence | Use |
 |---|---|---|
 | Open-Meteo | CC BY 4.0 data; free tier non-commercial | Hourly rain, gusts, sunset |
 | DNT metropolitan GTFS (catalogodatos.gub.uy; Canelones ↔ Montevideo lines, not urban STM) | DAG UY | Last bus ("horario publicado") |
+| Intendencia de Montevideo public-transport API (city GTFS and live arrivals) | Free with an account; no licence stated, named in the README | Last bus in Montevideo; next buses in the day-of reminder (on for every ronda unless `dayOfReminder: false`) |
 | OpenStreetMap via Overpass | ODbL, attribution | Places (plazas, clubs, canchas); the free places Algo chico suggests (`osm_places`) |
 | Meta HDX population maps | CC BY | After the hackathon: flyer placement |
 | INUMET forecast JSON | No licence granted | **Not used** until permission |

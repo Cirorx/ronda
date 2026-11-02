@@ -14,6 +14,7 @@ from datetime import datetime
 import attendance
 import bench
 import buddy
+import day_of
 import despues
 import donde_queda
 import fcm
@@ -88,6 +89,10 @@ JOBS: dict[str, Callable[[object, datetime, Context], dict]] = {
     ),
     # The weekly card the organiser composes (#62), for rondas with the switch on; sends nothing.
     "weekly_card": lambda db, now, context: weekly_card.run_weekly_card(
+        db, now, send=context.send, app_url=context.app_url, force=context.force
+    ),
+    # The day-of reminder with the next city buses (#65), for every ronda not switched off.
+    "day_of": lambda db, now, context: day_of.run_day_of(
         db, now, send=context.send, app_url=context.app_url, force=context.force
     ),
 }

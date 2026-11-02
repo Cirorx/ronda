@@ -1,6 +1,9 @@
-"""The last bus from one stop, read from the DNT metropolitan GTFS (docs/MODELS.md, test 7).
+"""The last bus from one stop, read from a GTFS timetable: the DNT metropolitan feed for
+Ciudad de la Costa (docs/MODELS.md, test 7), or the Intendencia de Montevideo's city feed for
+a Montevideo barrio (test 11). Both read the same way; the city's needs a token to download
+(flyer.py gets one) and gives a time at every stop, so nothing in it is `estimated`.
 
-The feed publishes times only at each trip's timepoints, mostly its ends: in the 2026-09-21 feed
+The DNT feed publishes times only at each trip's timepoints, mostly its ends: in the 2026-09-21 feed
 720 thousand of 795 thousand `stop_times` rows have none. A stop between two timepoints gets a
 time interpolated along the straight-line distance between the trip's stops, as GTFS asks of
 consumers, and is marked `estimated`, so the page can say which time is the published one.
@@ -30,6 +33,14 @@ DNT_GTFS = (
     "9f44b654-751a-42a4-a481-af91b7c9a2e4/download/gtfs_20260921.zip"
 )
 """The published feed, 2026-09-21, as smoke test 7 reads it."""
+
+CITY_GTFS = (
+    "https://api.montevideo.gub.uy/api/transportepublico/buses/gtfs/static/latest/"
+    "google_transit.zip"
+)
+"""The Intendencia de Montevideo's city buses, regenerated daily; the download needs a token
+from `CITY_TOKEN_URL` (OAuth2 client credentials, `MVD_API_CLIENT_ID` and `MVD_API_SECRET_ID`)."""
+CITY_TOKEN_URL = "https://mvdapi-auth.montevideo.gub.uy/token"
 
 DAY_TYPES = {
     "weekday": ("monday", "tuesday", "wednesday", "thursday", "friday"),
