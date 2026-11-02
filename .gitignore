@@ -156,3 +156,6 @@ node_modules/
 # The live transcription relay and the evals: their venvs and the rebuilt invented note.
 relay/venv/
 evals/voice/fixtures/note.wav
+
+# Firebase CLI download for Crashlytics symbol uploads
+.crashlytics/
