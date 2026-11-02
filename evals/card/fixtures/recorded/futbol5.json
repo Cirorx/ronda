@@ -1,0 +1,64 @@
+{
+  "note": "Recorded with --live --record on 2026-11-01.",
+  "turns": [
+    {
+      "model": "meta-models/muse-spark-open-1026",
+      "latency_ms": 1331,
+      "tokens_in": 2129,
+      "tokens_out": 160,
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "chatcmpl-tool-4ba53805aae74bbeb1a47beb4d58bfb3",
+          "name": "get_forecast",
+          "arguments": {
+            "reason": "Chequear lluvia probable para reunión sábado",
+            "date": "2026-11-07"
+          }
+        }
+      ]
+    },
+    {
+      "model": "meta-models/muse-spark-open-1026",
+      "latency_ms": 3852,
+      "tokens_in": 2245,
+      "tokens_out": 312,
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "chatcmpl-tool-eb9f8a4d49db44b891b4133470b43cbe",
+          "name": "compose_card",
+          "arguments": {
+            "reason": "Sin avisos que valgan la pena esta semana",
+            "blocks": []
+          }
+        }
+      ]
+    },
+    {
+      "model": "meta-models/muse-spark-open-1026",
+      "latency_ms": 1774,
+      "tokens_in": 2349,
+      "tokens_out": 287,
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "chatcmpl-tool-bef20fc4c71a48339e066f478ab11ade",
+          "name": "log_acta",
+          "arguments": {
+            "reason": "Cerrar acta semanal con resumen",
+            "summary": "Armó la tarjeta sin avisos y dejó constancia en el acta."
+          }
+        }
+      ]
+    },
+    {
+      "model": "meta-models/muse-spark-open-1026",
+      "latency_ms": 2643,
+      "tokens_in": 2458,
+      "tokens_out": 509,
+      "content": "Listo, ya armé la tarjeta de esta semana.\n\nComo no hay anfitrión, ni gente nueva, ni después, ni lista de espera, y el pronóstico no indicó lluvia probable, la tarjeta queda solo con dónde y cuándo se juntan y la pregunta de confirmación.\n\nDejé constancia en el acta.",
+      "tool_calls": []
+    }
+  ]
+}

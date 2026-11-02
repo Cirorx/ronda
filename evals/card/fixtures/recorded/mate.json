@@ -1,0 +1,85 @@
+{
+  "note": "Recorded with --live --record on 2026-11-01.",
+  "turns": [
+    {
+      "model": "meta-models/muse-spark-open-1026",
+      "latency_ms": 1998,
+      "tokens_in": 2132,
+      "tokens_out": 262,
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "chatcmpl-tool-ac3ea5da4d9e483b8507f3f3d4ad9744",
+          "name": "get_forecast",
+          "arguments": {
+            "reason": "ver si lluvia probable para decidir bloque rain",
+            "date": "2026-11-05"
+          }
+        }
+      ]
+    },
+    {
+      "model": "meta-models/muse-spark-open-1026",
+      "latency_ms": 2762,
+      "tokens_in": 2289,
+      "tokens_out": 550,
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "chatcmpl-tool-ace6e1c1ae7a4c7a8e3d15819649589a",
+          "name": "compose_card",
+          "arguments": {
+            "reason": "pronóstico con lluvia probable y hay anfitrión, nuevo y después para incluir",
+            "blocks": [
+              {
+                "kind": "rain",
+                "title": "Lluvia a la vista",
+                "text": "El pronóstico da lluvia probable con ráfagas, llevá abrigo y contá con el plan bajo techo."
+              },
+              {
+                "kind": "host",
+                "title": "Abre la ronda",
+                "text": "Esta semana te recibe {anfitrion}, que abre el espacio y te da la bienvenida."
+              },
+              {
+                "kind": "newcomer",
+                "title": "Bienvenida",
+                "text": "Se suma {nuevo} a la ronda, presentate y hacelo sentir en casa desde el primer mate."
+              },
+              {
+                "kind": "despues",
+                "title": "Seguimos después",
+                "text": "Si te quedás un rato más, sigue {despues} para los que quieran estirar la charla."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "model": "meta-models/muse-spark-open-1026",
+      "latency_ms": 1422,
+      "tokens_in": 2589,
+      "tokens_out": 181,
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "chatcmpl-tool-087b5235e3ba4c2db5b496356d8e87bd",
+          "name": "log_acta",
+          "arguments": {
+            "reason": "cierre de acta con resumen de tarjeta armada",
+            "summary": "Armó la tarjeta con aviso de lluvia, anfitrión, bienvenida y después."
+          }
+        }
+      ]
+    },
+    {
+      "model": "meta-models/muse-spark-open-1026",
+      "latency_ms": 1305,
+      "tokens_in": 2707,
+      "tokens_out": 131,
+      "content": "Listo, ya armé tu tarjeta con los avisos de esta semana: lluvia, anfitrión, bienvenida y después. Avisame si querés revisarla.",
+      "tool_calls": []
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 """weekly_card.py: the organiser agent's weekly card, over the Firestore stand-in, a scripted
 model and a fake forecast. The first tests are #62's "Done when"."""
 
+from dataclasses import replace
 from datetime import timedelta
 
 import pytest
@@ -176,6 +177,22 @@ class TestDoneWhen:
         assert card(db)["runId"] == RUN
         assert card(db)["model"] == "scripted"
         assert card(db)["latencyMs"] >= 0
+        assert card(db)["tokens"] == [{"model": "scripted", "in": 0, "out": 0}]
+
+    def test_the_card_keeps_what_each_model_billed(self):
+        db = FakeFirestore(on())
+        # Spark Open answers the first turn, then Spark 1.3 takes over (the fallback).
+        script = compose(RAIN_BLOCK)
+        script[0] = replace(script[0], model="open", tokens_in=900, tokens_out=40)
+        script[1] = replace(script[1], model="spark", tokens_in=1100, tokens_out=120)
+
+        run(db, script=script)
+
+        assert card(db)["tokens"] == [
+            {"model": "open", "in": 900, "out": 40},
+            {"model": "spark", "in": 1100, "out": 120},
+            {"model": "scripted", "in": 0, "out": 0},
+        ]
 
 
 class TestTheMessages:
@@ -370,7 +387,7 @@ class TestTheBlocks:
 
         run(db, script=script)
 
-        first = [s for s in steps(db) if s.get("tool") == "compose_card"][0]
+        first = next(s for s in steps(db) if s.get("tool") == "compose_card")
         assert first["status"] == "invalid"
         assert "blocks.0.kind" in first["resultSummary"]
         assert card(db)["blocks"] == ["rain"]

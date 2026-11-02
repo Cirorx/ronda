@@ -220,7 +220,8 @@ def streamed(answer: Turn) -> list[SimpleNamespace]:
         chunks.append(chunk(calls=[fragment(index, tool_call.id, tool_call.name, "")]))
         chunks.append(chunk(calls=[fragment(index, arguments=tool_call.arguments[:half])]))
         chunks.append(chunk(calls=[fragment(index, arguments=tool_call.arguments[half:])]))
-    chunks.append(SimpleNamespace(choices=[]))
+    usage = SimpleNamespace(prompt_tokens=answer.tokens_in, completion_tokens=answer.tokens_out)
+    chunks.append(SimpleNamespace(choices=[], usage=usage if answer.tokens_in else None))
     return chunks
 
 

@@ -67,6 +67,8 @@ def run_agent(
             latencyMs=round((clock() - started) * 1000),
             toolCalls=[call.name for call in turn.tool_calls],
             content=words,
+            tokensIn=turn.tokens_in,
+            tokensOut=turn.tokens_out,
         )
         if not turn.tool_calls:
             return Outcome(DONE, words)

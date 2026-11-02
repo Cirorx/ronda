@@ -28,7 +28,8 @@ Where things live (docs/ARCHITECTURE.md § Data model):
 - `rondas/{id}.agentCard`: the switch, set by the admin (`set_ronda_setup`); off by default.
 - `rondas/{id}/views/card`: week, status (`agent` | `template`), reason (why the template),
   messages (the A2UI messages, status `agent`), blocks (the kinds kept), dropped (how many),
-  model, runId, latencyMs, updatedAt. Members read it through the `views/{view}` rule.
+  model, runId, latencyMs, tokens ([{model, in, out}], what each model billed), updatedAt.
+  Members read it through the `views/{view}` rule.
 - `agent_runs/{rondaId}_{week}_card`: the run's trace, as every organiser run.
 
 - `run_weekly_card(db, now, send=...)`: the job (`jobs.JOBS["weekly_card"]`), hourly from the
@@ -51,7 +52,7 @@ import rsvp
 from organiser import gates, moves, outbox, text
 from organiser import tools as organiser_tools
 from organiser.agent import FAILED, run_agent
-from organiser.model import ModelClient, ModelUnavailable, from_environment
+from organiser.model import ModelClient, ModelUnavailable, Turn, from_environment
 from organiser.tools import Args, Meeting, Result, Toolbox
 from organiser.trace import Trace
 from organiser.weather import OpenMeteo, Weather
@@ -290,6 +291,28 @@ def a2ui_messages(week: str, blocks: list[dict]) -> list[dict]:
     ]
 
 
+class Metered:
+    """`model`, keeping the tokens each model behind it billed, for the card's cost."""
+
+    def __init__(self, model: ModelClient) -> None:
+        self._model = model
+        self.tokens: dict[str, list[int]] = {}
+
+    @property
+    def name(self) -> str:
+        return self._model.name
+
+    def complete(self, messages: list[dict], tools: list[dict]) -> Turn:
+        turn = self._model.complete(messages, tools)
+        billed = self.tokens.setdefault(turn.model or self._model.name, [0, 0])
+        billed[0] += turn.tokens_in
+        billed[1] += turn.tokens_out
+        return turn
+
+    def summary(self) -> list[dict]:
+        return [{"model": m, "in": t[0], "out": t[1]} for m, t in self.tokens.items()]
+
+
 # --- The job -------------------------------------------------------------------------------
 
 
@@ -379,7 +402,7 @@ def compose_ronda(
     """One ronda's card, from the start of its run to the stored result; returns `AGENT` when
     the model's card is stored, `TEMPLATE` when the phone will show the template."""
     try:
-        model = get_model()
+        model = Metered(get_model())
     except ModelUnavailable as error:
         trace.start(job=JOB, model="", forced=force)
         trace.step("stop", why=f"no hay modelo ({error})", model="")
@@ -410,12 +433,20 @@ def compose_ronda(
     trace.finish(outcome.status, outcome.note)
     if box.card is None:
         reason = "el modelo no respondió" if outcome.status == FAILED else "no armó la tarjeta"
-        return _store(db, meeting, trace, TEMPLATE, reason=reason, dropped=box.dropped)
+        return _store(
+            db, meeting, trace, TEMPLATE, reason=reason, dropped=box.dropped, tokens=model
+        )
     if not box.card:
         return _store(
-            db, meeting, trace, TEMPLATE, reason="no quedó ningún aviso", dropped=box.dropped
+            db,
+            meeting,
+            trace,
+            TEMPLATE,
+            reason="no quedó ningún aviso",
+            dropped=box.dropped,
+            tokens=model,
         )
-    return _store(db, meeting, trace, AGENT, blocks=box.card, dropped=box.dropped)
+    return _store(db, meeting, trace, AGENT, blocks=box.card, dropped=box.dropped, tokens=model)
 
 
 def _task(meeting: Meeting, facts: Facts, now: datetime) -> str:
@@ -472,6 +503,7 @@ def _store(
     reason: str = "",
     blocks: list[dict] | None = None,
     dropped: list[str] | None = None,
+    tokens: Metered | None = None,
 ) -> str:
     """Writes `views/card` for the phone and says in the trace what it will show."""
     run = _read(db, f"agent_runs/{trace.run_id}")
@@ -488,6 +520,7 @@ def _store(
         "latencyMs": round((at - started).total_seconds() * 1000)
         if isinstance(started, datetime)
         else 0,
+        "tokens": tokens.summary() if tokens else [],
         "updatedAt": at,
     }
     if status == AGENT:

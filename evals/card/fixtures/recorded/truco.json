@@ -1,0 +1,80 @@
+{
+  "note": "Recorded with --live --record on 2026-11-01.",
+  "turns": [
+    {
+      "model": "meta-models/muse-spark-open-1026",
+      "latency_ms": 1354,
+      "tokens_in": 2128,
+      "tokens_out": 178,
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "chatcmpl-tool-84c0ad3e38b54ea8859d1e4973444182",
+          "name": "get_forecast",
+          "arguments": {
+            "reason": "Ver si llueve para bloque rain",
+            "date": "2026-11-03"
+          }
+        }
+      ]
+    },
+    {
+      "model": "meta-models/muse-spark-open-1026",
+      "latency_ms": 2197,
+      "tokens_in": 2284,
+      "tokens_out": 439,
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "chatcmpl-tool-572c557cfa50452097320f34c73515a9",
+          "name": "compose_card",
+          "arguments": {
+            "reason": "Armar tarjeta con rain, host y bench según datos",
+            "blocks": [
+              {
+                "kind": "rain",
+                "title": "Lluvia a la vista",
+                "text": "El pronóstico da 75% de probabilidad de lluvia con 1.5 mm y ráfagas de 35 km/h a las 19hs. Si llueve nos corremos bajo techo y seguimos igual."
+              },
+              {
+                "kind": "host",
+                "title": "Anfitrión de la semana",
+                "text": "Esta semana abre {anfitrion}, que se encarga de recibirte y ordenar la mesa."
+              },
+              {
+                "kind": "bench",
+                "title": "Lugares limitados",
+                "text": "Si esta no podés ir, avisá a tiempo así le das tu lugar a alguien de la lista de espera."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "model": "meta-models/muse-spark-open-1026",
+      "latency_ms": 1560,
+      "tokens_in": 2550,
+      "tokens_out": 254,
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "chatcmpl-tool-4d1bdf8fb2f943159eff6e7ff71e587a",
+          "name": "log_acta",
+          "arguments": {
+            "reason": "Registrar tarjeta en acta",
+            "summary": "Armó la tarjeta de la reunión del 2026-11-03 con aviso de lluvia, anfitrión y lista de espera."
+          }
+        }
+      ]
+    },
+    {
+      "model": "meta-models/muse-spark-open-1026",
+      "latency_ms": 1189,
+      "tokens_in": 2672,
+      "tokens_out": 85,
+      "content": "Listo, ya tenés la tarjeta de esta semana armada con el aviso de lluvia, anfitrión y el aviso de lista de espera.",
+      "tool_calls": []
+    }
+  ]
+}

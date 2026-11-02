@@ -48,6 +48,9 @@ class Turn:
     content: str = ""
     tool_calls: tuple[ToolCall, ...] = field(default_factory=tuple)
     model: str = ""
+    tokens_in: int = 0
+    tokens_out: int = 0
+    """What the endpoint billed for this answer (its streamed usage); 0 when it sent none."""
 
     def message(self) -> dict:
         """The assistant message that carries this turn into the next request."""
@@ -101,6 +104,8 @@ class ChatModel:
                 messages=messages,
                 **({"tools": tools} if tools else {}),
                 stream=True,
+                # The last chunk then carries the tokens, for the cost per run.
+                stream_options={"include_usage": True},
                 extra_body={"reasoning_effort": self._effort},
             )
             turn = collect(stream, self._model)
@@ -112,13 +117,17 @@ class ChatModel:
 
 
 def collect(chunks: Iterable[Any], model: str) -> Turn:
-    """A `Turn` from streamed chunks: the words joined, and each tool call's id, name and
-    argument fragments gathered by its index (the id and name arrive on its first fragment)."""
+    """A `Turn` from streamed chunks: the words joined, each tool call's id, name and
+    argument fragments gathered by its index (the id and name arrive on its first fragment),
+    and the tokens from the usage chunk at the end, which has no choices."""
     content: list[str] = []
+    tokens_in = tokens_out = 0
     ids: dict[int, str] = {}
     names: dict[int, str] = {}
     parts: dict[int, list[str]] = {}
     for chunk in chunks:
+        if usage := getattr(chunk, "usage", None):
+            tokens_in, tokens_out = usage.prompt_tokens or 0, usage.completion_tokens or 0
         if not chunk.choices:
             continue
         delta = chunk.choices[0].delta
@@ -131,7 +140,13 @@ def collect(chunks: Iterable[Any], model: str) -> Turn:
     calls = tuple(
         ToolCall(ids[i] or f"call_{i}", names[i], "".join(parts[i])) for i in sorted(parts)
     )
-    return Turn(content="".join(content), tool_calls=calls, model=model)
+    return Turn(
+        content="".join(content),
+        tool_calls=calls,
+        model=model,
+        tokens_in=tokens_in,
+        tokens_out=tokens_out,
+    )
 
 
 class FallbackModel:
