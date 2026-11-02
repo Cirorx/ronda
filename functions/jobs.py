@@ -24,6 +24,7 @@ import rsvp
 import seguimos
 import shared_plans
 import waitlists
+import weekly_card
 
 log = logging.getLogger(__name__)
 
@@ -77,6 +78,10 @@ JOBS: dict[str, Callable[[object, datetime, Context], dict]] = {
     "donde_queda": lambda db, now, context: donde_queda.run_donde_queda(db, now),
     # ¿Alguien se suma? (#57): deletes shared plans once their time has passed; sends nothing.
     "shared_plans": lambda db, now, context: shared_plans.run_shared_plans(db, now),
+    # The weekly card the organiser composes (#62), for rondas with the switch on; sends nothing.
+    "weekly_card": lambda db, now, context: weekly_card.run_weekly_card(
+        db, now, send=context.send, app_url=context.app_url, force=context.force
+    ),
 }
 
 

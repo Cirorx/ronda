@@ -24,7 +24,9 @@ abstract final class MyRondaFixtures {
     List<HostTurn> turns = const [],
     Despues? despues,
     HandoffAsk? handoffAsk,
+    AgentCard? agentCard,
   }) => ThisWeek(
+    agentCard: agentCard,
     rondaId: 'r1',
     pretextId: 'mate',
     barrioId: 'el-pinar-sur',

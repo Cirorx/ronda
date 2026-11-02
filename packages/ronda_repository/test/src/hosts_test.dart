@@ -53,6 +53,8 @@ void main() {
           .thenAnswer((_) => Stream.value(null));
       when(() => rondasApi.watchDespues(any(), any()))
           .thenAnswer((_) => Stream.value(null));
+      when(() => rondasApi.watchCardView(any()))
+          .thenAnswer((_) => Stream.value(null));
       subject = RondaRepository(
         proposalsApi: _MockProposalsApi(),
         rondasApi: rondasApi,
@@ -193,6 +195,25 @@ void main() {
             anfitrionUid: 'demo-101',
           ),
         ).called(1);
+      });
+
+      test("passes the weekly card's switch through", () async {
+        when(
+          () => rondasApi.setRondaSetup(
+            rondaId: any(named: 'rondaId'),
+            placeName: any(named: 'placeName'),
+            placeLandmark: any(named: 'placeLandmark'),
+            hour: any(named: 'hour'),
+            anfitrionUid: any(named: 'anfitrionUid'),
+            colaUid: any(named: 'colaUid'),
+            agentCard: any(named: 'agentCard'),
+          ),
+        ).thenAnswer((_) async {});
+
+        await subject.setRondaSetup(rondaId: 'r1', agentCard: true);
+
+        verify(() => rondasApi.setRondaSetup(rondaId: 'r1', agentCard: true))
+            .called(1);
       });
 
       test('a place that is not public is notPublic', () {

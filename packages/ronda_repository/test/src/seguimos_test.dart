@@ -45,6 +45,8 @@ void main() {
           .thenAnswer((_) => Stream.value(null));
       when(() => rondasApi.watchDespues(any(), any()))
           .thenAnswer((_) => Stream.value(null));
+      when(() => rondasApi.watchCardView(any()))
+          .thenAnswer((_) => Stream.value(null));
       subject = RondaRepository(
         proposalsApi: _MockProposalsApi(),
         rondasApi: rondasApi,

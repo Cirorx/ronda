@@ -1,0 +1,36 @@
+{
+  "note": "Hand-written stand-in for Muse Spark Open's turns on the fútbol ronda (no key was available while #62 was built); it slips once into tú and names a host there is none of, so the gates and the facts show. Replace with a recording from --live.",
+  "turns": [
+    {
+      "content": "",
+      "tool_calls": [
+        {"name": "get_forecast", "arguments": {"date": "2026-11-07", "reason": "ver si llueve el sábado a la mañana"}}
+      ]
+    },
+    {
+      "content": "",
+      "tool_calls": [
+        {
+          "name": "compose_card",
+          "arguments": {
+            "reason": "llueve 80% a las 10",
+            "blocks": [
+              {"kind": "rain", "title": "Puede llover", "text": "El sábado a las 10 hay 80% de lluvia. Si llueve, **traes** botines para pasto mojado."},
+              {"kind": "host", "title": "Quién abre", "text": "Abre {anfitrion}."}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "content": "",
+      "tool_calls": [
+        {"name": "log_acta", "arguments": {"summary": "Armó la tarjeta del fútbol con el pronóstico.", "reason": "anotar lo que hizo"}}
+      ]
+    },
+    {
+      "content": "Listo.",
+      "tool_calls": []
+    }
+  ]
+}

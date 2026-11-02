@@ -44,6 +44,8 @@ void main() {
           .thenAnswer((_) => Stream.value(null));
       when(() => rondasApi.watchDespues(any(), any()))
           .thenAnswer((_) => Stream.value(null));
+      when(() => rondasApi.watchCardView(any()))
+          .thenAnswer((_) => Stream.value(null));
       subject = RondaRepository(
         proposalsApi: _MockProposalsApi(),
         rondasApi: rondasApi,
@@ -98,6 +100,109 @@ void main() {
               ],
               noCount: 1,
               unansweredCount: 2,
+            ),
+          ),
+        );
+      });
+
+      group("the organiser's card", () {
+        const messages = [
+          <String, Object?>{
+            'version': 'v0.9',
+            'createSurface': {
+              'surfaceId': 'card-2026-W44',
+              'catalogId': 'uy.ronda.card',
+            },
+          },
+          <String, Object?>{
+            'version': 'v0.9',
+            'updateComponents': {
+              'surfaceId': 'card-2026-W44',
+              'components': <Object?>[],
+            },
+          },
+        ];
+        const card = CardViewDocument(
+          week: '2026-W44',
+          status: 'agent',
+          messages: messages,
+        );
+        const on = RondaDocument(
+          id: 'r1',
+          pretext: 'mate',
+          barrio: 'el-pinar-sur',
+          slotDay: 'sat',
+          slotBand: 'afternoon',
+          agentCard: true,
+        );
+
+        test('is this week\'s $AgentCard when the switch is on', () async {
+          when(() => rondasApi.watchRonda('r1'))
+              .thenAnswer((_) => Stream.value(on));
+          when(() => rondasApi.watchCardView('r1'))
+              .thenAnswer((_) => Stream.value(card));
+          ids.add(['r1']);
+
+          final week = await subject.watchThisWeek('demo-001').first;
+
+          expect(
+            week!.agentCard,
+            const AgentCard(week: '2026-W44', messages: messages),
+          );
+        });
+
+        test('is the template with the switch off', () async {
+          when(() => rondasApi.watchCardView('r1'))
+              .thenAnswer((_) => Stream.value(card));
+          ids.add(['r1']);
+
+          final week = await subject.watchThisWeek('demo-001').first;
+
+          expect(week!.agentCard, isNull);
+        });
+
+        Future<void> expectTemplate(CardViewDocument stored) async {
+          when(() => rondasApi.watchRonda('r1'))
+              .thenAnswer((_) => Stream.value(on));
+          when(() => rondasApi.watchCardView('r1'))
+              .thenAnswer((_) => Stream.value(stored));
+          ids.add(['r1']);
+
+          final week = await subject.watchThisWeek('demo-001').first;
+
+          expect(week!.agentCard, isNull);
+        }
+
+        test(
+          'is the template for another week',
+          () => expectTemplate(
+            const CardViewDocument(
+              week: '2026-W43',
+              status: 'agent',
+              messages: messages,
+            ),
+          ),
+        );
+
+        test(
+          'is the template when the server stored the template',
+          () => expectTemplate(
+            const CardViewDocument(
+              week: '2026-W44',
+              status: 'template',
+              messages: [],
+              reason: 'no hay modelo',
+            ),
+          ),
+        );
+
+        test(
+          'is the template without messages',
+          () => expectTemplate(
+            const CardViewDocument(
+              week: '2026-W44',
+              status: 'agent',
+              messages: [],
             ),
           ),
         );

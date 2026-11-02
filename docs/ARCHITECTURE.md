@@ -137,7 +137,8 @@ isn't set up).
   cola, anfitrionName, colaName, month?}, turns [{month, anfitrion, anfitrionName, cola,
   colaName}] (this month first, then the next two), opener {week, uid, firstName}? (who took
   over opening that week, "¿Abrís vos?"), setupAt, season {start, end} (the ISO dates of its first and last meeting, set by the ¿seguimos? close,
-  which also makes the ronda `active`), openSeatFromWeek: 4,
+  which also makes the ronda `active`), openSeatFromWeek: 4, agentCard? (true once the admin
+  lets the organiser compose the weekly card, #62),
   rsvpLead {daysBefore 1–6, hour 9–20}? (when the RSVP push goes out, Montevideo time; missing
   or out of range reads as two days before at 19:00, so a Saturday ronda takes Friday with
   `{daysBefore: 1, hour: 19}`).
@@ -416,6 +417,14 @@ isn't set up).
   by its `hostUid` only, never listed. A pick writes `weeks/{w}.placeOverride {placeId, name}`
   or `weeks/{w}.dateOverride` (`YYYY-MM-DD`); the Mi ronda card and `views/week` don't read
   either yet, so members learn the change from the push.
+- `rondas/{id}/views/card` (#62, `functions/weekly_card.py`): the weekly card the organiser
+  composed, for the phone to draw with genui: week, status (`agent` | `template`), reason (why
+  the template), messages (the A2UI messages, `agent` only: a `createSurface` for the catalog
+  `uy.ronda.card` and one `updateComponents` with a `RondaCard` root, one component per block
+  kept and the `Rsvp` block last), blocks (the kinds kept), dropped, model, runId, latencyMs,
+  updatedAt. Members read it through the `views/{view}` rule; `rondas/{id}.agentCard` (the
+  admin's switch, `set_ronda_setup`) decides whether the phone uses it. One run per ronda and
+  week, `agent_runs/{rondaId}_{isoWeek}_card`, claimed like the rain check's.
 - `places/{id}`: covered public places the organiser may offer when it rains: name (with its
   article, "el Salón Comunal de El Pinar"), barrios[], covered, kind (`public`). Read by the
   server only. The demo set is `data/demo/invented_places.json`; the real project has none until
@@ -737,6 +746,32 @@ code jobs with no model, § Data model, the weekly loop's code jobs):
     with `default_deadline` and a `note` step says why; without a chosen time, code sends the
     host's summary once the bench settles. The summary goes to the anfitrión, else the cola,
     never a stand-in.
+
+- **The weekly card** (#62, `functions/weekly_card.py`, job `weekly_card`), behind the admin's
+  switch `rondas/{id}.agentCard` (off by default; set on "Lugar, hora y anfitriones"). With it
+  on, once per ronda and week, inside the hours and within three days of the meeting (or on
+  `run_job("weekly_card", force)`), the same agent loop reads the forecast, the sunset, the last
+  bus and the counts and calls `compose_card` once with the blocks it wants from Ronda's own
+  catalog: `rain`, `host`, `newcomer`, `despues`, `bench`, each a kind, a title and a text.
+  - The tool's pydantic schema is the catalog: Spark Open doesn't enforce schemas, so the model
+    writes blocks and code assembles the A2UI messages (`a2ui_messages`), rather than the model
+    writing A2UI itself. The RSVP block is always there; code adds it.
+  - The model sees no member's name: a host, newcomer or después block carries `{anfitrion}`,
+    `{nuevo}` or `{despues}` and code fills it from the week's facts, which code also uses to
+    drop a block whose fact doesn't hold (no host, nobody new within seven days, no después
+    set, nobody on the bench). The después never carries an address. Markdown is stripped and
+    every title and text passes `gates.check_words` (emoji, voseo, money, address); a dropped
+    block is a `note` step, so the trace says why.
+  - Fallback: no model, a failed run, a run that never composes, a card with no block left, or
+    an exception stores `views/card` with status `template` and the reason, and the phone shows
+    the fixed card. The phone (`lib/my_ronda/agent_card/`, genui 0.10.4 with only our catalog
+    registered) also falls back on anything it can't draw: a message that doesn't parse, another
+    catalog, a component outside the catalog, a block without its title, a surface error.
+    Taps on the card's RSVP block go through the RSVP path, never back to the model.
+  - Measured on the build machine (2026-11-01): the Android release APK grew by 0.64 MB
+    (88.74 → 89.39 MB) from genui's audio and video player plugins, the web `main.dart.js` by
+    0.17 MB (4.72 → 4.89 MB); iOS simulator and web builds pass. `evals/card/` runs the job over
+    three demo rondas and reports schema validity, the gates and the fallbacks.
 
 ## Data sources and licences
 

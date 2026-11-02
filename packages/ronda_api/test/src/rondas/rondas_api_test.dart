@@ -119,6 +119,104 @@ void main() {
 
         expect(subject.watchRonda('r1'), emitsError(isA<FormatException>()));
       });
+
+      test("reads the weekly card's switch, off unless it is true", () async {
+        await firestore.doc('rondas/r1').set({
+          'pretext': 'mate',
+          'barrio': 'el-pinar-sur',
+          'slot': {'day': 'sat', 'time': 'afternoon'},
+          'agentCard': true,
+        });
+        await firestore.doc('rondas/r2').set({
+          'pretext': 'mate',
+          'barrio': 'el-pinar-sur',
+          'slot': {'day': 'sat', 'time': 'afternoon'},
+          'agentCard': 'yes',
+        });
+
+        expect((await subject.watchRonda('r1').first)!.agentCard, isTrue);
+        expect((await subject.watchRonda('r2').first)!.agentCard, isFalse);
+      });
+    });
+
+    group('watchCardView', () {
+      test('reads the card the organiser composed', () async {
+        await firestore.doc('rondas/r1/views/card').set({
+          'week': '2026-W45',
+          'status': 'agent',
+          'reason': '',
+          'messages': [
+            {
+              'version': 'v0.9',
+              'createSurface': {
+                'surfaceId': 'card-2026-W45',
+                'catalogId': 'uy.ronda.card',
+              },
+            },
+            {
+              'version': 'v0.9',
+              'updateComponents': {
+                'surfaceId': 'card-2026-W45',
+                'components': [
+                  {
+                    'id': 'root',
+                    'component': 'RondaCard',
+                    'children': ['rsvp'],
+                  },
+                  {'id': 'rsvp', 'component': 'Rsvp'},
+                ],
+              },
+            },
+          ],
+        });
+
+        final card = (await subject.watchCardView('r1').first)!;
+
+        expect(card.week, '2026-W45');
+        expect(card.status, 'agent');
+        expect(card.reason, '');
+        expect(card.messages, hasLength(2));
+        expect(card.messages.first['version'], 'v0.9');
+        expect(
+          card.messages.last['updateComponents'],
+          isA<Map<Object?, Object?>>(),
+        );
+      });
+
+      test('reads a template card without messages', () async {
+        await firestore.doc('rondas/r1/views/card').set({
+          'week': '2026-W45',
+          'status': 'template',
+          'reason': 'no hay modelo',
+        });
+
+        final card = (await subject.watchCardView('r1').first)!;
+
+        expect(card.status, 'template');
+        expect(card.reason, 'no hay modelo');
+        expect(card.messages, isEmpty);
+      });
+
+      test('emits null while there is none', () {
+        expect(subject.watchCardView('r1'), emits(isNull));
+      });
+
+      test('errors for another shape', () async {
+        await firestore.doc('rondas/r1/views/card').set({'week': '2026-W45'});
+
+        expect(subject.watchCardView('r1'), emitsError(isA<FormatException>()));
+      });
+
+      test('a message that is not an object is refused', () {
+        expect(
+          () => CardViewDocument.fromJson(const {
+            'week': '2026-W45',
+            'status': 'agent',
+            'messages': ['x'],
+          }),
+          throwsFormatException,
+        );
+      });
     });
 
     group('watchMember', () {

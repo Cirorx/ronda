@@ -307,6 +307,15 @@ Python functions (`functions/requirements.txt`): `firebase-functions`, `firebase
 links to the solver. Check WAV headers with the
 stdlib `wave` module (`audioop` is gone in 3.13).
 
+The weekly card (#62) adds `genui` 0.10.4 (BSD-3-Clause) with `a2ui_core` (Apache-2.0) and
+`json_schema_builder` (BSD-3-Clause) as direct dependencies, because the catalog names their
+types. genui pulls in `audioplayers`, `video_player` (both platforms' plugins), `flutter_markdown_plus`,
+`html` and `markdown`; none is imported, but the plugins register natively, which is the 0.64 MB
+on the Android release APK. The licence check skips `a2ui_core` (untagged on pub.dev) and
+`html` (MIT text pub.dev reads as unknown), with the reason in the workflow. Only Ronda's own
+catalog is registered (`lib/my_ronda/agent_card/ronda_card_catalog.dart`); genui's core catalog
+is never built.
+
 ## Algo chico esta semana (#56)
 
 - **Calendar:** `add_2_calendar` 3.1.1 (pub.dev, 160/160 points, the most used of its kind, maintained

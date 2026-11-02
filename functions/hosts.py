@@ -114,6 +114,7 @@ def setups(db, now: datetime) -> list[dict]:
                 ],
                 "roll": _latest_roll(db, snapshot.id),
                 "handoff": _handoff(db, snapshot.id, ronda, now),
+                "agentCard": ronda.get("agentCard") is True,
             }
         )
     return sorted(rows, key=lambda row: (row["line"], row["rondaId"]))
@@ -143,7 +144,9 @@ def _ronda_id(data: dict) -> str:
 
 def set_setup(db, data: object, now: datetime) -> dict:
     """Sets ronda `rondaId`'s place, hour and hosts from `{rondaId, place: {name, landmark?} |
-    null, hour: "16:00" | null, anfitrion: uid | "", cola: uid | ""}`; returns what it wrote.
+    null, hour: "16:00" | null, anfitrion: uid | "", cola: uid | "", agentCard?: bool}`;
+    returns what it wrote. `agentCard` is the weekly card's switch (weekly_card.py): left
+    out, it stays as it is.
 
     Refuses (`SetupError`) a place whose words look like a home or an address
     (`failed-precondition`), an hour outside the band, a host who isn't in the ronda, and the
@@ -197,6 +200,9 @@ def set_setup(db, data: object, now: datetime) -> dict:
         slot.pop("hour", None)
     else:
         slot["hour"] = hour
+    agent_card = data.get("agentCard")
+    if agent_card is not None and not isinstance(agent_card, bool):
+        raise SetupError("invalid-argument", "agentCard is true, false or absent")
     ronda_ref.update(
         {
             "place": place if place is not None else DELETE_FIELD,
@@ -204,6 +210,14 @@ def set_setup(db, data: object, now: datetime) -> dict:
             "hosts": hosts if hosts else DELETE_FIELD,
             "turns": turns,
             "setupAt": now,
+            # The weekly card's switch (weekly_card.py): absent leaves it as it is.
+            **({} if agent_card is None else {"agentCard": agent_card}),
         }
     )
-    return {"rondaId": snapshot.id, "place": place, "hour": hour, "hosts": hosts}
+    return {
+        "rondaId": snapshot.id,
+        "place": place,
+        "hour": hour,
+        "hosts": hosts,
+        "agentCard": ronda.get("agentCard") is True if agent_card is None else agent_card,
+    }

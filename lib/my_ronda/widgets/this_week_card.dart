@@ -1,9 +1,10 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ronda/attendance/widgets/roll_link.dart';
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/my_ronda/agent_card/agent_card_surface.dart';
 import 'package:ronda/my_ronda/cubit/this_week_cubit.dart';
 import 'package:ronda/my_ronda/widgets/despues_section.dart';
 import 'package:ronda/my_ronda/widgets/handoff_ask.dart';
+import 'package:ronda/my_ronda/widgets/rsvp_section.dart';
 import 'package:ronda/my_ronda/widgets/this_week_labels.dart';
 import 'package:ronda/my_ronda/widgets/who_is_going.dart';
 import 'package:ronda_repository/ronda_repository.dart';
@@ -16,6 +17,11 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// counts for the rest. The anfitrión and the cola also get "¿Quién vino
 /// hoy?" once the meeting's roll exists. It carries the monthly turns,
 /// "¿Abrís vos?" while it is open to this member, and the después.
+///
+/// With the ronda's switch on and a card the organiser composed for this
+/// week ([ThisWeek.agentCard]), its notices and "¿Venís?" are drawn from
+/// that card ([AgentCardSurface]); whatever can't be drawn falls back to
+/// the same [RsvpSection] the template shows.
 ///
 /// The answer is the card's one moment of motion: the question gives way
 /// to "Vas" on a [RondaSwap], someone joining "Quiénes van" grows into the
@@ -36,8 +42,8 @@ class const ThisWeekCard({
   /// Maestro's handles: the card, the RsvpBar's prefix (`rsvp.yes`,
   /// `rsvp.no`) and "Cambiar mi respuesta".
   static const identifier = 'thisWeek';
-  static const rsvpIdentifier = 'rsvp';
-  static const changeIdentifier = 'rsvp.change';
+  static const String rsvpIdentifier = RsvpSection.rsvpIdentifier;
+  static const String changeIdentifier = RsvpSection.changeIdentifier;
 
   @override
   Widget build(BuildContext context) {
@@ -45,64 +51,8 @@ class const ThisWeekCard({
     final l10n = context.l10n;
     final textTheme = Theme.of(context).textTheme;
     final spacing = context.appSpacing;
-    final cubit = context.read<ThisWeekCubit>();
-    final item = l10n.bringItem(week.myBrings);
 
-    final Widget answer;
-    final Key answerKey;
-    if (state.asks) {
-      answerKey = const ValueKey('asks');
-      answer = RsvpBar(
-        identifier: rsvpIdentifier,
-        question: l10n.thisWeekQuestion,
-        message: item == null ? null : l10n.thisWeekYourTurn(item),
-        yesLabel: l10n.thisWeekYes,
-        noLabel: l10n.thisWeekNo,
-        onYes: cubit.yesTapped,
-        onNo: cubit.noTapped,
-        savingLabel: l10n.thisWeekSaving,
-        pending: switch (state.answering) {
-          RsvpAnswer.yes => RsvpBarAnswer.yes,
-          RsvpAnswer.no => RsvpBarAnswer.no,
-          null => null,
-        },
-      );
-    } else {
-      final going = week.myAnswer == RsvpAnswer.yes;
-      answerKey = ValueKey((going, week.pausedUntil));
-      answer = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: spacing.xs,
-        children: [
-          Semantics(
-            liveRegion: true,
-            child: Text(
-              going
-                  ? (item == null
-                        ? l10n.thisWeekGoing
-                        : l10n.thisWeekGoingBring(item))
-                  : l10n.thisWeekNotGoing,
-              style: textTheme.headlineSmall,
-            ),
-          ),
-          if (!going && week.pausedUntil != null)
-            Text(
-              l10n.thisWeekPausedUntil(l10n.shortDate(week.pausedUntil!)),
-              style: textTheme.bodyMedium,
-            ),
-          if (state.answering != null) StatusLine(l10n.thisWeekSaving),
-          MergeSemantics(
-            child: Semantics(
-              identifier: changeIdentifier,
-              child: TextButton(
-                onPressed: cubit.changeTapped,
-                child: Text(l10n.thisWeekChange),
-              ),
-            ),
-          ),
-        ],
-      );
-    }
+    Widget rsvp(BuildContext _) => RsvpSection(state: state);
 
     return Semantics(
       container: true,
@@ -133,10 +83,10 @@ class const ThisWeekCard({
                   variant: NoteBannerVariant.warning,
                   message: l10n.thisWeekSaveError,
                 ),
-              RondaSwap(
-                layoutBuilder: RondaSwap.topStartLayout,
-                child: KeyedSubtree(key: answerKey, child: answer),
-              ),
+              if (week.agentCard case final card?)
+                AgentCardSurface(card: card, rsvp: rsvp, fallback: rsvp)
+              else
+                rsvp(context),
               if (week.week != null && showWhoIsGoing)
                 WhoIsGoing(week: week, uid: uid),
               ?reminder,

@@ -1,0 +1,19 @@
+# The card eval (test_card_eval.py): `uv run pytest` plays back recorded/, `uv run pytest --live`
+# runs the real models. It imports the functions' code and their test stand-ins, so it needs
+# what they import; `functions/venv/bin/pytest` from this directory works too.
+[project]
+name = "ronda-card-eval"
+version = "0.1.0"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "google-cloud-firestore==2.24.0",
+    "httpx==0.28.1",
+    "openai==3.41.0",
+    "pydantic==2.14.1",
+    "pytest>=8",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["../../functions", "../../scripts/smoke", "."]
+testpaths = ["."]
+filterwarnings = ["ignore:Bitwise inversion:DeprecationWarning"]

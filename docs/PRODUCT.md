@@ -474,6 +474,13 @@ Ronda.
 - **Ronda se calla:** from week 2, jobs move to members: "Jorge, ¿avisás vos cuando llueve?" The
   agent drafts, the member sends from their own WhatsApp: [Mandarlo por WhatsApp] [Cambiar el
   texto], or "Prefiero que lo siga mandando Ronda".
+- **The weekly card** (#62, behind the admin's switch "La tarjeta de la semana la arma el
+  programa", off by default): with it on, the agent composes the card's notices for the week
+  from Ronda's own blocks — "Puede llover" with the plan, who opens, someone new joining, the
+  después (never an address), a nudge that "esta no" gives the seat to the bench — and the card
+  draws them with genui. It is still one card a week: the same header, "¿Venís?" and "Quiénes
+  van" as always, no feed, no chat. Every line passes the gates; whatever the agent gets wrong
+  (or a run that fails) falls back to the fixed card without a word.
 - **El acta:** "Lo que hizo el programa" — a short, factual weekly log ending "No leyó mensajes
   de nadie ni mandó nada fuera de horario."; [Algo estuvo mal].
 - Logistics only. Never 21:00–09:00. Admin sees every message as "Salió" or "Frenado" with the

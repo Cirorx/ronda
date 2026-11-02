@@ -124,6 +124,26 @@ void main() {
     );
 
     blocTest<RondaSetupCubit, RondaSetupState>(
+      "passes the weekly card's switch to the repository",
+      setUp: () => when(
+        () => repository.setRondaSetup(
+          rondaId: any(named: 'rondaId'),
+          placeName: any(named: 'placeName'),
+          placeLandmark: any(named: 'placeLandmark'),
+          hour: any(named: 'hour'),
+          anfitrionUid: any(named: 'anfitrionUid'),
+          colaUid: any(named: 'colaUid'),
+          agentCard: any(named: 'agentCard'),
+        ),
+      ).thenAnswer((_) async {}),
+      build: build,
+      act: (cubit) => cubit.save(rondaId: 'r1', agentCard: true),
+      verify: (_) =>
+          verify(() => repository.setRondaSetup(rondaId: 'r1', agentCard: true))
+              .called(1),
+    );
+
+    blocTest<RondaSetupCubit, RondaSetupState>(
       'says why a save failed until the sheet closes',
       setUp: () =>
           saves().thenThrow(const HostsFailure(HostsFailureReason.notPublic)),

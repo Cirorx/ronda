@@ -47,6 +47,9 @@ class const RondaSetupDocument({
 
   /// The upcoming meeting's "¿Abrís vos?", if the anfitrión can't open it.
   final HandoffSummaryDocument? handoff,
+
+  /// Whether the organiser composes this ronda's weekly card.
+  final bool agentCard = false,
 }) {
   /// {@macro ronda_setup_document}
   this;
@@ -88,6 +91,7 @@ class const RondaSetupDocument({
           null => null,
           final handoff => HandoffSummaryDocument.fromJson(handoff),
         },
+        agentCard: json['agentCard'] == true,
       );
     }
     throw const FormatException('ronda_setups returned another shape');
