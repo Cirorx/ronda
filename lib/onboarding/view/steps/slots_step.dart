@@ -24,22 +24,10 @@ class const SlotsStep({super.key}) extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: context.appSpacing.md,
         children: [
-          SlotGrid(
+          SlotsPicker(
             identifier: identifier,
-            dayLabels: [for (final day in SlotDay.values) l10n.slotDay(day)],
-            bandLabels: [
-              for (final band in SlotBand.values) l10n.slotBand(band),
-            ],
-            cellSemanticsLabel: (day, band) =>
-                l10n.slot(Slot(SlotDay.values[day], SlotBand.values[band])),
-            selected: {
-              for (final slot in slots)
-                (day: slot.day.index, band: slot.band.index),
-            },
-            onChanged: (cells) => context.read<OnboardingCubit>().slotsChanged({
-              for (final cell in cells)
-                Slot(SlotDay.values[cell.day], SlotBand.values[cell.band]),
-            }),
+            selected: slots,
+            onChanged: context.read<OnboardingCubit>().slotsChanged,
           ),
           Text(
             l10n.slotsBands,

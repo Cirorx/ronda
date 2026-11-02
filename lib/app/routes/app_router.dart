@@ -13,6 +13,7 @@ import 'package:ronda/donde_queda/donde_queda.dart';
 import 'package:ronda/error_log/error_log.dart';
 import 'package:ronda/login/login.dart';
 import 'package:ronda/mate_flyer/mate_flyer.dart';
+import 'package:ronda/my_data/my_data.dart';
 import 'package:ronda/my_ronda/my_ronda.dart';
 import 'package:ronda/onboarding/onboarding.dart';
 import 'package:ronda/payoff/payoff.dart';
@@ -259,6 +260,10 @@ GoRouter createAppRouter({
                     path: CuadernoPage.segment,
                     builder: (_, _) => const CuadernoPage(),
                   ),
+                  GoRoute(
+                    path: MyDataPage.segment,
+                    builder: (_, _) => const MyDataPage(),
+                  ),
                 ],
               ),
             ],
@@ -277,6 +282,10 @@ GoRouter createAppRouter({
                 path: SettingsPage.path,
                 builder: (_, _) => const SettingsPage(),
                 routes: [
+                  GoRoute(
+                    path: MyDataPage.segment,
+                    builder: (_, _) => const MyDataPage(),
+                  ),
                   GoRoute(
                     path: NotificationsPage.segment,
                     builder: (_, _) => const NotificationsPage(),

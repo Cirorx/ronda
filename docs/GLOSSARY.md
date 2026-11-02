@@ -10,6 +10,8 @@ issues, docs, code, commit messages.
 | `Pretext` | actividad | What the ronda does: mate on the rambla, truco, fútbol 5, caminata |
 | `Slot` | día y horario | Weekday plus a time band (mañana / tarde / noche), and once the admin sets it the hour it starts (`slot.hour`, "16:00") |
 | `Barrio` | barrio | The neighbourhood: Ciudad de la Costa's nine and Montevideo's 62 (`ronda_solver.barrios`); distance is measured between barrio centroids. Names are proper nouns, the same in every language |
+| `Anchor` | casa · trabajo | A barrio a member meets from: casa (`barrio`, required) and optionally trabajo (`workBarrio`), at most two. With "también barrios vecinos" (`barrioNeighbours`, `workBarrioNeighbours`) it reaches 1.5 times the walk. A seat is eligible from either; the walk is from the nearer. Nobody else ever sees which is trabajo |
+| `MisDatos` | Mis datos | The screen where a member changes what they gave at sign-up (Mi ronda's app bar, Ajustes). A barrio or slot change counts from the next grouping; a seated member stays in their ronda |
 | `BarrioArea` | Ciudad de la Costa · Montevideo | Where a barrio is; the picker groups barrios by it, and a seat's walk table lists its own area's barrios |
 | `AgeBand` | edad ("sesenta y pico") | The only age data Ronda keeps; never a birth date. Values: `18-29`, `30-39`, `40-49`, `50-59`, `60-69`, `70-79`, `80+` |
 | `Brings` | lo que traés | What a member brings or teaches (pan, termo, enseño truco, tengo ganas); how people are known |

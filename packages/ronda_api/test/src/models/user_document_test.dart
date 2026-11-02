@@ -66,8 +66,30 @@ void main() {
             'pretexts': ['mate', 3],
             'brings': null,
             'createdAt': '2026-10-27',
+            'barrioNeighbours': 'yes',
+            'workBarrio': 3,
+            'workBarrioNeighbours': 1,
           }),
           equals(const UserDocument(pretexts: ['mate'])),
+        );
+      });
+
+      test('reads casa with its neighbours and trabajo', () {
+        expect(
+          UserDocument.fromJson(const {
+            'barrio': 'cordon',
+            'barrioNeighbours': true,
+            'workBarrio': 'centro',
+            'workBarrioNeighbours': true,
+          }),
+          equals(
+            const UserDocument(
+              barrio: 'cordon',
+              barrioNeighbours: true,
+              workBarrio: 'centro',
+              workBarrioNeighbours: true,
+            ),
+          ),
         );
       });
     });

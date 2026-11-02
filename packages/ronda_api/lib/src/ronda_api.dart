@@ -60,8 +60,12 @@ class const RondaApi({
   Future<void> saveTerms(String uid, TermsRecord terms) =>
       _user(uid).set({'terms': terms.toJson()}, SetOptions(merge: true));
 
-  /// Writes the profile fields on `users/{uid}` and stamps `createdAt` with
-  /// the server time, leaving `terms` as it is.
+  /// Writes the profile fields on `users/{uid}`, leaving `terms` as it is.
+  ///
+  /// [barrio] is casa; [workBarrio] is trabajo, removed from the document
+  /// when `null`, and each says whether it reaches its neighbouring barrios.
+  /// A new profile stamps `createdAt` with the server time; an edit
+  /// ([isNew] false) keeps the first one, which the bench orders by.
   Future<void> saveProfile(
     String uid, {
     required String firstName,
@@ -70,14 +74,23 @@ class const RondaApi({
     required List<String> slots,
     required List<String> pretexts,
     required List<String> brings,
+    bool barrioNeighbours = false,
+    String? workBarrio,
+    bool workBarrioNeighbours = false,
+    bool isNew = true,
   }) => _user(uid).set({
     'firstName': firstName,
     'ageBand': ageBand,
     'barrio': barrio,
+    'barrioNeighbours': barrioNeighbours,
+    'workBarrio': workBarrio ?? FieldValue.delete(),
+    'workBarrioNeighbours': workBarrio == null
+        ? FieldValue.delete()
+        : workBarrioNeighbours,
     'slots': slots,
     'pretexts': pretexts,
     'brings': brings,
-    'createdAt': FieldValue.serverTimestamp(),
+    if (isNew) 'createdAt': FieldValue.serverTimestamp(),
   }, SetOptions(merge: true));
 
   /// How long the app waits for each half of `extract`: Voice Transcribe

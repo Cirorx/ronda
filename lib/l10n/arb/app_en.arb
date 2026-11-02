@@ -4505,5 +4505,94 @@
     "pushUnsupportedBrowser": "This browser can't get notifications from Ronda. Try another browser, or the app on your phone.",
     "@pushUnsupportedBrowser": {
         "description": "Notifications can't work in this browser"
+    },
+    "myDataTitle": "My details",
+    "@myDataTitle": {
+        "description": "Screen title, Ajustes row and Home's button: the member changes what they gave at sign-up"
+    },
+    "myDataIntro": "What you change here is used to put groups together. Others only see your first name, your age and what you bring.",
+    "@myDataIntro": {
+        "description": "Under the title: what the screen is for and what others see"
+    },
+    "myDataPlacesTitle": "Where you can meet",
+    "@myDataPlacesTitle": {
+        "description": "Heading of casa and trabajo"
+    },
+    "myDataHome": "Home",
+    "@myDataHome": {
+        "description": "The barrio the member lives in"
+    },
+    "myDataWork": "Work",
+    "@myDataWork": {
+        "description": "The optional barrio the member works in"
+    },
+    "myDataWorkBody": "If you work in another barrio, you can meet there too. Nobody sees which one is your work.",
+    "@myDataWorkBody": {
+        "description": "Under Trabajo, before one is set"
+    },
+    "myDataAddWork": "Add work",
+    "@myDataAddWork": {
+        "description": "Button that picks a work barrio"
+    },
+    "myDataRemoveWork": "Remove work",
+    "@myDataRemoveWork": {
+        "description": "Button that removes the work barrio"
+    },
+    "myDataChangeBarrio": "Change",
+    "@myDataChangeBarrio": {
+        "description": "Button that picks another barrio for casa or trabajo"
+    },
+    "myDataNeighbours": "Neighbouring barrios too",
+    "@myDataNeighbours": {
+        "description": "Switch: this barrio also reaches the barrios next to it"
+    },
+    "myDataPickTitle": "Pick the barrio",
+    "@myDataPickTitle": {
+        "description": "Title of the barrio sheet"
+    },
+    "myDataSeatedNote": "You're already in a ronda and you stay in it. A new barrio or new times count from the next time we put groups together.",
+    "@myDataSeatedNote": {
+        "description": "Shown to a seated member who changed a barrio or the times"
+    },
+    "myDataIncomplete": "Pick at least one in each question.",
+    "@myDataIncomplete": {
+        "description": "Under Guardar while an answer is missing"
+    },
+    "myDataSave": "Save",
+    "@myDataSave": {
+        "description": "Saves the changes"
+    },
+    "myDataSaving": "Saving…",
+    "@myDataSaving": {
+        "description": "While saving"
+    },
+    "myDataSaved": "Done, saved.",
+    "@myDataSaved": {
+        "description": "After saving"
+    },
+    "myDataSaveError": "We couldn't save. Try again.",
+    "@myDataSaveError": {
+        "description": "When saving failed"
+    },
+    "myDataLoading": "Getting your details…",
+    "@myDataLoading": {
+        "description": "While the profile loads"
+    },
+    "myDataLoadError": "We couldn't get your details.",
+    "@myDataLoadError": {
+        "description": "When the profile can't be read"
+    },
+    "myDataRetry": "Try again",
+    "@myDataRetry": {
+        "description": "Reads the profile again"
+    },
+    "myDataNeighboursBody": "Up to about {blocks} blocks",
+    "@myDataNeighboursBody": {
+        "description": "Under the neighbours switch: how far the barrio then reaches",
+        "placeholders": {
+            "blocks": {
+                "type": "int"
+            }
+        }
     }
 }

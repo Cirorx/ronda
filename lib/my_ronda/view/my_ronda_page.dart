@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cuaderno_repository/cuaderno_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:push_repository/push_repository.dart';
 import 'package:ronda/acta/acta.dart';
 import 'package:ronda/app/app.dart';
@@ -9,6 +10,7 @@ import 'package:ronda/buddy/buddy.dart';
 import 'package:ronda/cuaderno/cuaderno.dart';
 import 'package:ronda/donde_queda/donde_queda.dart';
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/my_data/my_data.dart';
 import 'package:ronda/my_ronda/cubit/bench_offer_cubit.dart';
 import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
 import 'package:ronda/my_ronda/cubit/this_week_cubit.dart';
@@ -46,6 +48,9 @@ class const MyRondaPage({super.key}) extends StatelessWidget {
   /// reached Mi ronda. It wraps the whole body, so it outlives whatever the
   /// body shows.
   static const identifier = 'myRonda';
+
+  /// Maestro's handle on the app bar's "Mis datos" button.
+  static const myDataIdentifier = 'myRonda.myData';
 
   @override
   Widget build(BuildContext context) {
@@ -218,7 +223,19 @@ class const MyRondaView({required final String uid, super.key})
         cubit.sheetClosed();
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(l10n.myRondaTabLabel)),
+        appBar: AppBar(
+          title: Text(l10n.myRondaTabLabel),
+          actions: [
+            Semantics(
+              identifier: MyRondaPage.myDataIdentifier,
+              child: IconButton(
+                icon: const Icon(Icons.person_outline),
+                tooltip: l10n.myDataTitle,
+                onPressed: () => context.go(MyDataPage.homePath),
+              ),
+            ),
+          ],
+        ),
         body: Semantics(
           container: true,
           identifier: MyRondaPage.identifier,

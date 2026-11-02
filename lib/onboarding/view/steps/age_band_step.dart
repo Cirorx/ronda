@@ -19,17 +19,10 @@ class const AgeBandStep({super.key}) extends StatelessWidget {
       step: OnboardingStep.ageBand,
       title: l10n.ageBandTitle,
       body: l10n.ageBandBody,
-      child: ChipPicker(
+      child: AgeBandPicker(
         identifier: identifier,
-        multiSelect: false,
-        options: [
-          for (final band in AgeBand.values)
-            ChipPickerOption(value: band.name, label: l10n.ageBand(band)),
-        ],
-        selected: {?ageBand?.name},
-        onChanged: (names) => context.read<OnboardingCubit>().ageBandChanged(
-          AgeBand.values.byName(names.single),
-        ),
+        selected: ageBand,
+        onChanged: context.read<OnboardingCubit>().ageBandChanged,
       ),
     );
   }

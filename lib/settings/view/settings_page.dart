@@ -4,18 +4,21 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/my_data/my_data.dart';
 import 'package:ronda/settings/view/notifications_page.dart';
 import 'package:ronda/settings/view/report_page.dart';
 import 'package:ronda/settings/view/your_data_page.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
-/// The Ajustes tab: Avisos, "Contar algo que pasó" and "Tus datos", each on
-/// its own screen under [path], and, set apart by space, "Salir de esta
-/// cuenta" after a confirmation. Every row presses in from touch-down.
+/// The Ajustes tab: Mis datos, Avisos, "Contar algo que pasó" and "Tus
+/// datos", each on its own screen under [path], and, set apart by space,
+/// "Salir de esta cuenta" after a confirmation. Every row presses in from
+/// touch-down.
 class const SettingsPage({super.key}) extends StatelessWidget {
   static const path = '/ajustes';
 
   /// Maestro's handles on the rows.
+  static const myDataIdentifier = 'settings.myData';
   static const notificationsIdentifier = 'settings.notifications';
   static const reportIdentifier = 'settings.report';
   static const dataIdentifier = 'settings.data';
@@ -56,6 +59,12 @@ class const SettingsPage({super.key}) extends StatelessWidget {
       body: ReadableColumn(
         child: ListView(
           children: [
+            row(
+              myDataIdentifier,
+              Icons.person_outline,
+              l10n.myDataTitle,
+              () => context.go(MyDataPage.settingsPath),
+            ),
             row(
               notificationsIdentifier,
               Icons.notifications_outlined,

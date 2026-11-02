@@ -75,6 +75,23 @@ void main() {
         expect(await subject.heldTerms(), equals(terms));
       });
 
+      test('keeps trabajo and the neighbours', () async {
+        final withWork = Profile(
+          firstName: answers.firstName,
+          ageBand: answers.ageBand,
+          barrio: answers.barrio,
+          pretexts: answers.pretexts,
+          slots: answers.slots,
+          brings: answers.brings,
+          barrioNeighbours: true,
+          work: const Anchor(barrio: Barrio.centro, neighbours: true),
+        );
+
+        await subject.holdAnswers(withWork);
+
+        expect(await subject.heldAnswers(), equals(withWork));
+      });
+
       test('returns null when nothing is held', () async {
         expect(await subject.heldTerms(), isNull);
       });
@@ -121,6 +138,7 @@ void main() {
             'firstName': 'Marta',
             'ageBand': '60-69',
             'barrio': 'solymar-norte',
+            'barrioNeighbours': false,
             'pretexts': ['mate', 'truco'],
             'slots': ['thu-afternoon', 'sat-morning'],
             'brings': ['termo', 'tengo-ganas'],
@@ -134,6 +152,23 @@ void main() {
         await subject.holdAnswers(answers);
 
         expect(await subject.heldAnswers(), equals(answers));
+      });
+
+      test('keeps trabajo and the neighbours', () async {
+        final withWork = Profile(
+          firstName: answers.firstName,
+          ageBand: answers.ageBand,
+          barrio: answers.barrio,
+          pretexts: answers.pretexts,
+          slots: answers.slots,
+          brings: answers.brings,
+          barrioNeighbours: true,
+          work: const Anchor(barrio: Barrio.centro, neighbours: true),
+        );
+
+        await subject.holdAnswers(withWork);
+
+        expect(await subject.heldAnswers(), equals(withWork));
       });
 
       test('returns null when nothing is held', () async {

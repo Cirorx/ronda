@@ -1,4 +1,5 @@
 export 'age_band.dart';
+export 'anchor.dart';
 export 'barrio.dart';
 export 'bring.dart';
 export 'pretext.dart';

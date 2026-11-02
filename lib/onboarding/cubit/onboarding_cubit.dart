@@ -230,38 +230,17 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         emit(state.copyWith(status: OnboardingStatus.held));
         return;
       }
-      await _publishEligibleSeatIds(needs, barrio);
+      await publishEligibleSeatIds(
+        uid: _uid,
+        needs: needs,
+        profile: answers,
+        profileRepository: _profileRepository,
+        needsRepository: _needsRepository,
+      );
       await _profileRepository.createProfile(_uid, answers);
       emit(state.copyWith(status: OnboardingStatus.saved));
     } on Exception {
       emit(state.copyWith(status: OnboardingStatus.failure));
     }
-  }
-
-  /// Filters the published seats with [needs] on this phone, measuring each
-  /// walk from [barrio], and writes only the ids that pass.
-  ///
-  /// Pretext and slot are not filtered here: the solver matches those
-  /// against the profile.
-  Future<void> _publishEligibleSeatIds(Needs needs, Barrio barrio) async {
-    final seats = await _profileRepository.publishedSeats();
-    final facts = [
-      for (final seat in seats)
-        SeatFacts(
-          seatId: seat.seatId,
-          walkDistance: WalkDistance.forMember(
-            memberBarrio: barrio.id,
-            blocksFrom: seat.blocksFrom,
-            maxBlocks: barrio.walkBlocks,
-          ),
-          hasStairs: seat.hasStairs,
-          endsAfterDark: seat.endsAfterDark,
-          needsCar: seat.needsCar,
-        ),
-    ];
-    await _profileRepository.saveEligibleSeatIds(
-      uid: _uid,
-      seatIds: _needsRepository.eligibleSeatIds(needs, facts),
-    );
   }
 }

@@ -18,7 +18,16 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 - **Cerca** (tab): groups with open places, groups about to start, waiting demand. Also a public
   web page with no login. Until the in-app list exists the tab says so: "Pronto vas a ver acá los
   grupos cerca tuyo que tienen lugar. Mientras tanto, si tenés grupo, lo ves en Mi ronda."
-- **Ajustes** (tab). Built (#54), four rows:
+- **Mis datos** (Mi ronda's app bar, and the first row of Ajustes): "Lo que cambies acá lo usamos
+  para armar los grupos. Los demás ven solo tu nombre, tu edad y lo que traés." Then the first
+  name, the age band, "Dónde podés juntarte" (Casa, with [Cambiar] and "También barrios
+  vecinos · Hasta unas N cuadras"; Trabajo: "Si trabajás en otro barrio, también podés juntarte
+  ahí. Nadie ve cuál es tu trabajo." [Agregar trabajo], then the same row and [Sacar trabajo]),
+  the activities, days and times and what they bring, with onboarding's pickers, and [Guardar].
+  A member already in a ronda who changes a barrio or the times reads "Ya estás en una ronda y
+  seguís en ella. Si cambiás el barrio o los horarios, cuenta desde la próxima vez que armemos
+  grupos." Saving sends the new eligible seat ids first, then the profile.
+- **Ajustes** (tab). Built (#54), five rows (Mis datos first):
   - **Avisos:** "Los avisos están prendidos." or "Los avisos están apagados." with what Ronda
     sends, and [Prender los avisos], which forgets "Ahora no" and asks the phone again. A phone
     that refused for good gets the push card's line: "Los avisos de Ronda están apagados en este

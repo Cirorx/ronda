@@ -225,12 +225,13 @@ void main() {
 
         final card = tester.getRect(find.byType(ThisWeekCard));
         final reached = <bool>[];
-        for (var i = 0; i < 6; i++) {
+        for (var i = 0; i < 7; i++) {
           await tester.sendKeyEvent(LogicalKeyboardKey.tab);
           await tester.pump();
-          final box =
-              FocusManager.instance.primaryFocus!.context!.findRenderObject()!
-                  as RenderBox;
+          final focused = FocusManager.instance.primaryFocus!.context!;
+          // The app bar's "Mis datos" comes first; the body is what's read.
+          if (focused.findAncestorWidgetOfExactType<AppBar>() != null) continue;
+          final box = focused.findRenderObject()! as RenderBox;
           reached.add(
             box.localToGlobal(box.size.center(Offset.zero)).dx < card.right,
           );

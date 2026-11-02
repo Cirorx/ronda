@@ -39,6 +39,12 @@ enum WalkDistance {
         : WalkDistance.fromBlocks(blocks, maxBlocks: maxBlocks);
   }
 
+  /// The shortest of [walks], for a member who meets from more than one
+  /// barrio (casa and trabajo): a seat is as near as their nearest barrio.
+  /// [far] when there are none.
+  static WalkDistance nearest(Iterable<WalkDistance> walks) =>
+      walks.fold(far, (best, walk) => walk.index < best.index ? walk : best);
+
   /// The farthest walk outside Montevideo, in blocks.
   static const defaultMaxBlocks = 10;
 }

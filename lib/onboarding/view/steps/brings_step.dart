@@ -25,16 +25,10 @@ class const BringsStep({super.key}) extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: context.appSpacing.lg,
         children: [
-          ChipPicker(
+          BringsPicker(
             identifier: identifier,
-            options: [
-              for (final bring in Bring.values)
-                ChipPickerOption(value: bring.name, label: l10n.bring(bring)),
-            ],
-            selected: {for (final bring in brings) bring.name},
-            onChanged: (names) => context.read<OnboardingCubit>().bringsChanged(
-              {for (final name in names) Bring.values.byName(name)},
-            ),
+            selected: brings,
+            onChanged: context.read<OnboardingCubit>().bringsChanged,
           ),
           Text(
             l10n.bringsNote,
