@@ -17,6 +17,7 @@ issues, docs, code, commit messages.
 | `Brings` | lo que traés | What a member brings or teaches (pan, termo, enseño truco, tortas fritas, tengo ganas; `termo` reads "Mate y termo": the mate and the termo together); how people are known |
 | `Needs` | lo que te complica ir | What makes taking part hard (caminar mucho, subir escaleras, volver de noche, no tengo auto). Lives only on the phone |
 | `Seat` | lugar | One place in a ronda. A seat is *eligible* for a member when it passes their needs filter. Its id is the ronda's key, `{barrio}_{pretext}_{slot}` |
+| `SeatCatalogue` | — | Every place a ronda can form, one `seat_facts/{barrio}_{pretext}` per barrio and pretext, which the phone expands to a seat per slot. Published by the server, never seeded in production |
 | `Need` | (one item of lo que te complica ir) | `walkALot`, `climbStairs`, `returnAfterDark`, `noCar`; stored by these names on the phone |
 | `SeatFacts` | (none) | What the filter knows about a seat: `walkDistance`, `hasStairs`, `endsAfterDark`, `needsCar` |
 | `WalkDistance` | a pocas cuadras | `near` ≤ half the walk, `medium` ≤ the walk (10 blocks, 15 in Montevideo), `far` beyond; "caminar mucho" drops far |

@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+from ronda_solver.seats import catalogue
 
 import demo_data
 
@@ -155,6 +156,11 @@ def test_no_document_carries_needs_mood_or_audio(state):
         assert not set(keys(fields)) & {"needs", "mood", "audio"}, path
 
 
+def _place(seat_id: str) -> str:
+    """The catalogue document a seat id expands from: `{barrio}_{pretext}`."""
+    return "seat_facts/" + seat_id.rsplit("_", 1)[0]
+
+
 def test_every_seat_anyone_lists_has_seat_facts_with_a_walk_from_every_barrio(state):
     listed = {
         seat_id
@@ -163,22 +169,18 @@ def test_every_seat_anyone_lists_has_seat_facts_with_a_walk_from_every_barrio(st
     }
 
     for seat_id in listed:
-        facts = state.get(f"seat_facts/{seat_id}")
+        facts = state.get(f"seat_facts/{seat_id}") or state.get(_place(seat_id))
         assert facts, seat_id
         assert set(facts["blocksFrom"]) == BARRIOS, seat_id
 
 
-def test_seat_facts_cover_every_barrio_pretext_and_demo_slot():
+def test_seat_facts_are_the_catalogue_and_the_hand_made_seats():
     seats = _collection(demo_data.documents(30), r"seat_facts/.+")
+    places = {path: facts for path, facts in seats.items() if "slot" not in facts}
 
-    assert len(seats) == (9 + 62) * len(demo_data.PRETEXTS) * 4
-    assert {facts["pretext"] for facts in seats.values()} == set(demo_data.PRETEXTS)
-    for path, facts in seats.items():
-        assert path == f"seat_facts/{facts['barrio']}_{facts['pretext']}_{facts['slot']}"
-        assert set(facts) == {
-            "barrio", "pretext", "slot", "blocksFrom", "hasStairs", "endsAfterDark",
-            "needsCar", "updatedAt",
-        }  # fmt: skip
+    assert places == {f"seat_facts/{seat_id}": f for seat_id, f in catalogue().items()}
+    assert len(places) == (9 + 62) * len(demo_data.PRETEXTS)
+    assert len(seats) == len(places) + len(INVENTED_SEATS["seats"])
 
 
 def test_the_hand_made_seats_are_seeded_as_written(thirty):
@@ -186,16 +188,17 @@ def test_the_hand_made_seats_are_seeded_as_written(thirty):
         assert thirty[f"seat_facts/{seat_id}"] == {**facts, "updatedAt": demo_data.DEMO_TIME}
 
 
-def test_generated_seats_follow_the_hand_made_file_formula():
-    """Walks, slot and darkness agree with the file; only a host-set place differs."""
+def test_the_hand_made_seats_agree_with_the_catalogue():
+    """Walks and darkness agree with the place they replace; only a host-set place differs."""
     for seat_id, facts in INVENTED_SEATS["seats"].items():
-        twin = demo_data.generated_seat_facts([facts["pretext"]], [facts["slot"]])[seat_id]
-        for field in ("barrio", "pretext", "slot", "blocksFrom", "endsAfterDark"):
-            assert twin[field] == facts[field], (seat_id, field)
+        place = catalogue()[seat_id.rsplit("_", 1)[0]]
+        assert (place["barrio"], place["pretext"]) == (facts["barrio"], facts["pretext"])
+        assert place["blocksFrom"] == facts["blocksFrom"], seat_id
+        assert facts["endsAfterDark"] == facts["slot"].endswith("-evening"), seat_id
 
 
 def test_a_montevideo_seat_lists_the_walk_from_montevideo_barrios_only(thirty):
-    seat = thirty["seat_facts/barrio-sur_mate_sat-afternoon"]
+    seat = thirty["seat_facts/barrio-sur_mate"]
 
     assert len(seat["blocksFrom"]) == 62
     assert seat["blocksFrom"]["barrio-sur"] == 0.0
@@ -203,10 +206,10 @@ def test_a_montevideo_seat_lists_the_walk_from_montevideo_barrios_only(thirty):
     assert "shangrila" not in seat["blocksFrom"]
 
 
-def test_a_generated_evening_seat_ends_after_dark_and_has_no_place_yet(thirty):
-    seat = thirty["seat_facts/shangrila_truco_thu-evening"]
+def test_a_catalogue_place_has_no_slot_and_no_place_yet(thirty):
+    seat = thirty["seat_facts/shangrila_truco"]
 
-    assert seat["endsAfterDark"] is True
+    assert "slot" not in seat and "endsAfterDark" not in seat
     assert seat["hasStairs"] is False
     assert seat["needsCar"] is False
     assert seat["blocksFrom"]["shangrila"] == 0.0

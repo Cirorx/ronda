@@ -228,6 +228,12 @@ void main() {
       when(() => needsRepository.eligibleSeatIds(any(), any()))
           .thenReturn(const []);
       when(profileRepository.publishedSeats).thenAnswer((_) async => const []);
+      when(profileRepository.publishedSeatCatalogVersion)
+          .thenAnswer((_) async => null);
+      when(() => profileRepository.seatCatalogWorkedOut(any()))
+          .thenAnswer((_) async => null);
+      when(() => profileRepository.holdSeatCatalogWorkedOut(any(), any()))
+          .thenAnswer((_) async {});
       when(
         () => profileRepository.saveEligibleSeatIds(
           uid: any(named: 'uid'),
@@ -292,6 +298,38 @@ void main() {
 
         expect(find.byType(AppShell), findsOneWidget);
         expect(find.byType(MyRondaPage), findsOneWidget);
+      });
+    });
+
+    group('seats', () {
+      testWidgets('works them out again on launch when the catalogue '
+          'changed', (tester) async {
+        when(profileRepository.publishedSeatCatalogVersion)
+            .thenAnswer((_) async => 'v2');
+        when(() => profileRepository.seatCatalogWorkedOut('demo-uid'))
+            .thenAnswer((_) async => 'v1');
+        // A profile read that answers at once, as Firestore's does.
+        when(() => profileRepository.watchProfile(any()))
+            .thenAnswer((_) => Stream.value(_profile));
+
+        await pumpSignedIn(tester);
+
+        verify(
+          () => profileRepository.saveEligibleSeatIds(
+            uid: 'demo-uid',
+            seatIds: const [],
+          ),
+        ).called(1);
+        verify(
+          () => profileRepository.holdSeatCatalogWorkedOut('demo-uid', 'v2'),
+        ).called(1);
+      });
+
+      testWidgets('leaves them when no catalogue is published', (tester) async {
+        await pumpSignedIn(tester);
+
+        verify(profileRepository.publishedSeatCatalogVersion).called(1);
+        verifyNever(profileRepository.publishedSeats);
       });
     });
 

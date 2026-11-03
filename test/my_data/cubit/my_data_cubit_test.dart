@@ -51,6 +51,12 @@ void main() {
       when(() => rondaRepository.watchThisWeek('demo-uid'))
           .thenAnswer((_) => Stream.value(null));
       when(needsRepository.read).thenAnswer((_) async => Needs.none);
+      when(profileRepository.publishedSeatCatalogVersion)
+          .thenAnswer((_) async => null);
+      when(() => profileRepository.seatCatalogWorkedOut(any()))
+          .thenAnswer((_) async => null);
+      when(() => profileRepository.holdSeatCatalogWorkedOut(any(), any()))
+          .thenAnswer((_) async {});
       when(profileRepository.publishedSeats).thenAnswer(
         (_) async => const [
           PublishedSeat(

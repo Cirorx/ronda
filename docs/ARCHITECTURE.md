@@ -108,10 +108,23 @@ isn't set up).
     counts (counted in both). The phone's seat filter measures each seat from the nearer anchor.
     Trabajo is in no document another member or the public reads; the admin's lists show casa.
 - `users/{uid}/private/eligible`: seatIds[], updatedAt (written by the phone; read by the solver only).
-- `seat_facts/{seatId}` (decided in #20): what the server publishes for the phone's filter, one
-  document per seat id `{barrio}_{pretext}_{slot}`, read by any signed-in member, written by the
-  admin SDK only. Fields: barrio, pretext, slot, `blocksFrom {barrioId: blocks}`, `hasStairs`,
-  `endsAfterDark`, `needsCar`, updatedAt.
+- `seat_facts/{id}` (decided in #20; catalogue 2026-11-02): what the server publishes for the
+  phone's filter, read by any signed-in member, written by the admin SDK only.
+  - **The catalogue:** one document per barrio and pretext, `{barrio}_{pretext}` (497: 71 barrios
+    × 7 pretexts), with barrio, pretext, `blocksFrom {barrioId: blocks}`, `hasStairs`,
+    `needsCar`, and no slot. The phone expands each into a seat per slot,
+    `{barrio}_{pretext}_{slot}` (all 21), evening seats ending after dark, so every day and time
+    a member picks has seats. Built by `ronda_solver.seats` from the barrio points (not demo
+    data) and published by the hourly job `seat_catalog` (`functions/seat_catalog.py`), which
+    writes only when the catalogue's version differs from `config/seat_catalog.version`.
+  - **One seat for one slot:** a document `{barrio}_{pretext}_{slot}` with `slot` and
+    `endsAfterDark` too replaces its expanded twin (a place a host set, or an older seed's).
+  - `config/seat_catalog`: version, seats, updatedAt; read by any signed-in member. A phone
+    remembers which version its member's eligible seats were worked out against
+    (`ProfileRepository.holdSeatCatalogWorkedOut`, on the phone only) and, on launch, works them
+    out again when the published one differs (`SeatRefreshCubit`): nobody re-saves Mis datos
+    after the catalogue changes. Before 2026-11-02 only the demo seed wrote seats, so production
+    had the Costa's demo slots alone and Montevideo members got no seat.
   - **Walk distance is per member, so the phone computes it.** It depends on the member's barrio
     and the seat's, so the document carries `blocksFrom`: the haversine walk from every barrio's
     centroid to the seat's (a block is 100 m, as in the solver), and the phone reads its own
@@ -121,12 +134,13 @@ isn't set up).
     the member's barrio in the profile, so this sends nothing new.
   - `hasStairs` and `needsCar` describe the place, so they are false until a host sets one; the
     server republishes the document then, and phones recompute.
-  - `endsAfterDark` is per seat: the slot's end against that week's Open-Meteo sunset.
+  - `endsAfterDark` comes from the slot: evening seats end after dark.
   - The phone writes `users/{uid}/private/eligible` = exactly `{seatIds, updatedAt}` (rules check
     the keys, a list of at most 1000 strings shaped `{barrio}_{pretext}_{slot}`, and
     `updatedAt == request.time`). No client reads it back, not even its owner or the admin.
   - When: on "Está bien, guardalo" (for answers given signed out, right after sign-in), after
-    the needs are saved on the phone and before the profile. The phone filters by needs only (pretext and slot are the solver's match). If
+    the needs are saved on the phone and before the profile; on "Guardar" in Mis datos; and on
+    launch when the catalogue's version changed. The phone filters by needs only (pretext and slot are the solver's match). If
     reading the seats or writing the ids fails, the save fails and no profile is written, so
     the person retries from the read-back and nobody reaches the tabs without eligible ids.
   - Far seats never leave the phone, need or not (2026-11-01): the solver's hard
@@ -135,12 +149,11 @@ isn't set up).
     nothing about it.
   - Known limits: the server holds both the facts it published and the ids that came back, so
     it could infer a need from which ids are missing (all evening seats gone → "volver de
-    noche"). The need itself is never sent. Every phone reads every seat fact at the save: with
-    Montevideo that is 1,988 documents for the demo slots, worth a query by the member's barrio
-    if it gets slow.
-  - Demo data: `data/demo/invented_seat_facts.json` (invented: 14 hand-made seats, two with a
-    place an invented host has set) over seats generated the same way for every barrio ×
-    pretext × slot the demo people pick, loaded by `scripts/seed.py` (§ Demo data).
+    noche"). The need itself is never sent. Every phone reads every seat fact when it works the seats
+    out: 497 catalogue documents, worth a query by the member's barrio if it gets slow.
+  - Demo data: `data/demo/invented_seat_facts.json` (invented: 14 hand-made seats for one slot
+    each, two with a place an invented host has set) over the same catalogue production
+    publishes, loaded by `scripts/seed.py` (§ Demo data).
 - `users/{uid}/tokens/{token}`: platform (android | ios | web), updatedAt (server time). Written
   and deleted by the owner only, never read by a client (rules test: `rules/tokens.test.js`); the
   phone deletes its own on sign-out, before the auth state changes. The
@@ -706,14 +719,14 @@ project checklist. Everything seeded is invented:
   exactly `solver/fixtures/invented_demo_30.json`. `scripts/demo_data.py` adds a first name and
   brings per uid, deterministically. Every uid starts with `demo-`: the rules leave no room for a
   label field on `users/{uid}`, so the id is the label.
-- Documents: `seat_facts/{seatId}` (1,988: 71 barrios × all 7 pretexts × the 4 demo slots, so a
-  real member in any barrio has seats, whatever they picked; a seat's `blocksFrom` lists its own area's barrios,
-  Ciudad de la Costa's or Montevideo's, and the Costa's 144 are unchanged since #22);
+- Documents: `seat_facts` (511: the catalogue's 497, exactly as `seat_catalog` publishes it, and
+  the 14 hand-made seats; a place's `blocksFrom` lists its own area's barrios, Ciudad de la
+  Costa's or Montevideo's);
   `places/demo-*` (5 invented covered public places, `data/demo/invented_places.json`);
   `users/{uid}` with the profile, `plusOneUid` on whoever brings a +1 (as the generator gives
   it) and the accepted terms; `users/{uid}/private/eligible` = `{seatIds, updatedAt}`; and
   `avoid/{uidA}_{uidB}` per report-apart pair, uids in order (one pair in the 30 set). Needs are
-  never seeded. The 30 set is 1,220 documents, the free places included.
+  never seeded. The 30 set is 595 documents, the free places included.
 - Every timestamp is one fixed demo moment (`DEMO_TIME`), never the server's, so two resets leave
   identical documents (Firestore's own create and update times aside).
 - Reset deletes every Auth account and document of the project through the emulators' clear

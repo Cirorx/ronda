@@ -37,6 +37,10 @@ class ProfileRepository {
   /// The device-store key that holds the language picked for Ronda.
   static const languageKey = 'app.language';
 
+  /// The device-store key, before `.{uid}`, that holds the seat catalogue
+  /// version the person's eligible seats were last worked out against.
+  static const seatCatalogKey = 'seats.catalog';
+
   /// The profile of [uid] now and on every change; `null` until onboarding
   /// has saved one (the document may already hold the accepted terms).
   Stream<Profile?> watchProfile(String uid) =>
@@ -259,24 +263,79 @@ class ProfileRepository {
 
   /// Every seat the server publishes, for the phone's needs filter.
   ///
+  /// Each place of the catalogue becomes a seat in every slot,
+  /// `{barrio}_{pretext}_{slot}`, ending after dark in the evening; a seat a
+  /// host set for one slot replaces its twin.
+  ///
   /// Throws a [ReadPublishedSeatsFailure] when the read fails.
   Future<List<PublishedSeat>> publishedSeats() async {
+    final List<SeatFactsDocument> documents;
     try {
-      final seats = await _rondaApi.readSeatFacts();
-      return [
-        for (final seat in seats)
-          PublishedSeat(
-            seatId: seat.seatId,
-            blocksFrom: seat.blocksFrom,
-            hasStairs: seat.hasStairs,
-            endsAfterDark: seat.endsAfterDark,
-            needsCar: seat.needsCar,
-          ),
-      ];
+      documents = await _rondaApi.readSeatFacts();
+    } on Exception {
+      throw const ReadPublishedSeatsFailure();
+    }
+    final seats = <String, PublishedSeat>{};
+    for (final place in documents.where((document) => document.slot == null)) {
+      for (final day in SlotDay.values) {
+        for (final band in SlotBand.values) {
+          final seatId =
+              '${place.barrio}_${place.pretext}_'
+              '${Slot(day, band).id}';
+          seats[seatId] = PublishedSeat(
+            seatId: seatId,
+            blocksFrom: place.blocksFrom,
+            hasStairs: place.hasStairs,
+            endsAfterDark: band == SlotBand.evening,
+            needsCar: place.needsCar,
+          );
+        }
+      }
+    }
+    for (final document in documents) {
+      if (document case SeatFactsDocument(
+        slot: _?,
+        endsAfterDark: final endsAfterDark?,
+      )) {
+        seats[document.seatId] = PublishedSeat(
+          seatId: document.seatId,
+          blocksFrom: document.blocksFrom,
+          hasStairs: document.hasStairs,
+          endsAfterDark: endsAfterDark,
+          needsCar: document.needsCar,
+        );
+      }
+    }
+    return seats.values.toList();
+  }
+
+  /// The version of the seat catalogue the server published, or `null`
+  /// before it published one.
+  ///
+  /// Throws a [ReadPublishedSeatsFailure] when the read fails.
+  Future<String?> publishedSeatCatalogVersion() async {
+    try {
+      return await _rondaApi.readSeatCatalogVersion();
     } on Exception {
       throw const ReadPublishedSeatsFailure();
     }
   }
+
+  /// The catalogue version [uid]'s eligible seats were last worked out
+  /// against on this phone, or `null` when they weren't here or it can't be
+  /// read.
+  Future<String?> seatCatalogWorkedOut(String uid) async =>
+      switch (await _held('$seatCatalogKey.$uid')) {
+        final String version => version,
+        _ => null,
+      };
+
+  /// Remembers on this phone that [uid]'s eligible seats were worked out
+  /// against the catalogue [version].
+  ///
+  /// Throws a [HoldOnPhoneFailure] when the phone can't keep it.
+  Future<void> holdSeatCatalogWorkedOut(String uid, String version) =>
+      _hold('$seatCatalogKey.$uid', version);
 
   /// Replaces the eligible seat ids of [uid] with [seatIds]: the only trace
   /// of their needs that leaves the phone.

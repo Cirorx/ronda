@@ -35,13 +35,44 @@ void main() {
         expect(document.needsCar, isFalse);
       });
 
+      test('reads a place without a slot as one for every slot', () {
+        final document = SeatFactsDocument.fromJson(
+          'solymar-norte_truco',
+          json()
+            ..remove('slot')
+            ..remove('endsAfterDark'),
+        );
+
+        expect(document.seatId, equals('solymar-norte_truco'));
+        expect(document.slot, isNull);
+        expect(document.endsAfterDark, isNull);
+        expect(document.hasStairs, isTrue);
+      });
+
+      test('ignores endsAfterDark on a place without a slot', () {
+        final document = SeatFactsDocument.fromJson(
+          'solymar-norte_truco',
+          json()..remove('slot'),
+        );
+
+        expect(document.endsAfterDark, isNull);
+      });
+
+      test('throws $FormatException for a slot without endsAfterDark', () {
+        expect(
+          () => SeatFactsDocument.fromJson(
+            'seat',
+            json()..remove('endsAfterDark'),
+          ),
+          throwsFormatException,
+        );
+      });
+
       for (final field in [
         'barrio',
         'pretext',
-        'slot',
         'blocksFrom',
         'hasStairs',
-        'endsAfterDark',
         'needsCar',
       ]) {
         test('throws $FormatException when $field is missing', () {

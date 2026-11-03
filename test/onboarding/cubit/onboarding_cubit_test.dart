@@ -127,6 +127,12 @@ void main() {
       profileRepository = _MockProfileRepository();
       needsRepository = _MockNeedsRepository();
       when(() => needsRepository.save(any())).thenAnswer((_) async {});
+      when(profileRepository.publishedSeatCatalogVersion)
+          .thenAnswer((_) async => null);
+      when(() => profileRepository.seatCatalogWorkedOut(any()))
+          .thenAnswer((_) async => null);
+      when(() => profileRepository.holdSeatCatalogWorkedOut(any(), any()))
+          .thenAnswer((_) async {});
       when(() => profileRepository.createProfile(any(), any()))
           .thenAnswer((_) async {});
       when(() => profileRepository.publishedSeats())

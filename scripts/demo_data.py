@@ -16,7 +16,6 @@ import random
 import sys
 from collections.abc import Callable
 from datetime import UTC, datetime
-from itertools import product
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,16 +26,8 @@ INVENTED_OSM_PLACES = ROOT / "data" / "demo" / "invented_osm_places.json"
 # ronda_solver is not an installable package (solver/pyproject.toml: package = false), so the
 # generator is imported from its folder.
 sys.path.append(str(ROOT / "solver"))
-from ronda_solver.barrios import COSTA_BARRIOS  # noqa: E402
 from ronda_solver.demo import invented_problem  # noqa: E402
-from ronda_solver.geo import blocks_between  # noqa: E402
-from ronda_solver.montevideo import MONTEVIDEO_BARRIOS  # noqa: E402
-
-AREAS = tuple(
-    {barrio: (lat, lng) for barrio, (_, lat, lng) in table.items()}
-    for table in (COSTA_BARRIOS, MONTEVIDEO_BARRIOS)
-)
-"""Ciudad de la Costa's and Montevideo's centroids: a seat's walk table lists its own area's."""
+from ronda_solver.seats import catalogue  # noqa: E402
 
 SET_SIZES = (30, 200)
 """The invented sign-up sets: 30 for the golden path and the solver's tests, 200 for scale."""
@@ -85,44 +76,16 @@ def documents(people: int) -> Documents:
 
 
 def seat_facts_documents(problem: dict) -> Documents:
-    """`seat_facts/{seatId}` for every barrio, Montevideo's too, × every pretext × slot the demo
-    people pick, so a real member anywhere has seats to be matched in, whatever they like doing
-    (a pretext none of the invented people picks still needs seats).
-
-    The hand-made seats in data/demo/invented_seat_facts.json replace their generated twins,
-    which keeps the two places an invented host has set.
+    """`seat_facts`: the seat catalogue production publishes (ronda_solver.seats, one document per
+    barrio and pretext, which the phone expands to every slot), plus the hand-made seats in
+    data/demo/invented_seat_facts.json, each for one slot, which keep the two places an invented
+    host has set. The catalogue's documents are exactly what functions/seat_catalog.py writes, so
+    a project reset finds them unchanged.
     """
-    pretexts = sorted(PRETEXTS)
-    slots = sorted({s for person in problem["people"] for s in person["slots"]})
-    seats = generated_seat_facts(pretexts, slots)
-    seats |= json.loads(INVENTED_SEAT_FACTS.read_text())["seats"]
-    return {
+    seats = json.loads(INVENTED_SEAT_FACTS.read_text())["seats"]
+    return {f"seat_facts/{seat_id}": fields for seat_id, fields in catalogue().items()} | {
         f"seat_facts/{seat_id}": {**facts, "updatedAt": DEMO_TIME}
         for seat_id, facts in sorted(seats.items())
-    }
-
-
-def generated_seat_facts(pretexts: list[str], slots: list[str]) -> dict[str, dict]:
-    """Facts for every barrio × `pretexts` × `slots`, by seat id, the way
-    data/demo/invented_seat_facts.json was made: `blocksFrom` is the haversine walk in blocks from
-    each barrio's centroid in the seat's area (Ciudad de la Costa or Montevideo, `AREAS`) to the
-    seat's, rounded to 0.1; a barrio of the other area reads as far on the phone. Evening slots
-    end after dark; no host has set a place yet, so no stairs and no car."""
-    return {
-        f"{barrio}_{pretext}_{slot}": {
-            "barrio": barrio,
-            "pretext": pretext,
-            "slot": slot,
-            "blocksFrom": {
-                origin: round(blocks_between(centroid, area[barrio]), 1)
-                for origin, centroid in area.items()
-            },
-            "hasStairs": False,
-            "endsAfterDark": slot.endswith("-evening"),
-            "needsCar": False,
-        }
-        for area in AREAS
-        for barrio, pretext, slot in product(area, pretexts, slots)
     }
 
 

@@ -91,6 +91,12 @@ service cloud.firestore {
       allow read: if request.auth != null;
     }
 
+    // The seat catalogue's version (functions/seat_catalog.py): a phone that
+    // saw another one works out its eligible seats again. Admin SDK writes.
+    match /config/seat_catalog {
+      allow read: if request.auth != null;
+    }
+
     // The seat ids that passed the member's needs on their phone, and when:
     // exactly seatIds and updatedAt. Nobody reads it back from a client; the
     // solver reads it with the admin SDK.

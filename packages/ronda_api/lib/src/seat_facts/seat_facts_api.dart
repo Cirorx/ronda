@@ -8,7 +8,8 @@ import 'package:ronda_api/src/seat_facts/seat_facts_document.dart';
 /// An extension so it sits in its own file beside the profile methods on
 /// [RondaApi].
 extension EligibleSeatsApi on RondaApi {
-  /// The seat facts the server publishes, one document per seat id.
+  /// The seat facts the server publishes: the catalogue's places, and any
+  /// seat a host set for one slot.
   static const seatFactsCollection = 'seat_facts';
 
   /// The subcollection of `users/{uid}` that members never read back.
@@ -17,13 +18,26 @@ extension EligibleSeatsApi on RondaApi {
   /// The document under [privateCollection] that holds the eligible ids.
   static const eligibleDocument = 'eligible';
 
-  /// Every published seat.
+  /// Where the server says which version of the catalogue it published.
+  static const seatCatalogPath = 'config/seat_catalog';
+
+  /// Every published place and seat.
   ///
   /// A document that doesn't have the seat shape is skipped: a seat whose
   /// facts can't be read can't be checked against needs, so it never passes.
   Future<List<SeatFactsDocument>> readSeatFacts() async {
     final snapshot = await firestore.collection(seatFactsCollection).get();
     return [for (final document in snapshot.docs) ?_tryRead(document)];
+  }
+
+  /// The version of the seat catalogue the server published, or `null`
+  /// before it published one.
+  Future<String?> readSeatCatalogVersion() async {
+    final snapshot = await firestore.doc(seatCatalogPath).get();
+    return switch (snapshot.data()?['version']) {
+      final String version => version,
+      _ => null,
+    };
   }
 
   /// Replaces `users/{uid}/private/eligible` with [seatIds] and the server's

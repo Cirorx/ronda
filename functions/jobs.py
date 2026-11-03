@@ -24,6 +24,7 @@ import rain
 import removals
 import rotation
 import rsvp
+import seat_catalog
 import seguimos
 import shared_plans
 import waitlists
@@ -90,6 +91,10 @@ JOBS: dict[str, Callable[[object, datetime, Context], dict]] = {
     # The weekly card the organiser composes (#62), for rondas with the switch on; sends nothing.
     "weekly_card": lambda db, now, context: weekly_card.run_weekly_card(
         db, now, send=context.send, app_url=context.app_url, force=context.force
+    ),
+    # The seat catalogue phones match needs against; writes only when it changed.
+    "seat_catalog": lambda db, now, context: seat_catalog.run_seat_catalog(
+        db, now, force=context.force
     ),
     # The day-of reminder with the next city buses (#65), for every ronda not switched off.
     "day_of": lambda db, now, context: day_of.run_day_of(

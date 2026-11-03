@@ -22,8 +22,10 @@ import 'package:safety_repository/safety_repository.dart';
 import 'package:small_plan_repository/small_plan_repository.dart';
 
 /// The app's root: provides the repositories bootstrap built, the [AppBloc]
-/// that follows who is signed in and whether they have a profile, and the
-/// [AdminAccessCubit] that reads whether they are the admin.
+/// that follows who is signed in and whether they have a profile, the
+/// [AdminAccessCubit] that reads whether they are the admin, and the
+/// [SeatRefreshCubit] that works a member's eligible seats out again when
+/// the server published another seat catalogue.
 class const App({
   required final AuthRepository authRepository,
   required final ContactRepository contactRepository,
@@ -90,13 +92,35 @@ class const App({
             create: (_) =>
                 UnreadReportsCubit(safetyRepository: safetyRepository),
           ),
+          BlocProvider(
+            create: (_) => SeatRefreshCubit(
+              profileRepository: profileRepository,
+              needsRepository: needsRepository,
+            ),
+          ),
         ],
-        // The Admin tab's unread count reads only while the account is the
-        // admin; the access starts signed out, so every change comes here.
-        child: BlocListener<AdminAccessCubit, AdminAccess>(
-          listener: (context, access) => context
-              .read<UnreadReportsCubit>()
-              .follow(admin: access == AdminAccess.admin),
+        child: MultiBlocListener(
+          listeners: [
+            // The Admin tab's unread count reads only while the account is
+            // the admin; the access starts signed out, so every change comes
+            // here.
+            BlocListener<AdminAccessCubit, AdminAccess>(
+              listener: (context, access) => context
+                  .read<UnreadReportsCubit>()
+                  .follow(admin: access == AdminAccess.admin),
+            ),
+            // Once per launch and per person with a profile: the seats they
+            // can be matched in, against the catalogue the server publishes.
+            BlocListener<AppBloc, AppState>(
+              listenWhen: (previous, current) =>
+                  current.status == AppStatus.authenticated &&
+                  (previous.status != AppStatus.authenticated ||
+                      previous.user != current.user),
+              listener: (context, state) => unawaited(
+                context.read<SeatRefreshCubit>().refresh(state.user.id),
+              ),
+            ),
+          ],
           child: const AppView(),
         ),
       ),

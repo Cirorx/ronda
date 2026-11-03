@@ -38,6 +38,27 @@ void main() {
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
+    group('readSeatCatalogVersion', () {
+      test('is null before the server published a catalogue', () async {
+        expect(await subject.readSeatCatalogVersion(), isNull);
+      });
+
+      test('is the published version', () async {
+        await firestore.doc('config/seat_catalog').set({
+          'version': 'a1b2c3',
+          'seats': 497,
+        });
+
+        expect(await subject.readSeatCatalogVersion(), equals('a1b2c3'));
+      });
+
+      test('is null when the version is not text', () async {
+        await firestore.doc('config/seat_catalog').set({'version': 3});
+
+        expect(await subject.readSeatCatalogVersion(), isNull);
+      });
+    });
+
     group('readSeatFacts', () {
       test('returns no seats when none are published', () async {
         expect(await subject.readSeatFacts(), isEmpty);

@@ -314,6 +314,96 @@ void main() {
         test('returns no seats when none is published', () async {
           expect(await subject.publishedSeats(), isEmpty);
         });
+
+        test('turns a place into a seat in every slot, ending after dark in '
+            'the evening', () async {
+          await firestore.collection('seat_facts').doc('palermo_mate').set({
+            'barrio': 'palermo',
+            'pretext': 'mate',
+            'blocksFrom': {'palermo': 0, 'parque-rodo': 10.4},
+            'hasStairs': false,
+            'needsCar': false,
+          });
+
+          final seats = await subject.publishedSeats();
+
+          expect(seats, hasLength(21));
+          expect(
+            seats.map((seat) => seat.seatId),
+            containsAll([
+              'palermo_mate_mon-morning',
+              'palermo_mate_wed-evening',
+              'palermo_mate_sun-evening',
+            ]),
+          );
+          final wednesday = seats.singleWhere(
+            (seat) => seat.seatId == 'palermo_mate_wed-evening',
+          );
+          expect(
+            wednesday,
+            equals(
+              const PublishedSeat(
+                seatId: 'palermo_mate_wed-evening',
+                blocksFrom: {'palermo': 0, 'parque-rodo': 10.4},
+                hasStairs: false,
+                endsAfterDark: true,
+                needsCar: false,
+              ),
+            ),
+          );
+          expect(
+            seats
+                .singleWhere(
+                  (seat) => seat.seatId == 'palermo_mate_sat-morning',
+                )
+                .endsAfterDark,
+            isFalse,
+          );
+        });
+
+        test('lets a seat set for one slot replace its twin', () async {
+          final seatFacts = firestore.collection('seat_facts');
+          await seatFacts.doc('solymar-sur_mate').set({
+            'barrio': 'solymar-sur',
+            'pretext': 'mate',
+            'blocksFrom': {'solymar-sur': 0},
+            'hasStairs': false,
+            'needsCar': false,
+          });
+          await seatFacts.doc('solymar-sur_mate_sat-afternoon').set({
+            'barrio': 'solymar-sur',
+            'pretext': 'mate',
+            'slot': 'sat-afternoon',
+            'blocksFrom': {'solymar-sur': 0},
+            'hasStairs': true,
+            'endsAfterDark': false,
+            'needsCar': false,
+          });
+
+          final seats = await subject.publishedSeats();
+
+          expect(seats, hasLength(21));
+          expect(
+            seats
+                .singleWhere(
+                  (seat) => seat.seatId == 'solymar-sur_mate_sat-afternoon',
+                )
+                .hasStairs,
+            isTrue,
+          );
+        });
+      });
+
+      group('publishedSeatCatalogVersion', () {
+        test('is null before the server published one', () async {
+          expect(await subject.publishedSeatCatalogVersion(), isNull);
+        });
+
+        test('is the published version', () async {
+          await firestore.doc('config/seat_catalog').set({'version': 'a1b2'});
+
+          expect(await subject.publishedSeatCatalogVersion(), equals('a1b2'));
+        });
       });
 
       group('saveEligibleSeatIds', () {
@@ -358,6 +448,13 @@ void main() {
       test('publishedSeats throws $ReadPublishedSeatsFailure', () {
         expect(
           subject.publishedSeats,
+          throwsA(isA<ReadPublishedSeatsFailure>()),
+        );
+      });
+
+      test('publishedSeatCatalogVersion throws $ReadPublishedSeatsFailure', () {
+        expect(
+          subject.publishedSeatCatalogVersion,
           throwsA(isA<ReadPublishedSeatsFailure>()),
         );
       });

@@ -287,6 +287,31 @@ void main() {
       });
     });
 
+    group('seatCatalogWorkedOut', () {
+      test('is null before the seats were worked out here', () async {
+        expect(await subject.seatCatalogWorkedOut('demo-uid'), isNull);
+      });
+
+      test('reads back the version holdSeatCatalogWorkedOut kept, per '
+          'person', () async {
+        await subject.holdSeatCatalogWorkedOut('demo-uid', 'a1b2');
+
+        expect(await subject.seatCatalogWorkedOut('demo-uid'), equals('a1b2'));
+        expect(await subject.seatCatalogWorkedOut('demo-other'), isNull);
+        expect(
+          deviceStore.values['${ProfileRepository.seatCatalogKey}.demo-uid'],
+          equals('"a1b2"'),
+        );
+      });
+
+      test('is null for a value that is not a version', () async {
+        deviceStore.values['${ProfileRepository.seatCatalogKey}.demo-uid'] =
+            '3';
+
+        expect(await subject.seatCatalogWorkedOut('demo-uid'), isNull);
+      });
+    });
+
     group('when the device store fails', () {
       late DeviceStore failing;
 
@@ -319,6 +344,17 @@ void main() {
 
       test('clearHeldAnswers throws $HoldOnPhoneFailure', () {
         expect(subject.clearHeldAnswers(), throwsA(isA<HoldOnPhoneFailure>()));
+      });
+
+      test('holdSeatCatalogWorkedOut throws $HoldOnPhoneFailure', () {
+        expect(
+          subject.holdSeatCatalogWorkedOut('demo-uid', 'a1b2'),
+          throwsA(isA<HoldOnPhoneFailure>()),
+        );
+      });
+
+      test('seatCatalogWorkedOut is null', () async {
+        expect(await subject.seatCatalogWorkedOut('demo-uid'), isNull);
       });
 
       test('markWalkthroughSeen throws $HoldOnPhoneFailure', () {
