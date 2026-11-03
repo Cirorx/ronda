@@ -107,6 +107,43 @@ error; answers are Markdown-stripped. No paid call ran while building it: the te
 scripted turns shaped like the smoke test's stream. The first real runs, the weekly card on
 ronda-uy and the rain check over the Firestore stand-in, are in § Results on the current code.
 
+## Per job: why each model, and what happens when it fails
+
+The README keeps one short line per job; this is the long form. The numbers behind it are in
+§ Results on the current code and § Rondas that form themselves, below.
+
+- **Hear a spoken sign-up** (also the cuaderno's lines and a spoken small plan): Muse Voice
+  Transcribe (`muse-voice-transcribe-1.0`, `POST /asr/transcribe`). Meta's speech-to-text, biased
+  to Spanish with 114 keywords (every barrio, "truco", "bizcochos"). Live mode
+  (`wss://…/asr/realtime` through `relay/`) is built and off by default; on 2026-11-02 it gave the
+  first words 0.7 s after speaking started and all of them 0.25 s after stopping (n = 1,
+  [`evals/voice`](../evals/voice/RESULTS.md)). If it fails: 429 and 5xx are retried twice, then
+  "No pudimos leer el audio" and [Prefiero tocar botones], the same sign-up by taps.
+- **Turn those words into the sign-up's fields:** Muse Spark 1.3 (`muse-spark-1.3`) at
+  `reasoning_effort: low`. The Meta Model API enforces a strict `json_schema`, so name, age band,
+  barrio (one of 71), pretexts, slots and what they bring come back as the app's own ids, or
+  `unknown`. If it fails: the read-back screen, where the person checks and edits every field;
+  on an error, the buttons.
+- **The organiser agent** (the rain check: forecast, sunset, last bus, the next city buses in
+  Montevideo, who's coming, then a proposal to the host; the weekly card; the bench; the place,
+  hour and host of a ronda that formed itself): Muse Spark Open
+  (`meta-models/muse-spark-open-1026`) on Baseten. Open weights with tool calling; at
+  `reasoning_effort: low` a turn takes about 1.5 s. If it fails: Spark 1.3 on the Meta Model API
+  for the rest of the run, on an error or raw `<atem:` text. With no model at all, code goes on
+  alone: the fixed card, the bench's default deadline, no rain proposal, a new ronda's nearest
+  open place at the band's usual hour.
+- **Cut the group's things out of the host's photo for the flyer** (also find the people, plates
+  and house numbers ¿Dónde queda? blurs): SAM 3.1 (`sam-3.1`, Responses API). Segmentation from
+  a short noun phrase; boxes and masks come back, decoded with `meta-sam-parser` into clean
+  cutouts. The termo, the mazo and the mates are looked for side by side, beside Muse Image. If
+  nothing usable is found: "No encontramos el termo, el mazo ni los mates. Probá con otra foto";
+  on an error, "Probá de nuevo en un rato". The tear-off flyer (`scripts/flyer.py`) uses no
+  model.
+- **Paint the flyer's background** (also the cuaderno's postcard): Muse Image
+  (`muse-image-1.0`). It paints the scene with no people and no text, from a prompt that names
+  the place in full. If it fails: 429 and 5xx are retried twice, then "No pudimos hacer el
+  volante. Probá de nuevo en un rato", or the tear-off flyer.
+
 ## Results on the current code (2026-11-02, #61)
 
 Measured from Uruguay on main at 7989262 by calling the functions' own code with the real keys
