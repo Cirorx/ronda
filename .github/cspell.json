@@ -196,7 +196,9 @@
     "WSGI",
     "Buscás",
     "Esperás",
-    "Llegá"
+    "Llegá",
+    "proponés",
+    "anotala"
   ],
   "ignoreWords": [
     "realtime"
