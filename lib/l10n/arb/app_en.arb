@@ -3964,6 +3964,26 @@
             }
         }
     },
+    "errorLogCopy": "Copy",
+    "@errorLogCopy": {
+        "description": "Admin: copies one error report to the clipboard"
+    },
+    "errorLogCopyAll": "Copy all",
+    "@errorLogCopyAll": {
+        "description": "Admin: copies every listed report of a group to the clipboard"
+    },
+    "errorLogCopied": "Copied",
+    "@errorLogCopied": {
+        "description": "Admin: confirmation after copying an error report"
+    },
+    "errorLogStack": "Stack",
+    "@errorLogStack": {
+        "description": "Admin: label of the collapsed stack trace"
+    },
+    "errorLogMinified": "This stack is minified. Read it with flutter symbolize and the symbols in symbols/.",
+    "@errorLogMinified": {
+        "description": "Admin: why the stack of a web report is unreadable and how to read it"
+    },
     "cuadernoTitle": "The barrio notebook",
     "@cuadernoTitle": {
         "description": "Cuaderno screen title"

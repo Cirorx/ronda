@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:error_reporter/error_reporter.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -37,7 +38,7 @@ ClientError _error(
   at: DateTime(2026, 10, 30, 21, 15),
 );
 
-const _groupKey = 'voice/uploadFailed\n/onboarding';
+const _groupKey = 'voice/uploadFailed\n/onboarding\n';
 
 void main() {
   group(ErrorLogPage, () {
@@ -127,7 +128,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.textContaining('android, web · cortó la app'),
+        find.textContaining('android, web · 1.0.0 (3) · cortó la app'),
         findsOneWidget,
       );
       expect(find.textContaining('sin pantalla · una vez'), findsOneWidget);
@@ -149,7 +150,6 @@ void main() {
           errors: [
             _error(
               '1',
-              message: 'Upload failed',
               stack: '#0 main (package:ronda/main.dart:1:2)',
               fatal: true,
             ),
@@ -163,19 +163,105 @@ void main() {
       expect(find.text('/onboarding · 2 veces'), findsOneWidget);
       expect(find.text('Se ven las 2 más nuevas.'), findsOneWidget);
       expect(find.text('Paso: voiceUpload'), findsOneWidget);
-      expect(find.text('Upload failed'), findsOneWidget);
-      expect(
-        find.text('#0 main (package:ronda/main.dart:1:2)'),
-        findsOneWidget,
-      );
+      expect(find.text('Stack'), findsOneWidget);
       expect(
         find.text('Sin mensaje: una falla que la app nombró.'),
-        findsOneWidget,
+        findsNWidgets(2),
       );
       expect(
         find.textContaining('1.0.0 (3) · production · cortó'),
         findsOneWidget,
       );
+    });
+
+    testWidgets('titles a group by its message and keeps the stack closed', (
+      tester,
+    ) async {
+      final key = ErrorGroup.keyOf(
+        'ReadPublishedSeatsFailure',
+        '/onboarding',
+        'ReadPublishedSeatsFailure',
+      );
+      await pump(
+        tester,
+        ErrorLogState(
+          status: ErrorLogStatus.ready,
+          errors: [
+            _error(
+              '0',
+              code: 'ReadPublishedSeatsFailure',
+              message: 'ReadPublishedSeatsFailure',
+              stack: '#0 a (main.dart.js:1:2)',
+            ),
+          ],
+          openGroup: key,
+        ),
+      );
+
+      expect(find.text('ReadPublishedSeatsFailure'), findsWidgets);
+      expect(find.text('#0 a (main.dart.js:1:2)'), findsNothing);
+
+      await tester.tap(find.text('Stack'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('#0 a (main.dart.js:1:2)'), findsOneWidget);
+      expect(find.textContaining('flutter symbolize'), findsOneWidget);
+    });
+
+    group('copying', () {
+      late List<String?> copied;
+
+      setUp(() {
+        copied = [];
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+              if (call.method == 'Clipboard.setData') {
+                copied.add((call.arguments as Map)['text'] as String?);
+              }
+              return null;
+            });
+      });
+
+      tearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, null);
+      });
+
+      final open = ErrorLogState(
+        status: ErrorLogStatus.ready,
+        errors: [
+          _error('1', message: 'Upload failed', stack: '#0 a'),
+          _error('0', message: 'Upload failed', stack: '#0 b'),
+        ],
+        openGroup: ErrorGroup.keyOf(
+          'voice/uploadFailed',
+          '/onboarding',
+          'Upload failed',
+        ),
+      );
+
+      testWidgets('copies one report and says so', (tester) async {
+        await pump(tester, open);
+
+        await tester.tap(find.text('Copiar').first);
+        await tester.pump();
+
+        expect(copied.single, contains('code: voice/uploadFailed'));
+        expect(copied.single, contains('message: Upload failed'));
+        expect(copied.single, contains('#0 a'));
+        expect(copied.single, isNot(contains('#0 b')));
+        expect(find.text('Copiado'), findsOneWidget);
+      });
+
+      testWidgets('copies the whole group and says so', (tester) async {
+        await pump(tester, open);
+
+        await tester.tap(find.text('Copiar todos'));
+        await tester.pump();
+
+        expect(copied.single, allOf(contains('#0 a'), contains('#0 b')));
+        expect(find.text('Copiado'), findsOneWidget);
+      });
     });
 
     testWidgets('goes back to the groups from its button', (tester) async {

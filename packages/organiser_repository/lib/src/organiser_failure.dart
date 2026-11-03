@@ -19,4 +19,7 @@ class const OrganiserFailure(final OrganiserFailureReason reason)
     implements Exception {
   /// {@macro organiser_failure}
   this;
+
+  @override
+  String toString() => 'OrganiserFailure(${reason.name})';
 }

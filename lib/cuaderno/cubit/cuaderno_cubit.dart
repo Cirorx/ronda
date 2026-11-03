@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:cuaderno_repository/cuaderno_repository.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda/cuaderno/cubit/cuaderno_hook.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
@@ -17,7 +18,7 @@ part 'cuaderno_state.dart';
 /// from the week's lines (the last seven days) and held in memory, offered
 /// only on the day before the ronda's meeting and on the day itself, and
 /// only when the week has lines.
-class CuadernoCubit extends Cubit<CuadernoState> {
+class CuadernoCubit extends Cubit<CuadernoState> implements StepNamed {
   new({
     required this._uid,
     required this._cuadernoRepository,
@@ -159,4 +160,7 @@ class CuadernoCubit extends Cubit<CuadernoState> {
     await _week?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'CuadernoCubit';
 }

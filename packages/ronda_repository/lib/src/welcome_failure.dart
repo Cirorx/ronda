@@ -28,4 +28,7 @@ class const WelcomeFailure(final WelcomeFailureReason reason)
     implements Exception {
   /// {@macro welcome_failure}
   this;
+
+  @override
+  String toString() => 'WelcomeFailure(${reason.name})';
 }

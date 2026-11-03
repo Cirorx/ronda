@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:safety_repository/safety_repository.dart';
 
 /// How many reports the admin hasn't seen: the Admin tab's count, the only
@@ -9,7 +10,7 @@ import 'package:safety_repository/safety_repository.dart';
 /// It reads only while [follow] says the account is the admin; otherwise it
 /// is 0 and nothing is asked of the server. A refused or failed read counts
 /// as 0.
-class UnreadReportsCubit extends Cubit<int> {
+class UnreadReportsCubit extends Cubit<int> implements StepNamed {
   new({required this._safetyRepository}) : super(0);
 
   final SafetyRepository _safetyRepository;
@@ -37,4 +38,7 @@ class UnreadReportsCubit extends Cubit<int> {
     await _count?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'UnreadReportsCubit';
 }

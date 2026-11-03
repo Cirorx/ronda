@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'ronda_setup_state.dart';
@@ -24,7 +25,7 @@ List<String> hourChoices(String bandId) {
 
 /// The admin's "Lugar, hora y anfitriones": every ronda that still meets,
 /// and setting one's public place, hour and hosts.
-class RondaSetupCubit extends Cubit<RondaSetupState> {
+class RondaSetupCubit extends Cubit<RondaSetupState> implements StepNamed {
   new({required this._rondaRepository}) : super(const RondaSetupState());
 
   final RondaRepository _rondaRepository;
@@ -83,4 +84,7 @@ class RondaSetupCubit extends Cubit<RondaSetupState> {
 
   /// The sheet closed: its failure line goes with it.
   void sheetClosed() => emit(state.copyWith(saveFailure: () => null));
+
+  @override
+  String get reportStep => 'RondaSetupCubit';
 }

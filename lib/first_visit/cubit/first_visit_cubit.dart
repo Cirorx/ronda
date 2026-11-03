@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'first_visit_state.dart';
@@ -15,7 +16,7 @@ part 'first_visit_state.dart';
 /// - a host's question until the meeting's day;
 /// - a waiter's "No puedo" only when someone else picked them, until the
 ///   meeting's day (a host who picked themself changes it instead).
-class FirstVisitCubit extends Cubit<FirstVisitState> {
+class FirstVisitCubit extends Cubit<FirstVisitState> implements StepNamed {
   new({
     required this._uid,
     required this._rondaRepository,
@@ -118,4 +119,7 @@ class FirstVisitCubit extends Cubit<FirstVisitState> {
     await _subscription?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'FirstVisitCubit';
 }

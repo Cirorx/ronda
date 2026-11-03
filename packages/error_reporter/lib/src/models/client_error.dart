@@ -43,6 +43,21 @@ class const ClientError({
   /// {@macro client_error}
   this;
 
+  /// This report as plain text for a bug report: screen, step, code,
+  /// message, build, time (UTC) and stack.
+  String get reportText => [
+    'screen: ${screen.isEmpty ? '-' : screen}',
+    'step: ${step.isEmpty ? '-' : step}',
+    'code: $code',
+    'message: ${message.isEmpty ? '-' : message}',
+    'platform: $platform',
+    'build: $appVersion ($build) $flavor',
+    'fatal: $fatal',
+    'time: ${at.toUtc().toIso8601String()}',
+    'stack:',
+    if (stack.isEmpty) '-' else stack,
+  ].join('\n');
+
   @override
   List<Object?> get props => [
     id,

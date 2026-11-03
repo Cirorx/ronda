@@ -2,13 +2,14 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:cuaderno_repository/cuaderno_repository.dart';
+import 'package:error_reporter/error_reporter.dart';
 
 /// The cuaderno's side of Mi ronda: the line the member chose to bring to
 /// the meeting, as their own card shows it. It reads the phone only, and
 /// follows the cuaderno when it changes.
 ///
 /// The state is that line, or `null` when none is chosen.
-class CuadernoCardCubit extends Cubit<String?> {
+class CuadernoCardCubit extends Cubit<String?> implements StepNamed {
   new({required this._uid, required this._cuadernoRepository}) : super(null);
 
   final String _uid;
@@ -36,4 +37,7 @@ class CuadernoCardCubit extends Cubit<String?> {
     await _changes?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'CuadernoCardCubit';
 }

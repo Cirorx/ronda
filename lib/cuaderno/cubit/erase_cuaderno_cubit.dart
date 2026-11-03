@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:cuaderno_repository/cuaderno_repository.dart';
+import 'package:error_reporter/error_reporter.dart';
 
 /// Where deleting the cuaderno stands.
 enum EraseCuadernoStatus {
@@ -19,7 +20,8 @@ enum EraseCuadernoStatus {
 /// Ajustes → Tus datos → "Borrar mi cuaderno": one action that removes the
 /// whole cuaderno from this phone. It has nothing to ask the server: the
 /// cuaderno was never there.
-class EraseCuadernoCubit extends Cubit<EraseCuadernoStatus> {
+class EraseCuadernoCubit extends Cubit<EraseCuadernoStatus>
+    implements StepNamed {
   new({required this._uid, required this._cuadernoRepository})
     : super(EraseCuadernoStatus.idle);
 
@@ -38,4 +40,7 @@ class EraseCuadernoCubit extends Cubit<EraseCuadernoStatus> {
       emit(EraseCuadernoStatus.failed);
     }
   }
+
+  @override
+  String get reportStep => 'EraseCuadernoCubit';
 }

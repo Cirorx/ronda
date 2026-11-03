@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:error_reporter/error_reporter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,6 +23,15 @@ class _Recording extends ErrorReporter {
     sent.add(report);
   }
 }
+
+/// Stands for a class a release web build renamed (`minified:Ds`): only
+/// its own `toString` still says what it is.
+class const _Renamed(final String text) {
+  @override
+  String toString() => text;
+}
+
+class _Plain;
 
 class const _Typed(final String text) {
   @override
@@ -123,12 +133,79 @@ void main() {
         );
       });
 
+      test('is plugin/code for a functions error', () {
+        expect(
+          ErrorReporter.errorCode(
+            FirebaseFunctionsException(
+              message: 'no',
+              code: 'permission-denied',
+            ),
+          ),
+          equals('firebase_functions/permission-denied'),
+        );
+      });
+
+      test('is the name our own failure prints, not its renamed type', () {
+        expect(
+          ErrorReporter.errorCode(const _Renamed('ReadPublishedSeatsFailure')),
+          equals('ReadPublishedSeatsFailure'),
+        );
+        expect(
+          ErrorReporter.errorCode(const _Renamed('RsvpFailure(offline)')),
+          equals('RsvpFailure'),
+        );
+      });
+
       test("is the type's name for anything else", () {
         expect(
           ErrorReporter.errorCode(const FormatException()),
           equals('FormatException'),
         );
       });
+    });
+  });
+
+  group('errorMessage', () {
+    test('is what our own failure prints', () {
+      expect(
+        ErrorReporter.errorMessage(const _Renamed('RsvpFailure(offline)')),
+        equals('RsvpFailure(offline)'),
+      );
+    });
+
+    test("is a Firebase error's own message, scrubbed", () {
+      expect(
+        ErrorReporter.errorMessage(
+          FirebaseException(
+            plugin: 'cloud_firestore',
+            code: 'permission-denied',
+            message: 'Missing permissions for users/abcDEF1234567890abcdef12',
+          ),
+        ),
+        equals('Missing permissions for users/<id>'),
+      );
+    });
+
+    test("is a functions error's message from the server", () {
+      expect(
+        ErrorReporter.errorMessage(
+          FirebaseFunctionsException(message: 'Too many', code: 'aborted'),
+        ),
+        equals('Too many'),
+      );
+    });
+
+    test('falls back to the code when Firebase gave no message', () {
+      expect(
+        ErrorReporter.errorMessage(
+          FirebaseException(plugin: 'firebase_storage', code: 'unauthorized'),
+        ),
+        equals('unauthorized'),
+      );
+    });
+
+    test('is empty for a type that prints only Instance of', () {
+      expect(ErrorReporter.errorMessage(_Plain()), isEmpty);
     });
   });
 

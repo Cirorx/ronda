@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:profile_repository/profile_repository.dart';
 
 /// The language Ronda shows: the one picked on this phone, or, with none
@@ -14,7 +15,7 @@ class const LanguageState({
 
 /// Switches Ronda's language at once and remembers the pick on this phone,
 /// so the next start opens in it.
-class LanguageCubit extends Cubit<LanguageState> {
+class LanguageCubit extends Cubit<LanguageState> implements StepNamed {
   /// [initial] is the language read from the phone before the app started.
   new({required this._profileRepository, AppLanguage? initial})
     : super(LanguageState(language: initial));
@@ -31,4 +32,7 @@ class LanguageCubit extends Cubit<LanguageState> {
       // Switched for now; only the next start won't remember it.
     }
   }
+
+  @override
+  String get reportStep => 'LanguageCubit';
 }

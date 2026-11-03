@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'proposals_state.dart';
@@ -11,7 +12,7 @@ part 'proposals_state.dart';
 ///
 /// The server decides who is admin; a refusal from it shows as
 /// [ProposalsStatus.forbidden].
-class ProposalsCubit extends Cubit<ProposalsState> {
+class ProposalsCubit extends Cubit<ProposalsState> implements StepNamed {
   new({required this._rondaRepository}) : super(const ProposalsState());
 
   final RondaRepository _rondaRepository;
@@ -105,4 +106,7 @@ class ProposalsCubit extends Cubit<ProposalsState> {
     await _subscription?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'ProposalsCubit';
 }

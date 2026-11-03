@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:needs_repository/needs_repository.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
@@ -19,7 +20,7 @@ part 'onboarding_state.dart';
 /// Signed out (no uid), "Está bien, guardalo" holds the answers on this
 /// phone instead ([OnboardingStatus.held]), and the payoff and sign-in come
 /// next. Once someone signs in, [load] finds them and saves them.
-class OnboardingCubit extends Cubit<OnboardingState> {
+class OnboardingCubit extends Cubit<OnboardingState> implements StepNamed {
   new({
     required this._uid,
     required this._profileRepository,
@@ -251,4 +252,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       emit(state.copyWith(status: OnboardingStatus.failure));
     }
   }
+
+  @override
+  String get reportStep => 'OnboardingCubit';
 }

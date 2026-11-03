@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda/small_plan/models/models.dart';
 import 'package:small_plan_repository/small_plan_repository.dart';
 
@@ -17,7 +18,8 @@ part 'small_plan_choose_state.dart';
 /// missing; leaving throws away a note still recording. Every failure lands
 /// in [SmallPlanChooseState.failure], typed, so the sheet can say what went
 /// wrong and the error log can report it.
-class SmallPlanChooseCubit extends Cubit<SmallPlanChooseState> {
+class SmallPlanChooseCubit extends Cubit<SmallPlanChooseState>
+    implements StepNamed {
   new({
     required this._uid,
     required this._smallPlanRepository,
@@ -253,4 +255,7 @@ class SmallPlanChooseCubit extends Cubit<SmallPlanChooseState> {
     await discarded;
     await super.close();
   }
+
+  @override
+  String get reportStep => 'SmallPlanChooseCubit';
 }

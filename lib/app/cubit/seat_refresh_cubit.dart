@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:needs_repository/needs_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda/onboarding/models/eligible_seats.dart';
@@ -30,7 +31,7 @@ enum SeatRefreshStatus {
 /// The needs filter runs here on the phone, as at sign-up: only the seat ids
 /// that pass go to the server. Failures are reported to the observer, never
 /// shown.
-class SeatRefreshCubit extends Cubit<SeatRefreshStatus> {
+class SeatRefreshCubit extends Cubit<SeatRefreshStatus> implements StepNamed {
   new({required this._profileRepository, required this._needsRepository})
     : super(SeatRefreshStatus.idle);
 
@@ -71,4 +72,7 @@ class SeatRefreshCubit extends Cubit<SeatRefreshStatus> {
   void _finish(SeatRefreshStatus status) {
     if (!isClosed) emit(status);
   }
+
+  @override
+  String get reportStep => 'SeatRefreshCubit';
 }

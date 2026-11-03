@@ -82,7 +82,10 @@ class AppBlocObserver extends BlocObserver {
       errorReporter?.recordError(
         error,
         stackTrace,
-        step: '${bloc.runtimeType}',
+        step: switch (bloc) {
+          final StepNamed named => named.reportStep,
+          _ => '${bloc.runtimeType}',
+        },
       ),
     );
     super.onError(bloc, error, stackTrace);

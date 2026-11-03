@@ -4,6 +4,9 @@
 class TakePhotoFailure implements Exception {
   /// {@macro take_photo_failure}
   const new();
+
+  @override
+  String toString() => 'TakePhotoFailure';
 }
 
 /// {@template blur_photo_failure}
@@ -12,6 +15,9 @@ class TakePhotoFailure implements Exception {
 class BlurPhotoFailure implements Exception {
   /// {@macro blur_photo_failure}
   const new();
+
+  @override
+  String toString() => 'BlurPhotoFailure';
 }
 
 /// {@template not_a_host_failure}
@@ -21,6 +27,9 @@ class BlurPhotoFailure implements Exception {
 class NotAHostFailure implements Exception {
   /// {@macro not_a_host_failure}
   const new();
+
+  @override
+  String toString() => 'NotAHostFailure';
 }
 
 /// {@template nothing_to_cut_out_failure}
@@ -30,6 +39,9 @@ class NotAHostFailure implements Exception {
 class NothingToCutOutFailure implements Exception {
   /// {@macro nothing_to_cut_out_failure}
   const new();
+
+  @override
+  String toString() => 'NothingToCutOutFailure';
 }
 
 /// {@template make_flyer_failure}
@@ -38,6 +50,9 @@ class NothingToCutOutFailure implements Exception {
 class MakeFlyerFailure implements Exception {
   /// {@macro make_flyer_failure}
   const new();
+
+  @override
+  String toString() => 'MakeFlyerFailure';
 }
 
 /// {@template share_flyer_failure}
@@ -46,4 +61,7 @@ class MakeFlyerFailure implements Exception {
 class ShareFlyerFailure implements Exception {
   /// {@macro share_flyer_failure}
   const new();
+
+  @override
+  String toString() => 'ShareFlyerFailure';
 }

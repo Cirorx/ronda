@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:onboarding_repository/onboarding_repository.dart';
 
 part 'voice_note_state.dart';
@@ -14,7 +15,7 @@ part 'voice_note_state.dart';
 /// unfinished note away. Every failure lands in [VoiceNoteState.failure],
 /// typed, so the screen can say what went wrong and the error log can
 /// report it.
-class VoiceNoteCubit extends Cubit<VoiceNoteState> {
+class VoiceNoteCubit extends Cubit<VoiceNoteState> implements StepNamed {
   new({
     required this._uid,
     required this._onboardingRepository,
@@ -235,4 +236,7 @@ class VoiceNoteCubit extends Cubit<VoiceNoteState> {
     await discarded;
     await super.close();
   }
+
+  @override
+  String get reportStep => 'VoiceNoteCubit';
 }

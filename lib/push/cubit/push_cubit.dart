@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:push_repository/push_repository.dart';
 
 part 'push_state.dart';
@@ -14,7 +15,7 @@ part 'push_state.dart';
 /// A token that can't be saved (no network, an iPhone without APNs) is
 /// reported to the observer and tried again on the next launch; the person
 /// sees nothing. Neither the token nor any failure detail reaches the state.
-class PushCubit extends Cubit<PushState> {
+class PushCubit extends Cubit<PushState> implements StepNamed {
   new({required this._uid, required this._pushRepository})
     : super(const PushState());
 
@@ -122,4 +123,7 @@ class PushCubit extends Cubit<PushState> {
     await _registrations?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'PushCubit';
 }

@@ -51,6 +51,9 @@ class const VoiceLineFailure(
 class NothingToDrawFailure implements Exception {
   /// {@macro nothing_to_draw_failure}
   const new();
+
+  @override
+  String toString() => 'NothingToDrawFailure';
 }
 
 /// {@template make_postcard_failure}
@@ -59,6 +62,9 @@ class NothingToDrawFailure implements Exception {
 class MakePostcardFailure implements Exception {
   /// {@macro make_postcard_failure}
   const new();
+
+  @override
+  String toString() => 'MakePostcardFailure';
 }
 
 /// {@template share_postcard_failure}
@@ -67,4 +73,7 @@ class MakePostcardFailure implements Exception {
 class SharePostcardFailure implements Exception {
   /// {@macro share_postcard_failure}
   const new();
+
+  @override
+  String toString() => 'SharePostcardFailure';
 }

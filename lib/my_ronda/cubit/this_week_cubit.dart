@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'this_week_state.dart';
@@ -17,7 +18,7 @@ part 'this_week_state.dart';
 /// It also answers what the card asks this member about the week: "¿Abrís
 /// vos?" ([handoffAnswered]) and the después at their home
 /// ([homeAnswered]).
-class ThisWeekCubit extends Cubit<ThisWeekState> {
+class ThisWeekCubit extends Cubit<ThisWeekState> implements StepNamed {
   new({required this._uid, required this._rondaRepository})
     : super(const ThisWeekState());
 
@@ -148,4 +149,7 @@ class ThisWeekCubit extends Cubit<ThisWeekState> {
     await _subscription?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'ThisWeekCubit';
 }

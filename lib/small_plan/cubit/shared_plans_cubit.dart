@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:small_plan_repository/small_plan_repository.dart';
 
 part 'shared_plans_state.dart';
@@ -11,7 +12,7 @@ part 'shared_plans_state.dart';
 /// turn "Avisarle a la ronda" on and takes it back when they turn it off,
 /// and says "Me sumo" for them. Nothing here sends a notification: people see
 /// a plan when they open Mi ronda.
-class SharedPlansCubit extends Cubit<SharedPlansState> {
+class SharedPlansCubit extends Cubit<SharedPlansState> implements StepNamed {
   new({
     required this._rondaId,
     required this._uid,
@@ -144,4 +145,7 @@ class SharedPlansCubit extends Cubit<SharedPlansState> {
     await _subscription?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'SharedPlansCubit';
 }

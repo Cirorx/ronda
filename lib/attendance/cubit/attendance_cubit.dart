@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'attendance_state.dart';
@@ -12,7 +13,7 @@ part 'attendance_state.dart';
 /// A tap shows at once and stays until the roll comes back with it; a tap
 /// that doesn't reach the server goes back to what the roll says, with
 /// [AttendanceState.tapFailure] for the line that says why.
-class AttendanceCubit extends Cubit<AttendanceState> {
+class AttendanceCubit extends Cubit<AttendanceState> implements StepNamed {
   new({
     required this._rondaId,
     required this._week,
@@ -88,4 +89,7 @@ class AttendanceCubit extends Cubit<AttendanceState> {
     await _subscription?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'AttendanceCubit';
 }

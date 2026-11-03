@@ -6,6 +6,9 @@
 class UnreadableVoiceNoteException implements Exception {
   /// {@macro unreadable_voice_note_exception}
   const new();
+
+  @override
+  String toString() => 'UnreadableVoiceNoteException';
 }
 
 /// {@template voice_note_refused_exception}
@@ -47,6 +50,9 @@ class const VoiceNoteUploadException(
 class NotAHostException implements Exception {
   /// {@macro not_a_host_exception}
   const new();
+
+  @override
+  String toString() => 'NotAHostException';
 }
 
 /// {@template nothing_to_cut_out_exception}
@@ -56,6 +62,9 @@ class NotAHostException implements Exception {
 class NothingToCutOutException implements Exception {
   /// {@macro nothing_to_cut_out_exception}
   const new();
+
+  @override
+  String toString() => 'NothingToCutOutException';
 }
 
 /// {@template nothing_to_draw_exception}
@@ -65,6 +74,9 @@ class NothingToCutOutException implements Exception {
 class NothingToDrawException implements Exception {
   /// {@macro nothing_to_draw_exception}
   const new();
+
+  @override
+  String toString() => 'NothingToDrawException';
 }
 
 /// {@template donde_queda_refused_exception}
@@ -90,6 +102,9 @@ class const DondeQuedaRefusedException(
 class NotYourTurnException implements Exception {
   /// {@macro not_your_turn_exception}
   const new();
+
+  @override
+  String toString() => 'NotYourTurnException';
 }
 
 /// {@template already_guessed_exception}
@@ -98,6 +113,9 @@ class NotYourTurnException implements Exception {
 class AlreadyGuessedException implements Exception {
   /// {@macro already_guessed_exception}
   const new();
+
+  @override
+  String toString() => 'AlreadyGuessedException';
 }
 
 /// {@template shared_plan_held_exception}
@@ -139,4 +157,7 @@ class const WelcomeHeldException(
 class SharedPlanGoneException implements Exception {
   /// {@macro shared_plan_gone_exception}
   const new();
+
+  @override
+  String toString() => 'SharedPlanGoneException';
 }

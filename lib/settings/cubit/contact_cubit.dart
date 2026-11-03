@@ -1,13 +1,14 @@
 import 'package:bloc/bloc.dart';
 import 'package:contact_repository/contact_repository.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 
 part 'contact_state.dart';
 
 /// Writing to Ronda and calling a helpline, from Ajustes: opens the mail
 /// app or the dialer. When none opens, the state says which, so the screen
 /// shows the address or the number to use by hand.
-class ContactCubit extends Cubit<ContactState> {
+class ContactCubit extends Cubit<ContactState> implements StepNamed {
   new({required this._contactRepository})
     : super(ContactState(email: _contactRepository.email));
 
@@ -54,4 +55,7 @@ class ContactCubit extends Cubit<ContactState> {
     if (state.status == ContactStatus.idle) return;
     emit(ContactState(email: state.email));
   }
+
+  @override
+  String get reportStep => 'ContactCubit';
 }

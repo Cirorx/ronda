@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda/settings/models/report_text.dart';
 import 'package:safety_repository/safety_repository.dart';
 
@@ -13,7 +14,7 @@ part 'report_state.dart';
 ///
 /// The server decides who may be named and keeps the report from everyone
 /// but the admin; the receipt never says what the admin did.
-class ReportCubit extends Cubit<ReportState> {
+class ReportCubit extends Cubit<ReportState> implements StepNamed {
   new({required this._safetyRepository, required this._uid})
     : super(const ReportState());
 
@@ -148,4 +149,7 @@ class ReportCubit extends Cubit<ReportState> {
     await _receipts?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'ReportCubit';
 }

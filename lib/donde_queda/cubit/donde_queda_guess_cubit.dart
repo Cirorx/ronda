@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:bloc/bloc.dart';
 import 'package:donde_queda_repository/donde_queda_repository.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 
 part 'donde_queda_guess_state.dart';
 
@@ -10,7 +11,8 @@ part 'donde_queda_guess_state.dart';
 /// ronda [_rondaId]: the photo and the hint, a small map of the barrio, a
 /// tap for the pin, and [Es acá]. The photographer doesn't guess, and a pin
 /// can't be moved once sent.
-class DondeQuedaGuessCubit extends Cubit<DondeQuedaGuessState> {
+class DondeQuedaGuessCubit extends Cubit<DondeQuedaGuessState>
+    implements StepNamed {
   new({
     required this._uid,
     required this._rondaId,
@@ -91,4 +93,7 @@ class DondeQuedaGuessCubit extends Cubit<DondeQuedaGuessState> {
       );
     }
   }
+
+  @override
+  String get reportStep => 'DondeQuedaGuessCubit';
 }

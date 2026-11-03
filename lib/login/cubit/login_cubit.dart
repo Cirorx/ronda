@@ -1,13 +1,14 @@
 import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 
 part 'login_state.dart';
 
 /// Signs the person in with Google, or opens Google's page to make an
 /// account. Where they go next is the router's call: it follows `AppBloc`,
 /// not this cubit.
-class LoginCubit extends Cubit<LoginState> {
+class LoginCubit extends Cubit<LoginState> implements StepNamed {
   new({required this._authRepository}) : super(const LoginState());
 
   final AuthRepository _authRepository;
@@ -45,4 +46,7 @@ class LoginCubit extends Cubit<LoginState> {
       addError(error, stackTrace);
     }
   }
+
+  @override
+  String get reportStep => 'LoginCubit';
 }

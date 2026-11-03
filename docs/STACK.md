@@ -827,7 +827,8 @@ What feeds it:
 - **Bloc errors:** `AppBlocObserver` is installed in both flavors (the development one logs type
   names, one change per bloc a second at most, since the voice note's levels change its state
   about 25 times a second; production's logs nothing) and sends every `addError` with the
-  cubit's type as the step.
+  cubit's `reportStep` as the step: every cubit and bloc implements `StepNamed` with its class name
+  as a string literal, because a release web build minifies `runtimeType` (`minified:Ds`).
 - **Handled failures that matter:** `ErrorReporter.reportFailure(screen:, step:, code:)`, a typed
   code with no message or stack. The reporter is provided above the app
   (`context.read<ErrorReporter>()`). The voice sign-up reports each new `VoiceNoteState.failure`
@@ -841,13 +842,22 @@ What feeds it:
 - The web sink batches for 2 s (a fatal report goes at once), 10 a call, sends each code and
   screen once and at most 20 reports a session; the server keeps at most 60 per caller per hour.
 
+- **Naming a failure:** `ErrorReporter.errorCode` is `plugin/code` for a `FirebaseException` (a
+  `FirebaseFunctionsException` too: `firebase_functions/<code>`), else the first word our own
+  `*Failure` / `*Exception` prints, else the type; the message is the Firebase message or the
+  error's first line, scrubbed. Every failure class overrides `toString()` with a literal
+  (`ReadPublishedSeatsFailure`, `RsvpFailure(offline)`), never a field that could hold personal data;
+  a new failure class gets the same plus a line in its package's `failure_names_test.dart`.
+
 **How to read errors:**
 - Android and iOS: Firebase console → Crashlytics, per app (`com.ciroapps.ronda`). Dart frames
   are readable once the build's symbols are uploaded: `scripts/distribute_android.sh` does it
   (`firebase crashlytics:symbols:upload --app=<app id> symbols/android/<version>-<commit>`);
   by hand, the same command.
-- Web: `/admin/errores` (admin claim), grouped by code and screen, each group opening its
-  newest reports. In the console: Firestore → `client_errors`.
+- Web: `/admin/errores` (admin claim), grouped by code, message and screen, titled by the message,
+  each group opening its newest reports; a stack stays collapsed, "Copiar" copies one report and
+  "Copiar todos" the group (screen, step, code, message, build, UTC time, stack). Web stacks are
+  minified: read them with `flutter symbolize` and the build's `symbols/`. In the console: Firestore → `client_errors`.
 - Server side: `firebase functions:log --only <function>` (for example `extract`,
   `report_client_error`), or Cloud Logging in the console.
 

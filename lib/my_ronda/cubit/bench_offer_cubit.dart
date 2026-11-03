@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'bench_offer_state.dart';
@@ -13,7 +14,7 @@ part 'bench_offer_state.dart';
 /// A failed answer leaves the card as it was, with
 /// [BenchOfferState.saveFailed], or [BenchOfferState.over] when the server
 /// said the offer had ended; nothing is held against the person either way.
-class BenchOfferCubit extends Cubit<BenchOfferState> {
+class BenchOfferCubit extends Cubit<BenchOfferState> implements StepNamed {
   new({
     required this._uid,
     required this._rondaRepository,
@@ -101,4 +102,7 @@ class BenchOfferCubit extends Cubit<BenchOfferState> {
     await _subscription?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'BenchOfferCubit';
 }

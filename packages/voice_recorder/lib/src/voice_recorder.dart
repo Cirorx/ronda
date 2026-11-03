@@ -19,6 +19,9 @@ import 'package:voice_recorder/src/microphones/microphones.dart' as microphones;
 class VoiceRecorderException implements Exception {
   /// {@macro voice_recorder_exception}
   const new();
+
+  @override
+  String toString() => 'VoiceRecorderException';
 }
 
 /// {@template voice_recorder}

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:donde_queda_repository/donde_queda_repository.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 
 part 'donde_queda_state.dart';
 
@@ -10,7 +11,7 @@ part 'donde_queda_state.dart';
 /// game and last week's answer as [_uid] sees them, and records "Esta
 /// semana no" when it is their turn. Nothing here sends a notification:
 /// the card is something people open themselves.
-class DondeQuedaCubit extends Cubit<DondeQuedaState> {
+class DondeQuedaCubit extends Cubit<DondeQuedaState> implements StepNamed {
   new({
     required this._rondaId,
     required this._uid,
@@ -63,4 +64,7 @@ class DondeQuedaCubit extends Cubit<DondeQuedaState> {
     await _subscription?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'DondeQuedaCubit';
 }

@@ -51,7 +51,7 @@ abstract class ErrorReporter {
       screen: _screen,
       step: _label(step),
       code: errorCode(error),
-      message: scrubMessage(error.toString()),
+      message: errorMessage(error),
       stack: scrubStack(stack?.toString() ?? ''),
       fatal: fatal,
     ),
@@ -93,14 +93,38 @@ abstract class ErrorReporter {
   @protected
   Future<void> send(ErrorReport report);
 
-  /// A Firebase error's `plugin/code` (`firebase_storage/unauthorized`),
-  /// else the error's type. Release web builds minify type names, so there
-  /// a typed [reportFailure] code reads better.
-  static String errorCode(Object error) => capText(
-    error is FirebaseException
-        ? '${error.plugin}/${error.code}'
-        : error.runtimeType.toString(),
-    maxCodeLength,
+  /// A Firebase error's `plugin/code` (`firebase_storage/unauthorized`,
+  /// `firebase_functions/permission-denied`), else the name our own failures
+  /// and exceptions print first (`ReadPublishedSeatsFailure`), else the
+  /// error's type. A release web build minifies type names, so there only
+  /// the first two read.
+  static String errorCode(Object error) {
+    final named = _printedName.firstMatch(error.toString())?.group(1);
+    return capText(
+      scrub(
+        error is FirebaseException
+            ? '${error.plugin}/${error.code}'
+            : named ?? error.runtimeType.toString(),
+      ),
+      maxCodeLength,
+    );
+  }
+
+  /// What the report says about [error], scrubbed: a Firebase error's own
+  /// message (a functions error's is the server's), else the first line of
+  /// what the error prints. A type without its own `toString` prints
+  /// `Instance of 'Type'`, which says nothing, so it gives an empty message.
+  static String errorMessage(Object error) {
+    final text = error is FirebaseException
+        ? error.message ?? error.code
+        : error.toString();
+    if (text.startsWith('Instance of ')) return '';
+    return scrubMessage(text);
+  }
+
+  // `NameFailure`, `NameException(...)`, `FormatException: ...`.
+  static final _printedName = RegExp(
+    r'^([A-Z]\w*(?:Failure|Exception|Error))\b',
   );
 
   static String _label(String text) => capText(scrub(text), maxLabelLength);

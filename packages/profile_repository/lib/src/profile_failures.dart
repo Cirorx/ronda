@@ -4,6 +4,9 @@
 class AcceptTermsFailure implements Exception {
   /// {@macro accept_terms_failure}
   const new();
+
+  @override
+  String toString() => 'AcceptTermsFailure';
 }
 
 /// {@template save_profile_failure}
@@ -12,6 +15,9 @@ class AcceptTermsFailure implements Exception {
 class SaveProfileFailure implements Exception {
   /// {@macro save_profile_failure}
   const new();
+
+  @override
+  String toString() => 'SaveProfileFailure';
 }
 
 /// {@template read_published_seats_failure}
@@ -20,6 +26,9 @@ class SaveProfileFailure implements Exception {
 class ReadPublishedSeatsFailure implements Exception {
   /// {@macro read_published_seats_failure}
   const new();
+
+  @override
+  String toString() => 'ReadPublishedSeatsFailure';
 }
 
 /// {@template save_eligible_seat_ids_failure}
@@ -28,6 +37,9 @@ class ReadPublishedSeatsFailure implements Exception {
 class SaveEligibleSeatIdsFailure implements Exception {
   /// {@macro save_eligible_seat_ids_failure}
   const new();
+
+  @override
+  String toString() => 'SaveEligibleSeatIdsFailure';
 }
 
 /// {@template hold_on_phone_failure}
@@ -37,4 +49,7 @@ class SaveEligibleSeatIdsFailure implements Exception {
 class HoldOnPhoneFailure implements Exception {
   /// {@macro hold_on_phone_failure}
   const new();
+
+  @override
+  String toString() => 'HoldOnPhoneFailure';
 }

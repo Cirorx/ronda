@@ -1,12 +1,13 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'pilot_numbers_state.dart';
 
 /// "Los números del piloto" on the admin screen: counted by the server when
 /// asked, never stored, invented sign-ups left out.
-class PilotNumbersCubit extends Cubit<PilotNumbersState> {
+class PilotNumbersCubit extends Cubit<PilotNumbersState> implements StepNamed {
   new({required this._rondaRepository}) : super(const PilotNumbersState());
 
   final RondaRepository _rondaRepository;
@@ -31,4 +32,7 @@ class PilotNumbersCubit extends Cubit<PilotNumbersState> {
       );
     }
   }
+
+  @override
+  String get reportStep => 'PilotNumbersCubit';
 }

@@ -17,4 +17,7 @@ enum RsvpFailureReason {
 class const RsvpFailure(final RsvpFailureReason reason) implements Exception {
   /// {@macro rsvp_failure}
   this;
+
+  @override
+  String toString() => 'RsvpFailure(${reason.name})';
 }

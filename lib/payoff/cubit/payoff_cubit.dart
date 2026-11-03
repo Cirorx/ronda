@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
@@ -12,7 +13,7 @@ part 'payoff_state.dart';
 /// for the person's pretexts, at their slots when the counts say so.
 /// Nothing yet lets a new sign-up take a seat in an existing ronda, and the
 /// solver can still split or trim a group.
-class PayoffCubit extends Cubit<PayoffState> {
+class PayoffCubit extends Cubit<PayoffState> implements StepNamed {
   new({required this._profileRepository, required this._rondaRepository})
     : super(const PayoffState());
 
@@ -93,4 +94,7 @@ class PayoffCubit extends Cubit<PayoffState> {
   ) => counts
       .where((c) => c.pretextId == pretext.id && c.slotId == slotId)
       .fold(0, (largest, c) => c.count > largest ? c.count : largest);
+
+  @override
+  String get reportStep => 'PayoffCubit';
 }

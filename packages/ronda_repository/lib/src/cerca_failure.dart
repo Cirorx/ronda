@@ -5,4 +5,7 @@
 class CercaFailure implements Exception {
   /// {@macro cerca_failure}
   const new();
+
+  @override
+  String toString() => 'CercaFailure';
 }

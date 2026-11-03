@@ -6,4 +6,7 @@
 class ContactFailure implements Exception {
   /// {@macro contact_failure}
   const new();
+
+  @override
+  String toString() => 'ContactFailure';
 }

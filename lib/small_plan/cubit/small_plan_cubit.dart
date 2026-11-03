@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:calendar_client/calendar_client.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:small_plan_repository/small_plan_repository.dart';
 
 part 'small_plan_state.dart';
@@ -10,7 +11,7 @@ part 'small_plan_state.dart';
 ///
 /// The plan lives on the phone only ([SmallPlanRepository]); nothing here
 /// reaches the server.
-class SmallPlanCubit extends Cubit<SmallPlanState> {
+class SmallPlanCubit extends Cubit<SmallPlanState> implements StepNamed {
   new({required this._uid, required this._smallPlanRepository})
     : super(const SmallPlanState());
 
@@ -98,4 +99,7 @@ class SmallPlanCubit extends Cubit<SmallPlanState> {
     if (isClosed) return;
     emit(state.copyWith(card: const SmallPlanNothing()));
   }
+
+  @override
+  String get reportStep => 'SmallPlanCubit';
 }

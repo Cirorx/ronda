@@ -15,7 +15,7 @@ enum ErrorLogStatus {
   failure,
 }
 
-/// The reports of one code on one screen, newest first.
+/// The reports of one code and message on one screen, newest first.
 final class const ErrorGroup(
   /// What went wrong.
   final String code,
@@ -23,11 +23,14 @@ final class const ErrorGroup(
   /// Where.
   final String screen,
 
+  /// What the failure said, scrubbed; empty for a typed failure with none.
+  final String message,
+
   /// Its reports, newest first.
   final List<ClientError> errors,
 ) extends Equatable {
   /// What identifies the group.
-  String get key => keyOf(code, screen);
+  String get key => keyOf(code, screen, message);
 
   /// How many times it was reported.
   int get count => errors.length;
@@ -42,10 +45,17 @@ final class const ErrorGroup(
   bool get fatal => errors.any((error) => error.fatal);
 
   /// The key of a group.
-  static String keyOf(String code, String screen) => '$code\n$screen';
+  static String keyOf(String code, String screen, [String message = '']) =>
+      '$code\n$screen\n$message';
+
+  /// What names the group: its message, else its code.
+  String get title => message.isEmpty ? code : message;
+
+  /// Every report of the group, newest first, as text to copy.
+  String get reportText => errors.map((e) => e.reportText).join('\n\n---\n\n');
 
   @override
-  List<Object?> get props => [code, screen, errors];
+  List<Object?> get props => [code, screen, message, errors];
 }
 
 final class const ErrorLogState({
@@ -57,17 +67,26 @@ final class const ErrorLogState({
   /// The open group's key, if one is open.
   final String? openGroup,
 }) extends Equatable {
-  /// The reports grouped by code and screen, the most recently seen first.
+  /// The reports grouped by code, message and screen, the most recently
+  /// seen first.
   List<ErrorGroup> get groups {
     final byKey = <String, List<ClientError>>{};
     for (final error in errors) {
       byKey
-          .putIfAbsent(ErrorGroup.keyOf(error.code, error.screen), () => [])
+          .putIfAbsent(
+            ErrorGroup.keyOf(error.code, error.screen, error.message),
+            () => [],
+          )
           .add(error);
     }
     return [
       for (final group in byKey.values)
-        ErrorGroup(group.first.code, group.first.screen, group),
+        ErrorGroup(
+          group.first.code,
+          group.first.screen,
+          group.first.message,
+          group,
+        ),
     ];
   }
 

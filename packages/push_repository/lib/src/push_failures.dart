@@ -5,6 +5,9 @@
 class RegisterDeviceFailure implements Exception {
   /// {@macro register_device_failure}
   const new();
+
+  @override
+  String toString() => 'RegisterDeviceFailure';
 }
 
 /// {@template unregister_device_failure}
@@ -14,6 +17,9 @@ class RegisterDeviceFailure implements Exception {
 class UnregisterDeviceFailure implements Exception {
   /// {@macro unregister_device_failure}
   const new();
+
+  @override
+  String toString() => 'UnregisterDeviceFailure';
 }
 
 /// {@template snooze_prompt_failure}
@@ -22,6 +28,9 @@ class UnregisterDeviceFailure implements Exception {
 class SnoozePromptFailure implements Exception {
   /// {@macro snooze_prompt_failure}
   const new();
+
+  @override
+  String toString() => 'SnoozePromptFailure';
 }
 
 /// {@template push_permission_failure}
@@ -30,4 +39,7 @@ class SnoozePromptFailure implements Exception {
 class PushPermissionFailure implements Exception {
   /// {@macro push_permission_failure}
   const new();
+
+  @override
+  String toString() => 'PushPermissionFailure';
 }

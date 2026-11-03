@@ -22,4 +22,7 @@ class const SafetyFailure(final SafetyFailureReason reason)
     implements Exception {
   /// {@macro safety_failure}
   this;
+
+  @override
+  String toString() => 'SafetyFailure(${reason.name})';
 }

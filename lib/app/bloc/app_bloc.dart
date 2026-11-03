@@ -4,6 +4,7 @@ import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:push_repository/push_repository.dart';
 
@@ -22,7 +23,7 @@ part 'app_state.dart';
 ///
 /// Signing out goes through here too ([AppSignOutRequested]), so this
 /// phone's push token is forgotten while the member may still delete it.
-class AppBloc extends Bloc<AppEvent, AppState> {
+class AppBloc extends Bloc<AppEvent, AppState> implements StepNamed {
   new({
     required AuthRepository authRepository,
     required this._profileRepository,
@@ -195,4 +196,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
       addError(error, stackTrace);
     }
   }
+
+  @override
+  String get reportStep => 'AppBloc';
 }

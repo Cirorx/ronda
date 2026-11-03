@@ -10,3 +10,4 @@ export 'src/error_reporter.dart';
 export 'src/local_error_reporter.dart';
 export 'src/models/models.dart';
 export 'src/scrub.dart' show uidHash;
+export 'src/step_named.dart';

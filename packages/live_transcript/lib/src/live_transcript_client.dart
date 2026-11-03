@@ -13,6 +13,9 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class LiveTranscriptException implements Exception {
   /// {@macro live_transcript_exception}
   const new();
+
+  @override
+  String toString() => 'LiveTranscriptException';
 }
 
 /// {@template live_transcript_client}

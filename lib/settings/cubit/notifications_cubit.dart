@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:push_repository/push_repository.dart';
 
 part 'notifications_state.dart';
@@ -13,7 +14,8 @@ part 'notifications_state.dart';
 /// launch on. A phone that refused for good is told how to allow them in
 /// its settings, and a browser that can't get them, where they would work.
 /// Failures are reported to the observer, never shown.
-class NotificationsCubit extends Cubit<NotificationsState> {
+class NotificationsCubit extends Cubit<NotificationsState>
+    implements StepNamed {
   new({required this._uid, required this._pushRepository})
     : super(const NotificationsState());
 
@@ -99,4 +101,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       addError(error, stackTrace);
     }
   }
+
+  @override
+  String get reportStep => 'NotificationsCubit';
 }

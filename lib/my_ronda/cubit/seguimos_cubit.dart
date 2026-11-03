@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'seguimos_state.dart';
@@ -13,7 +14,7 @@ part 'seguimos_state.dart';
 /// A failed answer leaves the card as it was, with [SeguimosState.saveFailed]
 /// for the line that says so, or [SeguimosState.closed] when the question
 /// closed meanwhile.
-class SeguimosCubit extends Cubit<SeguimosState> {
+class SeguimosCubit extends Cubit<SeguimosState> implements StepNamed {
   new({required this._uid, required this._rondaRepository})
     : super(const SeguimosState());
 
@@ -112,4 +113,7 @@ class SeguimosCubit extends Cubit<SeguimosState> {
     await _subscription?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'SeguimosCubit';
 }

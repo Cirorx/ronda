@@ -53,6 +53,9 @@ class const SignInWithGoogleFailure([
 class const SignOutFailure() implements Exception {
   /// {@macro sign_out_failure}
   this;
+
+  @override
+  String toString() => 'SignOutFailure';
 }
 
 /// {@template admin_claim_failure}
@@ -62,6 +65,9 @@ class const SignOutFailure() implements Exception {
 class const AdminClaimFailure() implements Exception {
   /// {@macro admin_claim_failure}
   this;
+
+  @override
+  String toString() => 'AdminClaimFailure';
 }
 
 /// {@template open_create_account_failure}
@@ -71,6 +77,9 @@ class const AdminClaimFailure() implements Exception {
 class const OpenCreateAccountFailure() implements Exception {
   /// {@macro open_create_account_failure}
   this;
+
+  @override
+  String toString() => 'OpenCreateAccountFailure';
 }
 
 /// Why no code went out by SMS.

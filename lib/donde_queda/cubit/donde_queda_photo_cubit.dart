@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:donde_queda_repository/donde_queda_repository.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda/donde_queda/models/game_text.dart';
 
 part 'donde_queda_photo_state.dart';
@@ -14,7 +15,8 @@ part 'donde_queda_photo_state.dart';
 /// the program refuses comes back with the reason: a house number, a
 /// person or an empty photo asks for another one; words it holds go back
 /// to the words.
-class DondeQuedaPhotoCubit extends Cubit<DondeQuedaPhotoState> {
+class DondeQuedaPhotoCubit extends Cubit<DondeQuedaPhotoState>
+    implements StepNamed {
   new({
     required this._uid,
     required this._rondaId,
@@ -237,4 +239,7 @@ class DondeQuedaPhotoCubit extends Cubit<DondeQuedaPhotoState> {
       ),
     );
   }
+
+  @override
+  String get reportStep => 'DondeQuedaPhotoCubit';
 }

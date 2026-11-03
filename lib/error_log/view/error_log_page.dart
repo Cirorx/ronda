@@ -1,4 +1,5 @@
 import 'package:error_reporter/error_reporter.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ronda/agent_trace/agent_trace.dart';
 import 'package:ronda/error_log/cubit/error_log_cubit.dart';
@@ -140,13 +141,15 @@ class const _Groups(final List<ErrorGroup> groups, {super.key})
                   child: ListTile(
                     onTap: () =>
                         context.read<ErrorLogCubit>().groupOpened(group.key),
-                    title: Text(group.code, style: textTheme.titleMedium),
+                    title: Text(group.title, style: textTheme.titleMedium),
                     subtitle: Text(
                       [
+                        if (group.message.isNotEmpty) group.code,
                         _screen(l10n, group.screen),
                         l10n.errorLogCount(group.count),
                         l10n.errorLogLastSeen(_when(context, group.latest.at)),
                         group.platforms.join(', '),
+                        _builds(group),
                         if (group.fatal) l10n.errorLogFatal,
                       ].join(' · '),
                     ),
@@ -195,16 +198,29 @@ class const _Group(final ErrorGroup group, {super.key})
         SizedBox(height: spacing.md),
         Semantics(
           header: true,
-          child: Text(group.code, style: textTheme.titleLarge),
+          child: Text(group.title, style: textTheme.titleLarge),
         ),
         Text(
           [
+            if (group.message.isNotEmpty) group.code,
             _screen(l10n, group.screen),
             l10n.errorLogCount(group.count),
           ].join(' · '),
           style: textTheme.bodyLarge,
         ),
         Text(l10n.errorLogShown(shown.length), style: textTheme.bodyMedium),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: _CopyButton(
+            label: l10n.errorLogCopyAll,
+            text: ErrorGroup(
+              group.code,
+              group.screen,
+              group.message,
+              shown,
+            ).reportText,
+          ),
+        ),
         for (final error in shown) ...[
           SizedBox(height: spacing.lg),
           Text(
@@ -219,24 +235,64 @@ class const _Group(final ErrorGroup group, {super.key})
           ),
           if (error.step.isNotEmpty)
             Text(l10n.errorLogStep(error.step), style: textTheme.bodyMedium),
-          SelectableText(
-            error.message.isEmpty ? l10n.errorLogNoMessage : error.message,
-            style: textTheme.bodyMedium,
-          ),
-          if (error.stack.isNotEmpty) ...[
-            SizedBox(height: spacing.xs),
-            SelectableText(
-              error.stack,
-              style: textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+          Row(
+            children: [
+              Expanded(
+                child: SelectableText(
+                  error.message.isEmpty
+                      ? l10n.errorLogNoMessage
+                      : error.message,
+                  style: textTheme.bodyMedium,
+                ),
               ),
+              _CopyButton(label: l10n.errorLogCopy, text: error.reportText),
+            ],
+          ),
+          if (error.stack.isNotEmpty)
+            ExpansionTile(
+              tilePadding: EdgeInsetsDirectional.zero,
+              title: Text(l10n.errorLogStack, style: textTheme.titleSmall),
+              expandedCrossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (error.platform == 'web')
+                  Text(l10n.errorLogMinified, style: textTheme.bodySmall),
+                SelectableText(
+                  error.stack,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
-          ],
         ],
       ],
     );
   }
 }
+
+/// Copies [text] to the clipboard and says so in a SnackBar.
+class const _CopyButton({
+  required final String label,
+  required final String text,
+}) extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final messenger = ScaffoldMessenger.of(context);
+    final copied = context.l10n.errorLogCopied;
+    return TextButton.icon(
+      onPressed: () async {
+        await Clipboard.setData(ClipboardData(text: text));
+        messenger.showSnackBar(SnackBar(content: Text(copied)));
+      },
+      icon: const Icon(Icons.copy, size: 18),
+      label: Text(label),
+    );
+  }
+}
+
+String _builds(ErrorGroup group) =>
+    {for (final error in group.errors) '${error.appVersion} (${error.build})'}
+        .join(', ');
 
 String _screen(AppLocalizations l10n, String screen) =>
     screen.isEmpty ? l10n.errorLogNoScreen : screen;

@@ -2,13 +2,15 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'seguimos_counts_state.dart';
 
 /// The admin's ¿seguimos? counts per ronda: sí, no and sin contestar, and
 /// what came of each close. Never who said what.
-class SeguimosCountsCubit extends Cubit<SeguimosCountsState> {
+class SeguimosCountsCubit extends Cubit<SeguimosCountsState>
+    implements StepNamed {
   new({required this._rondaRepository}) : super(const SeguimosCountsState());
 
   final RondaRepository _rondaRepository;
@@ -33,4 +35,7 @@ class SeguimosCountsCubit extends Cubit<SeguimosCountsState> {
     await _subscription?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'SeguimosCountsCubit';
 }

@@ -22,4 +22,7 @@ class const ProposalsFailure(final ProposalsFailureReason reason)
     implements Exception {
   /// {@macro proposals_failure}
   this;
+
+  @override
+  String toString() => 'ProposalsFailure(${reason.name})';
 }

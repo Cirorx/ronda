@@ -1,12 +1,13 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'despues_state.dart';
 
 /// "¿Hay después esta semana?": saves what this week's host set for ronda
 /// [_rondaId]'s meeting of [_week].
-class DespuesCubit extends Cubit<DespuesState> {
+class DespuesCubit extends Cubit<DespuesState> implements StepNamed {
   new({
     required this._rondaId,
     required this._week,
@@ -72,4 +73,7 @@ class DespuesCubit extends Cubit<DespuesState> {
     }
     emit(const DespuesState(saved: true));
   }
+
+  @override
+  String get reportStep => 'DespuesCubit';
 }

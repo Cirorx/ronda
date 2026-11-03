@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'add_to_ronda_state.dart';
@@ -7,7 +8,7 @@ part 'add_to_ronda_state.dart';
 /// "Sumar a esta ronda": who could join one ronda, and adding one of them.
 /// The server checks the cap, the one-ronda rule and the demo rule; this
 /// only reports what it said.
-class AddToRondaCubit extends Cubit<AddToRondaState> {
+class AddToRondaCubit extends Cubit<AddToRondaState> implements StepNamed {
   new({required this._rondaRepository, required this._rondaId})
     : super(const AddToRondaState());
 
@@ -66,4 +67,7 @@ class AddToRondaCubit extends Cubit<AddToRondaState> {
       );
     }
   }
+
+  @override
+  String get reportStep => 'AddToRondaCubit';
 }

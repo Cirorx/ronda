@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'waiting_state.dart';
@@ -10,7 +11,7 @@ part 'waiting_state.dart';
 /// [_uid]'s place on the list nearest to filling ("Con vos son 5 de 6"),
 /// and after a round that didn't fill records their pick between joining a
 /// nearby ronda and waiting two weeks more.
-class WaitingCubit extends Cubit<WaitingState> {
+class WaitingCubit extends Cubit<WaitingState> implements StepNamed {
   new({required this._uid, required this._rondaRepository})
     : super(const WaitingState());
 
@@ -67,4 +68,7 @@ class WaitingCubit extends Cubit<WaitingState> {
     await _subscription?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'WaitingCubit';
 }

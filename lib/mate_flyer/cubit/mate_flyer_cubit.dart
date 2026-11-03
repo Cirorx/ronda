@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:flyer_repository/flyer_repository.dart';
 
 part 'mate_flyer_state.dart';
@@ -9,7 +10,7 @@ part 'mate_flyer_state.dart';
 /// by a tap, then the flyer the server makes from it, to print or share.
 ///
 /// Only a [BlurredPhoto] ever reaches [FlyerRepository.makeMateFlyer].
-class MateFlyerCubit extends Cubit<MateFlyerState> {
+class MateFlyerCubit extends Cubit<MateFlyerState> implements StepNamed {
   new({
     required this._uid,
     required this._rondaId,
@@ -140,4 +141,7 @@ class MateFlyerCubit extends Cubit<MateFlyerState> {
     if (state.status == MateFlyerStatus.unsupported) return;
     emit(const MateFlyerState());
   }
+
+  @override
+  String get reportStep => 'MateFlyerCubit';
 }

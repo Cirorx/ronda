@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:safety_repository/safety_repository.dart';
 
 part 'safety_queue_state.dart';
@@ -12,7 +13,7 @@ part 'safety_queue_state.dart';
 ///
 /// The server decides who is admin: a refusal shows as
 /// [SafetyQueueStatus.forbidden].
-class SafetyQueueCubit extends Cubit<SafetyQueueState> {
+class SafetyQueueCubit extends Cubit<SafetyQueueState> implements StepNamed {
   new({required this._safetyRepository}) : super(const SafetyQueueState());
 
   final SafetyRepository _safetyRepository;
@@ -111,4 +112,7 @@ class SafetyQueueCubit extends Cubit<SafetyQueueState> {
     await _queue?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'SafetyQueueCubit';
 }

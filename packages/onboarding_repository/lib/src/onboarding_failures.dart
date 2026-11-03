@@ -5,6 +5,9 @@
 class NoMicrophoneFailure implements Exception {
   /// {@macro no_microphone_failure}
   const new();
+
+  @override
+  String toString() => 'NoMicrophoneFailure';
 }
 
 /// {@template microphone_denied_failure}
@@ -13,6 +16,9 @@ class NoMicrophoneFailure implements Exception {
 class MicrophoneDeniedFailure implements Exception {
   /// {@macro microphone_denied_failure}
   const new();
+
+  @override
+  String toString() => 'MicrophoneDeniedFailure';
 }
 
 /// {@template start_voice_note_failure}
@@ -21,6 +27,9 @@ class MicrophoneDeniedFailure implements Exception {
 class StartVoiceNoteFailure implements Exception {
   /// {@macro start_voice_note_failure}
   const new();
+
+  @override
+  String toString() => 'StartVoiceNoteFailure';
 }
 
 /// {@template record_voice_note_failure}
@@ -29,6 +38,9 @@ class StartVoiceNoteFailure implements Exception {
 class RecordVoiceNoteFailure implements Exception {
   /// {@macro record_voice_note_failure}
   const new();
+
+  @override
+  String toString() => 'RecordVoiceNoteFailure';
 }
 
 /// {@template upload_voice_note_failure}
@@ -55,6 +67,9 @@ class const UploadVoiceNoteFailure({
 class TermsNotAcceptedFailure implements Exception {
   /// {@macro terms_not_accepted_failure}
   const new();
+
+  @override
+  String toString() => 'TermsNotAcceptedFailure';
 }
 
 /// {@template voice_note_not_understood_failure}
@@ -64,6 +79,9 @@ class TermsNotAcceptedFailure implements Exception {
 class VoiceNoteNotUnderstoodFailure implements Exception {
   /// {@macro voice_note_not_understood_failure}
   const new();
+
+  @override
+  String toString() => 'VoiceNoteNotUnderstoodFailure';
 }
 
 /// {@template read_voice_note_failure}
@@ -73,4 +91,7 @@ class VoiceNoteNotUnderstoodFailure implements Exception {
 class ReadVoiceNoteFailure implements Exception {
   /// {@macro read_voice_note_failure}
   const new();
+
+  @override
+  String toString() => 'ReadVoiceNoteFailure';
 }

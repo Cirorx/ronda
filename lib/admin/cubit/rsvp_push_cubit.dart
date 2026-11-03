@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'rsvp_push_state.dart';
@@ -7,7 +8,7 @@ part 'rsvp_push_state.dart';
 /// "Mandarlo ahora" on the admin screen: sends this week's RSVP push to
 /// every ronda ahead of its lead time, once a week and never at night (the
 /// server decides both).
-class RsvpPushCubit extends Cubit<RsvpPushState> {
+class RsvpPushCubit extends Cubit<RsvpPushState> implements StepNamed {
   new({required this._rondaRepository}) : super(const RsvpPushState());
 
   final RondaRepository _rondaRepository;
@@ -24,4 +25,7 @@ class RsvpPushCubit extends Cubit<RsvpPushState> {
       emit(const RsvpPushState(status: RsvpPushStatus.failed));
     }
   }
+
+  @override
+  String get reportStep => 'RsvpPushCubit';
 }

@@ -11,7 +11,7 @@ part 'error_log_state.dart';
 ///
 /// The server decides who is admin: a refusal shows as
 /// [ErrorLogStatus.forbidden].
-class ErrorLogCubit extends Cubit<ErrorLogState> {
+class ErrorLogCubit extends Cubit<ErrorLogState> implements StepNamed {
   new({required this._clientErrorLog}) : super(const ErrorLogState());
 
   final ClientErrorLog _clientErrorLog;
@@ -55,4 +55,7 @@ class ErrorLogCubit extends Cubit<ErrorLogState> {
     await _errors?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'ErrorLogCubit';
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:contact_repository/contact_repository.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 
 part 'buddy_state.dart';
@@ -11,7 +12,7 @@ part 'buddy_state.dart';
 /// who hears when they miss a week without saying so, and for a buddy, the
 /// card that tells them someone did, with [Le escribo] opening WhatsApp
 /// with no number and no text. A rule in code sends it, never the model.
-class BuddyCubit extends Cubit<BuddyState> {
+class BuddyCubit extends Cubit<BuddyState> implements StepNamed {
   new({
     required this._rondaId,
     required this._uid,
@@ -124,4 +125,7 @@ class BuddyCubit extends Cubit<BuddyState> {
     await _asks?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'BuddyCubit';
 }

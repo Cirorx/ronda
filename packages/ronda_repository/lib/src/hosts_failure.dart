@@ -21,4 +21,7 @@ enum HostsFailureReason {
 class const HostsFailure(final HostsFailureReason reason) implements Exception {
   /// {@macro hosts_failure}
   this;
+
+  @override
+  String toString() => 'HostsFailure(${reason.name})';
 }

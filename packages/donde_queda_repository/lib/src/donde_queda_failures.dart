@@ -6,6 +6,9 @@ import 'package:donde_queda_repository/src/models/models.dart';
 class TakePhotoFailure implements Exception {
   /// {@macro take_photo_failure}
   const new();
+
+  @override
+  String toString() => 'TakePhotoFailure';
 }
 
 /// {@template blur_photo_failure}
@@ -14,6 +17,9 @@ class TakePhotoFailure implements Exception {
 class BlurPhotoFailure implements Exception {
   /// {@macro blur_photo_failure}
   const new();
+
+  @override
+  String toString() => 'BlurPhotoFailure';
 }
 
 /// {@template photo_refused_failure}
@@ -26,6 +32,9 @@ class const PhotoRefusedFailure(
 ) implements Exception {
   /// {@macro photo_refused_failure}
   this;
+
+  @override
+  String toString() => 'PhotoRefusedFailure(${reason.name})';
 }
 
 /// {@template not_your_turn_failure}
@@ -35,6 +44,9 @@ class const PhotoRefusedFailure(
 class NotYourTurnFailure implements Exception {
   /// {@macro not_your_turn_failure}
   const new();
+
+  @override
+  String toString() => 'NotYourTurnFailure';
 }
 
 /// {@template already_guessed_failure}
@@ -43,6 +55,9 @@ class NotYourTurnFailure implements Exception {
 class AlreadyGuessedFailure implements Exception {
   /// {@macro already_guessed_failure}
   const new();
+
+  @override
+  String toString() => 'AlreadyGuessedFailure';
 }
 
 /// {@template donde_queda_failure}
@@ -52,4 +67,7 @@ class AlreadyGuessedFailure implements Exception {
 class DondeQuedaFailure implements Exception {
   /// {@macro donde_queda_failure}
   const new();
+
+  @override
+  String toString() => 'DondeQuedaFailure';
 }

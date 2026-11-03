@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc/bloc.dart';
+import 'package:error_reporter/error_reporter.dart';
 
 /// What the app may show of the admin screens to whoever is signed in.
 enum AdminAccess {
@@ -32,7 +33,7 @@ enum AdminAccess {
 /// This only decides what the app shows. Every admin read and call is
 /// checked again on the server (`firestore.rules`, the callables'
 /// `_require_admin`).
-class AdminAccessCubit extends Cubit<AdminAccess> {
+class AdminAccessCubit extends Cubit<AdminAccess> implements StepNamed {
   new({required this._authRepository}) : super(AdminAccess.signedOut);
 
   final AuthRepository _authRepository;
@@ -85,4 +86,7 @@ class AdminAccessCubit extends Cubit<AdminAccess> {
     await _subscription?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'AdminAccessCubit';
 }

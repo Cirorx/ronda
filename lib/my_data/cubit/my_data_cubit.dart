@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:needs_repository/needs_repository.dart';
 import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda/onboarding/models/models.dart';
@@ -14,7 +15,7 @@ part 'my_data_state.dart';
 ///
 /// A member already in a ronda stays in it: a new barrio or new times count
 /// from the next time the solver groups people, and the screen says so.
-class MyDataCubit extends Cubit<MyDataState> {
+class MyDataCubit extends Cubit<MyDataState> implements StepNamed {
   new({
     required this._uid,
     required this._profileRepository,
@@ -139,4 +140,7 @@ class MyDataCubit extends Cubit<MyDataState> {
       emit(state.copyWith(status: MyDataStatus.saved, saved: profile));
     }
   }
+
+  @override
+  String get reportStep => 'MyDataCubit';
 }

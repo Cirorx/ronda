@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:cuaderno_repository/cuaderno_repository.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 
 part 'line_voice_state.dart';
 
@@ -14,7 +15,7 @@ part 'line_voice_state.dart';
 /// the server only through [CuadernoRepository], which refuses it before
 /// the terms, and is deleted once read. Leaving the screen throws an
 /// unfinished note away.
-class LineVoiceCubit extends Cubit<LineVoiceState> {
+class LineVoiceCubit extends Cubit<LineVoiceState> implements StepNamed {
   new({
     required this._uid,
     required this._cuadernoRepository,
@@ -150,4 +151,7 @@ class LineVoiceCubit extends Cubit<LineVoiceState> {
     await discarded;
     await super.close();
   }
+
+  @override
+  String get reportStep => 'LineVoiceCubit';
 }

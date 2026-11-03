@@ -13,6 +13,7 @@ ClientError _error(
   String code = 'voice/uploadFailed',
   String screen = '/onboarding',
   String platform = 'web',
+  String message = '',
   bool fatal = false,
   int hour = 20,
 }) => ClientError(
@@ -24,7 +25,7 @@ ClientError _error(
   screen: screen,
   step: 'voiceUpload',
   code: code,
-  message: '',
+  message: message,
   stack: '',
   fatal: fatal,
   at: DateTime.utc(2026, 10, 30, hour),
@@ -98,11 +99,11 @@ void main() {
       },
       expect: () => [
         const ErrorLogState(),
-        const ErrorLogState(openGroup: 'voice/uploadFailed\n/onboarding'),
+        const ErrorLogState(openGroup: 'voice/uploadFailed\n/onboarding\n'),
         ErrorLogState(
           status: ErrorLogStatus.ready,
           errors: [_error('b'), _error('a')],
-          openGroup: 'voice/uploadFailed\n/onboarding',
+          openGroup: 'voice/uploadFailed\n/onboarding\n',
         ),
         ErrorLogState(
           status: ErrorLogStatus.ready,
@@ -139,8 +140,45 @@ void main() {
       expect(state.group, equals(groups[1]));
     });
 
+    test('groups apart what said different things, titled by the message', () {
+      final state = ErrorLogState(
+        status: ErrorLogStatus.ready,
+        errors: [
+          _error('2', message: 'ReadPublishedSeatsFailure'),
+          _error('1', message: 'SaveEligibleSeatIdsFailure'),
+          _error('0', message: 'ReadPublishedSeatsFailure'),
+        ],
+      );
+
+      final groups = state.groups;
+
+      expect(groups.map((group) => (group.title, group.count)), [
+        ('ReadPublishedSeatsFailure', 2),
+        ('SaveEligibleSeatIdsFailure', 1),
+      ]);
+      expect(groups.first.code, equals('voice/uploadFailed'));
+    });
+
+    test('is titled by its code when it has no message', () {
+      final group = ErrorLogState(errors: [_error('0')]).groups.single;
+
+      expect(group.title, equals('voice/uploadFailed'));
+    });
+
+    test('copies every report of a group, split by a rule', () {
+      final group = ErrorLogState(errors: [_error('1'), _error('0')])
+          .groups
+          .single;
+
+      expect(group.reportText, contains('\n\n---\n\n'));
+      expect(
+        group.reportText,
+        startsWith('screen: /onboarding\nstep: voiceUpload'),
+      );
+    });
+
     test('has no open group when it has no reports left', () {
-      expect(const ErrorLogState(openGroup: 'gone\n/x').group, isNull);
+      expect(const ErrorLogState(openGroup: 'gone\n/x\n').group, isNull);
     });
   });
 }

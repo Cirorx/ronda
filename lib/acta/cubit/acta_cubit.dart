@@ -2,13 +2,14 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:organiser_repository/organiser_repository.dart';
 
 part 'acta_state.dart';
 
 /// "Lo que hizo el programa" for ronda [_rondaId]: follows its newest week
 /// of the acta and records [_uid]'s [Algo estuvo mal] for the admin.
-class ActaCubit extends Cubit<ActaState> {
+class ActaCubit extends Cubit<ActaState> implements StepNamed {
   new({
     required this._uid,
     required this._rondaId,
@@ -86,4 +87,7 @@ class ActaCubit extends Cubit<ActaState> {
     await _subscription?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'ActaCubit';
 }

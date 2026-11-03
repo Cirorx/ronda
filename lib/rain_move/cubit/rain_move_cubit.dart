@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:organiser_repository/organiser_repository.dart';
 
 part 'rain_move_state.dart';
@@ -9,7 +10,7 @@ part 'rain_move_state.dart';
 /// The host's side of a rain proposal for ronda [_rondaId]'s [_week]:
 /// follows it, shows the exact message of the option tapped, and sends that
 /// one message to the members.
-class RainMoveCubit extends Cubit<RainMoveState> {
+class RainMoveCubit extends Cubit<RainMoveState> implements StepNamed {
   new({
     required this._rondaId,
     required this._week,
@@ -95,4 +96,7 @@ class RainMoveCubit extends Cubit<RainMoveState> {
     await _subscription?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'RainMoveCubit';
 }

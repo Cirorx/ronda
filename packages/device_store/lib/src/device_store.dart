@@ -11,6 +11,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class DeviceStoreException implements Exception {
   /// {@macro device_store_exception}
   const new();
+
+  @override
+  String toString() => 'DeviceStoreException';
 }
 
 /// {@template device_store}

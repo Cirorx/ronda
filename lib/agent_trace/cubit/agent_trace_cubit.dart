@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:organiser_repository/organiser_repository.dart';
 
 part 'agent_trace_state.dart';
@@ -13,7 +14,7 @@ part 'agent_trace_state.dart';
 /// It follows the newest run, so a run started from here shows at once,
 /// unless the admin picked an older one. The server decides who is admin:
 /// a refusal shows as [AgentTraceStatus.forbidden].
-class AgentTraceCubit extends Cubit<AgentTraceState> {
+class AgentTraceCubit extends Cubit<AgentTraceState> implements StepNamed {
   new({required this._organiserRepository, DateTime Function()? now})
     : _now = now ?? DateTime.now,
       super(const AgentTraceState());
@@ -132,4 +133,7 @@ class AgentTraceCubit extends Cubit<AgentTraceState> {
     await _flags?.cancel();
     await super.close();
   }
+
+  @override
+  String get reportStep => 'AgentTraceCubit';
 }

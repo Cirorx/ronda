@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:error_reporter/error_reporter.dart';
 import 'package:ronda/phone_login/models/models.dart';
 
 part 'phone_login_state.dart';
@@ -13,7 +14,7 @@ part 'phone_login_state.dart';
 /// Android phone that reads the SMS by itself moves on with no tap.
 ///
 /// The number stays in this cubit's memory and Firebase Auth only.
-class PhoneLoginCubit extends Cubit<PhoneLoginState> {
+class PhoneLoginCubit extends Cubit<PhoneLoginState> implements StepNamed {
   new({required this._authRepository, this._now = DateTime.now})
     : super(const PhoneLoginState());
 
@@ -175,4 +176,7 @@ class PhoneLoginCubit extends Cubit<PhoneLoginState> {
     _countdown?.cancel();
     return super.close();
   }
+
+  @override
+  String get reportStep => 'PhoneLoginCubit';
 }
