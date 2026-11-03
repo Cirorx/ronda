@@ -55,7 +55,7 @@ void main() {
     });
 
     group('watchWelcome', () {
-      test('reads the newcomer\'s own welcome, waiter and sign', () async {
+      test("reads the newcomer's own welcome, waiter and sign", () async {
         await firestore.doc('rondas/r1/welcomes/demo-105').set(_nico);
 
         final welcome = (await subject.watchWelcome('r1', 'demo-105').first)!;

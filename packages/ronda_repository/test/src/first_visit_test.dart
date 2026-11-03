@@ -98,7 +98,8 @@ void main() {
         expect(await subject.watchFirstVisit('demo-105').first, isNull);
       });
 
-      test("gives the newcomer the anfitrión while nobody picked, the place and the hour", () async {
+      test('gives the newcomer the anfitrión while nobody picked, the place '
+          'and the hour', () async {
         when(() => rondasApi.watchWelcome('r1', 'demo-105'))
             .thenAnswer((_) => Stream.value(_open));
 

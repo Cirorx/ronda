@@ -16,7 +16,7 @@ class _MockRondaRepository extends Mock implements RondaRepository;
 
 void main() {
   group(FirstVisitSection, () {
-    testWidgets('follows the member\'s first visit from the repository', (
+    testWidgets("follows the member's first visit from the repository", (
       tester,
     ) async {
       final repository = _MockRondaRepository();
@@ -80,7 +80,7 @@ void main() {
       expect(find.byType(Card), findsNothing);
     });
 
-    group('the newcomer\'s card', () {
+    group("the newcomer's card", () {
       testWidgets('says who waits, how to know them, where and what comes '
           'first', (tester) async {
         await pump(
@@ -148,7 +148,7 @@ void main() {
       });
     });
 
-    group('the hosts\' question', () {
+    group("the hosts' question", () {
       testWidgets('asks who waits, and who does while nobody chose', (
         tester,
       ) async {
