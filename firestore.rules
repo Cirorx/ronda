@@ -105,14 +105,15 @@ service cloud.firestore {
     }
 
     // Each id is a seat id, `{barrio}_{pretext}_{slot}`; the size bound
-    // stays above every seat a phone sends: only those within ten blocks of
-    // the member, never more than a few barrios x 4 pretexts x 21 slots.
+    // stays above every seat a phone sends: every pretext and slot of each
+    // barrio within reach of casa and trabajo, at most 19 barrios x 7
+    // pretexts x 21 slots = 2793 today.
     function isEligibleSeatIds() {
       let data = request.resource.data;
       return data.keys().hasOnly(['seatIds', 'updatedAt'])
           && data.keys().hasAll(['seatIds', 'updatedAt'])
           && data.seatIds is list
-          && data.seatIds.size() <= 1000
+          && data.seatIds.size() <= 3000
           && isIdList(data.seatIds,
               idPattern() + '_' + idPattern() + '_' + slotPattern())
           && data.updatedAt == request.time;

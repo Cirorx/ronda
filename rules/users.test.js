@@ -257,10 +257,10 @@ describe('users/{uid}/private/eligible', () => {
   const seatIds = (count) =>
     Array.from({ length: count }, (_, i) => `barrio-${i}_mate_mon-morning`);
 
-  test('takes exactly the seat ids and the server time, up to 1000 ids', async () => {
+  test('takes exactly the seat ids and the server time, up to 3000 ids', async () => {
     await assertSucceeds(saveEligible(member()));
     await assertSucceeds(saveEligible(member(), { seatIds: [] }));
-    await assertSucceeds(saveEligible(member(), { seatIds: seatIds(1000) }));
+    await assertSucceeds(saveEligible(member(), { seatIds: seatIds(3000) }));
   });
 
   test('refuses needs, a mood or audio beside the ids', async () => {
@@ -281,8 +281,8 @@ describe('users/{uid}/private/eligible', () => {
     }
   });
 
-  test("refuses more than 1000 ids, a missing time or the phone's clock", async () => {
-    await assertFails(saveEligible(member(), { seatIds: seatIds(1001) }));
+  test("refuses more than 3000 ids, a missing time or the phone's clock", async () => {
+    await assertFails(saveEligible(member(), { seatIds: seatIds(3001) }));
     await assertFails(setDoc(doc(member(), ELIGIBLE), { seatIds: SEAT_IDS }));
     await assertFails(saveEligible(member(), { updatedAt: new Date() }));
   });
