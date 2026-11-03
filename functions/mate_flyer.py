@@ -85,13 +85,16 @@ MUTED = (90, 100, 119)
 MARGEN = (200, 67, 60)
 
 FONTS = pathlib.Path(__file__).resolve().parent / "fonts"
-TITLE_FONT = FONTS / "YoungSerif-Regular.ttf"
+TITLE_FONT = FONTS / "ZillaSlab-Bold.ttf"
 BODY_FONT = FONTS / "AtkinsonHyperlegible-Regular.ttf"
 BOLD_FONT = FONTS / "AtkinsonHyperlegible-Bold.ttf"
 
 HEADLINE = "Hay un mate de más."
 SUBHEAD = "Es tuyo."
-BODY = "Cinco vecinos, a pocas cuadras, todas las semanas. Venís y listo; no hace falta traer nada."
+BODY = (
+    "Los mismos vecinos, a pocas cuadras, todas las semanas. "
+    "Venís y listo; no hace falta traer nada."
+)
 MONEY = "Ronda nunca pide plata."
 QR_CAPTION = "Escaneá y mirá las rondas cerca de acá"
 
