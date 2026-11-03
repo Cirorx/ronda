@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:ronda_api/src/proposals/auto_form_document.dart';
 import 'package:ronda_api/src/proposals/proposal_document.dart';
 import 'package:ronda_api/src/proposals/ronda_candidates_document.dart';
 
@@ -31,6 +32,13 @@ class const ProposalsApi({
 
   /// The callable that approves a proposal, or takes an approval back.
   static const approveProposalCallable = 'approve_proposal';
+
+  /// The callable that writes `config/auto_form`.
+  static const setAutoFormCallable = 'set_auto_form';
+
+  /// Whether rondas form themselves, and the hold before they approve
+  /// themselves.
+  static const autoFormDocument = 'config/auto_form';
 
   /// The callable that lists who could be added to a ronda.
   static const rondaCandidatesCallable = 'ronda_candidates';
@@ -87,6 +95,34 @@ class const ProposalsApi({
   Future<void> undoApproval(String id) => functions
       .httpsCallable(approveProposalCallable)
       .call<Object?>({'proposalId': id, 'undo': true});
+
+  /// Stops auto proposal [id] from approving itself; it waits for
+  /// [approveProposal].
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails.
+  Future<void> stopProposal(String id) => functions
+      .httpsCallable(approveProposalCallable)
+      .call<Object?>({'proposalId': id, 'stop': true});
+
+  /// `config/auto_form` now and on every change; the server's defaults
+  /// while it doesn't exist.
+  ///
+  /// The stream errors with a [FirebaseException] when the rules refuse
+  /// the read.
+  Stream<AutoFormDocument> watchAutoForm() => firestore
+      .doc(autoFormDocument)
+      .snapshots()
+      .map((snapshot) => AutoFormDocument.fromJson(snapshot.data()));
+
+  /// Turns rondas forming themselves on or off, with a hold of
+  /// [holdMinutes].
+  ///
+  /// Throws a [FirebaseFunctionsException] when the call fails.
+  Future<void> setAutoForm({required bool enabled, required int holdMinutes}) =>
+      functions.httpsCallable(setAutoFormCallable).call<Object?>({
+        'enabled': enabled,
+        'holdMinutes': holdMinutes,
+      });
 
   /// Who could be added to ronda [rondaId], and who is in it now.
   ///

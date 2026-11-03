@@ -5394,5 +5394,119 @@
     "safetyLetBackIn": "Let back in",
     "@safetyLetBackIn": {
         "description": "Admin queue: undo Sacar de Ronda"
+    },
+    "adminAutoNobodyYet": "It formed on its own. Nobody gets anything until it is approved.",
+    "@adminAutoNobodyYet": {
+        "description": "Banner over a pending proposal the auto_form job formed"
+    },
+    "adminAutoApprovesAt": "Approves itself at {time}.",
+    "@adminAutoApprovesAt": {
+        "description": "Admin: when an auto proposal approves itself",
+        "placeholders": {
+            "time": {
+                "type": "String",
+                "example": "16:00"
+            }
+        }
+    },
+    "adminStop": "Stop",
+    "@adminStop": {
+        "description": "Button that keeps an auto proposal from approving itself"
+    },
+    "adminApproveNow": "Approve now",
+    "@adminApproveNow": {
+        "description": "Button that approves an auto proposal before its time"
+    },
+    "adminAutoStopped": "Stopped: it waits for you to approve it.",
+    "@adminAutoStopped": {
+        "description": "Admin: an auto proposal the admin stopped"
+    },
+    "adminAutoBlockedSetup": "It does not approve itself: a group has no place, hour or host.",
+    "@adminAutoBlockedSetup": {
+        "description": "Admin: why an auto proposal waits"
+    },
+    "adminAutoBlockedReport": "It does not approve itself: someone in it is in an open report.",
+    "@adminAutoBlockedReport": {
+        "description": "Admin: why an auto proposal waits"
+    },
+    "adminAutoBlockedAvoid": "It does not approve itself: someone in it is in a pair kept apart.",
+    "@adminAutoBlockedAvoid": {
+        "description": "Admin: why an auto proposal waits"
+    },
+    "adminAutoBlockedSeated": "It does not approve itself: someone in it is in another ronda now.",
+    "@adminAutoBlockedSeated": {
+        "description": "Admin: why an auto proposal waits"
+    },
+    "adminAutoBlockedRemoved": "It does not approve itself: someone in it is out of Ronda.",
+    "@adminAutoBlockedRemoved": {
+        "description": "Admin: why an auto proposal waits"
+    },
+    "adminAutoBlockedOther": "It does not approve itself. Check it and approve it yourself.",
+    "@adminAutoBlockedOther": {
+        "description": "Admin: an auto proposal waits for a reason the app does not know"
+    },
+    "adminSetupWhere": "{place}, at {hour}",
+    "@adminSetupWhere": {
+        "description": "Admin: the place and hour of a proposed ronda",
+        "placeholders": {
+            "place": {
+                "type": "String",
+                "example": "la plaza del barrio"
+            },
+            "hour": {
+                "type": "String",
+                "example": "16:00"
+            }
+        }
+    },
+    "adminSetupHosts": "{anfitrion} opens, {cola} closes.",
+    "@adminSetupHosts": {
+        "description": "Admin: who opens and closes a proposed ronda",
+        "placeholders": {
+            "anfitrion": {
+                "type": "String",
+                "example": "Ana"
+            },
+            "cola": {
+                "type": "String",
+                "example": "Beto"
+            }
+        }
+    },
+    "adminSetupByAgent": "The program chose it:",
+    "@adminSetupByAgent": {
+        "description": "Admin: before the organiser agent's reason (shown in Spanish)"
+    },
+    "adminSetupByRule": "Fixed rule:",
+    "@adminSetupByRule": {
+        "description": "Admin: before the rule code followed when the agent could not choose"
+    },
+    "adminAutoFormTitle": "Rondas that form themselves",
+    "@adminAutoFormTitle": {
+        "description": "Admin: the auto_form section"
+    },
+    "adminAutoFormBody": "Every hour the program groups whoever is waiting, picks a public place, the hour and who opens, and approves it once the minutes below pass. Until then you can stop it.",
+    "@adminAutoFormBody": {
+        "description": "Admin: what auto_form does"
+    },
+    "adminAutoFormSwitch": "Form them on their own",
+    "@adminAutoFormSwitch": {
+        "description": "Admin: the auto_form switch"
+    },
+    "adminAutoFormHold": "Minutes to stop it",
+    "@adminAutoFormHold": {
+        "description": "Admin: the hold field's label"
+    },
+    "adminAutoFormHoldInvalid": "From 0 to 1440.",
+    "@adminAutoFormHoldInvalid": {
+        "description": "Admin: the hold field takes 0 to a day"
+    },
+    "adminAutoFormSave": "Save",
+    "@adminAutoFormSave": {
+        "description": "Admin: saves the hold"
+    },
+    "adminAutoFormLoadError": "Couldn't read the setting.",
+    "@adminAutoFormLoadError": {
+        "description": "Admin: the auto_form setting failed to load"
     }
 }

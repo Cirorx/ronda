@@ -146,6 +146,121 @@ void main() {
         );
       });
 
+      test('reads a superseded proposal as superseded', () {
+        when(proposalsApi.watchLatestProposal)
+            .thenAnswer((_) => Stream.value(document(status: 'superseded')));
+
+        expect(
+          subject.watchLatestProposal().map((p) => p?.status),
+          emits(ProposalStatus.superseded),
+        );
+      });
+
+      test('reads a manual proposal as one that never approves itself', () {
+        when(proposalsApi.watchLatestProposal)
+            .thenAnswer((_) => Stream.value(document()));
+
+        expect(
+          subject.watchLatestProposal(),
+          emits(
+            isA<Proposal>()
+                .having((p) => p.auto, 'auto', isFalse)
+                .having((p) => p.approvesItself, 'approvesItself', isFalse)
+                .having((p) => p.rondas.single.setup, 'setup', isNull),
+          ),
+        );
+      });
+
+      test('reads an auto proposal with its hold and setup', () {
+        final approveAt = DateTime.utc(2026, 10, 27, 16);
+        final base = document();
+        when(proposalsApi.watchLatestProposal).thenAnswer(
+          (_) => Stream.value(
+            ProposalDocument(
+              id: base.id,
+              status: base.status,
+              unseated: base.unseated,
+              createdAt: base.createdAt,
+              auto: true,
+              approveAt: approveAt,
+              groups: [
+                ProposedGroupDocument(
+                  seatId: 's',
+                  barrio: 'lagomar-sur',
+                  pretext: 'mate',
+                  slot: 'sat-afternoon',
+                  members: base.groups.single.members,
+                  setup: const ProposedSetupDocument(
+                    placeName: 'la Plaza Inventada',
+                    hour: '16:30',
+                    anfitrionName: 'Marta',
+                    colaName: 'Jorge',
+                    reason: 'Queda cerca.',
+                    by: 'agent',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+
+        expect(
+          subject.watchLatestProposal(),
+          emits(
+            isA<Proposal>()
+                .having((p) => p.approveAt, 'approveAt', approveAt)
+                .having((p) => p.approvesItself, 'approvesItself', isTrue)
+                .having(
+                  (p) => p.rondas.single.setup,
+                  'setup',
+                  const ProposedSetup(
+                    placeName: 'la Plaza Inventada',
+                    hour: '16:30',
+                    anfitrionName: 'Marta',
+                    colaName: 'Jorge',
+                    reason: 'Queda cerca.',
+                    byAgent: true,
+                  ),
+                ),
+          ),
+        );
+      });
+
+      for (final (stopped, autoBlocked, blocked) in [
+        (true, null, AutoBlock.stopped),
+        (false, 'report', AutoBlock.report),
+        (false, 'seated', AutoBlock.seated),
+        (true, 'something-new', AutoBlock.other),
+      ]) {
+        test('reads $autoBlocked, stopped $stopped, as $blocked', () {
+          final base = document();
+          when(proposalsApi.watchLatestProposal).thenAnswer(
+            (_) => Stream.value(
+              ProposalDocument(
+                id: base.id,
+                status: base.status,
+                groups: base.groups,
+                unseated: base.unseated,
+                createdAt: base.createdAt,
+                auto: true,
+                approveAt: createdAt,
+                stopped: stopped,
+                autoBlocked: autoBlocked,
+              ),
+            ),
+          );
+
+          expect(
+            subject.watchLatestProposal(),
+            emits(
+              isA<Proposal>()
+                  .having((p) => p.blocked, 'blocked', blocked)
+                  .having((p) => p.approvesItself, 'approvesItself', isFalse),
+            ),
+          );
+        });
+      }
+
       test('emits null while there is none', () {
         when(proposalsApi.watchLatestProposal)
             .thenAnswer((_) => Stream.value(null));
@@ -248,6 +363,67 @@ void main() {
           () => subject.approveProposal('p1'),
           failsWith(ProposalsFailureReason.other),
         );
+      });
+    });
+
+    group('stopProposal', () {
+      test('stops it', () async {
+        when(() => proposalsApi.stopProposal('p1')).thenAnswer((_) async {});
+
+        await subject.stopProposal('p1');
+
+        verify(() => proposalsApi.stopProposal('p1')).called(1);
+      });
+    });
+
+    group('watchAutoForm', () {
+      test('emits the switch and the hold', () {
+        when(proposalsApi.watchAutoForm).thenAnswer(
+          (_) => Stream.value(
+            const AutoFormDocument(enabled: false, holdMinutes: 0),
+          ),
+        );
+
+        expect(
+          subject.watchAutoForm(),
+          emits(const AutoFormSettings(enabled: false, holdMinutes: 0)),
+        );
+      });
+
+      test('errors as forbidden when the rules refuse the read', () {
+        when(proposalsApi.watchAutoForm).thenAnswer(
+          (_) => Stream.error(
+            FirebaseException(
+              plugin: 'cloud_firestore',
+              code: 'permission-denied',
+            ),
+          ),
+        );
+
+        expect(
+          subject.watchAutoForm(),
+          emitsError(
+            isA<ProposalsFailure>().having(
+              (f) => f.reason,
+              'reason',
+              ProposalsFailureReason.forbidden,
+            ),
+          ),
+        );
+      });
+    });
+
+    group('setAutoForm', () {
+      test('sends the switch and the hold', () async {
+        when(() => proposalsApi.setAutoForm(enabled: true, holdMinutes: 30))
+            .thenAnswer((_) async {});
+
+        await subject.setAutoForm(
+          const AutoFormSettings(enabled: true, holdMinutes: 30),
+        );
+
+        verify(() => proposalsApi.setAutoForm(enabled: true, holdMinutes: 30))
+            .called(1);
       });
     });
 

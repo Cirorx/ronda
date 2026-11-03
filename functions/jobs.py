@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import attendance
+import auto_form
 import bench
 import buddy
 import day_of
@@ -95,6 +96,10 @@ JOBS: dict[str, Callable[[object, datetime, Context], dict]] = {
     # The seat catalogue phones match needs against; writes only when it changed.
     "seat_catalog": lambda db, now, context: seat_catalog.run_seat_catalog(
         db, now, force=context.force
+    ),
+    # Rondas that form themselves: the solver, the agent's setup, approval after the hold.
+    "auto_form": lambda db, now, context: auto_form.run_auto_form(
+        db, now, send=context.send, app_url=context.app_url
     ),
     # The day-of reminder with the next city buses (#65), for every ronda not switched off.
     "day_of": lambda db, now, context: day_of.run_day_of(

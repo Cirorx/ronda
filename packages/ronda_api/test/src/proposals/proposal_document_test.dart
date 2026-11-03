@@ -47,6 +47,57 @@ void main() {
         expect(document.rondaIds, isEmpty);
       });
 
+      test('reads a manual proposal as not auto, with no setup', () {
+        final document = ProposalDocument.fromJson('p1', json());
+
+        expect(document.auto, isFalse);
+        expect(document.approveAt, isNull);
+        expect(document.stopped, isFalse);
+        expect(document.autoBlocked, isNull);
+        expect(document.groups.single.setup, isNull);
+      });
+
+      test("reads an auto proposal, its hold and each group's setup", () {
+        final [group] = json()['groups']! as List<Object?>;
+        final document = ProposalDocument.fromJson('p1', {
+          ...json(
+            groups: [
+              {
+                ...group! as Map<String, Object?>,
+                'setup': {
+                  'placeId': 'plaza-inventada',
+                  'place': {'name': 'la Plaza Inventada'},
+                  'hour': '16:30',
+                  'anfitrion': 'demo-001',
+                  'cola': 'demo-002',
+                  'anfitrionName': 'Marta',
+                  'colaName': 'Jorge',
+                  'reason': 'Queda cerca de todos.',
+                  'by': 'agent',
+                  'runId': 'auto_p1_1',
+                },
+              },
+            ],
+          ),
+          'auto': true,
+          'approveAt': Timestamp.fromDate(DateTime.utc(2026, 10, 27, 16)),
+          'stoppedAt': Timestamp.fromDate(DateTime.utc(2026, 10, 27, 15, 30)),
+          'autoBlocked': 'stopped',
+        });
+
+        expect(document.auto, isTrue);
+        expect(document.approveAt?.toUtc(), DateTime.utc(2026, 10, 27, 16));
+        expect(document.stopped, isTrue);
+        expect(document.autoBlocked, 'stopped');
+        final setup = document.groups.single.setup!;
+        expect(setup.placeName, 'la Plaza Inventada');
+        expect(setup.hour, '16:30');
+        expect(setup.anfitrionName, 'Marta');
+        expect(setup.colaName, 'Jorge');
+        expect(setup.reason, 'Queda cerca de todos.');
+        expect(setup.by, 'agent');
+      });
+
       test('reads who is left out and the rondas it became', () {
         final document = ProposalDocument.fromJson('p1', {
           ...json(unseated: ['demo-009']),
@@ -113,6 +164,24 @@ void main() {
           ...json(),
           'rondaIds': [1],
         },
+        'an auto flag that is not a bool': {...json(), 'auto': 'yes'},
+        'an approval time that is not a timestamp': {
+          ...json(),
+          'approveAt': '16:00',
+        },
+        'a blocker that is not a string': {...json(), 'autoBlocked': 1},
+        'a setup of another shape': json(
+          groups: [
+            {
+              'id': 's',
+              'barrio': 'b',
+              'pretext': 'p',
+              'slot': 'sat-afternoon',
+              'members': <Object?>[],
+              'setup': {'hour': '16:00'},
+            },
+          ],
+        ),
       };
       for (final MapEntry(key: name, value: data) in malformed.entries) {
         test('throws a $FormatException for $name', () {

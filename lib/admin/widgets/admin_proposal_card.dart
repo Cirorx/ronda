@@ -7,7 +7,8 @@ import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// One proposed ronda for the admin: what, where and when, its members
-/// (first name, age band, walk) and the checks it passes or breaks. Once
+/// (first name, age band, walk) and the checks it passes or breaks; on an
+/// auto proposal, the place, hour and hosts the organiser chose and why. Once
 /// approved, "Sumar a esta ronda" opens the [AddToRondaSheet].
 class const AdminProposalCard({required final ProposedRonda ronda, super.key})
     extends StatelessWidget {
@@ -50,6 +51,31 @@ class const AdminProposalCard({required final ProposedRonda ronda, super.key})
                 detail: _memberDetail(l10n, member),
                 showDivider: index < ronda.members.length - 1,
               ),
+            if (ronda.setup case final setup?) ...[
+              SizedBox(height: spacing.sm),
+              Text(
+                l10n.adminSetupWhere(setup.placeName, setup.hour),
+                style: theme.textTheme.bodyLarge,
+              ),
+              Text(
+                l10n.adminSetupHosts(setup.anfitrionName, setup.colaName),
+                style: theme.textTheme.bodyMedium,
+              ),
+              // The agent's (or the rule's) own es-419 line: the admin reads
+              // Spanish, as with "Por qué no otra opción".
+              Text(
+                [
+                  if (setup.byAgent)
+                    l10n.adminSetupByAgent
+                  else
+                    l10n.adminSetupByRule,
+                  setup.reason,
+                ].join(' '),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
             SizedBox(height: spacing.sm),
             for (final (kept, label) in _checks(l10n))
               _Check(kept: kept, label: label),

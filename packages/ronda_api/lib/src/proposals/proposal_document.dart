@@ -8,7 +8,7 @@ class const ProposalDocument({
   /// The document id.
   required final String id,
 
-  /// `pending` or `approved`.
+  /// `pending`, `approved` or `superseded` (a newer proposal replaced it).
   required final String status,
 
   /// One entry per proposed ronda.
@@ -31,6 +31,21 @@ class const ProposalDocument({
   /// Once approved, the ronda each group became, in group order; empty
   /// while pending.
   final List<String> rondaIds = const [],
+
+  /// Whether the `auto_form` job wrote it, so it approves itself at
+  /// [approveAt] unless something stops it.
+  final bool auto = false,
+
+  /// When an [auto] proposal approves itself; `null` on a manual one.
+  final DateTime? approveAt,
+
+  /// Whether the admin stopped an [auto] proposal (Frenar): it waits for
+  /// a manual approval.
+  final bool stopped = false,
+
+  /// Why an [auto] proposal didn't approve itself (`stopped`, `setup`,
+  /// `report`, `avoid`, `seated`, `removed`); `null` while nothing blocks it.
+  final String? autoBlocked,
 }) {
   /// {@macro proposal_document}
   this;
@@ -70,6 +85,22 @@ class const ProposalDocument({
           for (final rondaId in _list(id, json['rondaIds']))
             if (rondaId is String) rondaId else throw _shape(id),
         ],
+        auto: switch (json['auto']) {
+          null => false,
+          final bool auto => auto,
+          _ => throw _shape(id),
+        },
+        approveAt: switch (json['approveAt']) {
+          null => null,
+          final Timestamp at => at.toDate(),
+          _ => throw _shape(id),
+        },
+        stopped: json['stoppedAt'] != null,
+        autoBlocked: switch (json['autoBlocked']) {
+          null => null,
+          final String why => why,
+          _ => throw _shape(id),
+        },
       );
     }
     throw _shape(id);
@@ -94,6 +125,10 @@ class const ProposedGroupDocument({
 
   /// Who the solver put in it.
   required final List<ProposedMemberDocument> members,
+
+  /// The place, hour and hosts the organiser chose for an auto proposal;
+  /// `null` on a manual one, or when neither the agent nor code could.
+  final ProposedSetupDocument? setup,
 }) {
   /// {@macro proposed_group_document}
   this;
@@ -116,6 +151,62 @@ class const ProposedGroupDocument({
           for (final member in members)
             ProposedMemberDocument.fromJson(proposalId, member),
         ],
+        setup: switch (json['setup']) {
+          null => null,
+          final Object setup => ProposedSetupDocument.fromJson(
+            proposalId,
+            setup,
+          ),
+        },
+      );
+    }
+    throw _shape(proposalId);
+  }
+}
+
+/// {@template proposed_setup_document}
+/// A group's `setup`: where, when and who opens, as `functions/auto_setup.py`
+/// writes it.
+/// {@endtemplate}
+class const ProposedSetupDocument({
+  /// The public place's name, with its article ("la plaza del barrio").
+  required final String placeName,
+
+  /// The hour, `HH:MM`, inside the slot's band.
+  required final String hour,
+
+  /// Who opens, by first name.
+  required final String anfitrionName,
+
+  /// Who closes, by first name.
+  required final String colaName,
+
+  /// Why, in one es-419 line: the agent's, or code's fixed rule.
+  required final String reason,
+
+  /// `agent` or `code`: who chose it.
+  required final String by,
+}) {
+  /// {@macro proposed_setup_document}
+  this;
+
+  /// Reads the `setup` of a group of proposal [proposalId].
+  factory fromJson(String proposalId, Object? json) {
+    if (json case {
+      'place': {'name': final String placeName},
+      'hour': final String hour,
+      'anfitrionName': final String anfitrionName,
+      'colaName': final String colaName,
+      'reason': final String reason,
+      'by': final String by,
+    }) {
+      return ProposedSetupDocument(
+        placeName: placeName,
+        hour: hour,
+        anfitrionName: anfitrionName,
+        colaName: colaName,
+        reason: reason,
+        by: by,
       );
     }
     throw _shape(proposalId);

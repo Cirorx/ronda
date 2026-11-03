@@ -240,6 +240,28 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   "Nadie recibe nada hasta que lo aprobás." [Aprobar y avisarles] → "Aprobado. Les llega el
   martes a las 19." with [Deshacer]. Under the groups, who is left out: "2 personas quedan sin
   lugar por ahora." and each by first name, barrio and the slots they picked.
+- **Rondas that form themselves** (owner, 2026-11-02; this changes "Nadie recibe nada hasta que
+  lo aprobás" from a rule to a default): every hour the `auto_form` job runs the same solver
+  and checks as "Armar las rondas" on whoever is waiting and writes an auto proposal. For each
+  group the organiser agent picks a public place from the cached OpenStreetMap places near
+  them, the hour inside the band and who opens (the next in the rotation closes); code checks
+  every field and, when the agent can't, picks the nearest open place, the band's usual hour
+  (10:00, 16:00, 19:00) and the rotation's first pair. After the hold (60 minutes by default,
+  "Minutos para frenarla") it approves itself, place, hour and hosts already set, so members
+  get a complete card and a notice, «Ya tenés ronda: Jueves 16:00 · mate en la rambla · la
+  plaza del barrio. Los detalles están en Mi ronda.», through the gates: an approval at night is
+  announced at 09:00.
+  - The admin keeps the window: "Se formó sola. Nadie recibe nada hasta que se apruebe." "Se
+    aprueba sola a las 16:05." with the place, hour, hosts and "Lo eligió el programa: …" (or
+    "Regla fija: …") on each ronda, [Aprobar ya] and [Frenar]. A stopped one ("Frenada: espera
+    que la apruebes.") waits for [Aprobar y avisarles].
+  - It never approves itself when a group has no setup, anyone in it is in an open report or
+    a separated pair, sits in another ronda by now or is out of Ronda: "No se aprueba sola: …"
+    and it waits for Aprobar. While an auto proposal waits, no new one forms.
+  - A new proposal, auto or "Armar las rondas", supersedes the older pending ones that name
+    the same people, so the queue holds one.
+  - "Rondas que se arman solas" on the Admin tab: [Que se armen solas] and the hold, 0 to 1440
+    minutes (0 approves at once, for the demo).
 - **Sumar a esta ronda** (admin, on an approved ronda): "3 de 6 lugares ocupados", then every
   sign-up not in it, with what doesn't match ("No eligió este día y horario", "Vive a más de 10
   cuadras", "Su teléfono no marcó este lugar como posible") and "Ya está en …" for someone in

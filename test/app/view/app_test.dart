@@ -168,6 +168,11 @@ void main() {
           .thenAnswer((_) async => PushPermission.blocked);
       when(rondaRepository.watchLatestProposal)
           .thenAnswer((_) => Stream.value(null));
+      when(rondaRepository.watchAutoForm).thenAnswer(
+        (_) => Stream.value(
+          const AutoFormSettings(enabled: true, holdMinutes: 60),
+        ),
+      );
       when(() => rondaRepository.watchThisWeek(any()))
           .thenAnswer((_) => Stream.value(null));
       when(() => rondaRepository.watchSeguimos(any()))

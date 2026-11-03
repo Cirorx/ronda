@@ -118,17 +118,38 @@ def propose_groups(req: https_fn.CallableRequest) -> dict:
     invoker="public",
 )
 def approve_proposal(req: https_fn.CallableRequest) -> dict:
-    """Approves a pending proposal into rondas, or with `undo: true` takes an approval back.
-    Admin only."""
+    """Approves a pending proposal into rondas, with `undo: true` takes an approval back, and
+    with `stop: true` stops an auto proposal from approving itself ([Frenar]). Admin only."""
     admin_uid = _require_admin(req)
     proposal_id = _proposal_id(req)
     import proposals
 
+    data = req.data or {}
     try:
-        if (req.data or {}).get("undo") is True:
-            return proposals.undo_approval(_firestore(), proposal_id)
+        if data.get("undo") is True:
+            return proposals.undo_approval(_firestore(), proposal_id, admin_uid, _now())
+        if data.get("stop") is True:
+            return proposals.stop(_firestore(), proposal_id, admin_uid, _now())
         return proposals.approve(_firestore(), proposal_id, admin_uid, _now())
     except proposals.ProposalError as error:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode(error.code), str(error)) from error
+
+
+@https_fn.on_call(
+    region=REGION,
+    max_instances=1,
+    memory=options.MemoryOption.MB_512,
+    invoker="public",
+)
+def set_auto_form(req: https_fn.CallableRequest) -> dict:
+    """Turns rondas forming themselves on or off and sets the hold before they approve
+    themselves: `{enabled, holdMinutes}` (auto_form.py). Admin only."""
+    admin_uid = _require_admin(req)
+    import auto_form
+
+    try:
+        return auto_form.set_config(_firestore(), req.data, admin_uid, _now())
+    except auto_form.ConfigError as error:
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode(error.code), str(error)) from error
 
 
@@ -386,14 +407,16 @@ def flyer_landing(req: https_fn.Request) -> https_fn.Response:
 MONTEVIDEO = "America/Montevideo"
 
 
-# On the hour in Montevideo, so a 19:00 lead time goes out at 19:00.
+# On the hour in Montevideo, so a 19:00 lead time goes out at 19:00. `auto_form` runs the
+# solver here (8 s on every core, then 2 s): 2 vCPUs need 1 GiB on Cloud Run.
 @scheduler_fn.on_schedule(
     schedule="0 * * * *",
     timezone=scheduler_fn.Timezone(MONTEVIDEO),
     region=REGION,
     max_instances=1,
     timeout_sec=300,
-    memory=options.MemoryOption.MB_512,
+    memory=options.MemoryOption.GB_1,
+    cpu=2,
     secrets=[MODEL_API_KEY, BASETEN_API_KEY, MVD_API_CLIENT_ID, MVD_API_SECRET_ID],
 )
 def dispatch(event: scheduler_fn.ScheduledEvent) -> None:
@@ -407,7 +430,8 @@ def dispatch(event: scheduler_fn.ScheduledEvent) -> None:
     region=REGION,
     max_instances=1,
     timeout_sec=300,
-    memory=options.MemoryOption.MB_512,
+    memory=options.MemoryOption.GB_1,
+    cpu=2,
     secrets=[MODEL_API_KEY, BASETEN_API_KEY, MVD_API_CLIENT_ID, MVD_API_SECRET_ID],
     invoker="public",
 )

@@ -21,6 +21,11 @@ class const AdminPage({super.key}) extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) =>
+              AutoFormCubit(rondaRepository: context.read<RondaRepository>())
+                ..subscribe(),
+        ),
+        BlocProvider(
+          create: (context) =>
               RsvpPushCubit(rondaRepository: context.read<RondaRepository>()),
         ),
         BlocProvider(

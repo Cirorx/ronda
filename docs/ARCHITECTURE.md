@@ -573,6 +573,13 @@ isn't set up).
   approvedAt, approvedBy. `plusOneInGroup` is set only when the member's +1 also signed up.
   `unseatedPeople [{uid, firstName, barrio, slots, pretexts}]` names the unseated for /admin
   (#55; older proposals lack it); `unseated` stays the uids `scripts/reset.py` reads.
+  Status `superseded` (with supersededBy, supersededAt) marks an older pending proposal a newer
+  one replaced because they name someone in common (`proposals.supersede`, run by both
+  `propose_groups` and `auto_form`). An auto proposal (`functions/auto_form.py`) adds auto
+  true, approveAt, createdBy `auto_form`, each group's `setup` {placeId, place {name}, hour,
+  anfitrion, cola, anfitrionName, colaName, reason, by (agent | code), runId} or null,
+  stoppedAt and stoppedBy ([Frenar]), autoBlocked (stopped | setup | report | avoid | seated |
+  removed) and autoBlockedAt, and once approved notice (pending | sent) and noticeAt.
   Read by the admin claim only (`request.auth.token.admin == true`), written only by the
   callables, so nothing reaches members before approval (rules test: `rules/`).
   - `propose_groups` (admin only, 2 GiB, 4 vCPU, max 1 instance, no min instances) reads
@@ -584,7 +591,13 @@ isn't set up).
     slot {day, time}, size, status forming, openSeatFromWeek 4, createdAt; no place, hosts or
     season yet) and `rondas/{id}/members/{uid}` (brings, state active, joinedAt) per group in one
     batch, with `users/{uid}/rondas/{id}` for each member, then marks the proposal approved. `{proposalId, undo: true}` deletes them and puts it
-    back to pending ([Deshacer]; nothing has been sent yet: the Tuesday push is the agent's).
+    back to pending ([Deshacer]; nothing has been sent yet: the Tuesday push is the agent's). A group with a `setup` gets its place, hour and
+    hosts through `hosts.set_setup` right after the batch (a setup the checks refuse leaves it
+    "a confirmar"); undoing an auto approval brings it back stopped. `{proposalId, stop: true}`
+    is [Frenar].
+- `config/auto_form` {enabled, holdMinutes, updatedAt, updatedBy}: read by the admin only,
+  written only by `set_auto_form` (admin; enabled bool, holdMinutes 0 to 1440). Missing or
+  malformed fields read as on and 60 minutes.
     One batch holds 500 writes, enough for about 240 members.
   - The admin claim is set by `scripts/set_admin.py <email>` after the owner signs in once.
     The app reads it from a forced-refreshed ID token (`AuthRepository.hasAdminClaim`, then
@@ -755,7 +768,8 @@ Built in `solver/` (#23): pure Python, JSON in and out, no Firebase imports. The
 weights and limits are in `solver/README.md`; every rule name and number is in
 `solver/ronda_solver/rules.py`.
 
-- Runs per season, never weekly. Only the season run is built: there is no input for existing
+- Runs per season, never weekly: on the admin's "Armar las rondas" and, for whoever is
+  waiting, the hourly `auto_form` job (§ Organiser agent). There is no input for existing
   rondas yet, so it takes only people with no seat in a ronda that still meets
   (`functions/proposals.py`); a ronda grows through Cerca and the admin's "Sumar a esta ronda".
 - Candidate rondas are barrio × pretext × slot, one per key. A seat id is that key,
@@ -783,7 +797,8 @@ weights and limits are in `solver/README.md`; every rule name and number is in
   `propose_move` (to the host), `send_member_push` (gated), `assign_hosts`, `prompt_buddy`,
   `offer_bench_seat`, `log_acta`. Every tool call is idempotent, takes a required `reason`, and is
   logged to the acta.
-- Two humans in the loop: Ciro approves groups; the host decides moves; the buddy writes the
+- Two humans in the loop: Ciro approves groups (or lets an auto proposal approve itself after
+  the hold, owner 2026-11-02); the host decides moves; the buddy writes the
   check-in in their own words.
 - Gates in code (not prompt): quiet hours 21:00–09:00, bot disclosure, no emoji, voseo, no
   money, one routine push a week, public places only for the ronda itself (the host may set a
@@ -880,6 +895,33 @@ code jobs with no model, § Data model, the weekly loop's code jobs):
     model. Measured live on three demo rondas (`evals/card/RESULTS.md`, 2026-11-01): Spark
     Open answered every turn, 4 turns and about 7.8 s of model time per card, about 9,500
     tokens in and 1,100 out, about $0.017 a card. Build sizes and the licences: docs/STACK.md.
+
+- **Rondas that form themselves** (`functions/auto_form.py`, job `auto_form`;
+  `functions/auto_setup.py`), approved by the owner on 2026-11-02. Each hour, with
+  `config/auto_form.enabled`: approve what is due, form, approve again (a hold of 0 approves in
+  the same run), then send the notices. The dispatcher and `run_job` got 1 GiB and 2 vCPUs for
+  the solver.
+  - Forming: only while no auto proposal is pending, the same input as `propose_groups`
+    (`proposals.solve_sign_ups`; it also leaves out anyone holding a pending bench offer), and
+    only when it seats someone.
+  - The setup (job `auto_setup`, trace `agent_runs/auto_{proposalId}_{n}`, its `rondaId` filled
+    on approval): the model gets the pretext, the first meeting's day and band, the members as
+    `m1`, `m2`… and up to eight cached `osm_places` nearest the members' barrio centroids
+    (within ten blocks, names of at most 60 characters), each with its kind, hours and the
+    blocks from each label; never a name, uid or barrio. It calls `propose_setup(place_id,
+    hour, host, reason)` once; code refuses a place it didn't offer or that is closed then, an
+    hour outside the band, a host outside the labels, or a reason the word gates refuse, and
+    the model gets one retry (4 turns at most). The kept reason has the labels replaced by
+    first names. Fallback in code: the nearest offered place open at the band's usual hour,
+    that hour, and the rotation's first pair; no place at all leaves `setup` null and the
+    proposal `autoBlocked: setup`.
+  - Approval goes through `proposals.approve`, the same path as [Aprobar], after `blocker`
+    finds nothing: stopped, an incomplete setup, an open report from or about a member, a
+    member in any avoid pair, seated elsewhere, or removed.
+  - The notice: kind `notice` through the outbox and every gate, one trace
+    `agent_runs/{rondaId}_formed` per ronda, nothing from 21:00 to 09:00. A manual approval
+    sends none, as before.
+  - Measured on Baseten: § Rondas that form themselves in docs/MODELS.md.
 
 ## Montevideo's city buses and the day-of reminder (#65)
 

@@ -19,6 +19,9 @@ class _MockProposalsCubit extends MockCubit<ProposalsState>
 class _MockRsvpPushCubit extends MockCubit<RsvpPushState>
     implements RsvpPushCubit;
 
+class _MockAutoFormCubit extends MockCubit<AutoFormState>
+    implements AutoFormCubit;
+
 class _MockSeguimosCountsCubit extends MockCubit<SeguimosCountsState>
     implements SeguimosCountsCubit;
 
@@ -32,6 +35,17 @@ class _MockRondaSetupCubit extends MockCubit<RondaSetupState>
     implements RondaSetupCubit;
 
 final _at = DateTime(2026, 11, 4, 18, 4);
+
+AutoFormCubit autoFormCubit() {
+  final cubit = _MockAutoFormCubit();
+  when(() => cubit.state).thenReturn(
+    const AutoFormState(
+      status: AutoFormStatus.ready,
+      settings: AutoFormSettings(enabled: true, holdMinutes: 60),
+    ),
+  );
+  return cubit;
+}
 
 void main() {
   group('$AdminView on wide windows', () {
@@ -79,6 +93,7 @@ void main() {
           providers: [
             BlocProvider.value(value: cubit),
             BlocProvider.value(value: rsvpPushCubit),
+            BlocProvider.value(value: autoFormCubit()),
             BlocProvider.value(value: unreadReports()),
             BlocProvider.value(value: seguimosCountsCubit),
             BlocProvider.value(value: pilotNumbersCubit),

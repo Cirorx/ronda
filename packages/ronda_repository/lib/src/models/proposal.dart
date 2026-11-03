@@ -7,6 +7,33 @@ enum ProposalStatus {
 
   /// Approved: its rondas exist.
   approved,
+
+  /// A newer proposal covering the same people replaced it.
+  superseded,
+}
+
+/// Why an auto proposal didn't approve itself: it waits for the admin.
+enum AutoBlock {
+  /// The admin stopped it (Frenar).
+  stopped,
+
+  /// A group has no place, hour or host.
+  setup,
+
+  /// One of its people is in an open safety report.
+  report,
+
+  /// One of its people is in a pair kept apart.
+  avoid,
+
+  /// One of its people sits in another ronda by now.
+  seated,
+
+  /// One of its people is out of Ronda.
+  removed,
+
+  /// A reason this app doesn't know yet.
+  other,
 }
 
 /// {@template proposal}
@@ -36,9 +63,25 @@ class const Proposal({
   /// Who it leaves without a seat, by name; empty on a proposal written
   /// before names were kept (then only [unseatedCount] says how many).
   final List<UnseatedPerson> unseated = const [],
+
+  /// When it approves itself, for a proposal the `auto_form` job formed;
+  /// `null` for one the admin asked for.
+  final DateTime? approveAt,
+
+  /// Why an auto proposal waits for the admin instead; `null` while
+  /// nothing stops it.
+  final AutoBlock? blocked,
 }) extends Equatable {
   /// {@macro proposal}
   this;
+
+  /// Whether the `auto_form` job formed it.
+  bool get auto => approveAt != null;
+
+  /// Whether it will approve itself at [approveAt]: auto, pending, and
+  /// nothing blocks it.
+  bool get approvesItself =>
+      auto && status == ProposalStatus.pending && blocked == null;
 
   @override
   List<Object?> get props => [
@@ -49,7 +92,64 @@ class const Proposal({
     createdAt,
     rejectedReason,
     unseated,
+    approveAt,
+    blocked,
   ];
+}
+
+/// {@template proposed_setup}
+/// Where, when and who opens a [ProposedRonda] of an auto proposal: the
+/// organiser agent's choice once code checked it, or code's fixed rule.
+/// {@endtemplate}
+class const ProposedSetup({
+  /// The public place, with its article ("la plaza del barrio").
+  required final String placeName,
+
+  /// The hour, `HH:MM`.
+  required final String hour,
+
+  /// Who opens, by first name.
+  required final String anfitrionName,
+
+  /// Who closes, by first name.
+  required final String colaName,
+
+  /// Why, in one es-419 line.
+  required final String reason,
+
+  /// Whether the agent chose it; otherwise code's fixed rule did.
+  required final bool byAgent,
+}) extends Equatable {
+  /// {@macro proposed_setup}
+  this;
+
+  @override
+  List<Object?> get props => [
+    placeName,
+    hour,
+    anfitrionName,
+    colaName,
+    reason,
+    byAgent,
+  ];
+}
+
+/// {@template auto_form_settings}
+/// Whether rondas form themselves, and the minutes the admin has to stop
+/// a proposal before it approves itself.
+/// {@endtemplate}
+class const AutoFormSettings({
+  required final bool enabled,
+  required final int holdMinutes,
+}) extends Equatable {
+  /// {@macro auto_form_settings}
+  this;
+
+  /// The longest hold the server takes, in minutes: a day.
+  static const int maxHoldMinutes = 24 * 60;
+
+  @override
+  List<Object?> get props => [enabled, holdMinutes];
 }
 
 /// {@template unseated_person}
@@ -103,6 +203,9 @@ class const ProposedRonda({
 
   /// The ronda it became once approved; `null` while pending.
   final String? rondaId,
+
+  /// Its place, hour and hosts, on an auto proposal that has them.
+  final ProposedSetup? setup,
 }) extends Equatable {
   /// {@macro proposed_ronda}
   this;
@@ -133,6 +236,7 @@ class const ProposedRonda({
     slotId,
     members,
     rondaId,
+    setup,
   ];
 }
 

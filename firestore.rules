@@ -97,6 +97,13 @@ service cloud.firestore {
       allow read: if request.auth != null;
     }
 
+    // Whether rondas form themselves, and the admin's hold before they are
+    // approved (functions/auto_form.py): the admin reads it; the
+    // set_auto_form callable writes it with the admin SDK.
+    match /config/auto_form {
+      allow read: if isAdmin();
+    }
+
     // The seat ids that passed the member's needs on their phone, and when:
     // exactly seatIds and updatedAt. Nobody reads it back from a client; the
     // solver reads it with the admin SDK.

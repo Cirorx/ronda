@@ -8,7 +8,8 @@ import 'package:ronda_repository/ronda_repository.dart';
 part 'proposals_state.dart';
 
 /// The admin's approval screen: follows the newest proposal, asks the
-/// solver for a new one, approves it into rondas and takes that back.
+/// solver for a new one, approves it into rondas and takes that back, and
+/// stops one the `auto_form` job formed from approving itself.
 ///
 /// The server decides who is admin; a refusal from it shows as
 /// [ProposalsStatus.forbidden].
@@ -48,6 +49,17 @@ class ProposalsCubit extends Cubit<ProposalsState> implements StepNamed {
       await _run(
         ProposalsAction.approving,
         () => _rondaRepository.approveProposal(id),
+      );
+    }
+  }
+
+  /// Stops the shown auto proposal from approving itself (Frenar): it
+  /// waits for [approve].
+  Future<void> stop() async {
+    if (state.proposal case final proposal? when proposal.approvesItself) {
+      await _run(
+        ProposalsAction.stopping,
+        () => _rondaRepository.stopProposal(proposal.id),
       );
     }
   }

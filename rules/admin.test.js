@@ -44,6 +44,7 @@ const ADMIN_PATHS = [
   },
   { path: `avoid/demo-admin-host_${MEMBER}`, fields: { uidA: 'demo-admin-host', uidB: MEMBER } },
   { path: 'removed/demo-admin-host', fields: { firstName: 'Mirta', at: NOW, notice: 'sent' } },
+  { path: 'config/auto_form', fields: { enabled: true, holdMinutes: 60 }, getOnly: true },
 ];
 
 // Stored files a member might upload or the functions publish: the claim reads none of them.

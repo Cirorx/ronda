@@ -36,6 +36,8 @@ abstract final class AdminFixtures {
     String? rejectedReason =
         'Alternativa B rechazada: hace caminar 18 cuadras más.',
     List<UnseatedPerson> unseated = const [],
+    DateTime? approveAt,
+    AutoBlock? blocked,
   }) => Proposal(
     id: 'p1',
     status: status,
@@ -44,6 +46,34 @@ abstract final class AdminFixtures {
     createdAt: DateTime.utc(2026, 10, 27, 15),
     rejectedReason: rejectedReason,
     unseated: unseated,
+    approveAt: approveAt,
+    blocked: blocked,
+  );
+
+  static const setup = ProposedSetup(
+    placeName: 'la Plaza Inventada',
+    hour: '16:30',
+    anfitrionName: 'Raúl',
+    colaName: 'Sofía',
+    reason:
+        'La plaza queda a dos cuadras de todos; abre Raúl, que vive más cerca.',
+    byAgent: true,
+  );
+
+  /// An auto proposal whose one ronda has the agent's setup.
+  static Proposal auto({AutoBlock? blocked}) => proposal(
+    rondas: [
+      ProposedRonda(
+        seatId: ronda.seatId,
+        barrioId: ronda.barrioId,
+        pretextId: ronda.pretextId,
+        slotId: ronda.slotId,
+        members: ronda.members,
+        setup: setup,
+      ),
+    ],
+    approveAt: DateTime(2026, 10, 27, 16, 5),
+    blocked: blocked,
   );
 }
 

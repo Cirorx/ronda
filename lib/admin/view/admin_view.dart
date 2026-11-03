@@ -11,7 +11,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// The newest proposal: "Nadie recibe nada hasta que lo aprobás.", each
 /// ronda with its checks, "Por qué no otra opción", and Aprobar; once
 /// approved, "Aprobado. Les llega el martes a las 19." with Deshacer, the
-/// one swapping for the other. Under it, spaced and titled rather than
+/// one swapping for the other. One the `auto_form` job formed says "Se
+/// aprueba sola a las 16:00" with Aprobar ya and Frenar, or why it
+/// waits for Aprobar instead. Under it, spaced and titled rather than
 /// ruled off, "El ¿Venís? de esta semana", "¿Seguimos?" and the pilot's
 /// numbers. Wider than a phone it keeps to a readable column; on a
 /// desktop window who the proposal leaves out stands beside it. Aprobar,
@@ -22,6 +24,7 @@ class const AdminView({super.key}) extends StatelessWidget {
   static const proposeIdentifier = 'admin_propose';
   static const approveIdentifier = 'admin_approve';
   static const undoIdentifier = 'admin_undo';
+  static const stopIdentifier = 'admin_stop';
 
   @override
   Widget build(BuildContext context) {
@@ -127,9 +130,23 @@ class const _Proposal(final ProposalsState state) extends StatelessWidget {
         RondaSwap(
           layoutBuilder: _topStart,
           child: pending
-              ? NoteBanner(
+              ? Column(
                   key: const ValueKey(ProposalStatus.pending),
-                  message: l10n.adminNobodyYet,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: spacing.xs,
+                  children: [
+                    NoteBanner(
+                      message: proposal.auto
+                          ? l10n.adminAutoNobodyYet
+                          : l10n.adminNobodyYet,
+                    ),
+                    if (_autoLine(context, proposal) case final line?)
+                      Semantics(
+                        container: true,
+                        liveRegion: true,
+                        child: Text(line, style: theme.textTheme.bodyLarge),
+                      ),
+                  ],
                 )
               : Column(
                   key: const ValueKey(ProposalStatus.approved),
@@ -174,9 +191,20 @@ class const _Proposal(final ProposalsState state) extends StatelessWidget {
         if (pending && proposal.rondas.isNotEmpty) ...[
           _Button(
             identifier: AdminView.approveIdentifier,
-            label: l10n.adminApprove,
+            label: proposal.approvesItself
+                ? l10n.adminApproveNow
+                : l10n.adminApprove,
             onPressed: RondaHaptics.onCommit(state.busy ? null : cubit.approve),
             filled: true,
+          ),
+          SizedBox(height: spacing.sm),
+        ],
+        if (proposal.approvesItself) ...[
+          _Button(
+            identifier: AdminView.stopIdentifier,
+            label: l10n.adminStop,
+            onPressed: RondaHaptics.onCommit(state.busy ? null : cubit.stop),
+            filled: false,
           ),
           SizedBox(height: spacing.sm),
         ],
@@ -184,6 +212,8 @@ class const _Proposal(final ProposalsState state) extends StatelessWidget {
       ],
       // Sections are set apart by space and their own titles; the only
       // rules on this screen are the planilla's, between people.
+      SizedBox(height: spacing.xlg),
+      const AutoFormSection(),
       SizedBox(height: spacing.xlg),
       const RsvpPushSection(),
       SizedBox(height: spacing.xlg),
@@ -206,6 +236,30 @@ class const _Proposal(final ProposalsState state) extends StatelessWidget {
       ),
     };
   }
+}
+
+/// What an auto proposal will do: "Se aprueba sola a las 16:00", or why it
+/// waits for the admin; `null` for a manual one.
+String? _autoLine(BuildContext context, Proposal proposal) {
+  final l10n = context.l10n;
+  return switch (proposal) {
+    Proposal(auto: false) => null,
+    Proposal(:final approveAt?, blocked: null) => l10n.adminAutoApprovesAt(
+      MaterialLocalizations.of(context).formatTimeOfDay(
+        TimeOfDay.fromDateTime(approveAt.toLocal()),
+        alwaysUse24HourFormat: true,
+      ),
+    ),
+    Proposal(:final blocked) => switch (blocked) {
+      AutoBlock.stopped => l10n.adminAutoStopped,
+      AutoBlock.setup => l10n.adminAutoBlockedSetup,
+      AutoBlock.report => l10n.adminAutoBlockedReport,
+      AutoBlock.avoid => l10n.adminAutoBlockedAvoid,
+      AutoBlock.seated => l10n.adminAutoBlockedSeated,
+      AutoBlock.removed => l10n.adminAutoBlockedRemoved,
+      AutoBlock.other || null => l10n.adminAutoBlockedOther,
+    },
+  };
 }
 
 /// Lays a [RondaSwap]'s outgoing and incoming states over each other from

@@ -19,6 +19,11 @@ void main() {
           .thenAnswer((_) => Stream.value(AdminFixtures.proposal()));
       when(rondaRepository.watchSeguimosCounts)
           .thenAnswer((_) => Stream.value(const []));
+      when(rondaRepository.watchAutoForm).thenAnswer(
+        (_) => Stream.value(
+          const AutoFormSettings(enabled: true, holdMinutes: 60),
+        ),
+      );
       when(rondaRepository.pilotNumbers)
           .thenAnswer((_) async => PilotFixtures.numbers);
     });

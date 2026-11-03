@@ -417,6 +417,76 @@ class TestApprove:
         assert error.value.code == "failed-precondition"
 
 
+class TestSupersede:
+    def test_a_new_proposal_supersedes_the_older_pending_ones_it_covers(self):
+        db = FakeFirestore(invented_sign_ups())
+        first = proposals.propose(db, ADMIN, NOW)["proposalId"]
+        db.documents["proposals/elsewhere"] = {"status": "pending", "groups": [], "unseated": ["x"]}
+
+        second = proposals.propose(db, ADMIN, NOW)["proposalId"]
+
+        old = db.documents[f"proposals/{first}"]
+        assert (old["status"], old["supersededBy"]) == ("superseded", second)
+        assert db.documents[f"proposals/{second}"]["status"] == "pending"
+        assert db.documents["proposals/elsewhere"]["status"] == "pending"
+        with pytest.raises(proposals.ProposalError):
+            proposals.approve(db, first, ADMIN, NOW)
+
+    def test_someone_holding_an_offer_of_a_freed_seat_is_left_out(self):
+        sign_ups = invented_sign_ups()
+        sign_ups["users/demo-001/offers/r_w_1"] = {"status": "pending"}
+        sign_ups["users/demo-002/offers/r_w_1"] = {"status": "declined"}
+        db = FakeFirestore(sign_ups)
+
+        proposals.propose(db, ADMIN, NOW)
+
+        considered = proposals.people(db.documents[proposal_path(db)])
+        assert "demo-001" not in considered and "demo-002" in considered
+
+
+SETUP = {
+    "place": {"name": "la Plaza Inventada"},
+    "hour": "16:00",
+    "anfitrion": "",
+    "cola": "",
+}
+
+
+class TestSetupOnApproval:
+    def proposed(self) -> tuple[FakeFirestore, str, dict]:
+        db = FakeFirestore(invented_sign_ups())
+        proposal_id = proposals.propose(db, ADMIN, NOW)["proposalId"]
+        proposal = db.documents[f"proposals/{proposal_id}"]
+        group = proposal["groups"][0]
+        uids = [m["uid"] for m in group["members"]]
+        group["setup"] = {**SETUP, "anfitrion": uids[0], "cola": uids[1]}
+        return db, proposal_id, group
+
+    def test_a_manual_aprobar_writes_the_groups_setup(self):
+        db, proposal_id, group = self.proposed()
+        group["setup"]["hour"] = {"morning": "10:00", "afternoon": "16:00", "evening": "19:00"}[
+            group["slot"].split("-")[1]
+        ]
+
+        [first, *_] = proposals.approve(db, proposal_id, ADMIN, NOW)["rondaIds"]
+
+        ronda = db.documents[f"rondas/{first}"]
+        assert ronda["place"] == {"name": "la Plaza Inventada"}
+        assert ronda["hosts"]["anfitrion"] == group["setup"]["anfitrion"]
+
+    @pytest.mark.parametrize("broken", [{"hour": "03:00"}, {"place": None, "hour": None}])
+    def test_a_setup_the_checks_refuse_leaves_the_ronda_to_confirm(self, broken):
+        db, proposal_id, group = self.proposed()
+        group["setup"] |= broken
+        if broken.get("place", 0) is None:
+            del group["setup"]["place"]
+
+        [first, *_] = proposals.approve(db, proposal_id, ADMIN, NOW)["rondaIds"]
+
+        assert db.documents[f"proposals/{proposal_id}"]["status"] == "approved"
+        assert "place" not in db.documents[f"rondas/{first}"]
+
+
 class TestUndoApproval:
     def test_deletes_the_rondas_and_puts_the_proposal_back_to_pending(self):
         db = FakeFirestore(invented_sign_ups())
@@ -424,7 +494,7 @@ class TestUndoApproval:
         pending = dict(db.documents[f"proposals/{proposal_id}"])
         proposals.approve(db, proposal_id, ADMIN, NOW)
 
-        proposals.undo_approval(db, proposal_id)
+        proposals.undo_approval(db, proposal_id, ADMIN, NOW)
 
         assert not [p for p in db.documents if p.startswith("rondas/")]
         assert not [p for p in db.documents if "/rondas/" in p]
@@ -435,4 +505,4 @@ class TestUndoApproval:
         proposal_id = proposals.propose(db, ADMIN, NOW)["proposalId"]
 
         with pytest.raises(proposals.ProposalError):
-            proposals.undo_approval(db, proposal_id)
+            proposals.undo_approval(db, proposal_id, ADMIN, NOW)

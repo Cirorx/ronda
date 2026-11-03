@@ -128,6 +128,72 @@ void main() {
       });
     });
 
+    group('stopProposal', () {
+      test('calls approve_proposal with stop', () async {
+        when(() => callable.call<Object?>(any<Object?>()))
+            .thenAnswer((_) async => _MockHttpsCallableResult<Object?>());
+
+        await subject.stopProposal('p1');
+
+        verify(() => callable.call<Object?>({'proposalId': 'p1', 'stop': true}))
+            .called(1);
+      });
+    });
+
+    group('watchAutoForm', () {
+      test('emits the defaults while nobody set it', () {
+        expect(
+          subject.watchAutoForm(),
+          emits(
+            isA<AutoFormDocument>()
+                .having((d) => d.enabled, 'enabled', isTrue)
+                .having((d) => d.holdMinutes, 'holdMinutes', 60),
+          ),
+        );
+      });
+
+      test('emits what the admin set', () async {
+        await firestore.doc('config/auto_form').set({
+          'enabled': false,
+          'holdMinutes': 0,
+        });
+
+        expect(
+          subject.watchAutoForm(),
+          emits(
+            isA<AutoFormDocument>()
+                .having((d) => d.enabled, 'enabled', isFalse)
+                .having((d) => d.holdMinutes, 'holdMinutes', 0),
+          ),
+        );
+      });
+
+      test('reads a malformed field as its default', () async {
+        await firestore.doc('config/auto_form').set({
+          'enabled': 'no',
+          'holdMinutes': 5000,
+        });
+
+        final document = await subject.watchAutoForm().first;
+
+        expect((document.enabled, document.holdMinutes), (true, 60));
+      });
+    });
+
+    group('setAutoForm', () {
+      test('calls set_auto_form with the switch and the hold', () async {
+        when(() => callable.call<Object?>(any<Object?>()))
+            .thenAnswer((_) async => _MockHttpsCallableResult<Object?>());
+
+        await subject.setAutoForm(enabled: false, holdMinutes: 0);
+
+        verify(() => functions.httpsCallable('set_auto_form')).called(1);
+        verify(
+          () => callable.call<Object?>({'enabled': false, 'holdMinutes': 0}),
+        ).called(1);
+      });
+    });
+
     group('rondaCandidates', () {
       test('calls ronda_candidates and reads its answer', () async {
         final result = _MockHttpsCallableResult<Object?>();

@@ -17,11 +17,25 @@ class _MockProposalsCubit extends MockCubit<ProposalsState>
 class _MockRsvpPushCubit extends MockCubit<RsvpPushState>
     implements RsvpPushCubit;
 
+class _MockAutoFormCubit extends MockCubit<AutoFormState>
+    implements AutoFormCubit;
+
 class _MockSeguimosCountsCubit extends MockCubit<SeguimosCountsState>
     implements SeguimosCountsCubit;
 
 class _MockPilotNumbersCubit extends MockCubit<PilotNumbersState>
     implements PilotNumbersCubit;
+
+AutoFormCubit autoFormCubit() {
+  final cubit = _MockAutoFormCubit();
+  when(() => cubit.state).thenReturn(
+    const AutoFormState(
+      status: AutoFormStatus.ready,
+      settings: AutoFormSettings(enabled: true, holdMinutes: 60),
+    ),
+  );
+  return cubit;
+}
 
 void main() {
   group(AdminView, () {
@@ -43,6 +57,7 @@ void main() {
       when(cubit.propose).thenAnswer((_) async {});
       when(cubit.approve).thenAnswer((_) async {});
       when(cubit.undo).thenAnswer((_) async {});
+      when(cubit.stop).thenAnswer((_) async {});
     });
 
     Future<void> pump(
@@ -58,6 +73,8 @@ void main() {
             providers: [
               BlocProvider.value(value: cubit),
               BlocProvider.value(value: rsvpPushCubit),
+              BlocProvider.value(value: autoFormCubit()),
+              BlocProvider.value(value: autoFormCubit()),
               BlocProvider.value(value: unreadReports()),
               BlocProvider.value(value: unreadReports()),
               BlocProvider.value(value: seguimosCountsCubit),
@@ -160,6 +177,73 @@ void main() {
         expect(button('Deshacer'), findsNothing);
       });
 
+      testWidgets('an auto proposal: when it approves itself, Aprobar ya and '
+          'Frenar', (tester) async {
+        await pump(tester, ready(AdminFixtures.auto()));
+
+        expect(
+          find.text('Se formó sola. Nadie recibe nada hasta que se apruebe.'),
+          findsOneWidget,
+        );
+        expect(find.text('Se aprueba sola a las 16:05.'), findsOneWidget);
+        expect(find.text('la Plaza Inventada, a las 16:30'), findsOneWidget);
+        expect(find.text('Abre Raúl y cierra Sofía.'), findsOneWidget);
+        expect(
+          find.textContaining('Lo eligió el programa: La plaza'),
+          findsOneWidget,
+        );
+        await tester.scrollUntilVisible(button('Frenar'), 200);
+        expect(button('Aprobar ya'), findsOneWidget);
+        expect(button('Aprobar y avisarles'), findsNothing);
+
+        await tester.tap(button('Frenar'));
+        verify(cubit.stop).called(1);
+        await tester.tap(button('Aprobar ya'));
+        verify(cubit.approve).called(1);
+      });
+
+      for (final (blocked, line) in [
+        (AutoBlock.stopped, 'Frenada: espera que la apruebes.'),
+        (
+          AutoBlock.setup,
+          'No se aprueba sola: a un grupo le falta lugar, hora o anfitrión.',
+        ),
+        (
+          AutoBlock.report,
+          'No se aprueba sola: alguien está en un reporte abierto.',
+        ),
+        (
+          AutoBlock.avoid,
+          'No se aprueba sola: alguien está en una pareja separada.',
+        ),
+        (
+          AutoBlock.seated,
+          'No se aprueba sola: alguien ya está en otra ronda.',
+        ),
+        (AutoBlock.removed, 'No se aprueba sola: alguien está fuera de Ronda.'),
+        (AutoBlock.other, 'No se aprueba sola. Revisala y aprobala vos.'),
+      ]) {
+        testWidgets('an auto proposal that waits: $blocked', (tester) async {
+          await pump(tester, ready(AdminFixtures.auto(blocked: blocked)));
+
+          expect(find.text(line), findsOneWidget);
+          expect(find.textContaining('Se aprueba sola a las'), findsNothing);
+          await tester.scrollUntilVisible(button('Aprobar y avisarles'), 200);
+          expect(button('Frenar'), findsNothing);
+        });
+      }
+
+      testWidgets('the auto_form switch among the sections', (tester) async {
+        await pump(tester, ready(null));
+
+        await tester.dragUntilVisible(
+          find.byType(AutoFormSection),
+          find.byType(ListView),
+          const Offset(0, -200),
+        );
+        expect(find.text('Rondas que se arman solas'), findsOneWidget);
+      });
+
       testWidgets('who is left out by name, barrio and slots', (tester) async {
         await pump(
           tester,
@@ -196,7 +280,11 @@ void main() {
       testWidgets("the pilot's numbers at the bottom", (tester) async {
         await pump(tester, ready(AdminFixtures.proposal()));
 
-        await tester.scrollUntilVisible(find.byType(PilotNumbersSection), 200);
+        await tester.dragUntilVisible(
+          find.byType(PilotNumbersSection),
+          find.byType(ListView),
+          const Offset(0, -200),
+        );
 
         expect(find.byType(PilotNumbersSection), findsOneWidget);
       });
@@ -453,7 +541,16 @@ void main() {
       testWidgets('each section title as a heading', (tester) async {
         final semantics = tester.ensureSemantics();
         await pump(tester, ready(null));
+        await tester.dragUntilVisible(
+          find.text('El ¿Venís? de esta semana'),
+          find.byType(ListView),
+          const Offset(0, -200),
+        );
 
+        expect(
+          tester.getSemantics(find.text('Rondas que se arman solas')),
+          isSemantics(isHeader: true),
+        );
         expect(
           tester.getSemantics(find.text('El ¿Venís? de esta semana')),
           isSemantics(isHeader: true),
@@ -469,6 +566,7 @@ void main() {
           providers: [
             BlocProvider.value(value: cubit),
             BlocProvider.value(value: rsvpPushCubit),
+            BlocProvider.value(value: autoFormCubit()),
             BlocProvider.value(value: unreadReports()),
             BlocProvider.value(value: seguimosCountsCubit),
           ],
@@ -488,6 +586,11 @@ void main() {
       tester,
     ) async {
       await pump(tester, ready(null));
+      await tester.dragUntilVisible(
+        find.byType(RsvpPushSection),
+        find.byType(ListView),
+        const Offset(0, -200),
+      );
 
       expect(find.byType(RsvpPushSection), findsOneWidget);
       await tester.dragUntilVisible(

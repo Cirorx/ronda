@@ -157,6 +157,20 @@ The README's models table quotes these numbers.
   production numbers per model come from the `agent_runs` traces, which keep each turn's
   latency and tokens, and from request latencies.
 
+## Rondas that form themselves: the agent's setup (2026-11-03)
+
+`scripts/smoke/s12_auto_setup.py` runs `functions/auto_setup.set_up` on Spark Open on Baseten
+alone (no fallback) for two invented neighbours in Cordón who want mate on Thursday afternoons,
+with three invented places: a library closed in the afternoon, a plaza and a rambla. Six runs,
+in two rounds of three, from Uruguay:
+
+- Every run `propose_setup:ok` on the first call, 2 turns (the call, then one sentence): 3.1 to
+  4.3 s from start to end, 2,525 to 2,591 tokens in and 445 to 820 out, about $0.005 a group.
+- It chose the rambla each time ("es ideal para el mate"), never the closed library, at 16:00
+  (once 15:30), with Ana opening; code accepted every field.
+- The first round wrote the reason to the member ("vos Ana podés abrir"); the system prompt now
+  asks for third person with an example, and the second round followed it.
+
 ## Meta tooling for building
 
 Counts toward "Use of Meta AI tooling" (25% of the score); mention what was used in the README.

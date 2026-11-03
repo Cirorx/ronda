@@ -16,7 +16,7 @@ enum ProposalsStatus {
 }
 
 /// The step the admin asked for, while it runs.
-enum ProposalsAction { none, proposing, approving, undoing }
+enum ProposalsAction { none, proposing, approving, stopping, undoing }
 
 final class const ProposalsState({
   final ProposalsStatus status = ProposalsStatus.loading,

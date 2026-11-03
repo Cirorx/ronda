@@ -64,6 +64,38 @@ class RondaRepository {
   Future<void> undoApproval(String id) =>
       _guard(() => _proposalsApi.undoApproval(id));
 
+  /// Stops auto proposal [id] from approving itself: it waits for
+  /// [approveProposal].
+  ///
+  /// Throws a [ProposalsFailure].
+  Future<void> stopProposal(String id) =>
+      _guard(() => _proposalsApi.stopProposal(id));
+
+  /// Whether rondas form themselves, and the hold, now and on every
+  /// change. The stream errors with a [ProposalsFailure].
+  Stream<AutoFormSettings> watchAutoForm() => _proposalsApi
+      .watchAutoForm()
+      .map(
+        (document) => AutoFormSettings(
+          enabled: document.enabled,
+          holdMinutes: document.holdMinutes,
+        ),
+      )
+      .handleError(
+        (Object error) => throw _failure(error),
+        test: (error) => error is Exception,
+      );
+
+  /// Sets whether rondas form themselves, and the hold.
+  ///
+  /// Throws a [ProposalsFailure].
+  Future<void> setAutoForm(AutoFormSettings settings) => _guard(
+    () => _proposalsApi.setAutoForm(
+      enabled: settings.enabled,
+      holdMinutes: settings.holdMinutes,
+    ),
+  );
+
   /// Who could be added to ronda [rondaId], and who is in it now. Admin
   /// only.
   ///
@@ -1025,9 +1057,11 @@ class RondaRepository {
 extension on ProposalDocument {
   Proposal toProposal() => Proposal(
     id: id,
-    status: status == 'approved'
-        ? ProposalStatus.approved
-        : ProposalStatus.pending,
+    status: switch (status) {
+      'approved' => ProposalStatus.approved,
+      'superseded' => ProposalStatus.superseded,
+      _ => ProposalStatus.pending,
+    },
     rondas: [
       for (final (index, group) in groups.indexed)
         ProposedRonda(
@@ -1036,6 +1070,17 @@ extension on ProposalDocument {
           pretextId: group.pretext,
           slotId: group.slot,
           rondaId: index < rondaIds.length ? rondaIds[index] : null,
+          setup: switch (group.setup) {
+            null => null,
+            final setup => ProposedSetup(
+              placeName: setup.placeName,
+              hour: setup.hour,
+              anfitrionName: setup.anfitrionName,
+              colaName: setup.colaName,
+              reason: setup.reason,
+              byAgent: setup.by == 'agent',
+            ),
+          },
           members: [
             for (final member in group.members)
               ProposedMember(
@@ -1061,5 +1106,14 @@ extension on ProposalDocument {
     ],
     createdAt: createdAt,
     rejectedReason: rejectedReason,
+    approveAt: auto ? approveAt : null,
+    blocked: switch (autoBlocked) {
+      null when stopped => AutoBlock.stopped,
+      null => null,
+      final why => AutoBlock.values.firstWhere(
+        (block) => block.name == why,
+        orElse: () => AutoBlock.other,
+      ),
+    },
   );
 }

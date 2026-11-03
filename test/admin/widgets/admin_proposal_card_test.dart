@@ -88,6 +88,52 @@ void main() {
         );
       });
 
+      testWidgets('the place, hour and hosts of an auto proposal', (
+        tester,
+      ) async {
+        await pump(tester, AdminFixtures.auto().rondas.single);
+
+        expect(find.text('la Plaza Inventada, a las 16:30'), findsOneWidget);
+        expect(find.text('Abre Raúl y cierra Sofía.'), findsOneWidget);
+        expect(
+          find.text(
+            'Lo eligió el programa: La plaza queda a dos cuadras de todos; '
+            'abre Raúl, que vive más cerca.',
+          ),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets("code's setup, by its fixed rule", (tester) async {
+        final ronda = AdminFixtures.auto().rondas.single;
+        await pump(
+          tester,
+          ProposedRonda(
+            seatId: ronda.seatId,
+            barrioId: ronda.barrioId,
+            pretextId: ronda.pretextId,
+            slotId: ronda.slotId,
+            members: ronda.members,
+            setup: const ProposedSetup(
+              placeName: 'la Plaza Inventada',
+              hour: '16:00',
+              anfitrionName: 'Marta',
+              colaName: 'Raúl',
+              reason: 'Lo eligió el programa por regla fija.',
+              byAgent: false,
+            ),
+          ),
+        );
+
+        expect(find.textContaining('Regla fija: Lo eligió'), findsOneWidget);
+      });
+
+      testWidgets('no setup on a manual proposal', (tester) async {
+        await pump(tester, AdminFixtures.ronda);
+
+        expect(find.textContaining(', a las '), findsNothing);
+      });
+
       testWidgets('a Montevideo walk of up to 15 blocks', (tester) async {
         await pump(
           tester,

@@ -172,6 +172,39 @@ void main() {
       );
     });
 
+    group('stop', () {
+      final auto = AdminFixtures.auto();
+
+      blocTest<ProposalsCubit, ProposalsState>(
+        'stops an auto proposal that approves itself',
+        setUp: () =>
+            when(() => rondaRepository.stopProposal('p1'))
+                .thenAnswer((_) async {}),
+        build: build,
+        seed: () => ready(auto),
+        act: (cubit) => cubit.stop(),
+        expect: () => [
+          ready(auto, action: ProposalsAction.stopping),
+          ready(auto),
+        ],
+        verify: (_) =>
+            verify(() => rondaRepository.stopProposal('p1')).called(1),
+      );
+
+      blocTest<ProposalsCubit, ProposalsState>(
+        'does nothing for a manual or an already stopped proposal',
+        build: build,
+        seed: () => ready(pending),
+        act: (cubit) async {
+          await cubit.stop();
+          cubit.emit(ready(AdminFixtures.auto(blocked: AutoBlock.stopped)));
+          await cubit.stop();
+        },
+        expect: () => [ready(AdminFixtures.auto(blocked: AutoBlock.stopped))],
+        verify: (_) => verifyNever(() => rondaRepository.stopProposal(any())),
+      );
+    });
+
     group('undo', () {
       blocTest<ProposalsCubit, ProposalsState>(
         'takes the approval back',

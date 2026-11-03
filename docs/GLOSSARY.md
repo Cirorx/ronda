@@ -24,6 +24,12 @@ issues, docs, code, commit messages.
 | `Waitlist` | lista de espera | Neighbours seated nowhere waiting for the same seat id (barrio × pretext × slot) that passes their needs filter; opens a ronda at the threshold |
 | `Threshold` | "hay 4 anotados y hacen falta 6" | The pretext's largest ronda (6; fútbol 10) on a waitlist by its deadline, a Sunday; the ronda would start on its slot's day the week after |
 | `Proposal` | propuesta | The solver's grouping, waiting for the owner's approval, with a rejected alternative |
+| `AutoForm` | rondas que se arman solas | The hourly `auto_form` job: it groups whoever is waiting, gets each group's setup and approves the proposal once its hold passes, unless something blocks it. Switched on and off, with the hold, in `config/auto_form` |
+| `AutoProposal` | se formó sola | A proposal `auto_form` wrote (`auto: true`): it approves itself at `approveAt` unless the admin stops it ([Frenar]) or a blocker holds it |
+| `Hold` | minutos para frenarla | The minutes between an auto proposal and its approval (`holdMinutes`, 60 by default, 0 for the demo) |
+| `AutoBlock` | no se aprueba sola | Why an auto proposal waits for Aprobar: stopped, setup, report, avoid, seated, removed (`autoBlocked`) |
+| `Setup` | lugar, hora y anfitriones | A group's public place, hour and hosts. On an auto proposal the organiser agent proposes them (`groups[n].setup`, `by: agent`), code checks every field, and code's fixed rule fills in when the agent can't (`by: code`) |
+| `Superseded` | (none) | An older pending proposal a newer one replaced because they name the same people; kept, never approved |
 | `RejectedAlternative` | alternativa B ("Por qué no otra opción") | The next-best grouping the solver turned down, with its `reasons`: each rule it breaks that the proposal keeps |
 | `Season` | temporada | The run of weeks a ronda commits to after ¿seguimos? |
 | `Seguimos` | ¿seguimos? | The private vote after the first meeting; the season starts when the yeses reach the pretext's floor (2; fútbol 4) |

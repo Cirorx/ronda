@@ -11,7 +11,7 @@ walk: the phone sends nothing about what makes walking hard, so everyone gets th
 (`organiser.gates.check_words`).
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import demo_users
 from organiser import gates
@@ -36,6 +36,8 @@ class Place:
     kind: str
     blocks: int
     hours: str | None
+    lat: float = field(default=0.0, compare=False)
+    lng: float = field(default=0.0, compare=False)
 
 
 def nearby(db, barrio: object) -> list[Place]:
@@ -44,7 +46,11 @@ def nearby(db, barrio: object) -> list[Place]:
     centroid = BARRIOS.get(barrio) if isinstance(barrio, str) else None
     if centroid is None:
         return []
-    here = (centroid["lat"], centroid["lng"])
+    return near(db, (centroid["lat"], centroid["lng"]))
+
+
+def near(db, here: tuple[float, float]) -> list[Place]:
+    """The cached places within `MAX_BLOCKS` of the point `here`, nearest first."""
     found = []
     for snapshot in db.collection(COLLECTION).stream():
         place = _place(snapshot.id, snapshot.to_dict() or {}, here)
@@ -71,4 +77,6 @@ def _place(place_id: str, fields: dict, here: tuple[float, float]) -> Place | No
         kind=kind,
         blocks=round(blocks_between(here, (lat, lng))),
         hours=hours if isinstance(hours, str) else None,
+        lat=float(lat),
+        lng=float(lng),
     )

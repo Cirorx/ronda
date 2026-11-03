@@ -41,7 +41,9 @@ class TestAuth:
             call(function, None, {"proposalId": "x"})
         assert error_code(excinfo) == https_fn.FunctionsErrorCode.UNAUTHENTICATED
 
-    @pytest.mark.parametrize("function", [main.propose_groups, main.approve_proposal])
+    @pytest.mark.parametrize(
+        "function", [main.propose_groups, main.approve_proposal, main.set_auto_form]
+    )
     def test_refuses_a_member_without_the_admin_claim(self, function, db):
         with pytest.raises(https_fn.HttpsError) as excinfo:
             call(function, MEMBER, {"proposalId": "x"})
@@ -65,6 +67,34 @@ class TestApproveProposal:
 
         call(main.approve_proposal, ADMIN, {"proposalId": proposal_id, "undo": True})
         assert db.documents[f"proposals/{proposal_id}"]["status"] == "pending"
+
+    def test_stops_an_auto_proposal_and_refuses_to_stop_a_manual_one(self, db):
+        proposal_id = call(main.propose_groups, ADMIN)["proposalId"]
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.approve_proposal, ADMIN, {"proposalId": proposal_id, "stop": True})
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.FAILED_PRECONDITION
+
+        db.documents[f"proposals/{proposal_id}"]["auto"] = True
+        call(main.approve_proposal, ADMIN, {"proposalId": proposal_id, "stop": True})
+        assert "stoppedAt" in db.documents[f"proposals/{proposal_id}"]
+
+    def test_the_admin_sets_auto_form(self, db):
+        assert call(main.set_auto_form, ADMIN, {"enabled": False, "holdMinutes": 0}) == {
+            "enabled": False,
+            "holdMinutes": 0,
+        }
+        assert db.documents["config/auto_form"]["holdMinutes"] == 0
+
+    @pytest.mark.parametrize(
+        "data",
+        [None, {"enabled": "no", "holdMinutes": 5}, {"enabled": True, "holdMinutes": -1},
+         {"enabled": True, "holdMinutes": True}, {"enabled": True, "holdMinutes": 1441}],
+    )  # fmt: skip
+    def test_auto_form_refuses_a_malformed_config(self, data, db):
+        with pytest.raises(https_fn.HttpsError) as excinfo:
+            call(main.set_auto_form, ADMIN, data)
+        assert error_code(excinfo) == https_fn.FunctionsErrorCode.INVALID_ARGUMENT
+        assert "config/auto_form" not in db.documents
 
     @pytest.mark.parametrize("data", [None, {}, {"proposalId": ""}, {"proposalId": "a/b"}])
     def test_needs_a_proposal_id(self, data, db):
@@ -827,6 +857,7 @@ class TestEveryAdminCallable:
     ADMIN_ONLY: ClassVar = {
         "propose_groups",
         "approve_proposal",
+        "set_auto_form",
         "run_job",
         "ronda_candidates",
         "add_to_ronda",
