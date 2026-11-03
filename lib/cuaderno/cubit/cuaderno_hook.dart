@@ -1,6 +1,7 @@
 /// The question that heads Mi ronda's way in to the cuaderno: what to
 /// write there, and what for (`docs/PRODUCT.md` § El cuaderno del barrio).
-/// It turns with the day of the week, so a day always asks the same thing.
+/// It turns day by day through all of them, so a day always asks the same
+/// thing and two days in a row never do.
 enum CardHook {
   sunset,
   bizcochos,
@@ -8,17 +9,33 @@ enum CardHook {
   corner,
   learned,
   talk,
-  bring;
+  bring,
+  helped,
+  laugh,
+  smell,
+  sound,
+  kindWord,
+  rondaLearned,
+  lookedNice,
+  smallWin,
+  thank,
+  goodNews;
 
-  /// The hook for [day]: Monday the first, Sunday the last.
-  static CardHook on(DateTime day) => values[day.weekday - 1];
+  /// The hook for [day]: one a day, in declaration order, round again
+  /// after the last.
+  static CardHook on(DateTime day) => values[_dayNumber(day) % values.length];
 }
+
+/// Days since 1970-01-01, counted in UTC so a clock change doesn't shift one.
+int _dayNumber(DateTime day) =>
+    DateTime.utc(day.year, day.month, day.day).millisecondsSinceEpoch ~/
+    Duration.millisecondsPerDay;
 
 /// The question over today's line inside the cuaderno, the prompt for the
 /// next entry. The day after a meeting (and the one after that) it asks
 /// about the meeting; a week with [postcardLines] lines or more and a ronda
-/// to meet asks for one more for the postcard; any other day it turns with
-/// the day of the week through [rotation].
+/// to meet asks for one more for the postcard; any other day it turns
+/// through [rotation], one a day.
 enum EntryHook {
   afterMeeting,
   postcard,
@@ -26,15 +43,35 @@ enum EntryHook {
   corner,
   learned,
   bizcochos,
-  bring;
+  bring,
+  helped,
+  laugh,
+  smell,
+  sound,
+  kindWord,
+  rondaLearned,
+  lookedNice,
+  smallWin,
+  thank,
+  goodNews;
 
-  /// The hooks a plain day turns through, Monday first.
+  /// The hooks a plain day turns through, one a day and round again.
   static const List<EntryHook> rotation = [
     rambla,
     corner,
     learned,
     bizcochos,
     bring,
+    helped,
+    laugh,
+    smell,
+    sound,
+    kindWord,
+    rondaLearned,
+    lookedNice,
+    smallWin,
+    thank,
+    goodNews,
   ];
 
   /// The week's lines from which the postcard hook is asked.
@@ -58,7 +95,7 @@ enum EntryHook {
       if (since == 1 || since == 2) return afterMeeting;
       if (weekLines >= postcardLines) return postcard;
     }
-    return rotation[(today.weekday - 1) % rotation.length];
+    return rotation[_dayNumber(today) % rotation.length];
   }
 
   // Days counted in UTC, so a clock change doesn't shorten one.

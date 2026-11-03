@@ -62,6 +62,16 @@ String _hook(AppLocalizations l10n, CardHook hook) => switch (hook) {
   CardHook.learned => l10n.cuadernoCardHookLearned,
   CardHook.talk => l10n.cuadernoCardHookTalk,
   CardHook.bring => l10n.cuadernoCardHookBring,
+  CardHook.helped => l10n.cuadernoCardHookHelped,
+  CardHook.laugh => l10n.cuadernoCardHookLaugh,
+  CardHook.smell => l10n.cuadernoCardHookSmell,
+  CardHook.sound => l10n.cuadernoCardHookSound,
+  CardHook.kindWord => l10n.cuadernoCardHookKindWord,
+  CardHook.rondaLearned => l10n.cuadernoCardHookRondaLearned,
+  CardHook.lookedNice => l10n.cuadernoCardHookLookedNice,
+  CardHook.smallWin => l10n.cuadernoCardHookSmallWin,
+  CardHook.thank => l10n.cuadernoCardHookThank,
+  CardHook.goodNews => l10n.cuadernoCardHookGoodNews,
 };
 
 /// The line the member chose to bring, as a reminder on their own card;

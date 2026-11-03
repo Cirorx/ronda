@@ -31,10 +31,10 @@ import 'package:small_plan_repository/small_plan_repository.dart';
 /// The Mi ronda tab: the notifications ask on top while it's pending, then
 /// an offer of a freed seat from a bench while one matters, the ¿seguimos?
 /// card while there is one, then this week's card and the buddy, or
-/// "Todavía no tenés grupo" with the waiting list's card before a group
-/// exists. A member who left at the ¿seguimos? close sees only that card
-/// ("Gracias por venir."). While it reads it says so; each state swaps in
-/// for the last on a [RondaSwap].
+/// "Todavía no tenés grupo" with the waiting list's card and Algo chico
+/// before a group exists. A member who left at the ¿seguimos? close sees
+/// only that card ("Gracias por venir."). While it reads it says so; each
+/// state swaps in for the last on a [RondaSwap].
 ///
 /// Wider than a phone it keeps to a readable column; on a desktop window
 /// the week's card stays in it and "Quiénes van" (with what each brings
@@ -202,6 +202,10 @@ class const MyRondaView({required final String uid, super.key})
             ],
           ),
         ),
+      // Waiting for a group, or with no week card: the same offer, with
+      // nobody to tell.
+      if (state.status == ThisWeekStatus.noGroup)
+        SmallPlanSection(uid: uid, waiting: true),
       SizedBox(height: spacing.md),
       const CuadernoEntryCard(),
     ];

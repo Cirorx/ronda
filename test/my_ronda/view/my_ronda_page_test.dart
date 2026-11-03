@@ -284,6 +284,36 @@ void main() {
         );
       });
 
+      testWidgets('Algo chico for a member waiting for a group, with nobody '
+          'to tell', (tester) async {
+        when(() => smallPlanCubit.state).thenReturn(
+          const SmallPlanState(
+            status: SmallPlanStatus.ready,
+            card: SmallPlanOffer(),
+          ),
+        );
+        await pump(tester);
+
+        expect(find.text('Todavía no tenés grupo'), findsOneWidget);
+        expect(find.byType(SmallPlanSection), findsOneWidget);
+        expect(
+          find.text(
+            'Mientras armamos tu grupo, ¿te proponés algo chico para esta '
+            'semana?',
+          ),
+          findsOneWidget,
+        );
+        expect(find.byType(SharedPlansSection), findsNothing);
+        expect(find.text('Avisarle a la ronda'), findsNothing);
+      });
+
+      testWidgets('no Algo chico while it reads', (tester) async {
+        when(() => thisWeekCubit.state).thenReturn(const ThisWeekState());
+        await pump(tester);
+
+        expect(find.byType(SmallPlanSection), findsNothing);
+      });
+
       testWidgets('a spinner and what it looks for while it reads', (
         tester,
       ) async {

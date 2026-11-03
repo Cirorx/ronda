@@ -134,9 +134,9 @@ void main() {
           ),
           findsOneWidget,
         );
-        // A Friday with no ronda.
+        // A day with no ronda, eleven into the rotation.
         expect(
-          find.text('¿Tenés algo para contarle a la ronda? Anotalo y llevalo.'),
+          find.text('¿Qué esquina se veía linda hoy? Contalo en una línea.'),
           findsOneWidget,
         );
         expect(find.text('¿Qué viste hoy?'), findsNothing);
@@ -677,9 +677,7 @@ void main() {
       await pump(tester, locale: const Locale('en'));
 
       expect(
-        find.text(
-          'Got something to tell the ronda? Write it down and bring it.',
-        ),
+        find.text('Which corner looked nice today? Tell it in one line.'),
         findsOneWidget,
       );
     });

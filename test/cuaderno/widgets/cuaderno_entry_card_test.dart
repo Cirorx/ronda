@@ -19,8 +19,8 @@ void main() {
           GoRoute(
             path: '/',
             builder: (_, _) => Scaffold(
-              // A Monday.
-              body: CuadernoEntryCard(today: DateTime(2026, 10, 26)),
+              // The day the turn starts again at the sunset.
+              body: CuadernoEntryCard(today: DateTime(2026, 10, 31)),
             ),
           ),
           GoRoute(
@@ -57,8 +57,8 @@ void main() {
 
     testWidgets('asks another hook on another weekday', (tester) async {
       await tester.pumpApp(
-        // A Tuesday.
-        Scaffold(body: CuadernoEntryCard(today: DateTime(2026, 10, 27))),
+        // The day after.
+        Scaffold(body: CuadernoEntryCard(today: DateTime(2026, 11))),
       );
 
       expect(
@@ -70,9 +70,10 @@ void main() {
       );
     });
 
-    testWidgets('has a hook for every day of the week', (tester) async {
+    testWidgets('asks something different for 17 days, the new ones '
+        'inviting something good', (tester) async {
       final hooks = <String>{};
-      for (var day = 26; day <= 32; day++) {
+      for (var day = 31; day < 31 + 17; day++) {
         await tester.pumpApp(
           Scaffold(body: CuadernoEntryCard(today: DateTime(2026, 10, day))),
         );
@@ -83,12 +84,22 @@ void main() {
         hooks.add(tester.widget<Text>(header.first).data!);
       }
 
-      expect(hooks, hasLength(7));
+      expect(hooks, hasLength(17));
+      expect(
+        hooks,
+        contains('¿Algún vecino te dio una mano? Anotalo en el cuaderno.'),
+      );
+      expect(
+        hooks,
+        contains(
+          '¿A quién le querés dar las gracias? Escribilo en el cuaderno.',
+        ),
+      );
     });
 
     testWidgets('in English', (tester) async {
       await tester.pumpApp(
-        Scaffold(body: CuadernoEntryCard(today: DateTime(2026, 10, 26))),
+        Scaffold(body: CuadernoEntryCard(today: DateTime(2026, 10, 31))),
         locale: const Locale('en'),
       );
 
@@ -99,6 +110,19 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Open the notebook'), findsOneWidget);
+    });
+
+    testWidgets('a new hook in English', (tester) async {
+      await tester.pumpApp(
+        // Seven days into the turn.
+        Scaffold(body: CuadernoEntryCard(today: DateTime(2026, 11, 7))),
+        locale: const Locale('en'),
+      );
+
+      expect(
+        find.text('Did a neighbour give you a hand? Note it in the notebook.'),
+        findsOneWidget,
+      );
     });
   });
 

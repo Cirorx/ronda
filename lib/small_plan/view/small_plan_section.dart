@@ -22,8 +22,15 @@ import 'package:small_plan_repository/small_plan_repository.dart';
 /// It reads the [SmallPlanCubit] that Mi ronda's page provides, and the
 /// [SharedPlansCubit] of the week's ronda. Reading the
 /// phone shows nothing at all, so the card never flashes in and out.
-class const SmallPlanSection({required final String uid, super.key})
-    extends StatelessWidget {
+///
+/// A member still [waiting] for a group gets the same card with its own
+/// title ("Mientras armamos tu grupo…"): there is no ronda to open a plan
+/// to, so no [SharedPlansCubit] is read and the plan has no share switch.
+class const SmallPlanSection({
+  required final String uid,
+  final bool waiting = false,
+  super.key,
+}) extends StatelessWidget {
   /// Maestro's handles.
   static const chooseIdentifier = 'smallPlan.choose';
   static const notThisWeekIdentifier = 'smallPlan.notThisWeek';
@@ -58,6 +65,7 @@ class const SmallPlanSection({required final String uid, super.key})
             padding: EdgeInsets.only(top: spacing.md),
             child: _Card(
               uid: uid,
+              waiting: waiting,
               card: card,
               state: state,
               onChoose: () => _choose(context, cubit),
@@ -69,17 +77,18 @@ class const SmallPlanSection({required final String uid, super.key})
   }
 
   Future<void> _choose(BuildContext context, SmallPlanCubit cubit) async {
-    final shared = context.read<SharedPlansCubit>();
+    final shared = waiting ? null : context.read<SharedPlansCubit>();
     final plan = await SmallPlanSheet.show(context, uid: uid);
     if (plan == null) return;
     // What was opened to the ronda was the old plan: it is taken back.
-    unawaited(shared.planChanged());
+    if (shared != null) unawaited(shared.planChanged());
     await cubit.planChosen(plan);
   }
 }
 
 class const _Card({
   required final String uid,
+  required final bool waiting,
   required final SmallPlanCard card,
   required final SmallPlanState state,
   required final VoidCallback onChoose,
@@ -107,7 +116,9 @@ class const _Card({
               style: textTheme.bodyMedium,
             ),
           ),
-        title(l10n.smallPlanOfferTitle),
+        title(
+          waiting ? l10n.smallPlanOfferWaitingTitle : l10n.smallPlanOfferTitle,
+        ),
         Text(l10n.smallPlanOfferBody, style: textTheme.bodyMedium),
         Wrap(
           spacing: spacing.sm,
@@ -155,7 +166,7 @@ class const _Card({
             ),
           ],
         ),
-        SharePlanToggle(plan: plan),
+        if (!waiting) SharePlanToggle(plan: plan),
         if (switch (state.calendar) {
               SmallPlanCalendar.idle => null,
               SmallPlanCalendar.opened => l10n.smallPlanCalendarOpened,

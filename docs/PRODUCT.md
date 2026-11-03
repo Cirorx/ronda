@@ -397,10 +397,15 @@ dates in the examples are demo data. Everything not listed here is out of the bu
 One small plan a week for a member, with a day, a time and a place, between meetings. Choosing
 an activity and fixing when and where is what makes people do it, and the suggestions lean
 outward, toward places with people in them. Built in #56.
-- **Where:** Mi ronda, under the week's card (only for a member whose ronda has a card), once
-  per ISO week: "¿Querés proponerte algo chico para esta semana?" — "Una cosa chica, con día,
-  hora y lugar. Se queda solo en este teléfono." [Elegir algo] [Esta semana no]. "Esta semana
-  no" keeps the offer away until Monday. A member with no group sees nothing of it.
+- **Where:** Mi ronda, once per ISO week, for every signed-in member who isn't gone. With a ronda it
+  sits under the week's card: "¿Querés proponerte algo chico para esta semana?" — "Una cosa
+  chica, con día, hora y lugar. Se queda solo en este teléfono." [Elegir algo] [Esta semana no].
+  "Esta semana no" keeps the offer away until Monday. A member still waiting for a group (or with
+  no week card) sees the same card under "Todavía no tenés grupo", above the cuaderno's, with the
+  title "Mientras armamos tu grupo, ¿te proponés algo chico para esta semana?" (en: "While we put
+  your group together, how about something small this week?"). Without a ronda there is nobody to
+  tell, so no "¿Alguien se suma?" and no "Avisarle a la ronda". A member who left at the
+  ¿seguimos? close sees only "Gracias por venir.".
 - **Choosing ("Elegí algo chico"):** a sheet with three ideas and "Decilo vos". Each idea has
   its sentence, its day and time and, outdoors, the forecast: "No se espera lluvia ese día."
   The five kinds are a walk on a route nearby ("Caminar 30 minutos por la Rambla de Solymar"),
@@ -587,24 +592,41 @@ A private noticing log about the barrio, not a mood log (#59). It never asks "¿
 rates anything, keeps a streak or counts days, and never says "ánimo", "bienestar", "mindfulness",
 "gratitud" or "salud". Nothing about it is pushed: it is a pull entry on Mi ronda.
 - **The hooks:** each place asks something specific, saying what to write and what for. They
-  turn with the day of the week, so a weekday always asks the same thing.
-  - On Mi ronda the card sells the cuaderno to someone who hasn't opened it, Monday to Sunday:
+  turn with the day, so a date always asks the same thing.
+  - On Mi ronda the card sells the cuaderno to someone who hasn't opened it. It asks one a day
+    and goes round again after the last, 17 in all, so the same day always asks the same thing and
+    no two days in a row repeat. The first seven:
     "¿Viste un atardecer lindo en la rambla? Anotalo en el cuaderno." / "¿Querés acordarte de
     quién trajo los bizcochos? Para eso está el cuaderno." / "¿Querés una postal de tu semana?
     Escribí unas líneas y te la dibujamos." / "¿Encontraste un rincón nuevo del barrio? Dejalo
     anotado en el cuaderno." / "¿Alguien te enseñó algo? Anotalo en el cuaderno para la
     próxima." / "¿Te acordás de lo que charlaron en la ronda? Guardalo en el cuaderno antes de que
     se te olvide." / "¿Tenés algo para contarle a la ronda? Anotalo y te lo recordamos en tu
-    tarjeta." Under it, always: "Una línea sobre tu barrio. La ves solo vos y queda en este
+    tarjeta." Then ten that invite something good from the barrio: "¿Algún vecino te dio una mano?
+    Anotalo en el cuaderno." / "¿Algo te hizo reír hoy? Guardalo en el cuaderno." / "¿A qué olía el
+    barrio hoy? Pan, lluvia, parrilla: anotalo en el cuaderno." / "¿Qué sonido te acompañó en la
+    cuadra? Dejalo en el cuaderno." / "¿Alguien te dijo una palabra linda? Para eso está el
+    cuaderno." / "¿Aprendiste algo en la ronda? Anotalo en el cuaderno para que no se te vaya." /
+    "¿Hubo una esquina que hoy se veía linda? Dejala anotada en el cuaderno." / "¿Algo chico te
+    salió bien esta semana? Anotalo en el cuaderno." / "¿A quién le querés dar las gracias?
+    Escribilo en el cuaderno." / "¿Te enteraste de algo lindo en el barrio? Guardalo en el
+    cuaderno." Under it, always: "Una línea sobre tu barrio. La ves solo vos y queda en este
     teléfono."
   - Inside the cuaderno the hook is the prompt for the next line. The day after the ronda's
     meeting and the one after that: "¿De qué charlaron en la ronda? Guardalo antes de que se te
     olvide." With a ronda and three lines or more in the last seven days: "¿Querés que tu postal
-    salga más completa? Cada línea de la semana le suma algo." Any other day, Monday first and
-    round again: "¿Viste algo lindo en la rambla o en la plaza? Contalo en una línea." /
+    salga más completa? Cada línea de la semana le suma algo." Any other day, one a day and round
+    again after the last (15): "¿Viste algo lindo en la rambla o en la plaza? Contalo en una línea." /
     "¿Encontraste un rincón nuevo del barrio? Dejalo anotado." / "¿Alguien te enseñó algo?
     Anotalo para la próxima." / "¿Quién trajo qué la última vez? Anotalo y no te lo olvidás." /
-    "¿Tenés algo para contarle a la ronda? Anotalo y llevalo."
+    "¿Tenés algo para contarle a la ronda? Anotalo y llevalo." Then ten
+    that invite something good: "¿Algún vecino te dio una mano? Contalo en una línea." / "¿Qué te
+    hizo reír hoy? Anotalo en una línea." / "¿A qué olía el barrio hoy? Pan, lluvia, parrilla:
+    dejalo anotado." / "¿Qué sonido te acompañó en la cuadra? Anotalo." / "¿Qué palabra linda te
+    dijeron? Dejala anotada." / "¿Qué aprendiste en la ronda? Anotalo para la próxima." / "¿Qué
+    esquina se veía linda hoy? Contalo en una línea." / "¿Qué te salió bien esta semana, aunque
+    sea chico? Anotalo." / "¿A quién le querés dar las gracias? Escribilo acá." / "¿Qué cosa linda
+    te contaron del barrio? Anotala."
 - **Today's line:** optional, any day, at most one line a day (writing again
   changes that day's line: [Cambiar lo de hoy]). One line typed ("El jacarandá de la esquina
   floreció."), or said: [Decilo con la voz] records up to 30 seconds, Voice Transcribe turns it

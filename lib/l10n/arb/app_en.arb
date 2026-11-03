@@ -3477,6 +3477,10 @@
     "@smallPlanOfferTitle": {
         "description": "Mi ronda, under the week's card: the offer, once a week"
     },
+    "smallPlanOfferWaitingTitle": "While we put your group together, how about something small this week?",
+    "@smallPlanOfferWaitingTitle": {
+        "description": "Mi ronda, for a member still waiting for a group: the Algo chico offer, once a week"
+    },
     "smallPlanOfferBody": "One small thing, with a day, a time and a place. It stays on this phone.",
     "@smallPlanOfferBody": {
         "description": "Mi ronda: what the small plan is, under its offer"
@@ -4042,6 +4046,86 @@
     },
     "cuadernoEntryHookBring": "Got something to tell the ronda? Write it down and bring it.",
     "@cuadernoEntryHookBring": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoCardHookHelped": "Did a neighbour give you a hand? Note it in the notebook.",
+    "@cuadernoCardHookHelped": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookLaugh": "Did something make you laugh today? Keep it in the notebook.",
+    "@cuadernoCardHookLaugh": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookSmell": "What did the barrio smell like today? Bread, rain, a grill: put it in the notebook.",
+    "@cuadernoCardHookSmell": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookSound": "What sound kept you company on your block? Leave it in the notebook.",
+    "@cuadernoCardHookSound": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookKindWord": "Did someone say a kind word to you? That's what the notebook is for.",
+    "@cuadernoCardHookKindWord": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookRondaLearned": "Did you learn something at the ronda? Write it in the notebook so it sticks.",
+    "@cuadernoCardHookRondaLearned": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookLookedNice": "Was there a corner that looked nice today? Leave it in the notebook.",
+    "@cuadernoCardHookLookedNice": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookSmallWin": "Did something small go well this week? Note it in the notebook.",
+    "@cuadernoCardHookSmallWin": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookThank": "Who would you like to thank? Write it in the notebook.",
+    "@cuadernoCardHookThank": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoCardHookGoodNews": "Did you hear something nice about the barrio? Keep it in the notebook.",
+    "@cuadernoCardHookGoodNews": {
+        "description": "Mi ronda: the question heading the card that leads to the cuaderno, one per weekday"
+    },
+    "cuadernoEntryHookHelped": "Did a neighbour give you a hand? Tell it in one line.",
+    "@cuadernoEntryHookHelped": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookLaugh": "What made you laugh today? Write it in one line.",
+    "@cuadernoEntryHookLaugh": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookSmell": "What did the barrio smell like today? Bread, rain, a grill: write it down.",
+    "@cuadernoEntryHookSmell": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookSound": "What sound kept you company on your block? Write it down.",
+    "@cuadernoEntryHookSound": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookKindWord": "What kind word did someone say to you? Write it down.",
+    "@cuadernoEntryHookKindWord": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookRondaLearned": "What did you learn at the ronda? Write it down for next time.",
+    "@cuadernoEntryHookRondaLearned": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookLookedNice": "Which corner looked nice today? Tell it in one line.",
+    "@cuadernoEntryHookLookedNice": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookSmallWin": "What went well this week, even if it's small? Write it down.",
+    "@cuadernoEntryHookSmallWin": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookThank": "Who would you like to thank? Write it here.",
+    "@cuadernoEntryHookThank": {
+        "description": "Cuaderno: the question over today's line, the prompt for the next entry"
+    },
+    "cuadernoEntryHookGoodNews": "What nice thing did someone tell you about the barrio? Write it down.",
+    "@cuadernoEntryHookGoodNews": {
         "description": "Cuaderno: the question over today's line, the prompt for the next entry"
     },
     "cuadernoEntryBody": "One line about your barrio. Only you see it, and it stays on this phone.",

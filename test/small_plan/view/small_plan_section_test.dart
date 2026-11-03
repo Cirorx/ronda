@@ -192,6 +192,79 @@ void main() {
       });
     });
 
+    group('for a member still waiting for a group', () {
+      // No ronda, so no SharedPlansCubit above the section.
+      Future<void> pumpWaiting(
+        WidgetTester tester,
+        SmallPlanState state, {
+        Locale locale = rioplatense,
+      }) {
+        when(() => cubit.state).thenReturn(state);
+        return tester.pumpApp(
+          BlocProvider.value(
+            value: cubit,
+            child: const Scaffold(
+              body: SmallPlanSection(uid: 'uid', waiting: true),
+            ),
+          ),
+          locale: locale,
+        );
+      }
+
+      testWidgets('offers it with its own title, in voseo', (tester) async {
+        await pumpWaiting(
+          tester,
+          const SmallPlanState(
+            status: SmallPlanStatus.ready,
+            card: SmallPlanOffer(),
+          ),
+        );
+
+        expect(
+          find.text(
+            'Mientras armamos tu grupo, ¿te proponés algo chico para esta '
+            'semana?',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Elegir algo'), findsOneWidget);
+      });
+
+      testWidgets('offers it in English', (tester) async {
+        await pumpWaiting(
+          tester,
+          const SmallPlanState(
+            status: SmallPlanStatus.ready,
+            card: SmallPlanOffer(),
+          ),
+          locale: const Locale('en'),
+        );
+
+        expect(
+          find.text(
+            'While we put your group together, how about something small '
+            'this week?',
+          ),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets('shows the plan without a switch to tell the ronda', (
+        tester,
+      ) async {
+        await pumpWaiting(
+          tester,
+          SmallPlanState(
+            status: SmallPlanStatus.ready,
+            card: SmallPlanSet(walk),
+          ),
+        );
+
+        expect(find.text('Agregar al calendario'), findsOneWidget);
+        expect(find.text('Avisarle a la ronda'), findsNothing);
+      });
+    });
+
     group("this week's plan", () {
       late SmallPlanState planned;
 
