@@ -411,7 +411,7 @@ void main() {
           final center = tester.getCenter(find.text('Voy'));
 
           final first = await tester.startGesture(center);
-          final second = await tester.startGesture(center, pointer: 7);
+          final second = await tester.startGesture(center, pointer: 1000000);
           await tester.pump();
           await second.up();
           await tester.pump();

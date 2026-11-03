@@ -8,13 +8,8 @@ class _MockBloc extends Mock implements Bloc<Object?, Object?>;
 
 class _MockErrorReporter extends Mock implements ErrorReporter;
 
-/// A cubit that names its step, as every cubit of the app does.
-class _NamedCubit extends Cubit<int> implements StepNamed {
-  new() : super(0);
-
-  @override
-  String get reportStep => 'NamedCubit';
-}
+/// A bloc that names its step, as every cubit of the app does.
+class _MockNamedBloc extends Mock implements Bloc<Object?, Object?>, StepNamed;
 
 /// A state carrying personal data that must never reach the log.
 final class const _MemberLoaded(final String phoneNumber) {
@@ -151,10 +146,10 @@ void main() {
       test('sends the step a bloc names, not its renamed type', () {
         final stackTrace = StackTrace.current;
         const error = _LookupFailed(_phoneNumber);
+        final named = _MockNamedBloc();
+        when(() => named.reportStep).thenReturn('NamedCubit');
 
-        observer
-            .reportingTo(reporter)
-            .onError(_NamedCubit(), error, stackTrace);
+        observer.reportingTo(reporter).onError(named, error, stackTrace);
 
         verify(
           () => reporter.recordError(error, stackTrace, step: 'NamedCubit'),
