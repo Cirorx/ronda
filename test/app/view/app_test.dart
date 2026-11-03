@@ -783,6 +783,30 @@ void main() {
           verify(profileRepository.markWalkthroughSeen).called(1);
         });
 
+        testWidgets('by switching its language in place, on the same card', (
+          tester,
+        ) async {
+          tester.platformDispatcher.localesTestValue = const [
+            Locale('es', 'UY'),
+          ];
+          addTearDown(tester.platformDispatcher.clearLocalesTestValue);
+          await pumpSignedOut(tester, firstTime: true);
+          await tester.tap(
+            find.bySemanticsIdentifier(WalkthroughPage.nextIdentifier),
+          );
+          await tester.pumpAndSettle();
+
+          await tester.tap(
+            find.bySemanticsIdentifier(LanguageToggle.identifier),
+          );
+          await tester.pumpAndSettle();
+
+          expect(find.byType(WalkthroughPage), findsOneWidget);
+          expect(find.text("One message a week, that's it"), findsOneWidget);
+          verify(() => profileRepository.holdLanguage(AppLanguage.english))
+              .called(1);
+        });
+
         testWidgets('by showing it only once', (tester) async {
           await pumpSignedOut(tester, firstTime: true);
           await tester.tap(

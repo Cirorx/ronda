@@ -17,6 +17,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// state while the redirect to it is still settling, and send people on to
 /// the doors before they saw it.)
 ///
+/// The header carries the [LanguageToggle], which switches the cards in
+/// place, on the same card.
+///
 /// The cards move with a swipe, settling on the app's spring
 /// ([WalkthroughPhysics]), with "Seguir" and with the arrow keys; "Saltear"
 /// and the last card's "Empezar" lead to the welcome doors. With reduced
@@ -110,22 +113,31 @@ class _WalkthroughPageState extends State<WalkthroughPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    child: Padding(
-                      padding: EdgeInsetsDirectional.only(
-                        end: spacing.xs,
-                        top: spacing.xs,
-                      ),
-                      child: MergeSemantics(
-                        child: Semantics(
-                          identifier: WalkthroughPage.skipIdentifier,
-                          child: TextButton(
-                            onPressed: _finish,
-                            child: Text(l10n.walkthroughSkip),
+                  // The language at the start, so someone who doesn't read
+                  // the phone's language needn't get through the cards to
+                  // find it; "Saltear" at the end. With large text or a
+                  // narrow phone they stack.
+                  Padding(
+                    padding: EdgeInsetsDirectional.only(
+                      start: spacing.xs,
+                      end: spacing.xs,
+                      top: spacing.xs,
+                    ),
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        const LanguageToggle(),
+                        MergeSemantics(
+                          child: Semantics(
+                            identifier: WalkthroughPage.skipIdentifier,
+                            child: TextButton(
+                              onPressed: _finish,
+                              child: Text(l10n.walkthroughSkip),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                   Expanded(

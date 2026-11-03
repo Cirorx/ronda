@@ -83,7 +83,10 @@ dates in the examples are demo data. Everything not listed here is out of the bu
      lugar si no vas. Las decisiones las toman ustedes." Drawn as objects (umbrella, key,
      chair), never people.
   Page dots, "Saltear" on every card, [Seguir] and on the last card [Empezar], both to the
-  doors. The cards swipe on the app's spring and follow the arrow keys; wide windows keep them to
+  doors. The header carries the language switch ("English" / "Español", as on the welcome
+  screen and the login) at its start, opposite "Saltear", so someone who doesn't read the
+  phone's language needn't get through the cards to find it; it switches them in place, on the
+  same card, and with large text or a narrow phone the two stack. The cards swipe on the app's spring and follow the arrow keys; wide windows keep them to
   the readable column.
 - Welcome: "Cinco vecinos, a pocas cuadras, el mismo día todas las semanas." Two doors: "Con un
   audio" ("Hablás un minuto, como en WhatsApp.") / "Tocando botones" ("Siete preguntas

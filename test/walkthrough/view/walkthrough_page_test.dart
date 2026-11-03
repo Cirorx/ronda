@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:profile_repository/profile_repository.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/walkthrough/walkthrough.dart';
 import 'package:ronda/welcome/welcome.dart';
@@ -12,6 +15,9 @@ import 'package:ronda_ui/ronda_ui.dart';
 import '../../helpers/helpers.dart';
 
 class _MockAppBloc extends MockBloc<AppEvent, AppState> implements AppBloc;
+
+class _MockLanguageCubit extends MockCubit<LanguageState>
+    implements LanguageCubit;
 
 class _MockGoRouter extends Mock implements GoRouter;
 
@@ -25,8 +31,28 @@ void main() {
   group(WalkthroughPage, () {
     late AppBloc appBloc;
     late GoRouter router;
+    late LanguageCubit languageCubit;
+    late StreamController<LanguageState> languages;
+
+    setUpAll(() => registerFallbackValue(AppLanguage.spanish));
 
     setUp(() {
+      languages = StreamController<LanguageState>();
+      addTearDown(languages.close);
+      languageCubit = _MockLanguageCubit();
+      // A pick shows at once, as the real cubit's does.
+      whenListen(
+        languageCubit,
+        languages.stream,
+        initialState: const LanguageState(),
+      );
+      when(() => languageCubit.languagePicked(any())).thenAnswer(
+        (invocation) async => languages.add(
+          LanguageState(
+            language: invocation.positionalArguments.first as AppLanguage?,
+          ),
+        ),
+      );
       appBloc = _MockAppBloc();
       when(() => appBloc.state)
           .thenReturn(const AppState(status: AppStatus.unauthenticated));
@@ -49,9 +75,20 @@ void main() {
       return tester.pumpApp(
         InheritedGoRouter(
           goRouter: router,
-          child: BlocProvider.value(
-            value: appBloc,
-            child: reducedMotion(reduced: reduced, child: page),
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: appBloc),
+              BlocProvider.value(value: languageCubit),
+            ],
+            // The picked language, over the one pumped, as the app does:
+            // the same tree either way, so only the locale changes.
+            child: BlocBuilder<LanguageCubit, LanguageState>(
+              builder: (context, state) => Localizations.override(
+                context: context,
+                locale: state.language.locale ?? locale,
+                child: reducedMotion(reduced: reduced, child: page),
+              ),
+            ),
           ),
         ),
         locale: locale,
@@ -125,6 +162,81 @@ void main() {
         expect(find.text(_secondTitle), findsOneWidget);
         expect(find.text(_firstTitle), findsNothing);
       });
+    });
+
+    group('the language toggle', () {
+      testWidgets('sits in the header on every card', (tester) async {
+        await pumpSubject(tester);
+
+        for (var card = 0; card < WalkthroughPage.cardCount; card++) {
+          expect(_byId(LanguageToggle.identifier), findsOneWidget);
+          expect(find.text('English'), findsOneWidget);
+          final toggle = tester.getCenter(_byId(LanguageToggle.identifier));
+          final skip = tester.getCenter(_byId(WalkthroughPage.skipIdentifier));
+          expect(toggle.dx, lessThan(skip.dx));
+          if (card < WalkthroughPage.cardCount - 1) await tapNext(tester);
+        }
+      });
+
+      testWidgets('switches the cards in place, on the same card', (
+        tester,
+      ) async {
+        await pumpSubject(tester);
+        await tapNext(tester);
+
+        await tester.tap(_byId(LanguageToggle.identifier));
+        await tester.pumpAndSettle();
+
+        verify(() => languageCubit.languagePicked(AppLanguage.english))
+            .called(1);
+        expect(find.text("One message a week, that's it"), findsOneWidget);
+        expect(find.text(_secondTitle), findsNothing);
+        expect(find.text('Español'), findsOneWidget);
+        expect(find.text('Skip'), findsOneWidget);
+        expect(find.bySemanticsLabel('Card 2 of 3'), findsOneWidget);
+
+        await tapNext(tester);
+        expect(find.text('A program takes care of the rest'), findsOneWidget);
+      });
+
+      testWidgets('back to Spanish, still on the same card', (tester) async {
+        await pumpSubject(tester, locale: const Locale('en'));
+        await tapNext(tester);
+        await tapNext(tester);
+
+        await tester.tap(find.text('Español'));
+        await tester.pumpAndSettle();
+
+        verify(() => languageCubit.languagePicked(AppLanguage.spanish))
+            .called(1);
+        expect(find.text(_thirdTitle), findsOneWidget);
+        expect(find.text('Empezar'), findsOneWidget);
+      });
+
+      for (final (label, size, textScale) in [
+        ('at 200% text', phoneSize, 2.0),
+        ('on a 320 dp phone', const Size(320, 640), 1.0),
+        ('on a 320 dp phone at 200% text', const Size(320, 640), 2.0),
+      ]) {
+        testWidgets('keeps both within reach $label', (tester) async {
+          await pumpSubject(tester, size: size, textScale: textScale);
+
+          expect(tester.takeException(), isNull);
+          for (final id in [
+            LanguageToggle.identifier,
+            WalkthroughPage.skipIdentifier,
+          ]) {
+            final rect = tester.getRect(_byId(id));
+            expect(rect.left, greaterThanOrEqualTo(0));
+            expect(rect.right, lessThanOrEqualTo(size.width));
+          }
+          await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+          await expectLater(tester, meetsGuideline(textContrastGuideline));
+
+          await tester.tap(_byId(WalkthroughPage.skipIdentifier));
+          verify(() => appBloc.add(const AppWalkthroughSeen())).called(1);
+        });
+      }
     });
 
     group('the sample weekly card', () {
