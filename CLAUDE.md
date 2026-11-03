@@ -33,10 +33,17 @@ runtime, built for the Meta Global AI Developer Hackathon.
    build output. It keeps the ones with uncommitted changes, locked ones, and any where nothing
    was ever committed, since that may be a fresh worktree whose agent hasn't written anything
    yet.
+7. Before you report a batch of work done, run `scripts/release_resources.sh --stop --here` from
+   your checkout. It ends what your batch left running there: Firebase emulators, their
+   functions-framework workers, `flutter run`/`flutter test` and their Chrome. Other sessions'
+   are left alone. Leave something running only when the owner asked for it, and say so in your
+   report. Android emulators are the owner's: list them (`scripts/release_resources.sh`) but
+   don't stop them unless asked.
 
 ## End of a session
 Update `notes/NOW.md`: done, half-done, next step, and anything learned (model quirks, API
-paths, latency, cost). Done when a fresh session could continue from `notes/NOW.md` alone.
+paths, latency, cost). Done when a fresh session could continue from `notes/NOW.md` alone, and
+`scripts/release_resources.sh --here` says nothing is left running.
 
 ## Local-only notes
 `notes/` is git-ignored by this repo and is its own local git repo with no remote. It holds
