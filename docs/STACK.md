@@ -629,6 +629,11 @@ on both Android apps, and release builds are signed with that key until a releas
   fact was changed (a host set a place). Tests: `cd scripts`, `uv sync`, `uv run pytest`; the
   reset tests run only with both hosts set, on their own project id (`demo-ronda-reset`), so they
   never wipe `ronda-uy`.
+- **A ronda to film:** after `reset.py`, sign in and onboard once, then
+  `FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 scripts/demo_ronda.sh <email> [--scene ronda|rain|handoff|newcomer|attendance]`
+  builds one ronda for that account with invented neighbours, through the functions' own code
+  and jobs (functions/venv), dated from today, and prints the shot list. Its docstring has the
+  scenes and the Android steps.
 - **Which host the development app uses:** `localhost` on web and the iOS simulator, `10.0.2.2`
   on the Android emulator, and on a USB phone `127.0.0.1` after
   `for p in 9099 8088 5001 9199; do adb reverse tcp:$p tcp:$p; done`, passed as
