@@ -21,6 +21,11 @@ enum OnboardingDoor {
 
   /// "Tocando botones": the seven questions.
   buttons,
+
+  /// "Ya tengo cuenta": sign-in first. A saved profile goes on to the tabs
+  /// and is never answered again; an account without one goes on to the
+  /// questions, signed in.
+  account,
 }
 
 final class const AppState({

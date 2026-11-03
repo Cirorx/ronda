@@ -242,6 +242,8 @@ void main() {
       ).thenAnswer((_) async {});
       when(() => profileRepository.createProfile(any(), any()))
           .thenAnswer((_) async {});
+      when(() => profileRepository.savedProfile(any()))
+          .thenAnswer((_) async => null);
       when(() => profileRepository.holdLanguage(any()))
           .thenAnswer((_) async {});
       when(() => rondaRepository.cerca(any())).thenAnswer(
@@ -1058,6 +1060,174 @@ void main() {
           await tester.pumpAndSettle();
           expect(find.byType(MyRondaPage), findsOneWidget, reason: path);
         }
+      });
+
+      group('a returning member', () {
+        Finder accountButton() =>
+            find.bySemanticsIdentifier(WelcomePage.accountIdentifier);
+
+        /// Answers someone left on this phone, which a saved profile wins
+        /// over.
+        final otherAnswers = Profile(
+          firstName: 'Otra',
+          ageBand: AgeBand.thirties,
+          barrio: Barrio.cordon,
+          pretexts: const {Pretext.truco},
+          slots: {const Slot(SlotDay.monday, SlotBand.morning)},
+          brings: const {Bring.pan},
+        );
+
+        void verifyProfileNeverWritten() {
+          verifyNever(() => profileRepository.createProfile(any(), any()));
+          verifyNever(() => profileRepository.updateProfile(any(), any()));
+        }
+
+        setUp(() {
+          when(() => profileRepository.updateProfile(any(), any()))
+              .thenAnswer((_) async {});
+        });
+
+        testWidgets('signed out on a new phone reaches $MyRondaPage through '
+            '"Ya tengo cuenta" without answering again', (tester) async {
+          when(profileRepository.publishedSeatCatalogVersion)
+              .thenAnswer((_) async => 'v2');
+          // A profile read that answers at once, as Firestore's does.
+          when(() => profileRepository.watchProfile(any()))
+              .thenAnswer((_) => Stream.value(_profile));
+          await pumpSignedOut(tester, firstTime: true);
+          await tester.tap(find.text('Skip'));
+          await tester.pumpAndSettle();
+
+          await tester.ensureVisible(accountButton());
+          await tester.tap(accountButton());
+          await tester.pumpAndSettle();
+          expect(find.byType(LoginPage), findsOneWidget);
+          expect(find.text('Sign in with your account'), findsOneWidget);
+
+          users.add(_user);
+          await tester.pumpAndSettle();
+          profiles.add(_profile);
+          await tester.pumpAndSettle();
+
+          expect(find.byType(MyRondaPage), findsOneWidget);
+          expect(find.byType(OnboardingPage), findsNothing);
+          verifyProfileNeverWritten();
+          // The seats, worked out on this phone, which never had them.
+          verify(() => profileRepository.seatCatalogWorkedOut('demo-uid'))
+              .called(1);
+          verify(
+            () => profileRepository.holdSeatCatalogWorkedOut('demo-uid', 'v2'),
+          ).called(1);
+        });
+
+        testWidgets('signed out reaches $MyRondaPage from the first question '
+            'too, leaving the answers held on the phone unsaved', (
+          tester,
+        ) async {
+          await pumpSignedOut(tester);
+          await tester.tap(buttonsDoor());
+          await tester.pumpAndSettle();
+          expect(find.byType(PretextsStep), findsOneWidget);
+
+          final account = find.bySemanticsIdentifier(
+            OnboardingQuestionPage.accountIdentifier,
+          );
+          await tester.ensureVisible(account);
+          await tester.tap(account);
+          await tester.pumpAndSettle();
+          expect(find.text('Sign in with your account'), findsOneWidget);
+
+          held = otherAnswers;
+          users.add(_user);
+          await tester.pumpAndSettle();
+          profiles.add(_profile);
+          await tester.pumpAndSettle();
+
+          expect(find.byType(MyRondaPage), findsOneWidget);
+          verifyProfileNeverWritten();
+          expect(held, isNull);
+        });
+
+        testWidgets('signing in at "Guardá tu lugar" with answers held on '
+            'the phone keeps the saved profile and its seats', (tester) async {
+          held = otherAnswers;
+          when(() => profileRepository.savedProfile('demo-uid'))
+              .thenAnswer((_) async => _profile);
+          await pumpSignedOut(tester);
+          await tester.tap(buttonsDoor());
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find.bySemanticsIdentifier(ReviewStep.saveIdentifier),
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find.bySemanticsIdentifier(PayoffView.continueIdentifier),
+          );
+          await tester.pumpAndSettle();
+          clearInteractions(needsRepository);
+
+          users.add(_user);
+          await tester.pumpAndSettle();
+          // The cache first, holding only the terms just written.
+          profiles.add(null);
+          await tester.pumpAndSettle();
+          profiles.add(_profile);
+          await tester.pumpAndSettle();
+
+          expect(find.byType(MyRondaPage), findsOneWidget);
+          verifyProfileNeverWritten();
+          verifyNever(
+            () => profileRepository.saveEligibleSeatIds(
+              uid: any(named: 'uid'),
+              seatIds: any(named: 'seatIds'),
+            ),
+          );
+          verifyNever(() => needsRepository.save(any()));
+          expect(held, isNull);
+        });
+
+        testWidgets('signed in reloads straight into $MyRondaPage, never '
+            'the doors or the questions', (tester) async {
+          held = otherAnswers;
+          await tester.pumpWidget(buildSubject(walkthroughSeen: false));
+          await tester.pump();
+          expect(find.byType(WalkthroughPage), findsNothing);
+          expect(find.byType(WelcomePage), findsNothing);
+          expect(find.byType(OnboardingPage), findsNothing);
+
+          users.add(_user);
+          await tester.pump();
+          profiles.add(_profile);
+          await tester.pumpAndSettle();
+
+          expect(find.byType(MyRondaPage), findsOneWidget);
+          verifyProfileNeverWritten();
+        });
+
+        testWidgets('with an account and no profile goes on to the first '
+            'question, signed in', (tester) async {
+          await pumpSignedOut(tester);
+          await tester.ensureVisible(accountButton());
+          await tester.tap(accountButton());
+          await tester.pumpAndSettle();
+
+          users.add(_user);
+          await tester.pumpAndSettle();
+          profiles.add(null);
+          await tester.pumpAndSettle();
+
+          expect(find.byType(OnboardingPage), findsOneWidget);
+          expect(find.byType(PretextsStep), findsOneWidget);
+          expect(
+            find.bySemanticsIdentifier(
+              OnboardingQuestionPage.accountIdentifier,
+            ),
+            findsNothing,
+          );
+          verify(() => profileRepository.acceptTerms('demo-uid', any()))
+              .called(1);
+          verifyProfileNeverWritten();
+        });
       });
 
       testWidgets('by opening $AdminPage for the admin', (tester) async {

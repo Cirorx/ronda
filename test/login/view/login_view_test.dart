@@ -68,6 +68,19 @@ void main() {
         expect(find.text('No publicamos nada en tu cuenta'), findsOneWidget);
       });
 
+      testWidgets('after "Ya tengo cuenta": the account they joined with', (
+        tester,
+      ) async {
+        await pumpSubject(tester, reason: LoginReason.account);
+
+        expect(find.text('Entrá con tu cuenta'), findsOneWidget);
+        expect(
+          find.text('Usá la misma con la que te sumaste: Google o tu celular.'),
+          findsOneWidget,
+        );
+        expect(find.text('No publicamos nada en tu cuenta'), findsOneWidget);
+      });
+
       testWidgets('after the voice door: to listen', (tester) async {
         await pumpSubject(tester, reason: LoginReason.voice);
 

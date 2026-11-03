@@ -50,11 +50,14 @@ const returnToParameter = 'from';
 ///   welcome screen's link opens it again); once a welcome door
 ///   accepted the terms, also the questions, the payoff and either sign-in,
 ///   by Google or by phone (the answers stay on the phone until then);
+///   "Ya tengo cuenta" is such a door, straight to sign-in;
 /// - signed in, profile not read yet: wherever they are;
 /// - signed in without a profile: onboarding, which saves the answers held
 ///   on the phone straight away when there are some;
 /// - signed in with a profile: the tabs, never welcome, onboarding or the
-///   payoff;
+///   payoff, whatever this phone holds. Bootstrap waits for Firebase Auth
+///   to read a saved session first, so a browser reload opens on the tabs
+///   rather than on the welcome doors;
 /// - the Admin tab (`/admin`) and everything under it (`/admin/programa`,
 ///   `/admin/rondas`, `/admin/errores`, `/admin/reportes`, the admin's roll): only the account
 ///   whose ID token carries the admin claim, with or without a profile (the
@@ -155,9 +158,11 @@ GoRouter createAppRouter({
           GoRoute(
             path: LoginPage.segment,
             builder: (context, state) => LoginPage(
-              reason: context.read<AppBloc>().state.door == OnboardingDoor.voice
-                  ? LoginReason.voice
-                  : LoginReason.signIn,
+              reason: switch (context.read<AppBloc>().state.door) {
+                OnboardingDoor.voice => LoginReason.voice,
+                OnboardingDoor.account => LoginReason.account,
+                OnboardingDoor.buttons => LoginReason.signIn,
+              },
               phoneLocation: state.uri
                   .replace(path: LoginPage.phonePath)
                   .toString(),

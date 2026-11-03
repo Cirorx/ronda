@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:auth_repository/auth_repository.dart';
@@ -104,6 +105,50 @@ void main() {
         );
 
         expect(subject.currentUser, equals(const User(id: _uid)));
+      });
+    });
+
+    group('restoredUser', () {
+      test('is the signed-in $User once the saved session is read', () async {
+        final subject = AuthRepository(
+          firebaseAuth: MockFirebaseAuth(signedIn: true, mockUser: mockUser),
+          googleSignInFlow: GoogleSignInFlow.popup,
+          linkOpener: linkOpener,
+          phoneSignInFlow: PhoneSignInFlow.verify,
+        );
+
+        expect(await subject.restoredUser(), equals(const User(id: _uid)));
+      });
+
+      test('is ${User.empty} when nobody is signed in', () async {
+        final subject = AuthRepository(
+          firebaseAuth: MockFirebaseAuth(mockUser: mockUser),
+          googleSignInFlow: GoogleSignInFlow.popup,
+          linkOpener: linkOpener,
+          phoneSignInFlow: PhoneSignInFlow.verify,
+        );
+
+        expect(await subject.restoredUser(), equals(User.empty));
+      });
+
+      test('falls back to the current user when the session never '
+          'arrives', () async {
+        final firebaseAuth = _MockFirebaseAuth();
+        final sessions = StreamController<firebase_auth.User?>();
+        addTearDown(sessions.close);
+        when(firebaseAuth.authStateChanges).thenAnswer((_) => sessions.stream);
+        when(() => firebaseAuth.currentUser).thenReturn(null);
+        final subject = AuthRepository(
+          firebaseAuth: firebaseAuth,
+          googleSignInFlow: GoogleSignInFlow.popup,
+          linkOpener: linkOpener,
+          phoneSignInFlow: PhoneSignInFlow.verify,
+        );
+
+        expect(
+          await subject.restoredUser(timeout: Duration.zero),
+          equals(User.empty),
+        );
       });
     });
 

@@ -208,6 +208,10 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   ///
   /// Signed out, it keeps the needs and the answers on this phone instead,
   /// and nothing leaves it: the seats are read only once signed in.
+  ///
+  /// Signed in to an account that already has a profile (answers held on
+  /// this phone, then sign-in with an old account), nothing is written: the
+  /// saved profile and its seats win, and the router moves on to the tabs.
   Future<void> save() async {
     final OnboardingState(:ageBand, :barrio, :status) = state;
     if (state.step != OnboardingStep.review || !state.isComplete) return;
@@ -224,6 +228,10 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       brings: state.brings,
     );
     try {
+      if (_signedIn && await _profileRepository.savedProfile(_uid) != null) {
+        emit(state.copyWith(status: OnboardingStatus.saved));
+        return;
+      }
       await _needsRepository.save(needs);
       if (!_signedIn) {
         await _profileRepository.holdAnswers(answers);

@@ -413,6 +413,10 @@ Future<void> bootstrap(
   // And the language picked on this phone, so the first frame is already in
   // it.
   final language = await profileRepository.language();
+  // And who is signed in: a browser reads the saved session only after
+  // launch, and until then Firebase Auth reports nobody, which would open a
+  // returning member on the welcome doors instead of Mi ronda.
+  await authRepository.restoredUser();
 
   final app = await builder(
     authRepository: authRepository,

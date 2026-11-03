@@ -15,6 +15,9 @@ class const OnboardingView({
   /// Back from the first question: to the welcome doors signed out, to the
   /// recorder signed in.
   final VoidCallback? onLeave,
+
+  /// "Ya tengo cuenta" on the first question, signed out.
+  final VoidCallback? onSignIn,
   super.key,
 }) extends StatelessWidget {
   @override
@@ -53,6 +56,7 @@ class const OnboardingView({
       },
       child: OnboardingLeaveScope(
         onLeave: onLeave,
+        onSignIn: onSignIn,
         child: StepSwitcher<OnboardingScreen>(
           step: screen,
           forward: (from, to) => to.isForwardFrom(from),

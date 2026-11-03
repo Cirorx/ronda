@@ -40,6 +40,14 @@
     "@loginTitle": {
         "description": "Heading of the sign-in screen when it opens to return somewhere (?from=/admin)"
     },
+    "loginAccountTitle": "Sign in with your account",
+    "@loginAccountTitle": {
+        "description": "Heading of the sign-in screen opened from I already have an account"
+    },
+    "loginAccountBody": "Use the one you joined with: Google or your mobile number.",
+    "@loginAccountBody": {
+        "description": "Under the heading of the sign-in screen opened from I already have an account"
+    },
     "loginBarTitle": "Sign in",
     "@loginBarTitle": {
         "description": "Top bar title of the sign-in screen"
@@ -322,6 +330,10 @@
     "welcomeHowItWorks": "How does it work?",
     "@welcomeHowItWorks": {
         "description": "Link on the welcome screen that opens the walkthrough again"
+    },
+    "welcomeHaveAccount": "I already have an account",
+    "@welcomeHaveAccount": {
+        "description": "Button under the welcome doors for someone who signed up before (on another phone or browser): it opens sign-in, and with a saved profile goes straight to Mi ronda"
     },
     "walkthroughSkip": "Skip",
     "@walkthroughSkip": {

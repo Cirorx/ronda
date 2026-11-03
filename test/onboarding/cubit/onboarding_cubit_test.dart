@@ -135,6 +135,8 @@ void main() {
           .thenAnswer((_) async {});
       when(() => profileRepository.createProfile(any(), any()))
           .thenAnswer((_) async {});
+      when(() => profileRepository.savedProfile(any()))
+          .thenAnswer((_) async => null);
       when(() => profileRepository.publishedSeats())
           .thenAnswer((_) async => _seats);
       when(() => needsRepository.eligibleSeatIds(any(), any()))
@@ -483,6 +485,57 @@ void main() {
     });
 
     group('save', () {
+      blocTest<OnboardingCubit, OnboardingState>(
+        'writes nothing for an account that already has a profile',
+        setUp: () {
+          when(() => profileRepository.savedProfile('demo-uid')).thenAnswer(
+            (_) async => const Profile(
+              firstName: 'Ana',
+              ageBand: AgeBand.thirties,
+              barrio: Barrio.cordon,
+              pretexts: {},
+              slots: {},
+              brings: {},
+            ),
+          );
+        },
+        build: buildCubit,
+        seed: () => _answered,
+        act: (cubit) => cubit.save(),
+        expect: () => [
+          _answered.copyWith(status: OnboardingStatus.saving),
+          _answered.copyWith(status: OnboardingStatus.saved),
+        ],
+        verify: (_) {
+          verifyNever(() => needsRepository.save(any()));
+          verifyNever(
+            () => profileRepository.saveEligibleSeatIds(
+              uid: any(named: 'uid'),
+              seatIds: any(named: 'seatIds'),
+            ),
+          );
+          verifyNever(() => profileRepository.createProfile(any(), any()));
+        },
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'emits failure when the saved profile cannot be read',
+        setUp: () {
+          when(() => profileRepository.savedProfile(any()))
+              .thenThrow(const SaveProfileFailure());
+        },
+        build: buildCubit,
+        seed: () => _answered,
+        act: (cubit) => cubit.save(),
+        expect: () => [
+          _answered.copyWith(status: OnboardingStatus.saving),
+          _answered.copyWith(status: OnboardingStatus.failure),
+        ],
+        verify: (_) {
+          verifyNever(() => profileRepository.createProfile(any(), any()));
+        },
+      );
+
       blocTest<OnboardingCubit, OnboardingState>(
         'saves the needs on the phone, then the eligible seat ids, then the '
         'profile without the needs',

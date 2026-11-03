@@ -90,7 +90,11 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   the readable column.
 - Welcome: "Cinco vecinos, a pocas cuadras, el mismo día todas las semanas." Two doors: "Con un
   audio" ("Hablás un minuto, como en WhatsApp.") / "Tocando botones" ("Siete preguntas
-  cortas."). Never asks address, cédula, birth date, or whether you live alone. Age is a band
+  cortas."). Under them, "Ya tengo cuenta" (2026-11-02), for someone who signed up on another
+  phone or browser: sign-in ("Entrá con tu cuenta", "Usá la misma con la que te sumaste: Google o
+  tu celular."), then Mi ronda with a saved profile, never the questions again, or the first
+  question, signed in, for an account without one. The first question offers it too, signed
+  out. A saved profile is never written over by answers held on the phone. Never asks address, cédula, birth date, or whether you live alone. Age is a band
   the person picks ("sesenta y pico").
 - **Terms by continuing, no consent screen.** Under the doors: "Al seguir, aceptás las
   condiciones de Ronda." Tapping either door is the acceptance; the app records the terms

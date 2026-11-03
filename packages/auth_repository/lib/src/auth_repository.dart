@@ -52,8 +52,27 @@ class AuthRepository {
   Stream<User> get user =>
       _firebaseAuth.authStateChanges().map((user) => user.toUser);
 
-  /// Who is signed in right now; [User.empty] when nobody is.
+  /// Who is signed in right now; [User.empty] when nobody is, and in a
+  /// browser until [restoredUser] completes.
   User get currentUser => _firebaseAuth.currentUser.toUser;
+
+  /// How long [restoredUser] waits for the saved session.
+  static const restoreTimeout = Duration(seconds: 5);
+
+  /// Who is signed in once Firebase Auth has read the session saved on this
+  /// phone or browser, so the app opens on the right screen for someone who
+  /// signed in before. Gives up after [timeout] and returns [currentUser];
+  /// [user] reports the session if it arrives later.
+  Future<User> restoredUser({Duration timeout = restoreTimeout}) async {
+    try {
+      final user = await _firebaseAuth.authStateChanges().first.timeout(
+        timeout,
+      );
+      return user.toUser;
+    } on TimeoutException {
+      return currentUser;
+    }
+  }
 
   /// How the signed-in person enters, with Google or a phone number, and the
   /// email or the number; null when nobody is signed in or the account has

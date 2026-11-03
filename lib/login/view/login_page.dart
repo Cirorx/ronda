@@ -16,6 +16,10 @@ enum LoginReason {
   /// Signing in to return somewhere (`?from=/admin`): "Primero, entrá con
   /// tu cuenta".
   signIn,
+
+  /// "Ya tengo cuenta", for someone who signed up before: "Entrá con tu
+  /// cuenta".
+  account,
 }
 
 /// The sign-in screen: Google, or a code by SMS on the screen under it. It

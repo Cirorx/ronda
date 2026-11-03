@@ -17,7 +17,9 @@ const voiceDoorEnabled = true;
 /// Tapping a door adds [AppTermsAccepted]; once [AppBloc] holds the
 /// acceptance, this page moves on: "Tocando botones" to the questions,
 /// signed out (sign-in comes after the payoff); "Con un audio" to sign-in,
-/// because the server reads the audio. Someone sent here to sign in and
+/// because the server reads the audio; "Ya tengo cuenta", for someone who
+/// signed up before, to sign-in, then the tabs with a saved profile or the
+/// questions without one. Someone sent here to sign in and
 /// return (`?from=/admin`) goes to sign-in through either door, keeping
 /// that query. "¿Cómo funciona?" opens the walkthrough again over it.
 class const WelcomePage({
@@ -32,6 +34,9 @@ class const WelcomePage({
 
   /// Maestro's handle on "Tocando botones".
   static const buttonsDoorIdentifier = 'welcome.buttons';
+
+  /// Maestro's handle on "Ya tengo cuenta".
+  static const accountIdentifier = 'welcome.account';
 
   /// Maestro's handle on "¿Cómo funciona?".
   static const howItWorksIdentifier = 'welcome.howItWorks';
@@ -148,6 +153,19 @@ class const WelcomePage({
                             title: l10n.welcomeButtonsDoorTitle,
                             subtitle: l10n.welcomeButtonsDoorSubtitle,
                             onTap: () => acceptTerms(OnboardingDoor.buttons),
+                          ),
+                          MergeSemantics(
+                            child: Semantics(
+                              identifier: accountIdentifier,
+                              child: TextButton(
+                                onPressed: () =>
+                                    acceptTerms(OnboardingDoor.account),
+                                child: Text(
+                                  l10n.welcomeHaveAccount,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
                           ),
                           TermsNote(
                             identifier: termsLinkIdentifier,

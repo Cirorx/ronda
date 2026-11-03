@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/onboarding/cubit/onboarding_cubit.dart';
 import 'package:ronda/onboarding/widgets/onboarding_leave_scope.dart';
 import 'package:ronda/onboarding/widgets/onboarding_next_button.dart';
@@ -67,7 +68,8 @@ class const OnboardingQuestion({
 /// A page of onboarding questions: the [page]'s number among the [pages],
 /// back to the page before (on the first page, out of onboarding through
 /// [OnboardingLeaveScope], when it gives a way), and "Seguir" past the
-/// whole page. A page of
+/// whole page; signed out, the first page also offers "Ya tengo cuenta"
+/// under it. A page of
 /// one question has its [title]; a page of several lays out each one's
 /// widget as a section ([OnboardingSectionScope]).
 /// {@endtemplate}
@@ -98,6 +100,9 @@ class const OnboardingQuestionPage({
   /// {@macro onboarding_question_page}
   this;
 
+  /// Maestro's handle on "Ya tengo cuenta".
+  static const accountIdentifier = 'onboarding.account';
+
   @override
   Widget build(BuildContext context) {
     final editingFromReview = context.select<OnboardingCubit, bool>(
@@ -105,6 +110,7 @@ class const OnboardingQuestionPage({
     );
     final number = pages.indexOf(page);
     final canGoBack = editingFromReview || number > 0;
+    final onSignIn = canGoBack ? null : OnboardingLeaveScope.signInOf(context);
     return OnboardingStepLayout(
       title: title,
       body: body,
@@ -116,7 +122,18 @@ class const OnboardingQuestionPage({
           ? () => _back(context, number)
           : OnboardingLeaveScope.of(context),
       primaryAction: OnboardingNextButton(page: page),
-      secondaryAction: secondaryAction,
+      secondaryAction: switch (onSignIn) {
+        final onSignIn? when secondaryAction == null => MergeSemantics(
+          child: Semantics(
+            identifier: accountIdentifier,
+            child: TextButton(
+              onPressed: onSignIn,
+              child: Text(context.l10n.welcomeHaveAccount),
+            ),
+          ),
+        ),
+        _ => secondaryAction,
+      },
       child: child,
     );
   }

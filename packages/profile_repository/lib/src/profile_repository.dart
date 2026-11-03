@@ -46,11 +46,14 @@ class ProfileRepository {
   Stream<Profile?> watchProfile(String uid) =>
       _rondaApi.watchUser(uid).map((user) => user?.toProfile());
 
-  /// Records on `users/{uid}` that [uid] accepted the conditions.
+  /// Records on `users/{uid}` that [uid] accepted the conditions. The same
+  /// version accepted before (on another phone, say) keeps its first time.
   ///
-  /// Throws an [AcceptTermsFailure] when the write fails.
+  /// Throws an [AcceptTermsFailure] when the read or the write fails.
   Future<void> acceptTerms(String uid, TermsAcceptance terms) async {
     try {
+      final saved = await _rondaApi.readUser(uid);
+      if (saved?.terms?.version == terms.version) return;
       await _rondaApi.saveTerms(
         uid,
         TermsRecord(version: terms.version, acceptedAt: terms.acceptedAt),
@@ -63,10 +66,27 @@ class ProfileRepository {
   /// Saves [profile] as the profile of [uid], keeping the accepted terms.
   ///
   /// Lists are stored in the enums' declaration order, so the same choices
-  /// always produce the same document. Throws a [SaveProfileFailure] when
-  /// the write fails.
-  Future<void> createProfile(String uid, Profile profile) =>
-      _saveProfile(uid, profile, isNew: true);
+  /// always produce the same document.
+  ///
+  /// A profile [uid] already saved (on another phone, or before this sign-in)
+  /// is kept as it is: answers held on this phone never write over it.
+  /// Throws a [SaveProfileFailure] when the read or the write fails.
+  Future<void> createProfile(String uid, Profile profile) async {
+    if (await savedProfile(uid) != null) return;
+    await _saveProfile(uid, profile, isNew: true);
+  }
+
+  /// The profile saved on `users/{uid}`, read once from the server rather
+  /// than from what this phone has cached, or `null` when there is none.
+  ///
+  /// Throws a [SaveProfileFailure] when the read fails.
+  Future<Profile?> savedProfile(String uid) async {
+    try {
+      return (await _rondaApi.readUser(uid))?.toProfile();
+    } on Exception {
+      throw const SaveProfileFailure();
+    }
+  }
 
   /// Replaces the profile of [uid] with [profile], from "Mis datos": casa,
   /// trabajo and every answer, keeping when it was first saved. A profile

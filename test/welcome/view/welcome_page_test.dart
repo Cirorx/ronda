@@ -202,6 +202,19 @@ void main() {
           () => appBloc.add(const AppTermsAccepted(door: OnboardingDoor.voice)),
         ).called(1);
       });
+
+      testWidgets('when "Ya tengo cuenta" is tapped', (tester) async {
+        await pumpSubject(tester);
+
+        expect(find.text('Ya tengo cuenta'), findsOneWidget);
+        await tester.ensureVisible(_byId(WelcomePage.accountIdentifier));
+        await tester.tap(_byId(WelcomePage.accountIdentifier));
+
+        verify(
+          () =>
+              appBloc.add(const AppTermsAccepted(door: OnboardingDoor.account)),
+        ).called(1);
+      });
     });
 
     group('lays out', () {

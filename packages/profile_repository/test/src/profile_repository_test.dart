@@ -152,6 +152,49 @@ void main() {
     });
 
     group('acceptTerms', () {
+      setUp(() {
+        when(() => rondaApi.readUser(any())).thenAnswer((_) async => null);
+      });
+
+      test('keeps the time of the same version accepted before', () async {
+        when(() => rondaApi.readUser('demo-uid')).thenAnswer(
+          (_) async => UserDocument(
+            terms: TermsRecord(version: '2026-10-27', acceptedAt: acceptedAt),
+          ),
+        );
+
+        await subject.acceptTerms(
+          'demo-uid',
+          TermsAcceptance(
+            version: '2026-10-27',
+            acceptedAt: DateTime(2026, 11),
+          ),
+        );
+
+        verifyNever(() => rondaApi.saveTerms(any(), any()));
+      });
+
+      test('records a newer version over an older one', () async {
+        when(() => rondaApi.saveTerms(any(), any())).thenAnswer((_) async {});
+        when(() => rondaApi.readUser('demo-uid')).thenAnswer(
+          (_) async => UserDocument(
+            terms: TermsRecord(version: '2026-01-01', acceptedAt: acceptedAt),
+          ),
+        );
+
+        await subject.acceptTerms(
+          'demo-uid',
+          TermsAcceptance(version: '2026-10-27', acceptedAt: acceptedAt),
+        );
+
+        verify(
+          () => rondaApi.saveTerms(
+            'demo-uid',
+            TermsRecord(version: '2026-10-27', acceptedAt: acceptedAt),
+          ),
+        ).called(1);
+      });
+
       test('writes the version and time through ronda_api', () async {
         when(() => rondaApi.saveTerms(any(), any())).thenAnswer((_) async {});
 
@@ -198,6 +241,10 @@ void main() {
           isNew: any(named: 'isNew'),
         ),
       );
+
+      setUp(() {
+        when(() => rondaApi.readUser(any())).thenAnswer((_) async => null);
+      });
 
       test('writes the ids in declaration order', () async {
         stubSave().thenAnswer((_) async {});
@@ -254,6 +301,83 @@ void main() {
 
       test('throws $SaveProfileFailure when the write fails', () {
         stubSave().thenThrow(Exception('unavailable'));
+
+        expect(
+          () => subject.createProfile('demo-uid', profile),
+          throwsA(isA<SaveProfileFailure>()),
+        );
+      });
+
+      test('keeps a profile already saved, writing nothing', () async {
+        stubSave().thenAnswer((_) async {});
+        when(() => rondaApi.readUser('demo-uid')).thenAnswer(
+          (_) async => const UserDocument(
+            firstName: 'Ana',
+            ageBand: '30-39',
+            barrio: 'cordon',
+          ),
+        );
+
+        await subject.createProfile('demo-uid', profile);
+
+        verifyNever(
+          () => rondaApi.saveProfile(
+            any(),
+            firstName: any(named: 'firstName'),
+            ageBand: any(named: 'ageBand'),
+            barrio: any(named: 'barrio'),
+            barrioNeighbours: any(named: 'barrioNeighbours'),
+            workBarrio: any(named: 'workBarrio'),
+            workBarrioNeighbours: any(named: 'workBarrioNeighbours'),
+            slots: any(named: 'slots'),
+            pretexts: any(named: 'pretexts'),
+            brings: any(named: 'brings'),
+            isNew: any(named: 'isNew'),
+          ),
+        );
+      });
+
+      test('saves over a document that holds only the terms', () async {
+        stubSave().thenAnswer((_) async {});
+        when(() => rondaApi.readUser('demo-uid')).thenAnswer(
+          (_) async => UserDocument(
+            terms: TermsRecord(version: '2026-10-27', acceptedAt: acceptedAt),
+          ),
+        );
+
+        await subject.createProfile('demo-uid', profile);
+
+        verify(
+          () => rondaApi.saveProfile(
+            'demo-uid',
+            firstName: 'Marta',
+            ageBand: '60-69',
+            barrio: 'solymar-norte',
+            slots: ['thu-afternoon', 'sat-morning'],
+            pretexts: ['mate', 'truco'],
+            brings: ['termo', 'tengo-ganas'],
+          ),
+        ).called(1);
+      });
+
+      test('savedProfile reads the $Profile saved on users/{uid}', () async {
+        when(() => rondaApi.readUser('demo-uid')).thenAnswer(
+          (_) async => const UserDocument(
+            firstName: 'Ana',
+            ageBand: '30-39',
+            barrio: 'cordon',
+          ),
+        );
+
+        expect(
+          await subject.savedProfile('demo-uid'),
+          isA<Profile>().having((p) => p.firstName, 'firstName', 'Ana'),
+        );
+      });
+
+      test('throws $SaveProfileFailure when the read fails', () {
+        when(() => rondaApi.readUser('demo-uid'))
+            .thenThrow(Exception('unavailable'));
 
         expect(
           () => subject.createProfile('demo-uid', profile),

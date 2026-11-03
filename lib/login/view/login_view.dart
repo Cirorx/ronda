@@ -42,6 +42,7 @@ class const LoginView({
       LoginReason.keepSeat => (l10n.loginKeepSeatTitle, l10n.loginKeepSeatBody),
       LoginReason.voice => (l10n.loginVoiceTitle, null),
       LoginReason.signIn => (l10n.loginTitle, null),
+      LoginReason.account => (l10n.loginAccountTitle, l10n.loginAccountBody),
     };
     // Disabled while the picker is open and until the router moves on.
     final inProgress =
