@@ -68,7 +68,8 @@ void main() {
       expect(find.byType(PayoffView), findsOneWidget);
       expect(
         find.text(
-          'Sos de los primeros en tu zona: te avisamos cuando seamos cinco.',
+          'Sos de los primeros en tu zona: te avisamos cuando se sume alguien '
+          'más.',
         ),
         findsOneWidget,
       );
@@ -186,7 +187,8 @@ void main() {
 
         expect(
           find.text(
-            'Sos de los primeros en tu zona: te avisamos cuando seamos cinco.',
+            'Sos de los primeros en tu zona: te avisamos cuando se sume '
+            'alguien más.',
           ),
           findsOneWidget,
         );

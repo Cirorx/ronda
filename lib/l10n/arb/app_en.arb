@@ -275,7 +275,7 @@
     "@payoffNext": {
         "description": "Under the payoff's demand lines"
     },
-    "payoffFirstOnes": "You're one of the first near you: we'll let you know when there are five of us.",
+    "payoffFirstOnes": "You're one of the first near you: we'll let you know when someone else joins.",
     "@payoffFirstOnes": {
         "description": "Payoff when nobody else in the barrio signed up for the person's pretexts"
     },
@@ -359,7 +359,7 @@
             }
         }
     },
-    "walkthroughGroupTitle": "The same 5 or 6, every week",
+    "walkthroughGroupTitle": "The same neighbours, every week",
     "@walkthroughGroupTitle": {
         "description": "Heading of the walkthrough's first card"
     },

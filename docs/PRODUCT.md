@@ -74,7 +74,7 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   phone remembers, and the welcome screen's "¿Cómo funciona?" link opens it again. A link to a screen, the welcome
   screen itself (the flyers' and Cerca tuyo's [Quiero sumarme] open it) and `?from=/admin` go
   straight on.
-  1. "Los mismos 5 o 6, cada semana" — "A pocas cuadras, con una excusa: mate en la rambla,
+  1. "Los mismos vecinos, cada semana" — "A pocas cuadras, con una excusa: mate en la rambla,
      truco, fútbol 5." Drawn as the mate, the mazo and the pelota.
   2. "Un aviso por semana, nada más" — a sample of the weekly card, "Jueves 16:00 · Rambla y
      Gestido" with "¿Venís?" [Voy] [Esta no] as a picture (nothing to tap), then "No hay nada
@@ -107,7 +107,7 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   Cerca tuyo's public `cerca/{barrio}` counts. It shows demand, never seats: "Hay 4 anotados para
   mate los sábados de tarde cerca tuyo." (the slot only where the counts have one; otherwise "Hay
   4 anotados para mate cerca tuyo."), then "Te avisamos cuando se arme tu ronda." With nobody
-  else: "Sos de los primeros en tu zona: te avisamos cuando seamos cinco." Offline or unreadable:
+  else: "Sos de los primeros en tu zona: te avisamos cuando se sume alguien más." Offline or unreadable:
   "Ahora no pudimos ver quién más se anotó cerca tuyo." No names, places or "4 de 6": nothing yet
   lets a new sign-up take a seat in an existing ronda, and the solver can still split or trim a
   group. [Guardame el lugar] leads to sign-in.

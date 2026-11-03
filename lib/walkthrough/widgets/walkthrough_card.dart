@@ -11,7 +11,7 @@ class const WalkthroughCard({
   /// What the card shows above its heading.
   required final Widget art,
 
-  /// The card's heading ("Los mismos 5 o 6, cada semana").
+  /// The card's heading ("Los mismos vecinos, cada semana").
   required final String title,
 
   /// The text under the heading.

@@ -23,7 +23,7 @@ class _MockGoRouter extends Mock implements GoRouter;
 
 Finder _byId(String identifier) => find.bySemanticsIdentifier(identifier);
 
-const _firstTitle = 'Los mismos 5 o 6, cada semana';
+const _firstTitle = 'Los mismos vecinos, cada semana';
 const _secondTitle = 'Un aviso por semana, nada más';
 const _thirdTitle = 'Un programa se encarga del resto';
 
@@ -131,7 +131,7 @@ void main() {
       testWidgets('in English', (tester) async {
         await pumpSubject(tester, locale: const Locale('en'));
 
-        expect(find.text('The same 5 or 6, every week'), findsOneWidget);
+        expect(find.text('The same neighbours, every week'), findsOneWidget);
         expect(find.text('Skip'), findsOneWidget);
         expect(find.text('Continue'), findsOneWidget);
       });
