@@ -206,6 +206,13 @@ class TestRunningItAgain:
         assert tree(db) == first
         assert not db.document(f"rondas/{RONDA}/handoff_asks/{OWNER}").get().exists
 
+    def test_leaves_nothing_of_the_last_scene_behind(self, db):
+        build(db)
+        build(db, "handoff")
+
+        # A fresh ¿seguimos?, not the last scene's, closed by this one's ¿Venís? push.
+        assert get(db, f"rondas/{RONDA}/seguimos/{OWNER}")["status"] == "open"
+
     def test_leaves_other_rondas_alone(self, db):
         db.document("rondas/someone-else").set(
             {"pretext": "truco", "slot": {"day": "wed", "time": "afternoon"}, "status": "active"}

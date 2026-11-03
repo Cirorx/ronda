@@ -1,6 +1,7 @@
 """Build one ronda to film on the Firebase emulators: the owner's account and invented neighbours.
 
-From the repo root, with the emulators up (`firebase emulators:start`) and the owner signed in
+From the repo root, with the emulators up (`OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES firebase
+emulators:start` on macOS, docs/STACK.md) and the owner signed in
 and onboarded once from the development app:
 
     FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \\

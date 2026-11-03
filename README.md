@@ -164,8 +164,9 @@ checklist), or, for tests only, copy `tool/firebase_options_stub.dart` to
 `lib/firebase_options_development.dart` and `lib/firebase_options_production.dart`, as CI does.
 
 ```sh
-# The emulators, from the repo root (Firestore on 8088, Auth 9099, Functions 5001, UI on :4000)
-firebase emulators:start
+# The emulators, from the repo root (Firestore on 8088, Auth 9099, Functions 5001, UI on :4000).
+# On macOS the variable keeps the Python functions' worker from crashing when it forks.
+OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES firebase emulators:start
 
 # Invented demo data: 30 sign-ups, seat facts and places (scripts/seed.py 200 adds more)
 FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \

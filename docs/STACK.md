@@ -621,7 +621,11 @@ on both Android apps, and release builds are signed with that key until a releas
   default 8080 because web dev servers often hold that port, and hosting off 5000 because macOS's
   AirPlay Receiver holds it. `ping` answers at
   `http://127.0.0.1:5001/ronda-uy/southamerica-east1/ping`. Hosting serves whatever `hosting/`
-  holds (§ Pilot builds); an empty or missing folder only gives 404s.
+  holds (§ Pilot builds); an empty or missing folder only gives 404s. **On macOS** start them
+  as `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES firebase emulators:start`: without it the
+  functions emulator's Python worker crashes when it forks ("Crashing instead" in the log), so
+  callables and triggers fail at random, and Firestore writes that fire a trigger can come back
+  `499 Cancelled` (seen 2026-11-03: `demo_ronda.py` left an earlier scene's ¿seguimos? behind).
 - **Demo data** (`docs/ARCHITECTURE.md` § Demo data), from the repo root with the emulators up:
   `FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 uv run --python 3.13 scripts/reset.py`
   restores the golden path (no Auth accounts; seat facts and the 30 invented sign-ups), and
