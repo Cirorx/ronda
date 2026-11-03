@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -136,6 +137,31 @@ void main() {
 
         expect((await subject.watchRonda('r1').first)!.agentCard, isTrue);
         expect((await subject.watchRonda('r2').first)!.agentCard, isFalse);
+      });
+
+      test('reads when it was made and its newcomer seat week', () async {
+        final createdAt = DateTime.utc(2026, 10, 27, 15);
+        await firestore.doc('rondas/r1').set({
+          'pretext': 'mate',
+          'barrio': 'el-pinar-sur',
+          'slot': {'day': 'sat', 'time': 'afternoon'},
+          'createdAt': Timestamp.fromDate(createdAt),
+          'openSeatFromWeek': 4,
+        });
+        await firestore.doc('rondas/r2').set({
+          'pretext': 'mate',
+          'barrio': 'el-pinar-sur',
+          'slot': {'day': 'sat', 'time': 'afternoon'},
+          'createdAt': 'yesterday',
+          'openSeatFromWeek': '4',
+        });
+
+        final ronda = (await subject.watchRonda('r1').first)!;
+        expect(ronda.createdAt!.isAtSameMomentAs(createdAt), isTrue);
+        expect(ronda.openSeatFromWeek, 4);
+        final other = (await subject.watchRonda('r2').first)!;
+        expect(other.createdAt, isNull);
+        expect(other.openSeatFromWeek, isNull);
       });
     });
 

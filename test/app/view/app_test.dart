@@ -164,6 +164,9 @@ void main() {
       when(() => pushRepository.openedRolls)
           .thenAnswer((_) => const Stream.empty());
       when(pushRepository.launchedRoll).thenAnswer((_) async => null);
+      when(() => pushRepository.openedRainMoves)
+          .thenAnswer((_) => const Stream.empty());
+      when(pushRepository.launchedRainMove).thenAnswer((_) async => null);
       when(pushRepository.permission)
           .thenAnswer((_) async => PushPermission.blocked);
       when(rondaRepository.watchLatestProposal)
@@ -1601,6 +1604,37 @@ void main() {
         await pumpSignedIn(tester);
 
         expect(find.byType(AttendancePage), findsOneWidget);
+      });
+
+      testWidgets(
+        'by opening the rain proposal when "El jueves puede llover" is tapped',
+        (tester) async {
+          final moves = StreamController<OpenedRainMove>();
+          addTearDown(() => unawaited(moves.close()));
+          when(() => pushRepository.openedRainMoves)
+              .thenAnswer((_) => moves.stream);
+          await pumpSignedIn(tester);
+
+          moves.add(const OpenedRainMove(rondaId: 'ronda-1', week: '2026-W45'));
+          await tester.pumpAndSettle();
+
+          final page = tester.widget<RainMovePage>(find.byType(RainMovePage));
+          expect((page.rondaId, page.week), ('ronda-1', '2026-W45'));
+        },
+      );
+
+      testWidgets('by opening the rain proposal when its tap started the app', (
+        tester,
+      ) async {
+        when(pushRepository.launchedRainMove).thenAnswer(
+          (_) async =>
+              const OpenedRainMove(rondaId: 'ronda-1', week: '2026-W45'),
+        );
+        await pumpSignedIn(tester);
+
+        expect(find.byType(RainMovePage), findsOneWidget);
+        verify(() => organiserRepository.watchMove('ronda-1', '2026-W45'))
+            .called(1);
       });
 
       testWidgets('by opening the setup and the roll under $AdminPage '

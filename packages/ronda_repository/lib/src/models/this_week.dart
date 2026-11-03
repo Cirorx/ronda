@@ -78,6 +78,10 @@ class const ThisWeek({
   /// close): there is no week for them to answer.
   final bool hasLeft = false,
 
+  /// Whether [week] is in the ronda's week 4 or later, when it keeps a
+  /// newcomer seat and its hosts can make "Un mate de más".
+  final bool keepsNewcomerSeat = false,
+
   /// The months' turns of who opens and who closes, this month first.
   final List<HostTurn> turns = const [],
 
@@ -96,6 +100,18 @@ class const ThisWeek({
 }) extends Equatable {
   /// {@macro this_week}
   this;
+
+  /// Whether [uid] makes "Un mate de más" this week: once the ronda keeps a
+  /// newcomer seat ([keepsNewcomerSeat]), its anfitrión or cola, or any
+  /// member while it has neither, as the server allows (`may_make_flyer`
+  /// in `functions/mate_flyer.py`).
+  bool makesMateFlyer(String uid) =>
+      keepsNewcomerSeat &&
+      switch ((anfitrion, cola)) {
+        (null, null) => true,
+        (final anfitrion, final cola) =>
+          uid == anfitrion?.uid || uid == cola?.uid,
+      };
 
   @override
   List<Object?> get props => [
@@ -118,6 +134,7 @@ class const ThisWeek({
     noCount,
     unansweredCount,
     hasLeft,
+    keepsNewcomerSeat,
     turns,
     opener,
     despues,

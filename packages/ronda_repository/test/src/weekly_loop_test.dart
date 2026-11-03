@@ -229,6 +229,97 @@ void main() {
         expect(week.despues, isNull);
         verifyNever(() => rondasApi.watchDespues(any(), any()));
       });
+
+      group('keepsNewcomerSeat', () {
+        // Made Thursday 2026-10-29 at 23:30 in Montevideo, already Friday
+        // in UTC: the Thursday slot's first meeting is that same day (week
+        // 1), so week 4 is 2026-11-19.
+        final createdAt = DateTime.utc(2026, 10, 30, 2, 30);
+
+        void meetsOn(String date, {DateTime? made, int? fromWeek = 4}) {
+          when(() => rondasApi.watchRonda('r1')).thenAnswer(
+            (_) => Stream.value(
+              RondaDocument(
+                id: 'r1',
+                pretext: 'mate',
+                barrio: 'el-pinar-sur',
+                slotDay: 'thu',
+                slotBand: 'afternoon',
+                createdAt: made ?? createdAt,
+                openSeatFromWeek: fromWeek,
+              ),
+            ),
+          );
+          when(() => rondasApi.watchWeekView('r1')).thenAnswer(
+            (_) => Stream.value(
+              WeekViewDocument(
+                week: '2026-W47',
+                date: date,
+                going: const [],
+                noCount: 0,
+                unansweredCount: 0,
+              ),
+            ),
+          );
+          when(() => rondasApi.watchDespues('r1', '2026-W47'))
+              .thenAnswer((_) => Stream.value(null));
+          asks.add(null);
+        }
+
+        Future<bool> keeps() async =>
+            (await subject.watchThisWeek('demo-104').first)!.keepsNewcomerSeat;
+
+        test("is true from the ronda's week 4", () async {
+          meetsOn('2026-11-19');
+          expect(await keeps(), isTrue);
+        });
+
+        test('is false in week 3', () async {
+          meetsOn('2026-11-12');
+          expect(await keeps(), isFalse);
+        });
+
+        // Made Monday 2026-10-26: Thursday 10-29 is week 1.
+        test('counts week 4 from the slot day after it was made', () async {
+          meetsOn('2026-11-19', made: DateTime.utc(2026, 10, 26, 12));
+          expect(await keeps(), isTrue);
+        });
+
+        test('counts week 3 from the slot day after it was made', () async {
+          meetsOn('2026-11-12', made: DateTime.utc(2026, 10, 26, 12));
+          expect(await keeps(), isFalse);
+        });
+
+        test('is false without openSeatFromWeek', () async {
+          meetsOn('2026-11-19', fromWeek: null);
+          expect(await keeps(), isFalse);
+        });
+
+        test('is false for a date it cannot read', () async {
+          meetsOn('soon');
+          expect(await keeps(), isFalse);
+        });
+
+        test('is false with no view yet', () async {
+          when(() => rondasApi.watchRonda('r1')).thenAnswer(
+            (_) => Stream.value(
+              RondaDocument(
+                id: 'r1',
+                pretext: 'mate',
+                barrio: 'el-pinar-sur',
+                slotDay: 'thu',
+                slotBand: 'afternoon',
+                createdAt: createdAt,
+                openSeatFromWeek: 4,
+              ),
+            ),
+          );
+          when(() => rondasApi.watchWeekView('r1'))
+              .thenAnswer((_) => Stream.value(null));
+          asks.add(null);
+          expect(await keeps(), isFalse);
+        });
+      });
     });
 
     group('the después', () {

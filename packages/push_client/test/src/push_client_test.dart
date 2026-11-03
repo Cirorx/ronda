@@ -847,6 +847,78 @@ void main() {
           },
         );
 
+        const move = '{"type":"move","rondaId":"r1","week":"2026-W45"}';
+
+        test(
+          'the rain proposal carries its type, ronda and week to the tap',
+          () async {
+            await buildSubject().showMessage(
+              const RemoteMessage(
+                messageId: 'message-6',
+                data: {
+                  'type': 'move',
+                  'rondaId': 'r1',
+                  'week': '2026-W45',
+                  'title': 'El jueves puede llover',
+                  'body': 'Jueves 16:00 · lluvia 80%.',
+                },
+              ),
+            );
+
+            final payload = verify(
+              () => notifications.show(
+                id: any(named: 'id'),
+                title: any(named: 'title'),
+                body: any(named: 'body'),
+                notificationDetails: any(named: 'notificationDetails'),
+                payload: captureAny(named: 'payload'),
+              ),
+            ).captured.single;
+            expect(payload, equals(move));
+          },
+        );
+
+        test('a push of another type carries nothing to the tap', () async {
+          await buildSubject().showMessage(
+            const RemoteMessage(
+              messageId: 'message-7',
+              data: {
+                'type': 'agent',
+                'rondaId': 'r1',
+                'week': '2026-W45',
+                'title': 'Ronda',
+                'body': 'Nos vemos el jueves.',
+              },
+            ),
+          );
+
+          final payload = verify(
+            () => notifications.show(
+              id: any(named: 'id'),
+              title: any(named: 'title'),
+              body: any(named: 'body'),
+              notificationDetails: any(named: 'notificationDetails'),
+              payload: captureAny(named: 'payload'),
+            ),
+          ).captured.single;
+          expect(payload, isNull);
+        });
+
+        test('tapFrom reads a tap on the body of the rain proposal', () {
+          final tap = PushClient.tapFrom(body(move))!;
+
+          expect((tap.type, tap.rondaId, tap.week), ('move', 'r1', '2026-W45'));
+        });
+
+        test('tapFrom ignores a payload of another type', () {
+          expect(
+            PushClient.tapFrom(
+              body('{"type":"agent","rondaId":"r1","week":"2026-W45"}'),
+            ),
+            isNull,
+          );
+        });
+
         test('tapFrom reads a tap on the body of the attendance ask', () {
           final tap = PushClient.tapFrom(body(roll))!;
 

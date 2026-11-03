@@ -11,6 +11,7 @@ import 'package:ronda/cuaderno/cuaderno.dart';
 import 'package:ronda/donde_queda/donde_queda.dart';
 import 'package:ronda/first_visit/first_visit.dart';
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/mate_flyer/mate_flyer.dart';
 import 'package:ronda/my_data/my_data.dart';
 import 'package:ronda/my_ronda/cubit/bench_offer_cubit.dart';
 import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
@@ -215,6 +216,9 @@ class const MyRondaView({required final String uid, super.key})
         DondeQuedaCard(rondaId: week.rondaId, uid: uid),
         BuddySection(rondaId: week.rondaId, uid: uid),
         ActaLink(rondaId: week.rondaId),
+        // Un mate de más: the hosts' flyer, once the ronda keeps a newcomer
+        // seat (week 4).
+        if (week.makesMateFlyer(uid)) MateFlyerEntry(rondaId: week.rondaId),
       ],
     ];
 

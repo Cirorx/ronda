@@ -16,6 +16,7 @@ import 'package:push_repository/push_repository.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/attendance/attendance.dart';
 import 'package:ronda/l10n/l10n.dart';
+import 'package:ronda/rain_move/rain_move.dart';
 import 'package:ronda_repository/ronda_repository.dart';
 import 'package:ronda_ui/ronda_ui.dart';
 import 'package:safety_repository/safety_repository.dart';
@@ -129,10 +130,11 @@ class const App({
 }
 
 /// Shows the router in Ronda's day and night themes, in the language picked
-/// on this phone (else the phone's), and opens the roll
-/// when "¿Quién vino hoy?" is tapped on Android, whether the tap started the
-/// app or found it running. Tells the [ErrorReporter] bootstrap provides, if
-/// any, which route pattern is on screen, so error reports say where.
+/// on this phone (else the phone's), and opens the roll when "¿Quién vino
+/// hoy?" is tapped on Android, or the rain proposal when "El jueves puede
+/// llover" is, whether the tap started the app or found it running. Tells
+/// the [ErrorReporter] bootstrap provides, if any, which route pattern is on
+/// screen, so error reports say where.
 class AppView extends StatefulWidget {
   const new({super.key});
 
@@ -154,6 +156,7 @@ class _AppViewState extends State<AppView> {
   );
 
   StreamSubscription<OpenedRoll>? _rolls;
+  StreamSubscription<OpenedRainMove>? _rainMoves;
   ErrorReporter? _errorReporter;
 
   @override
@@ -169,6 +172,12 @@ class _AppViewState extends State<AppView> {
         if (roll != null && mounted) _openRoll(roll);
       }),
     );
+    _rainMoves = push.openedRainMoves.listen(_openRainMove);
+    unawaited(
+      push.launchedRainMove().then((move) {
+        if (move != null && mounted) _openRainMove(move);
+      }),
+    );
   }
 
   // The pattern (`/acta/:rondaId`), never the filled path with its ids.
@@ -179,9 +188,13 @@ class _AppViewState extends State<AppView> {
   void _openRoll(OpenedRoll roll) =>
       unawaited(_router.push(AttendancePage.location(roll.rondaId, roll.week)));
 
+  void _openRainMove(OpenedRainMove move) =>
+      unawaited(_router.push(RainMovePage.location(move.rondaId, move.week)));
+
   @override
   void dispose() {
     unawaited(_rolls?.cancel());
+    unawaited(_rainMoves?.cancel());
     _router.routerDelegate.removeListener(_reportScreen);
     _router.dispose();
     _appRefresh.dispose();

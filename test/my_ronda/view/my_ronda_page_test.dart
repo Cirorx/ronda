@@ -12,6 +12,7 @@ import 'package:push_repository/push_repository.dart';
 import 'package:ronda/acta/acta.dart';
 import 'package:ronda/app/app.dart';
 import 'package:ronda/cuaderno/cuaderno.dart';
+import 'package:ronda/mate_flyer/mate_flyer.dart';
 import 'package:ronda/my_ronda/cubit/bench_offer_cubit.dart';
 import 'package:ronda/my_ronda/cubit/seguimos_cubit.dart';
 import 'package:ronda/my_ronda/cubit/this_week_cubit.dart';
@@ -447,6 +448,55 @@ void main() {
           tester.widget<ActaLink>(find.byType(ActaLink)).rondaId,
           MyRondaFixtures.week().rondaId,
         );
+      });
+
+      group('"Un mate de más"', () {
+        setUp(() {
+          // A host's card links the meeting's roll.
+          when(() => rondaRepository.watchRoll(any(), any()))
+              .thenAnswer((_) => Stream.value(null));
+        });
+
+        void weekWith({required bool keepsNewcomerSeat, Host? anfitrion}) =>
+            when(() => thisWeekCubit.state).thenReturn(
+              ThisWeekState(
+                status: ThisWeekStatus.ready,
+                week: MyRondaFixtures.week(
+                  keepsNewcomerSeat: keepsNewcomerSeat,
+                  anfitrion: anfitrion,
+                  cola: MyRondaFixtures.jorge,
+                ),
+              ),
+            );
+
+        testWidgets('for a host once the ronda keeps a newcomer seat', (
+          tester,
+        ) async {
+          weekWith(keepsNewcomerSeat: true, anfitrion: MyRondaFixtures.me);
+          await pump(tester);
+          await tester.scrollUntilVisible(find.byType(MateFlyerEntry), 200);
+
+          expect(
+            tester.widget<MateFlyerEntry>(find.byType(MateFlyerEntry)).rondaId,
+            MyRondaFixtures.week().rondaId,
+          );
+        });
+
+        testWidgets('not for a member who is not a host', (tester) async {
+          weekWith(keepsNewcomerSeat: true, anfitrion: MyRondaFixtures.mirta);
+          await pump(tester);
+          await tester.scrollUntilVisible(find.byType(ActaLink), 200);
+
+          expect(find.byType(MateFlyerEntry), findsNothing);
+        });
+
+        testWidgets('not for a host before week 4', (tester) async {
+          weekWith(keepsNewcomerSeat: false, anfitrion: MyRondaFixtures.me);
+          await pump(tester);
+          await tester.scrollUntilVisible(find.byType(ActaLink), 200);
+
+          expect(find.byType(MateFlyerEntry), findsNothing);
+        });
       });
 
       testWidgets('a retry when the ronda cannot be read', (tester) async {

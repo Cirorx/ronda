@@ -14,7 +14,9 @@ import 'package:ronda_api/ronda_api.dart';
 /// when the member signs out. It also remembers on the phone, through
 /// [DeviceStore], when "Ahora no" was tapped on the card that asks, and
 /// says which roll a tap on "¿Quién vino hoy?" opens ([openedRolls],
-/// [launchedRoll]). The token never leaves this class: callers get no
+/// [launchedRoll]) and which proposal a tap on "El jueves puede llover"
+/// opens ([openedRainMoves], [launchedRainMove]). The token never leaves
+/// this class: callers get no
 /// token, and failures carry no detail.
 /// {@endtemplate}
 class PushRepository {
@@ -178,6 +180,25 @@ class PushRepository {
     }
     if (tap == null || tap.type != PushClient.attendanceType) return null;
     return OpenedRoll(rondaId: tap.rondaId, week: tap.week);
+  }
+
+  /// Taps on "El jueves puede llover" while the app runs, each the rain
+  /// proposal it opens.
+  Stream<OpenedRainMove> get openedRainMoves => _pushClient.taps
+      .where((tap) => tap.type == PushClient.moveType)
+      .map((tap) => OpenedRainMove(rondaId: tap.rondaId, week: tap.week));
+
+  /// The rain proposal a tap on "El jueves puede llover" opens when that tap
+  /// started the app; `null` otherwise, or when it can't be read.
+  Future<OpenedRainMove?> launchedRainMove() async {
+    final PushTap? tap;
+    try {
+      tap = await _pushClient.launchTap();
+    } on Exception {
+      return null;
+    }
+    if (tap == null || tap.type != PushClient.moveType) return null;
+    return OpenedRainMove(rondaId: tap.rondaId, week: tap.week);
   }
 
   Future<void> _save(String uid, String token) async {

@@ -25,7 +25,9 @@ abstract final class MyRondaFixtures {
     Despues? despues,
     HandoffAsk? handoffAsk,
     AgentCard? agentCard,
+    bool keepsNewcomerSeat = false,
   }) => ThisWeek(
+    keepsNewcomerSeat: keepsNewcomerSeat,
     agentCard: agentCard,
     rondaId: 'r1',
     pretextId: 'mate',

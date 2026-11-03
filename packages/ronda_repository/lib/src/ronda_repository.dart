@@ -333,6 +333,7 @@ class RondaRepository {
       noCount: view?.noCount,
       unansweredCount: view?.unansweredCount,
       hasLeft: member.state == 'left',
+      keepsNewcomerSeat: _keepsNewcomerSeat(ronda, view),
       turns: [
         for (final turn in ronda.turns)
           if (DateTime.tryParse('${turn.month}-01') case final month?)
@@ -401,6 +402,29 @@ class RondaRepository {
         (Object error) => throw const RsvpFailure(RsvpFailureReason.other),
         test: (error) => error is Exception,
       );
+
+  /// Uruguay's offset from UTC, all year (no daylight saving since 2015).
+  static const _montevideoOffset = Duration(hours: 3);
+
+  /// Whether [view]'s meeting is in [ronda]'s week `openSeatFromWeek` or
+  /// later. Week 1 is the first meeting, the slot's first day on or after
+  /// the day the ronda was made in Montevideo (`first_meeting` in
+  /// `functions/seguimos.py`), so week n starts (n - 1) weeks after that
+  /// day, whichever weekday the slot is. A ronda without either field, or a
+  /// week without a date, keeps none.
+  static bool _keepsNewcomerSeat(RondaDocument ronda, WeekViewDocument? view) {
+    final from = ronda.openSeatFromWeek;
+    final created = ronda.createdAt;
+    final meeting = view == null ? null : DateTime.tryParse(view.date);
+    if (from == null || created == null || meeting == null) return false;
+    final made = created.toUtc().subtract(_montevideoOffset);
+    final days = DateTime.utc(
+      meeting.year,
+      meeting.month,
+      meeting.day,
+    ).difference(DateTime.utc(made.year, made.month, made.day)).inDays;
+    return days >= (from - 1) * 7;
+  }
 
   static Seguimos? _seguimos(RondaDocument? ronda, SeguimosDocument? own) {
     if (ronda == null || own == null) return null;

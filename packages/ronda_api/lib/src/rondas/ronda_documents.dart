@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ronda_api/src/rondas/weekly_loop_documents.dart';
 
 /// {@template ronda_document}
@@ -69,6 +70,14 @@ class const RondaDocument({
   /// Whether the organiser composes this ronda's weekly card (`agentCard`,
   /// the admin's switch); off until the admin turns it on.
   final bool agentCard = false,
+
+  /// When `approve_proposal` wrote the ronda; its first meeting is the
+  /// slot's first day on or after it.
+  final DateTime? createdAt,
+
+  /// The ronda's week, counted from its first meeting as week 1, from
+  /// which it keeps a newcomer seat ("Un mate de más").
+  final int? openSeatFromWeek,
 }) {
   /// {@macro ronda_document}
   this;
@@ -124,6 +133,14 @@ class const RondaDocument({
         openerUid: _opener(json, 'uid'),
         openerName: _opener(json, 'firstName'),
         agentCard: json['agentCard'] == true,
+        createdAt: switch (json['createdAt']) {
+          final Timestamp createdAt => createdAt.toDate(),
+          _ => null,
+        },
+        openSeatFromWeek: switch (json['openSeatFromWeek']) {
+          final int week => week,
+          _ => null,
+        },
       );
     }
     throw FormatException('rondas/$id has another shape');

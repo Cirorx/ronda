@@ -144,7 +144,7 @@ class const BenchOfferAction({
 /// meeting's week.
 /// {@endtemplate}
 class const PushTap({
-  /// The push's `data.type` (`attendance`).
+  /// The push's `data.type` (`attendance` or `move`).
   required final String type,
 
   /// The ronda's id.
@@ -173,8 +173,10 @@ class const PushTap({
 /// [seguimosActionFrom]. The offer of a freed seat (`data.type ==
 /// "benchOffer"`) gets "Lo tomo" and "Esta vez no", read by
 /// [benchOfferActionFrom]. A tap on the body of the attendance ask
-/// (`data.type == "attendance"`) comes out of [taps], or [launchTap] when it
-/// started the app, so the app opens the roll instead of Mi ronda. On web,
+/// (`data.type == "attendance"`) or of the host's rain proposal
+/// (`data.type == "move"`) comes out of [taps], or [launchTap] when it
+/// started the app, so the app opens the roll or the proposal instead of
+/// Mi ronda. On web,
 /// notifications are the service worker's and the browser's.
 ///
 /// It logs nothing, and the token it returns must never reach a log either.
@@ -246,6 +248,14 @@ class PushClient {
   /// `data.type` of "¿Quién vino hoy?" (`functions/attendance.py`), whose
   /// tap opens the roll ([taps]).
   static const attendanceType = 'attendance';
+
+  /// `data.type` of "El jueves puede llover", the rain proposal to the host
+  /// (`functions/organiser/tools.py`), whose tap opens the proposal
+  /// ([taps]).
+  static const moveType = 'move';
+
+  /// The `data.type`s whose tap on the body opens a screen of its own.
+  static const Set<String> _screenTypes = {attendanceType, moveType};
 
   final _taps = StreamController<PushTap>.broadcast();
 
@@ -478,15 +488,16 @@ class PushClient {
     _ => null,
   };
 
-  /// What a tap on the body carries to [tapFrom]: the attendance ask's ronda
-  /// and week; `null` for every other push.
+  /// What a tap on the body carries to [tapFrom]: the attendance ask's or
+  /// the rain proposal's type, ronda and week; `null` for every other push.
   static String? _tapPayload(Map<String, dynamic> data) => switch (data) {
     {
-      'type': attendanceType,
+      'type': final String type,
       'rondaId': final String rondaId,
       'week': final String week,
-    } =>
-      jsonEncode({'type': attendanceType, 'rondaId': rondaId, 'week': week}),
+    }
+        when _screenTypes.contains(type) =>
+      jsonEncode({'type': type, 'rondaId': rondaId, 'week': week}),
     _ => null,
   };
 
@@ -495,12 +506,14 @@ class PushClient {
   static PushTap? tapFrom(NotificationResponse? response) {
     if (response == null || response.actionId != null) return null;
     try {
-      if (jsonDecode(response.payload ?? '') case {
-        'type': attendanceType,
-        'rondaId': final String rondaId,
-        'week': final String week,
-      }) {
-        return PushTap(type: attendanceType, rondaId: rondaId, week: week);
+      if (jsonDecode(response.payload ?? '')
+          case {
+            'type': final String type,
+            'rondaId': final String rondaId,
+            'week': final String week,
+          }
+          when _screenTypes.contains(type)) {
+        return PushTap(type: type, rondaId: rondaId, week: week);
       }
     } on FormatException {
       return null;

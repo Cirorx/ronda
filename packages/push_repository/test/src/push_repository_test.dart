@@ -462,6 +462,50 @@ void main() {
           },
         );
       });
+      group('the rain proposal a tap opens', () {
+        const move = PushTap(type: 'move', rondaId: 'r1', week: '2026-W45');
+        const roll = PushTap(
+          type: 'attendance',
+          rondaId: 'r1',
+          week: '2026-W45',
+        );
+
+        test('openedRainMoves turns move taps into proposals', () {
+          when(() => pushClient.taps)
+              .thenAnswer((_) => Stream.fromIterable([roll, move]));
+
+          expect(
+            subject.openedRainMoves,
+            emitsInOrder([
+              const OpenedRainMove(rondaId: 'r1', week: '2026-W45'),
+              emitsDone,
+            ]),
+          );
+        });
+
+        test('launchedRainMove reads the tap that started the app', () async {
+          when(() => pushClient.launchTap()).thenAnswer((_) async => move);
+
+          expect(
+            await subject.launchedRainMove(),
+            const OpenedRainMove(rondaId: 'r1', week: '2026-W45'),
+          );
+        });
+
+        test(
+          'launchedRainMove is null for no tap, another tap, or a failure',
+          () async {
+            when(() => pushClient.launchTap()).thenAnswer((_) async => null);
+            expect(await subject.launchedRainMove(), isNull);
+
+            when(() => pushClient.launchTap()).thenAnswer((_) async => roll);
+            expect(await subject.launchedRainMove(), isNull);
+
+            when(() => pushClient.launchTap()).thenThrow(Exception('plugin'));
+            expect(await subject.launchedRainMove(), isNull);
+          },
+        );
+      });
     });
   });
 }
