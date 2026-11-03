@@ -1,7 +1,7 @@
 """The waiting list's threshold with a deadline and its didn't-fill (waitlists.py), over the
-Firestore stand-in. Four invented neighbours wait for mate on Saturday afternoons in El Pinar
-Sur; the job first runs on Friday 30/10, so the round ends on Sunday 1/11 and the ronda would
-start on Saturday 7/11."""
+Firestore stand-in. Invented neighbours wait for fútbol 5 (it opens with 4) on Saturday afternoons
+in El Pinar Sur; the job first runs on Friday 30/10, so the round ends on Sunday 1/11 and the ronda
+would start on Saturday 7/11."""
 
 from datetime import UTC, datetime
 
@@ -12,11 +12,12 @@ import waitlists
 from tests.fake_firestore import FakeFirestore
 from tests.organiser_fakes import at
 
-SEAT = "el-pinar-sur_mate_sat-afternoon"
+SEAT = "el-pinar-sur_futbol5_sat-afternoon"
+SUNDAY_SEAT = "el-pinar-sur_futbol5_sun-morning"
 FRIDAY = at(30, 12, month=10)
 
 
-def sign_up(uid, *, day, slots=("sat-afternoon",), seats=(SEAT,), pretexts=("mate",)):
+def sign_up(uid, *, day, slots=("sat-afternoon",), seats=(SEAT,), pretexts=("futbol5",)):
     return {
         f"users/{uid}": {
             "firstName": uid.title(),
@@ -29,7 +30,7 @@ def sign_up(uid, *, day, slots=("sat-afternoon",), seats=(SEAT,), pretexts=("mat
     }
 
 
-def waiting_db(people: int = 4) -> FakeFirestore:
+def waiting_db(people: int = 2) -> FakeFirestore:
     """`people` neighbours waiting on the Saturday list, plus who doesn't count: Rosa (the seat
     fails her needs filter), Sofi (sits in a ronda), Leo (no known barrio), a sign-up without a
     profile; Juan waits on both the Saturday list and a Sunday one with fewer; and a truco
@@ -50,7 +51,7 @@ def waiting_db(people: int = 4) -> FakeFirestore:
         "demo-514",
         day=29,
         slots=("sat-afternoon", "sun-morning"),
-        seats=(SEAT, "el-pinar-sur_mate_sun-morning"),
+        seats=(SEAT, SUNDAY_SEAT),
     )
     docs["users/demo-514/private/eligible"]["seatIds"].append("el-pinar-sur_truco_sat-afternoon")
     docs["rondas/r-truco"] = {
@@ -91,23 +92,17 @@ class TestTheJob:
 
         counts = waitlists.run_waitlists(db, FRIDAY)
 
-        assert counts == {"lists": 2, "people": 5, "closed": 0, "didntFill": 0}
+        assert counts == {"lists": 2, "people": 3, "closed": 0, "didntFill": 0}
         row = db.documents[f"waitlists/{SEAT}"]
-        assert [e["uid"] for e in row["entries"]] == [
-            "demo-500",
-            "demo-501",
-            "demo-502",
-            "demo-503",
-            "demo-514",
-        ]
-        assert row["threshold"] == 6
+        assert [e["uid"] for e in row["entries"]] == ["demo-500", "demo-501", "demo-514"]
+        assert row["threshold"] == 4
         assert card(db, "demo-500") | {"updatedAt": None, "alternatives": []} == {
             "seatId": SEAT,
             "barrio": "el-pinar-sur",
-            "pretext": "mate",
+            "pretext": "futbol5",
             "slot": "sat-afternoon",
-            "count": 5,
-            "threshold": 6,
+            "count": 3,
+            "threshold": 4,
             "deadline": "2026-11-01",
             "start": "2026-11-07",
             "status": "open",
@@ -122,7 +117,7 @@ class TestTheJob:
         waitlists.run_waitlists(db, FRIDAY)
 
         cards = {p.split("/")[1] for p in db.documents if p.startswith("waiting/")}
-        assert cards == {"demo-500", "demo-501", "demo-502", "demo-503", "demo-514"}
+        assert cards == {"demo-500", "demo-501", "demo-514"}
 
     def test_who_is_out_of_ronda_waits_nowhere(self):
         db = waiting_db()
@@ -134,7 +129,7 @@ class TestTheJob:
 
     def test_who_works_in_another_barrio_waits_there_too(self):
         db = waiting_db()
-        work_seat = "solymar-sur_mate_sat-afternoon"
+        work_seat = "solymar-sur_futbol5_sat-afternoon"
         db.documents |= sign_up("demo-515", day=2, seats=(SEAT, work_seat))
         db.documents["users/demo-515"]["workBarrio"] = "solymar-sur"
         waitlists.run_waitlists(db, FRIDAY)
@@ -150,7 +145,7 @@ class TestTheJob:
         waitlists.run_waitlists(db, FRIDAY)
 
         assert card(db, "demo-514")["seatId"] == SEAT
-        assert db.documents["waitlists/el-pinar-sur_mate_sun-morning"]["entries"] == [
+        assert db.documents[f"waitlists/{SUNDAY_SEAT}"]["entries"] == [
             {"uid": "demo-514", "at": datetime(2026, 10, 29, 12, tzinfo=UTC)}
         ]
 
@@ -177,7 +172,7 @@ class TestTheJob:
         assert last["outcome"] == "didntFill" and last["deadline"] == "2026-11-01"
 
     def test_at_the_threshold_it_is_full_and_rolls_a_week(self):
-        db = waiting_db(people=6)
+        db = waiting_db(people=3)
         waitlists.run_waitlists(db, FRIDAY)
         assert card(db, "demo-500")["status"] == "full"
 
@@ -186,6 +181,18 @@ class TestTheJob:
         assert card(db, "demo-500")["deadline"] == "2026-11-08"
         assert db.documents[f"waitlists/{SEAT}"]["last"]["outcome"] == "full"
 
+    def test_two_for_mate_are_enough(self):
+        seat = "el-pinar-sur_mate_sat-afternoon"
+        db = FakeFirestore(
+            sign_up("demo-530", day=20, seats=(seat,), pretexts=("mate",))
+            | sign_up("demo-531", day=21, seats=(seat,), pretexts=("mate",))
+        )
+
+        waitlists.run_waitlists(db, FRIDAY)
+
+        assert db.documents[f"waitlists/{seat}"]["threshold"] == 2
+        assert card(db, "demo-530")["status"] == "full"
+
     def test_who_is_seated_leaves_and_an_empty_list_goes(self):
         db = waiting_db()
         waitlists.run_waitlists(db, FRIDAY)
@@ -193,7 +200,7 @@ class TestTheJob:
 
         waitlists.run_waitlists(db, at(31, 12, month=10))
 
-        assert "waitlists/el-pinar-sur_mate_sun-morning" not in db.documents
+        assert f"waitlists/{SUNDAY_SEAT}" not in db.documents
         assert "waiting/demo-514" not in db.documents
 
     def test_the_dispatcher_runs_it(self):

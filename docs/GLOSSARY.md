@@ -6,7 +6,7 @@ issues, docs, code, commit messages.
 
 | Identifier | UI (es-419) | Meaning |
 |---|---|---|
-| `Ronda` | ronda | A standing group of 5–6 neighbours (10 for fútbol 5) with one pretext, one slot and one place, for a season |
+| `Ronda` | ronda | A standing group of 2 to 6 neighbours (fútbol 5: 4 to 10) with one pretext, one slot and one place, for a season |
 | `Pretext` | actividad | What the ronda does: mate on the rambla, truco, fútbol 5, caminata, conga, merienda (un café o merienda), pajaros (mirar pájaros) |
 | `Slot` | día y horario | Weekday plus a time band (mañana / tarde / noche), and once the admin sets it the hour it starts (`slot.hour`, "16:00") |
 | `Barrio` | barrio | The neighbourhood: Ciudad de la Costa's nine and Montevideo's 62 (`ronda_solver.barrios`); distance is measured between barrio centroids. Names are proper nouns, the same in every language |
@@ -25,7 +25,7 @@ issues, docs, code, commit messages.
 | `Proposal` | propuesta | The solver's grouping, waiting for the owner's approval, with a rejected alternative |
 | `RejectedAlternative` | alternativa B ("Por qué no otra opción") | The next-best grouping the solver turned down, with its `reasons`: each rule it breaks that the proposal keeps |
 | `Season` | temporada | The run of weeks a ronda commits to after ¿seguimos? |
-| `Seguimos` | ¿seguimos? | The private vote after the first meeting; the season starts when the yeses reach the pretext's floor (4; fútbol 8) |
+| `Seguimos` | ¿seguimos? | The private vote after the first meeting; the season starts when the yeses reach the pretext's floor (2; fútbol 4) |
 | `Rsvp` | voy / esta no | The weekly answer. Default is in; "esta no" never asks why |
 | `Anfitrion` | abre ("llega primero") | The host who opens the meeting this month; set by the admin with the place and the hour (`RondaSetup`), then by the monthly turns |
 | `Cola` | cierra ("se queda al final") | The co-host who closes; asked first when the anfitrión can't, and next month's anfitrión |

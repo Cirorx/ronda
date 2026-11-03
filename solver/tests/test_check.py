@@ -61,7 +61,7 @@ def test_a_neighbour_in_two_rondas_is_named():
     assert broken == [("oneRondaEach", None, ["demo-x"])]
 
 
-@pytest.mark.parametrize("size", [3, 7])
+@pytest.mark.parametrize("size", [1, 7])
 def test_a_ronda_outside_its_size_bounds_is_named(size):
     people = [person(f"demo-{i}") for i in range(size)]
 

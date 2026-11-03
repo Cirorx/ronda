@@ -47,3 +47,14 @@ extension LanguageLabels on AppLocalizations {
     null => languagePhone,
   };
 }
+
+/// The locale Ronda is pinned to for a picked language, or `null` to follow
+/// the phone. Here rather than in the cubit, which stays free of Flutter.
+extension AppLanguageLocale on AppLanguage? {
+  /// Rioplatense Spanish, English, or the phone's own.
+  Locale? get locale => switch (this) {
+    AppLanguage.spanish => const Locale('es', '419'),
+    AppLanguage.english => const Locale('en'),
+    null => null,
+  };
+}

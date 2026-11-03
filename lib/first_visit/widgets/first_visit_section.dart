@@ -95,7 +95,7 @@ class const _Paper(final Widget child, {super.key}) extends StatelessWidget {
 }
 
 /// "Viene alguien nuevo": the question to the ronda's anfitrión and cola,
-/// who waits now, and [Elegir quién espera] or [Cambiar].
+/// who waits now, and «Elegir quién espera» or «Cambiar».
 class const _HostAsk({
   required final Welcome welcome,
   required final String uid,

@@ -1,6 +1,6 @@
 # Ronda
 
-Weekly groups of the same 5–6 neighbours, a few blocks from home, around one pretext (mate on
+Weekly groups of the same neighbours (they open with 2 and fill to 6), a few blocks from home, around one pretext (mate on
 the rambla, truco, fútbol 5). Flutter app (Android, iOS, web) on Firebase, with Meta models at
 runtime, built for the Meta Global AI Developer Hackathon.
 
@@ -55,7 +55,9 @@ changes inside `notes/` (`git -C notes commit`); there is nothing to push.
   (Baseten), SAM 3.1, Muse Image. A platform model is used only for a job Meta has no model for,
   only on the phone, and is named in the README: ML Kit face detection and the phone's own
   text-to-speech. Speech recognition is always Voice Transcribe.
-- Data with rights only: Open-Meteo (CC BY 4.0), DNT GTFS, OpenStreetMap (ODbL, attributed).
+- Data with rights only: Open-Meteo (CC BY 4.0), DNT GTFS, the Intendencia de Montevideo's
+  public-transport API (free with an account; no licence stated, named in the README anyway),
+  OpenStreetMap (ODbL, attributed).
 - Matching uses slot, distance, pretext and age band. Ronda is neighbourhood infrastructure:
   no health framing, no personality, nothing political.
 

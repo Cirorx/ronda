@@ -206,18 +206,19 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   1/11, empieza el sábado 7/11." After joining: "Con vos son 5 de 6. Falta uno.", what happens
   if it doesn't fill, [Invitar por WhatsApp], "Salir de la lista".
   - Built (#48) on Mi ronda before a group exists, under "Todavía no tenés grupo": "Tu lista de
-    espera", the list's line ("Sábado a la tarde · Mate en la rambla"), "Con vos son 5 de 6.
-    Falta uno." ("Por ahora sos la primera persona anotada. Hacen falta 6." alone), "Si se suma
+    espera", the list's line ("Sábado a la tarde · Mate en la rambla"), "Con vos son 3 de 4.
+    Falta uno." ("Por ahora sos la primera persona anotada. Hacen falta 2." alone), "Si se suma
     uno más antes del domingo 1/11, empieza el sábado 7/11." and "Si no llegamos, te damos a
-    elegir: sumarte a otro grupo o esperar dos semanas más." A full list reads "Ya son 6:
+    elegir: sumarte a otro grupo o esperar dos semanas más." A full list reads "Ya son 2:
     alcanza para arrancar. Armamos el grupo y te avisamos antes del sábado 7/11." Counts and
-    dates only. Six is the pretext's largest ronda (fútbol 10); a round runs to a Sunday and
+    dates only. The threshold is the smallest ronda the solver opens, 2 (fútbol 4), since
+    2026-11-02; a round runs to a Sunday and
     the ronda would start on its day the week after. The payoff, signed out, still shows demand
     only. [Invitar por WhatsApp] and "Salir de la lista" are not built.
 - **Didn't fill:** "Esta vez no llegamos a 6" with two choices: "Sumarte a otro ya" (a named
   nearby group with places) or "Esperar dos semanas más" (fixed end date and start date). Each
   answer ends with the next date. Never limbo.
-  - Built (#48) for the waiting list on the same card: "Esta vez no llegamos a 6.", "¿Cómo
+  - Built (#48) for the waiting list on the same card: "Esta vez no llegamos a 2.", "¿Cómo
     seguís?", [Sumarte a otro ya] with "Jueves a la noche · Truco, el jueves 5/11" (shown only
     when a nearby ronda has places) and [Esperar dos semanas más] with "Esperamos hasta el
     domingo 15/11. Si se suman, arranca el sábado 21/11." Joining reads "Listo, lo anotamos. Te
@@ -504,7 +505,7 @@ Ronda.
 - **¿Seguimos?** after meeting 1, private: "¿Seguimos los jueves? Solo Ronda ve tu respuesta.
   Nadie del grupo se entera de lo que digas." Every active member is asked; the answer can change
   until the question closes with the next RSVP push. The season starts when the yeses alone
-  could be a ronda: the pretext's floor (4; fútbol 8), whatever the group's size (#9). "Si no
+  could be a ronda: the pretext's floor (2; fútbol 4), whatever the group's size (#9). "Si no
   contestás, seguís en la ronda, pero no cuenta como un sí." A "no" gets "Gracias por venir."
   and two nearby alternatives; their seat reopens at the close, not on answering, so the timing
   gives nobody away. Result, with that push: "Seguimos los jueves", the season's end date,

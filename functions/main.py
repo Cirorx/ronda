@@ -15,6 +15,10 @@ options.set_global_options(region=REGION, max_instances=2)
 MODEL_API_KEY = params.SecretParam("MODEL_API_KEY")
 # Baseten key for the organiser agent's Muse Spark Open (`functions:secrets:set BASETEN_API_KEY`).
 BASETEN_API_KEY = params.SecretParam("BASETEN_API_KEY")
+# The Intendencia de Montevideo's public-transport API, for the day-of reminder's next buses
+# (`functions:secrets:set MVD_API_CLIENT_ID` and `MVD_API_SECRET_ID`; mvd_buses.py).
+MVD_API_CLIENT_ID = params.SecretParam("MVD_API_CLIENT_ID")
+MVD_API_SECRET_ID = params.SecretParam("MVD_API_SECRET_ID")
 
 
 # Callables verify the caller's ID token with the default Admin app, so it must exist before
@@ -390,7 +394,7 @@ MONTEVIDEO = "America/Montevideo"
     max_instances=1,
     timeout_sec=300,
     memory=options.MemoryOption.MB_512,
-    secrets=[MODEL_API_KEY, BASETEN_API_KEY],
+    secrets=[MODEL_API_KEY, BASETEN_API_KEY, MVD_API_CLIENT_ID, MVD_API_SECRET_ID],
 )
 def dispatch(event: scheduler_fn.ScheduledEvent) -> None:
     """Runs every job that is due at the scheduled time (jobs.JOBS)."""
@@ -404,7 +408,7 @@ def dispatch(event: scheduler_fn.ScheduledEvent) -> None:
     max_instances=1,
     timeout_sec=300,
     memory=options.MemoryOption.MB_512,
-    secrets=[MODEL_API_KEY, BASETEN_API_KEY],
+    secrets=[MODEL_API_KEY, BASETEN_API_KEY, MVD_API_CLIENT_ID, MVD_API_SECRET_ID],
     invoker="public",
 )
 def run_job(req: https_fn.CallableRequest) -> dict:

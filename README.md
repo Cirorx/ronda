@@ -33,7 +33,7 @@ long enough for neighbours to become people you'd miss.
    plan, the bench when someone can't come, and the person you chose writing to you if you miss one.
 5. **Then Ronda goes quiet.** The group should outlive the app.
 
-Within 10 blocks (15 in Montevideo) · 5–6 people (10 for fútbol 5) · bring one friend · same slot all season ·
+Within 10 blocks (15 in Montevideo) · opens with 2 and fills to 6 (fútbol 5: 4 to 10) · bring one friend · same slot all season ·
 leave or switch without explaining · free: **Ronda nunca pide plata**.
 
 ## Meta models in Ronda
@@ -47,7 +47,7 @@ is in [`docs/MODELS.md`](docs/MODELS.md) § Results on the current code.
 |---|---|---|---|---|---|
 | Hear a spoken sign-up (also the cuaderno's lines and a spoken small plan) | **Muse Voice Transcribe** (`muse-voice-transcribe-1.0`, `POST /asr/transcribe`) | Meta's speech-to-text, biased to Spanish with 114 keywords (every barrio, "truco", "bizcochos"); it got every word of the invented test note (a Mac voice reading a rioplatense sign-up) in two of three calls, and doubled one in the third | 2.3–3.9 s for a 10.5 s note (n = 3, 2026-11-02). Live mode (`wss://…/asr/realtime` through our relay, built and off by default): first words 0.7 s after speaking starts, all of them 0.25 s after stopping (n = 1, 2026-11-02, [`evals/voice`](evals/voice/RESULTS.md)) | $0.0005 for 10.5 s ($0.18 an hour) | Retries 429 and 5xx twice; then "No pudimos leer el audio" and [Prefiero tocar botones], the same sign-up by taps |
 | Turn those words into the sign-up's fields | **Muse Spark 1.3** (`muse-spark-1.3`) | The Meta Model API enforces a strict `json_schema`, so name, age band, barrio (one of 71), pretexts, slots and what they bring come back as the app's own ids, or `unknown` | 2.5–4.3 s at `reasoning_effort: low`, about 2,140 tokens in and 430 out; the same fields all three times (n = 3, 2026-11-02) | $0.0045 | The read-back screen, where the person checks and edits every field; on an error, the buttons |
-| The organiser agent: the rain check (forecast, sunset, last bus, who's coming, then a proposal to the host), the weekly card, the bench | **Muse Spark Open** (`meta-models/muse-spark-open-1026`) on Baseten | Open weights with tool calling on Baseten; at `reasoning_effort: low` a turn takes about 1.5 s | 1.1–2.5 s a turn. Rain check: 5–6 turns, 8.1–11.0 s of model time (n = 2, 2026-11-02, invented ronda and forecast). Weekly card: 4 turns, 7.5–7.9 s (n = 3, 2026-11-02, [`evals/card`](evals/card/RESULTS.md)), and 6.1 s on the live project (n = 1, 2026-11-02) | Rain check $0.021–0.027; card $0.016–0.018 | Spark 1.3 on the Meta Model API for the rest of the run, on an error or raw `<atem:` text (none of these 6 runs needed it). With no model at all, code goes on alone: the fixed card, the bench's default deadline, no rain proposal |
+| The organiser agent: the rain check (forecast, sunset, last bus, the next city buses in Montevideo, who's coming, then a proposal to the host), the weekly card, the bench | **Muse Spark Open** (`meta-models/muse-spark-open-1026`) on Baseten | Open weights with tool calling on Baseten; at `reasoning_effort: low` a turn takes about 1.5 s | 1.1–2.5 s a turn. Rain check: 5–6 turns, 8.1–11.0 s of model time (n = 2, 2026-11-02, invented ronda and forecast). Weekly card: 4 turns, 7.5–7.9 s (n = 3, 2026-11-02, [`evals/card`](evals/card/RESULTS.md)), and 6.1 s on the live project (n = 1, 2026-11-02) | Rain check $0.021–0.027; card $0.016–0.018 | Spark 1.3 on the Meta Model API for the rest of the run, on an error or raw `<atem:` text (none of these 6 runs needed it). With no model at all, code goes on alone: the fixed card, the bench's default deadline, no rain proposal |
 | Cut the group's things out of the host's photo for the flyer (also find the people, plates and house numbers ¿Dónde queda? blurs) | **SAM 3.1** (`sam-3.1`, Responses API) | Segmentation from a short noun phrase: boxes and masks come back, decoded with `meta-sam-parser` into clean cutouts | 2.6–5.3 s a phrase (n = 8, 2026-11-02); the termo, the mazo and the mates are looked for side by side, beside Muse Image | $0.0025 a phrase; $0.01 for the test photo's 4 | Nothing usable found: "No encontramos el termo, el mazo ni los mates. Probá con otra foto". An error: "Probá de nuevo en un rato". The tear-off flyer (`scripts/flyer.py`) uses no model |
 | Paint the flyer's background (also the cuaderno's postcard) | **Muse Image** (`muse-image-1.0`) | Meta's image model; it paints the scene with no people and no text, from a prompt that names the place in full | 17.3–17.9 s (n = 2, 2026-11-02); with SAM beside it, the flyer's whole model step took 17.9 s | $0.01 | Retries 429 and 5xx twice; then "No pudimos hacer el volante. Probá de nuevo en un rato", or the tear-off flyer |
 
@@ -103,7 +103,7 @@ Firebase (São Paulo)
   ├─ Firestore, Storage (audio deleted on success), Hosting (the web app under /app, plain-HTML public pages)
   └─ Python functions: voice extraction · CP-SAT group solver · organiser agent · flyer
 Meta Model API (Voice Transcribe, Spark 1.3, SAM 3.1, Muse Image) · Baseten (Muse Spark Open)
-Open data: Open-Meteo · DNT bus timetables (GTFS) · OpenStreetMap
+Open data: Open-Meteo · DNT bus timetables (GTFS) · Intendencia de Montevideo buses · OpenStreetMap
 ```
 
 More in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/STACK.md`](docs/STACK.md).
@@ -142,6 +142,10 @@ Setup instructions arrive with the first code on 27 October.
 - Weather: [Open-Meteo](https://open-meteo.com/) (CC BY 4.0)
 - Bus timetables: Dirección Nacional de Transporte, metropolitan GTFS, via
   [catalogodatos.gub.uy](https://catalogodatos.gub.uy/) ("Licencia de DAG de Uruguay")
+- Montevideo's city buses (the timetable, GTFS, and the next buses at a stop, live): the
+  Intendencia de Montevideo's
+  [public-transport API](https://api.montevideo.gub.uy/apidocs/publictransport), free with an
+  account; it states no reuse licence and asks for no attribution, so we name it here
 - Places, and the point of each Montevideo barrio (`scripts/montevideo_barrios.py`): ©
   [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL)
 - All people and data in the mockups and seeds are invented.

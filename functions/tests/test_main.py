@@ -575,14 +575,28 @@ class TestAnswerSeguimos:
 
 
 class TestOrganiser:
-    """#49: the agent runs inside the dispatcher and `run_job`, so both get the model keys; the
-    host's pick is the `answer_move` callable."""
+    """#49: the agent runs inside the dispatcher and `run_job`, so both get the model keys, and
+    (#65) the Intendencia's bus API keys for the day-of reminder; the host's pick is the
+    `answer_move` callable."""
 
     @pytest.mark.parametrize("function", [main.dispatch, main.run_job])
-    def test_the_jobs_get_both_model_keys(self, function):
+    def test_the_jobs_get_the_model_and_bus_keys(self, function):
         secrets = {s["key"] for s in function.__firebase_endpoint__.secretEnvironmentVariables}
 
-        assert secrets == {"MODEL_API_KEY", "BASETEN_API_KEY"}
+        assert secrets == {
+            "MODEL_API_KEY",
+            "BASETEN_API_KEY",
+            "MVD_API_CLIENT_ID",
+            "MVD_API_SECRET_ID",
+        }
+
+    @pytest.mark.parametrize(
+        "function", [main.extract, main.read_line, main.make_postcard, main.make_mate_flyer]
+    )
+    def test_the_bus_keys_stay_with_the_jobs(self, function):
+        secrets = {s["key"] for s in function.__firebase_endpoint__.secretEnvironmentVariables}
+
+        assert not secrets & {"MVD_API_CLIENT_ID", "MVD_API_SECRET_ID"}
 
     @pytest.fixture
     def proposed(self, monkeypatch):

@@ -84,7 +84,7 @@ class const WaitingCard({super.key}) extends StatelessWidget {
                           liveRegion: true,
                           child: Text(
                             l10n.waitingFull(
-                              waiting.threshold,
+                              waiting.count,
                               l10n.dayDate(waiting.start),
                             ),
                             style: textTheme.bodyLarge,

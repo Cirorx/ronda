@@ -24,8 +24,11 @@ ten blocks) and the bus stop, and is then dropped: the document never holds it. 
 for the admin's scans-per-spot count and is never shown in public. The stop is the nearest one
 unless `--stop` names another; the five nearest are printed with their last buses, since the
 nearest can be a stop with three buses a day. The last bus of each day type is worked out here,
-once, from the DNT timetable (`last_bus.py`) and stored on the document; the page never
-computes it. `--gtfs` takes a downloaded zip instead of fetching the published one.
+once (`last_bus.py`), and stored on the document; the page never computes it. A Montevideo
+barrio's comes from the Intendencia's city timetable, whose download needs a token from
+`MVD_API_CLIENT_ID` and `MVD_API_SECRET_ID` (read from `.env` through scripts/smoke/_env.py,
+never printed); every other barrio's from the DNT timetable. `--gtfs` takes a downloaded zip
+instead of fetching the published one.
 
 The QR points at `{base}/f/{id}`. The base defaults to the project's firebaseapp.com address,
 the web app's sign-in domain, so [Quiero sumarme] signs in on the same site (docs/STACK.md §
@@ -33,11 +36,13 @@ Pilot builds).
 """
 
 import argparse
+import json
 import os
 import re
 import secrets
 import sys
 import tempfile
+import urllib.parse
 import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
@@ -51,6 +56,7 @@ import seed
 sys.path.append(str(demo_data.ROOT / "solver"))
 from ronda_solver.barrios import BARRIO_NAMES, CENTROIDS
 from ronda_solver.geo import blocks_between
+from ronda_solver.montevideo import MONTEVIDEO_BARRIOS
 from ronda_solver.rules import max_walk_blocks
 
 URUGUAY = ZoneInfo("America/Montevideo")
@@ -167,14 +173,43 @@ def create(client, document: dict, attempts: int = 5) -> str:
     raise RuntimeError(f"no free flyer id after {attempts} tries")
 
 
+USER_AGENT = "Ronda-hackathon/0.1 (github.com/Cirorx/ronda)"
+
+
+def timetable_url(barrio: str) -> str:
+    """The Intendencia's city timetable for a Montevideo barrio, the DNT's for the rest."""
+    return last_bus.CITY_GTFS if barrio in MONTEVIDEO_BARRIOS else last_bus.DNT_GTFS
+
+
+def city_token() -> str:
+    """A token for the city timetable, from the keys in `.env` (never printed)."""
+    sys.path.append(str(demo_data.ROOT / "scripts" / "smoke"))
+    from _env import key
+
+    form = urllib.parse.urlencode(
+        {
+            "grant_type": "client_credentials",
+            "client_id": key("MVD_API_CLIENT_ID"),
+            "client_secret": key("MVD_API_SECRET_ID"),
+        }
+    ).encode()
+    request = urllib.request.Request(
+        last_bus.CITY_TOKEN_URL, data=form, headers={"User-Agent": USER_AGENT}
+    )
+    with urllib.request.urlopen(request, timeout=30) as response:
+        return json.load(response)["access_token"]
+
+
 def timetable(source: str, folder: Path) -> Path:
-    """`source` as a local zip: a path as given, a URL downloaded into `folder`."""
+    """`source` as a local zip: a path as given, a URL downloaded into `folder` (with a token
+    for the city timetable)."""
     if not source.startswith(("https://", "http://")):
         return Path(source)
     target = folder / "gtfs.zip"
-    request = urllib.request.Request(
-        source, headers={"User-Agent": "Ronda-hackathon/0.1 (github.com/Cirorx/ronda)"}
-    )
+    headers = {"User-Agent": USER_AGENT}
+    if source == last_bus.CITY_GTFS:
+        headers["Authorization"] = f"Bearer {city_token()}"
+    request = urllib.request.Request(source, headers=headers)
     with urllib.request.urlopen(request, timeout=120) as response:
         target.write_bytes(response.read())
     return target
@@ -189,7 +224,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--slot", help="the day and band it announces, as in sat-afternoon")
     parser.add_argument("--barrio", choices=list(CENTROIDS), help="default: the nearest")
     parser.add_argument("--stop", help="a GTFS stop_id; default: the nearest stop")
-    parser.add_argument("--gtfs", default=last_bus.DNT_GTFS, help="the timetable: URL or zip")
+    parser.add_argument(
+        "--gtfs", help="the timetable, URL or zip; default: the city's in Montevideo, else DNT's"
+    )
     parser.add_argument("--base-url", help="default: https://{project}.firebaseapp.com")
     parser.add_argument("--out", type=Path, help="the PDF; default: flyer-{id}.pdf here")
     parser.add_argument("--project", help="write to this project (the real one without hosts)")
@@ -210,7 +247,7 @@ def main(argv: list[str] | None = None) -> int:
     spot = (args.lat, args.lng)
     barrio = args.barrio or barrio_at(spot)
     with tempfile.TemporaryDirectory() as folder:
-        archive = timetable(args.gtfs, Path(folder))
+        archive = timetable(args.gtfs or timetable_url(barrio), Path(folder))
         stops = last_bus.read_stops(archive)
         if args.stop and args.stop not in stops:
             print(f"No stop {args.stop} in the timetable.")
