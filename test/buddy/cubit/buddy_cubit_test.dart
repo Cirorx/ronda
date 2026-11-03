@@ -263,5 +263,18 @@ void main() {
       await refusedSave;
       expect(refused.state.saving, BuddySaving.notNow);
     });
+
+    test('follows no buddy card after closing mid-load', () async {
+      final cubit = build();
+      await cubit.load();
+      final reloading = cubit.load();
+      await cubit.close();
+      await reloading;
+
+      asks.add(_ask);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.ask, isNull);
+    });
   });
 }

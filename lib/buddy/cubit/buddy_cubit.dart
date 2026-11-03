@@ -29,13 +29,17 @@ class BuddyCubit extends Cubit<BuddyState> implements StepNamed {
   /// Reads whether it is time to choose and who could be chosen, whether
   /// WhatsApp opens here, and follows the member's buddy card.
   Future<void> load() async {
-    await _asks?.cancel();
+    // Subscribed before the old one is cancelled, so a close() that comes
+    // while it cancels ends this one too.
+    final previous = _asks;
     _asks = _rondaRepository
         .watchBuddyAsk(_uid)
         .listen(
           (ask) => emit(state.copyWith(ask: () => ask)),
           onError: addError,
         );
+    await previous?.cancel();
+    if (isClosed) return;
     final canWhatsApp = await _contactRepository.canOpenWhatsApp();
     try {
       final options = await _rondaRepository.buddyOptions(_rondaId);
