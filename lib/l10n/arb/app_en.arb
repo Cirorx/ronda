@@ -287,7 +287,7 @@
     "@payoffContinue": {
         "description": "The payoff's button, which leads to sign-in"
     },
-    "welcomeTitle": "Five neighbours, a few blocks away, the same day every week.",
+    "welcomeTitle": "The same few neighbours, a few blocks away, the same day every week.",
     "@welcomeTitle": {
         "description": "Heading of the welcome screen"
     },

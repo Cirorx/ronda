@@ -68,7 +68,8 @@ void main() {
 
         expect(
           find.text(
-            'Cinco vecinos, a pocas cuadras, el mismo día todas las semanas.',
+            'Los mismos vecinos, a pocas cuadras, el mismo día todas las '
+            'semanas.',
           ),
           findsOneWidget,
         );
@@ -143,7 +144,8 @@ void main() {
 
         expect(
           find.text(
-            'Five neighbours, a few blocks away, the same day every week.',
+            'The same few neighbours, a few blocks away, the same day every '
+            'week.',
           ),
           findsOneWidget,
         );
@@ -219,7 +221,7 @@ void main() {
 
     group('lays out', () {
       Finder title() => find.text(
-        'Cinco vecinos, a pocas cuadras, el mismo día todas las semanas.',
+        'Los mismos vecinos, a pocas cuadras, el mismo día todas las semanas.',
       );
       Finder doorsHeading() => find.text('¿Cómo nos querés contar?');
       Finder termsNote() => find.byType(TermsNote);

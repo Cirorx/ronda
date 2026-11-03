@@ -88,7 +88,7 @@ dates in the examples are demo data. Everything not listed here is out of the bu
   phone's language needn't get through the cards to find it; it switches them in place, on the
   same card, and with large text or a narrow phone the two stack. The cards swipe on the app's spring and follow the arrow keys; wide windows keep them to
   the readable column.
-- Welcome: "Cinco vecinos, a pocas cuadras, el mismo día todas las semanas." Two doors: "Con un
+- Welcome: "Los mismos vecinos, a pocas cuadras, el mismo día todas las semanas." Two doors: "Con un
   audio" ("Hablás un minuto, como en WhatsApp.") / "Tocando botones" ("Siete preguntas
   cortas."). Under them, "Ya tengo cuenta" (2026-11-02), for someone who signed up on another
   phone or browser: sign-in ("Entrá con tu cuenta", "Usá la misma con la que te sumaste: Google o

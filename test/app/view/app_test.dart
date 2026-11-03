@@ -683,6 +683,8 @@ void main() {
           'door', (tester) async {
         await pumpSignedOut(tester);
 
+        await tester.ensureVisible(buttonsDoor());
+
         await tester.tap(buttonsDoor());
         await tester.pumpAndSettle();
 
@@ -704,6 +706,7 @@ void main() {
         }
 
         await pumpSignedOut(tester);
+        await tester.ensureVisible(buttonsDoor());
         await tester.tap(buttonsDoor());
         await tester.pumpAndSettle();
 
@@ -787,6 +790,7 @@ void main() {
           'sign-in', (tester) async {
         held = _profile;
         await pumpSignedOut(tester);
+        await tester.ensureVisible(buttonsDoor());
         await tester.tap(buttonsDoor());
         await tester.pumpAndSettle();
         expect(find.byType(ReviewStep), findsOneWidget);
@@ -937,6 +941,7 @@ void main() {
       testWidgets('by going back from the first question to the doors, '
           'answering again from the start', (tester) async {
         await pumpSignedOut(tester);
+        await tester.ensureVisible(buttonsDoor());
         await tester.tap(buttonsDoor());
         await tester.pumpAndSettle();
         expect(find.byType(PretextsStep), findsOneWidget);
@@ -946,6 +951,8 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(find.byType(WelcomePage), findsOneWidget);
+
+        await tester.ensureVisible(buttonsDoor());
 
         await tester.tap(buttonsDoor());
         await tester.pumpAndSettle();
@@ -1133,6 +1140,7 @@ void main() {
           tester,
         ) async {
           await pumpSignedOut(tester);
+          await tester.ensureVisible(buttonsDoor());
           await tester.tap(buttonsDoor());
           await tester.pumpAndSettle();
           expect(find.byType(PretextsStep), findsOneWidget);
@@ -1162,6 +1170,7 @@ void main() {
           when(() => profileRepository.savedProfile('demo-uid'))
               .thenAnswer((_) async => _profile);
           await pumpSignedOut(tester);
+          await tester.ensureVisible(buttonsDoor());
           await tester.tap(buttonsDoor());
           await tester.pumpAndSettle();
           await tester.tap(
@@ -1686,6 +1695,7 @@ void main() {
           await pumpSignedOut(tester);
           GoRouter.of(tester.element(find.byType(WelcomePage))).go(location);
           await tester.pumpAndSettle();
+          await tester.ensureVisible(buttonsDoor());
           await tester.tap(buttonsDoor());
           await tester.pumpAndSettle();
           expect(find.byType(LoginPage), findsOneWidget);
@@ -1706,6 +1716,7 @@ void main() {
           GoRouter.of(tester.element(find.byType(WelcomePage)))
               .go(AdminPage.path);
           await tester.pumpAndSettle();
+          await tester.ensureVisible(buttonsDoor());
           await tester.tap(buttonsDoor());
           await tester.pumpAndSettle();
 
