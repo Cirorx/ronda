@@ -164,11 +164,11 @@ class TestDoneWhen:
         assert ("tool", "get_forecast") in kinds
         assert ("tool", "compose_card") in kinds
         assert ("tool", "log_acta") in kinds
-        assert kinds[-1] == ("note", "Tarjeta armada por el programa: 2 aviso(s) y ¿Venís?.")
+        assert kinds[-1] == ("note", "Tarjeta armada por el programa: 2 avisos y ¿Venís?.")
         compose_step = next(s for s in steps(db) if s.get("tool") == "compose_card")
         assert compose_step["status"] == "ok"
         assert compose_step["resultSummary"] == (
-            "Armó la tarjeta de la semana con 2 aviso(s): rain, host."
+            "Armó la tarjeta de la semana con 2 avisos: la lluvia, quién abre."
         )
         run_doc = db.documents[f"agent_runs/{RUN}"]
         assert run_doc["job"] == "weekly_card"

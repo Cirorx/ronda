@@ -90,6 +90,15 @@ COMPONENTS = {
 }
 """Each kind's component name in the phone's catalog."""
 
+KIND_WORDS = {
+    RAIN: "la lluvia",
+    HOST: "quién abre",
+    NEWCOMER: "alguien nuevo",
+    DESPUES: "el después",
+    BENCH: "un lugar libre",
+}
+"""How the acta, which members read, names each kind."""
+
 PLACEHOLDERS = {HOST: "{anfitrion}", NEWCOMER: "{nuevo}", DESPUES: "{despues}"}
 """What the model writes where a name or the después goes; code fills it."""
 
@@ -224,11 +233,16 @@ def compose_card(box: CardToolbox, args: CardArgs) -> Result:
             {"kind": block.kind, "title": box.facts.fill(title), "text": box.facts.fill(body)}
         )
     box.card = kept
-    kinds = ", ".join(b["kind"] for b in kept) or "ninguno"
-    summary = f"Armó la tarjeta de la semana con {len(kept)} aviso(s): {kinds}."
+    kinds = ", ".join(KIND_WORDS[b["kind"]] for b in kept) or "ninguno"
+    summary = f"Armó la tarjeta de la semana con {_avisos(len(kept))}: {kinds}."
     if box.dropped:
         summary += f" Descartó {len(box.dropped)}."
     return Result({"kept": [b["kind"] for b in kept], "dropped": list(box.dropped)}, summary)
+
+
+def _avisos(count: int) -> str:
+    """Counts the blocks as members read them in the acta: "1 aviso", "2 avisos"."""
+    return "1 aviso" if count == 1 else f"{count} avisos"
 
 
 def _why_dropped(facts: Facts, kind: str, title: str, body: str, seen: set[str]) -> str:
@@ -517,7 +531,7 @@ def _store(
     }
     if status == AGENT:
         card["messages"] = a2ui_messages(meeting.week, blocks or [])
-        note = f"Tarjeta armada por el programa: {len(blocks or [])} aviso(s) y ¿Venís?."
+        note = f"Tarjeta armada por el programa: {_avisos(len(blocks or []))} y ¿Venís?."
     else:
         note = f"Muestra la tarjeta fija: {reason}."
     db.document(f"rondas/{meeting.ronda_id}/views/{VIEW}").set(card)
