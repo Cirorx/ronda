@@ -153,6 +153,7 @@ class const MyRondaView({required final String uid, super.key})
             ThisWeekStatus.noGroup => Column(
               spacing: spacing.xs,
               children: [
+                const RondaSketch(RondaScene.emptyChairs, height: 96),
                 Semantics(
                   header: true,
                   child: Text(
@@ -168,6 +169,7 @@ class const MyRondaView({required final String uid, super.key})
             ThisWeekStatus.failure => Column(
               spacing: spacing.sm,
               children: [
+                const RondaSketch(RondaScene.termoAsks, height: 96),
                 line(l10n.thisWeekLoadError),
                 OutlinedButton(
                   onPressed: context.read<ThisWeekCubit>().subscribe,

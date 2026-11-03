@@ -218,6 +218,7 @@ void main() {
         );
 
         expect(find.text('Gracias por venir.'), findsOneWidget);
+        expect(findSketch(RondaScene.mateServed), findsOneWidget);
         expect(find.text('Jueves a la tarde · Truco'), findsOneWidget);
         expect(
           find.text('Quedan 2 lugares · el próximo es el 5/11'),

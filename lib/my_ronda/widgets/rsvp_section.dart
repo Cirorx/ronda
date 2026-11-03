@@ -56,18 +56,31 @@ class const RsvpSection({required final ThisWeekState state, super.key})
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: spacing.xs,
         children: [
-          Semantics(
-            liveRegion: true,
-            child: Text(
-              going
-                  ? switch (item) {
-                      final item? => l10n.thisWeekGoingBring(item),
-                      null when rainTurn => l10n.thisWeekGoingRain,
-                      null => l10n.thisWeekGoing,
-                    }
-                  : l10n.thisWeekNotGoing,
-              style: textTheme.headlineSmall,
-            ),
+          Row(
+            spacing: spacing.sm,
+            children: [
+              Expanded(
+                child: Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    going
+                        ? switch (item) {
+                            final item? => l10n.thisWeekGoingBring(item),
+                            null when rainTurn => l10n.thisWeekGoingRain,
+                            null => l10n.thisWeekGoing,
+                          }
+                        : l10n.thisWeekNotGoing,
+                    style: textTheme.headlineSmall,
+                  ),
+                ),
+              ),
+              // "Voy", stamped on the termo.
+              if (going)
+                const RondaSketch(
+                  RondaScene.termoStamp,
+                  height: RondaSketch.cardHeight,
+                ),
+            ],
           ),
           if (!going && week.pausedUntil != null)
             Text(

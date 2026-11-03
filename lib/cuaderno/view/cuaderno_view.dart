@@ -467,9 +467,10 @@ class const _Lines({required final CuadernoState state})
           header: true,
           child: Text(l10n.cuadernoLinesTitle, style: textTheme.titleMedium),
         ),
-        if (entries.isEmpty)
-          Text(l10n.cuadernoEmpty, style: textTheme.bodyLarge)
-        else ...[
+        if (entries.isEmpty) ...[
+          const RondaSketch(RondaScene.openCuaderno, height: 96),
+          Text(l10n.cuadernoEmpty, style: textTheme.bodyLarge),
+        ] else ...[
           Text(l10n.cuadernoBringExplain, style: textTheme.bodySmall),
           for (final entry in entries)
             Card(

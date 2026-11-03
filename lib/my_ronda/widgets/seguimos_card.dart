@@ -171,9 +171,23 @@ class const SeguimosCard({super.key}) extends StatelessWidget {
     final l10n = context.l10n;
     final textTheme = Theme.of(context).textTheme;
     return [
-      Semantics(
-        header: true,
-        child: Text(l10n.seguimosGraciasTitle, style: textTheme.headlineSmall),
+      Row(
+        spacing: context.appSpacing.sm,
+        children: [
+          Expanded(
+            child: Semantics(
+              header: true,
+              child: Text(
+                l10n.seguimosGraciasTitle,
+                style: textTheme.headlineSmall,
+              ),
+            ),
+          ),
+          const RondaSketch(
+            RondaScene.mateServed,
+            height: RondaSketch.cardHeight,
+          ),
+        ],
       ),
       if (seguimos.alternatives.isEmpty)
         Text(l10n.seguimosGraciasNone, style: textTheme.bodyMedium)

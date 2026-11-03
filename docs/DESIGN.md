@@ -206,6 +206,35 @@ edge. Phones are unchanged; every rule below is guarded by the window's width.
 - **Tests** check the shell, onboarding, Mi ronda and the admin screens at 360, 800 and 1280, and
   each at 200% text at 1280.
 
+## Sketches
+
+Added on 2026-11-03: the screens that were only words get a small line drawing. `RondaSketch`
+(`packages/ronda_ui`) draws each scene in code, in the same line as `RondaObjectIcon`: round
+strokes on a 24-unit-tall grid, the icons' own outlines reused where a scene holds a mate, a
+termo, a mazo or bizcochos. The geometry scales, the stroke stops at what a 48 dp icon shows
+(3.2 dp), so a big sketch still reads as a birome line. Colours come only from the theme:
+outlines in muted, yerba green (primary) for what is taken or done, the ochre margen, alpaca
+silver (tertiary) for metal, the line colour for rules, the surface for paper.
+
+| Scene | Where | What |
+|---|---|---|
+| `emptyChairs` | Mi ronda, no group yet | four chairs, one taken in green |
+| `termoAsks` | Mi ronda, couldn't read the week | a termo with its cup off, an ochre question mark; no red |
+| `almacenNotice` | Cerca | an almacén's door with a ruled notice taped on it |
+| `termoStamp` | Mi ronda's card after "Voy" (48 dp) | a termo with a green tick stamped beside it |
+| `firstLine` | the payoff, "Sos de los primeros" | a ruled sheet, one line written by the margin |
+| `mateServed` | ¿seguimos? closed, "Gracias por venir" (48 dp) | a mate and its bombilla, the ochre inside showing |
+| `openCuaderno` | the cuaderno with no lines yet | an open cuaderno, its lines blank, a pencil on it |
+| `objectsOnALine` | welcome, beside the doors' heading (28 dp) | mate, termo, mazo and bizcochos on a ruled line |
+
+Onboarding draws no scene: narrower than a desktop, where there is no side column, a row of the
+six object icons (28 dp, outline colour) stands over each question. Full-screen sketches are 96
+to 112 dp tall, those in cards 48; a sketch shrinks to the room it has and keeps its shape.
+
+Sketches are decoration: screen readers skip them and large text drops them, like the icons.
+They don't move. Never people, faces, hands or silhouettes, map pins or maps, confetti,
+gradients (the agent's virola thread owns those) or anything about money.
+
 ## In Flutter
 - Packages, versions, l10n setup and the native checklist: `docs/STACK.md`. State is Bloc
   (Cubit-first); fonts are bundled, not fetched.

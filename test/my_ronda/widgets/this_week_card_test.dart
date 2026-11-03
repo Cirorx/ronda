@@ -179,6 +179,7 @@ void main() {
       );
 
       expect(find.text('Vas.'), findsOneWidget);
+      expect(findSketch(RondaScene.termoStamp), findsOneWidget);
     });
 
     testWidgets('asks for tortas fritas only if it rains', (tester) async {
@@ -216,6 +217,7 @@ void main() {
       await pump(tester, ready(MyRondaFixtures.week(myAnswer: RsvpAnswer.no)));
 
       expect(find.text('Esta no vas.'), findsOneWidget);
+      expect(findSketch(RondaScene.termoStamp), findsNothing);
       await tester.tap(find.text('Cambiar mi respuesta'));
 
       verify(cubit.changeTapped).called(1);

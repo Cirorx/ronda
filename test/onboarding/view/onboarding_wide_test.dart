@@ -71,6 +71,33 @@ void main() {
         expect(find.byType(ReadableColumn), findsNothing);
         expect(find.byType(OnboardingObjects), findsNothing);
       });
+
+      testWidgets("draws a small row of the ronda's objects over the "
+          'question', (tester) async {
+        await pumpSubject(tester, const OnboardingState(), size: phoneSize);
+
+        final icons = find.byType(RondaObjectIcon);
+        expect(icons, findsNWidgets(RondaObject.values.length));
+        expect(
+          tester.getSize(icons.first),
+          const Size.square(OnboardingStepLayout.objectSize),
+        );
+        expect(
+          tester.getBottomLeft(icons.first).dy,
+          lessThan(tester.getTopLeft(find.text('¿Qué te gustaría hacer?')).dy),
+        );
+      });
+
+      testWidgets('drops the row of objects at large text', (tester) async {
+        await pumpSubject(
+          tester,
+          const OnboardingState(),
+          size: phoneSize,
+          textScale: AppTheme.largeTextScale,
+        );
+
+        expect(find.byType(RondaObjectIcon), findsNothing);
+      });
     });
 
     group('at ${tabletSize.width} px', () {
@@ -84,6 +111,10 @@ void main() {
         expect(tester.getSize(_bodyColumn).width, WindowSize.readableWidth);
         expect(tester.getCenter(_bodyColumn).dx, tabletSize.width / 2);
         expect(find.byType(OnboardingObjects), findsNothing);
+        expect(
+          find.byType(RondaObjectIcon),
+          findsNWidgets(RondaObject.values.length),
+        );
         expect(
           tester.getSize(find.byType(LinearProgressIndicator)).width,
           lessThan(WindowSize.readableWidth),

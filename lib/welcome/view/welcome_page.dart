@@ -44,6 +44,10 @@ class const WelcomePage({
   /// Maestro's handle on the conditions link.
   static const termsLinkIdentifier = 'welcome.terms';
 
+  /// How tall the strip of the ronda's things beside the doors' heading is
+  /// drawn: slim, so the doors stay where a thumb finds them.
+  static const double sketchHeight = 28;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -133,11 +137,25 @@ class const WelcomePage({
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         spacing: spacing.sm,
                         children: [
-                          Text(
-                            l10n.welcomeDoorsHeading,
-                            style: textTheme.titleSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
+                          // The ronda's things on a ruled line, a slim strip
+                          // on the heading's own line, so the doors stay
+                          // where they were.
+                          Row(
+                            spacing: spacing.sm,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  l10n.welcomeDoorsHeading,
+                                  style: textTheme.titleSmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                              const RondaSketch(
+                                RondaScene.objectsOnALine,
+                                height: WelcomePage.sketchHeight,
+                              ),
+                            ],
                           ),
                           if (showVoiceDoor)
                             WelcomeDoor(

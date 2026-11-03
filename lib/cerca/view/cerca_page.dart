@@ -21,10 +21,17 @@ class const CercaPage({super.key}) extends StatelessWidget {
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Center(
-                child: Text(
-                  l10n.cercaPlaceholder,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: context.appSpacing.lg,
+                  children: [
+                    const RondaSketch(RondaScene.almacenNotice),
+                    Text(
+                      l10n.cercaPlaceholder,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
                 ),
               ),
             ),

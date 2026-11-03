@@ -139,6 +139,27 @@ void main() {
         expect(find.text('condiciones de Ronda'), findsOneWidget);
       });
 
+      testWidgets("a slim strip of the ronda's things beside the doors' "
+          'heading', (tester) async {
+        await pumpSubject(tester);
+
+        final strip = find.byType(RondaSketch);
+        expect(
+          tester.widget<RondaSketch>(strip).scene,
+          RondaScene.objectsOnALine,
+        );
+        expect(tester.getSize(strip).height, WelcomePage.sketchHeight);
+        final heading = find.text('¿Cómo nos querés contar?');
+        expect(
+          tester.getCenter(strip).dy,
+          closeTo(tester.getCenter(heading).dy, 1),
+        );
+        expect(
+          tester.getTopLeft(strip).dx,
+          greaterThan(tester.getTopLeft(heading).dx),
+        );
+      });
+
       testWidgets('in English', (tester) async {
         await pumpSubject(tester, locale: const Locale('en'));
 
@@ -223,7 +244,6 @@ void main() {
       Finder title() => find.text(
         'Los mismos vecinos, a pocas cuadras, el mismo día todas las semanas.',
       );
-      Finder doorsHeading() => find.text('¿Cómo nos querés contar?');
       Finder termsNote() => find.byType(TermsNote);
 
       testWidgets('the doors at the bottom of a phone', (tester) async {
@@ -263,8 +283,10 @@ void main() {
             final copyBottom = tester
                 .getBottomLeft(find.textContaining('Contanos un poco de vos'))
                 .dy;
+            // The doors' heading shares its line with the strip of the
+            // ronda's things, the taller of the two.
             expect(
-              tester.getTopLeft(doorsHeading()).dy - copyBottom,
+              tester.getTopLeft(find.byType(RondaSketch)).dy - copyBottom,
               closeTo(2 * AppSpacing.unit, 1),
             );
             // The name's line, which the language and "¿Cómo funciona?"

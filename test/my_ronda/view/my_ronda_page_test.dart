@@ -499,6 +499,18 @@ void main() {
         });
       });
 
+      testWidgets('a row of chairs, one taken, while there is no group', (
+        tester,
+      ) async {
+        await pump(tester);
+
+        expect(findSketch(RondaScene.emptyChairs), findsOneWidget);
+        expect(
+          tester.getBottomLeft(findSketch(RondaScene.emptyChairs)).dy,
+          lessThan(tester.getTopLeft(find.text('Todavía no tenés grupo')).dy),
+        );
+      });
+
       testWidgets('a retry when the ronda cannot be read', (tester) async {
         when(() => thisWeekCubit.state)
             .thenReturn(const ThisWeekState(status: ThisWeekStatus.failure));
@@ -508,6 +520,7 @@ void main() {
           find.text('No pudimos leer tu ronda. Probá de nuevo.'),
           findsOneWidget,
         );
+        expect(findSketch(RondaScene.termoAsks), findsOneWidget);
         await tester.tap(find.text('Probar de nuevo'));
 
         verify(thisWeekCubit.subscribe).called(1);

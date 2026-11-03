@@ -556,6 +556,7 @@ void main() {
           find.text('Todavía no anotaste nada. Alcanza con lo que veas hoy.'),
           findsOneWidget,
         );
+        expect(findSketch(RondaScene.openCuaderno), findsOneWidget);
       });
 
       Future<void> openMenu(WidgetTester tester, String day) async {

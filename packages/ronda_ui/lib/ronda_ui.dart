@@ -31,6 +31,7 @@ export 'src/widgets/press_scale.dart';
 export 'src/widgets/read_back_card.dart';
 export 'src/widgets/ronda_object_icon.dart';
 export 'src/widgets/ronda_sheet.dart';
+export 'src/widgets/ronda_sketch.dart';
 export 'src/widgets/ronda_swap.dart';
 export 'src/widgets/rsvp_bar.dart';
 export 'src/widgets/scroll_edge_fade.dart';

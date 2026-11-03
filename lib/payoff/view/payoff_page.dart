@@ -142,10 +142,14 @@ class const PayoffView({super.key}) extends StatelessWidget {
         variant: NoteBannerVariant.offline,
         message: l10n.payoffUnavailable,
       ),
-      PayoffState(:final demand) when demand.isEmpty => Text(
+      PayoffState(:final demand) when demand.isEmpty => Column(
         key: const ValueKey(#firstOnes),
-        l10n.payoffFirstOnes,
-        style: textTheme.bodyLarge,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: spacing.md,
+        children: [
+          const RondaSketch(RondaScene.firstLine, height: 96),
+          Text(l10n.payoffFirstOnes, style: textTheme.bodyLarge),
+        ],
       ),
       PayoffState(:final demand) => Column(
         key: const ValueKey(#demand),

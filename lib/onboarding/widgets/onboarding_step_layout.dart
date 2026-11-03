@@ -71,6 +71,9 @@ class const OnboardingStepLayout({
   /// Maestro's handle on the back button.
   static const backIdentifier = 'onboarding.back';
 
+  /// The side of each object in the row over a question on a phone.
+  static const double objectSize = 28;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -181,6 +184,29 @@ class const OnboardingStepLayout({
                 vertical: spacing.sm,
               ),
               children: [
+                // Narrower than a desktop there is no side column for the
+                // ronda's objects, so a small row of them stands over the
+                // questions instead.
+                if (questionNumber != null &&
+                    context.windowSize != WindowSize.expanded &&
+                    !context.usesLargeText) ...[
+                  ExcludeSemantics(
+                    child: IconTheme(
+                      data: IconThemeData(
+                        color: theme.colorScheme.outline,
+                        size: objectSize,
+                      ),
+                      child: Row(
+                        spacing: spacing.sm,
+                        children: [
+                          for (final object in RondaObject.values)
+                            RondaObjectIcon(object),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: spacing.md),
+                ],
                 if (overline case final overline?)
                   Text(
                     overline,

@@ -190,6 +190,7 @@ void main() {
           ),
           findsOneWidget,
         );
+        expect(findSketch(RondaScene.firstLine), findsOneWidget);
       });
 
       testWidgets('that the counts could not be read, still leading to '

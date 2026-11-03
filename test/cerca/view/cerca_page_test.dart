@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:ronda/cerca/cerca.dart';
+import 'package:ronda_ui/ronda_ui.dart';
 
 import '../../helpers/helpers.dart';
 
@@ -30,6 +30,19 @@ void main() {
             'Mientras tanto, si tenés grupo, lo ves en Mi ronda.',
           ),
           findsOneWidget,
+        );
+      });
+
+      testWidgets("an almacén's door with a notice over the words", (
+        tester,
+      ) async {
+        await tester.pumpApp(const CercaPage());
+
+        final sketch = findSketch(RondaScene.almacenNotice);
+        expect(sketch, findsOneWidget);
+        expect(
+          tester.getBottomLeft(sketch).dy,
+          lessThan(tester.getTopLeft(find.textContaining('Pronto')).dy),
         );
       });
 
