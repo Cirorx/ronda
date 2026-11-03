@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:face_blur/face_blur.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_image_compress_common/flutter_image_compress_common.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -156,6 +157,17 @@ void main() {
 
         expect(await subject().retrieveLostPhoto(), isNull);
       });
+
+      test(
+        'returns null on iOS, where the picker keeps no lost photo',
+        () async {
+          debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+          addTearDown(() => debugDefaultTargetPlatformOverride = null);
+
+          expect(await subject().retrieveLostPhoto(), isNull);
+          verifyNever(() => picker.retrieveLostData());
+        },
+      );
     });
 
     group('blur', () {

@@ -94,8 +94,10 @@ class FaceBlur {
   }
 
   /// The photo the camera took while Android stopped the app to free
-  /// memory, if any: call it when the photo screen opens again.
+  /// memory, if any: call it when the photo screen opens again. Only Android
+  /// keeps one; elsewhere the picker doesn't implement it, so it is `null`.
   Future<TakenPhoto?> retrieveLostPhoto() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return null;
     final lost = await _imagePicker.retrieveLostData();
     final file = lost.file;
     return file == null ? null : TakenPhoto._(file.path);
