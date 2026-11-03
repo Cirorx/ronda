@@ -243,6 +243,69 @@ void main() {
       });
     });
 
+    group('contrast (WCAG 2.2 AA)', () {
+      double luminance(Color c) => c.computeLuminance();
+
+      double contrast(Color a, Color b) {
+        final (la, lb) = (luminance(a), luminance(b));
+        final (hi, lo) = la > lb ? (la, lb) : (lb, la);
+        return (hi + 0.05) / (lo + 0.05);
+      }
+
+      for (final theme in [AppTheme.light, AppTheme.dark]) {
+        group(theme.colorScheme.brightness.name, () {
+          test('keeps text and actions at 4.5:1 or better', () {
+            final scheme = theme.colorScheme;
+            expect(
+              contrast(scheme.onSurface, scheme.surface),
+              greaterThanOrEqualTo(4.5),
+            );
+            expect(
+              contrast(scheme.onPrimary, scheme.primary),
+              greaterThanOrEqualTo(4.5),
+            );
+            expect(
+              contrast(scheme.onSecondary, scheme.secondary),
+              greaterThanOrEqualTo(4.5),
+            );
+            expect(
+              contrast(scheme.onTertiary, scheme.tertiary),
+              greaterThanOrEqualTo(4.5),
+            );
+            expect(
+              contrast(scheme.onSurfaceVariant, scheme.surface),
+              greaterThanOrEqualTo(4.5),
+            );
+            // Styles swapped onto the theme keep its text colours;
+            // a colourless style renders paper-on-paper in the app.
+            expect(
+              contrast(theme.textTheme.bodyMedium!.color!, scheme.surface),
+              greaterThanOrEqualTo(4.5),
+            );
+            expect(
+              contrast(theme.textTheme.headlineMedium!.color!, scheme.surface),
+              greaterThanOrEqualTo(4.5),
+            );
+          });
+        });
+      }
+    });
+
+    group('AI treatment', () {
+      test('carries the virola thread in both themes', () {
+        for (final theme in [AppTheme.light, AppTheme.dark]) {
+          final ai = theme.extension<AiTreatment>();
+          expect(ai, isNotNull);
+          expect(ai!.gradient, hasLength(3));
+        }
+      });
+
+      testWidgets('draws the thread on an agent-composed card', (tester) async {
+        await tester.pumpApp(const Scaffold(body: AiSignature()));
+        expect(tester.getSize(find.byType(AiSignature)).height, greaterThan(0));
+      });
+    });
+
     group('buttons in use', () {
       late int taps;
 

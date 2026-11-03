@@ -6,36 +6,42 @@ import 'package:ronda_ui/ronda_ui.dart';
 ///
 /// Only [AppTheme] and [RondaPalette] read these. Widgets read colours from
 /// `Theme.of(context).colorScheme` or `context.rondaPalette`, never from here.
+///
+/// The names are the roles: `birome` is the primary action, `yerba` the
+/// tertiary, `ambar` warnings, `margen` the ruled sheet's margin line. Since
+/// the Mate y alpaca direction the hues are yerba green, ochre and alpaca
+/// silver, not the old birome blue.
 /// {@endtemplate}
 abstract final class AppColors {
   // Light (day).
 
-  /// Background: the barrio's paper.
-  static const paper = Color(0xFFFFFEFA);
+  /// Background: the camionero paper.
+  static const paper = Color(0xFFF8F3EA);
 
   /// Text.
-  static const ink = Color(0xFF18202F);
+  static const ink = Color(0xFF241B12);
 
-  /// Primary action, links, what neighbours read.
-  static const birome = Color(0xFF2341C0);
+  /// Primary action, links, what neighbours read: yerba green.
+  static const birome = Color(0xFF4E6428);
 
   /// [birome] while pressed.
-  static const biromePressed = Color(0xFF1A3196);
+  static const biromePressed = Color(0xFF3E5020);
 
-  /// Confirmed, "vino", "seguimos".
-  static const yerba = Color(0xFF1D7448);
+  /// Tertiary, confirmed, "vino", "seguimos": alpaca silver, one shade
+  /// deeper than the direction's swatch so white text on it passes AA.
+  static const yerba = Color(0xFF5C6B7A);
 
-  /// Warnings, rain moves.
-  static const ambar = Color(0xFF985E00);
+  /// Warnings, rain moves: ochre.
+  static const ambar = Color(0xFF8F5E0B);
 
   /// The ruled sheet's margin line. Rare accents only, never for errors alone.
-  static const margen = Color(0xFFC8433C);
+  static const margen = Color(0xFF8F5E0B);
 
   /// Dividers.
-  static const line = Color(0xFFD6DDE8);
+  static const line = Color(0xFFE2D6C2);
 
   /// Secondary text.
-  static const muted = Color(0xFF5A6477);
+  static const muted = Color(0xFF77695A);
 
   /// Cards on paper.
   static const surface = Color(0xFFFFFFFF);
@@ -44,76 +50,76 @@ abstract final class AppColors {
   static const danger = Color(0xFFB42318);
 
   /// Info banners and selected chips.
-  static const biromeTint = Color(0xFFEEF1FC);
+  static const biromeTint = Color(0xFFEEF1DF);
 
   /// Warning banners.
-  static const ambarTint = Color(0xFFFBF3E6);
+  static const ambarTint = Color(0xFFFAF0DA);
 
   /// Kept-on-phone banners.
-  static const yerbaTint = Color(0xFFE8F3EC);
+  static const yerbaTint = Color(0xFFE9EDF0);
 
   /// Offline banners.
-  static const neutralTint = Color(0xFFF3F5FA);
+  static const neutralTint = Color(0xFFEEF1DF);
 
   /// The track behind a segmented control ("Vino / No vino").
-  static const neutralFill = Color(0xFFEEF0F4);
+  static const neutralFill = Color(0xFFEEF1DF);
 
   /// A switch track or radio ring when off.
-  static const controlOff = Color(0xFF8792A6);
+  static const controlOff = Color(0xFF77695A);
 
   // Dark (night).
 
   /// [paper] at night.
-  static const paperDark = Color(0xFF0E1320);
+  static const paperDark = Color(0xFF171310);
 
   /// [ink] at night.
-  static const inkDark = Color(0xFFE5E9F1);
+  static const inkDark = Color(0xFFF5EEDF);
 
   /// [birome] at night.
-  static const biromeDark = Color(0xFF93A6FF);
+  static const biromeDark = Color(0xFFC2D191);
 
   /// [biromePressed] at night. Not in DESIGN.md yet.
-  static const biromePressedDark = Color(0xFF7189F0);
+  static const biromePressedDark = Color(0xFFA9BC74);
 
   /// [yerba] at night.
-  static const yerbaDark = Color(0xFF5CC48E);
+  static const yerbaDark = Color(0xFFBEC9D4);
 
   /// [ambar] at night.
-  static const ambarDark = Color(0xFFE2A53D);
+  static const ambarDark = Color(0xFFEBC078);
 
   /// [margen] at night.
-  static const margenDark = Color(0xFFE07A72);
+  static const margenDark = Color(0xFFEBC078);
 
   /// [line] at night.
-  static const lineDark = Color(0xFF2E384D);
+  static const lineDark = Color(0xFF42362A);
 
   /// [muted] at night.
-  static const mutedDark = Color(0xFFA3ADBF);
+  static const mutedDark = Color(0xFFBCAF9C);
 
   /// [surface] at night.
-  static const surfaceDark = Color(0xFF151B2B);
+  static const surfaceDark = Color(0xFF241D17);
 
   /// [danger] at night. Not in DESIGN.md yet (the planilla's dark "cut").
   static const dangerDark = Color(0xFFF07C72);
 
   /// [biromeTint] at night.
-  static const biromeTintDark = Color(0xFF1C2440);
+  static const biromeTintDark = Color(0xFF2E3419);
 
   /// [ambarTint] at night. Not in DESIGN.md yet.
-  static const ambarTintDark = Color(0xFF2A2416);
+  static const ambarTintDark = Color(0xFF3D2E14);
 
   /// [yerbaTint] at night. Not in DESIGN.md yet.
-  static const yerbaTintDark = Color(0xFF15291F);
+  static const yerbaTintDark = Color(0xFF2A333C);
 
   /// [neutralTint] at night. Not in DESIGN.md yet (the planilla's dark
   /// "notif").
-  static const neutralTintDark = Color(0xFF1A2234);
+  static const neutralTintDark = Color(0xFF2E3419);
 
   /// [neutralFill] at night. Not in DESIGN.md yet.
-  static const neutralFillDark = Color(0xFF1F2638);
+  static const neutralFillDark = Color(0xFF2E3419);
 
   /// [controlOff] at night. Not in DESIGN.md yet.
-  static const controlOffDark = Color(0xFF6B7489);
+  static const controlOffDark = Color(0xFFBCAF9C);
 
   /// Shadow and scrim at night: darker than [paperDark], so the top bar's
   /// edge and a sheet's scrim still read on dark paper. By day both are

@@ -12,7 +12,9 @@ Future<void> loadRondaFonts() async {
   const prefix = 'packages/${AppTextStyle.fontPackage}';
   final families = <String, List<String>>{
     '$prefix/${AppTextStyle.titleFamily}': [
-      'assets/fonts/YoungSerif-Regular.ttf',
+      'assets/fonts/ZillaSlab-Medium.ttf',
+      'assets/fonts/ZillaSlab-SemiBold.ttf',
+      'assets/fonts/ZillaSlab-Bold.ttf',
     ],
     '$prefix/${AppTextStyle.textFamily}': [
       'assets/fonts/AtkinsonHyperlegible-Regular.ttf',

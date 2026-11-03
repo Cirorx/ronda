@@ -26,9 +26,14 @@ flutter:
   # OFL 1.1, from github.com/google/fonts; registerRondaUiLicenses() adds the
   # two notices to the app's licence page.
   fonts:
-    - family: YoungSerif
+    - family: ZillaSlab
       fonts:
-        - asset: assets/fonts/YoungSerif-Regular.ttf
+        - asset: assets/fonts/ZillaSlab-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/ZillaSlab-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/ZillaSlab-Bold.ttf
+          weight: 700
     - family: AtkinsonHyperlegible
       fonts:
         - asset: assets/fonts/AtkinsonHyperlegible-Regular.ttf
@@ -36,5 +41,5 @@ flutter:
           weight: 700
 
   assets:
-    - assets/fonts/OFL-YoungSerif.txt
+    - assets/fonts/OFL-ZillaSlab.txt
     - assets/fonts/OFL-AtkinsonHyperlegible.txt

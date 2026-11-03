@@ -212,6 +212,7 @@ class const _Card({
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: spacing.sm,
           children: [
+            const AiSignature(),
             ...children,
             if (state.saveFailed)
               NoteBanner(

@@ -5,9 +5,9 @@ escaneala." and "Ronda nunca pide plata."; the bottom, seven strips to tear off,
 to the flyer's page and "Ronda nunca pide plata" again, since the strip is what goes home. Each
 QR is also a link, so the PDF opens the page when clicked on a screen.
 
-Type and colour follow docs/DESIGN.md: Young Serif for the headline, Atkinson Hyperlegible for
+Type and colour follow docs/DESIGN.md: Zilla Slab for the headline, Atkinson Hyperlegible for
 the rest (the app's bundled fonts, packages/ronda_ui/assets/fonts), ink on paper, the ruled
-sheet's red margin line as the one accent.
+sheet's ochre margin line as the one accent.
 """
 
 from dataclasses import dataclass
@@ -24,12 +24,12 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
 
 FONTS = Path(__file__).resolve().parents[1] / "packages" / "ronda_ui" / "assets" / "fonts"
-TITLE, BODY, BOLD = "YoungSerif", "Atkinson", "Atkinson-Bold"
+TITLE, BODY, BOLD = "ZillaSlab", "Atkinson", "Atkinson-Bold"
 
-INK = HexColor("#18202F")
-MUTED = HexColor("#5A6477")
-MARGEN = HexColor("#C8433C")
-LINE = HexColor("#8792A6")
+INK = HexColor("#241B12")
+MUTED = HexColor("#77695A")
+MARGEN = HexColor("#8F5E0B")
+LINE = HexColor("#77695A")
 
 STRIPS = 7
 MARGIN = 14 * mm
@@ -61,7 +61,7 @@ def write_pdf(path: Path, text: FlyerText, url: str, title: str) -> None:
 
 def _register_fonts() -> None:
     for name, file in (
-        (TITLE, "YoungSerif-Regular.ttf"),
+        (TITLE, "ZillaSlab-Medium.ttf"),
         (BODY, "AtkinsonHyperlegible-Regular.ttf"),
         (BOLD, "AtkinsonHyperlegible-Bold.ttf"),
     ):

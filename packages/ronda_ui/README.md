@@ -17,9 +17,10 @@ MaterialApp(theme: AppTheme.light, darkTheme: AppTheme.dark, home: ...);
 | `AppColors` | Every colour token, day and night. Read only by the theme. |
 | `AppTheme` | `light` / `dark` `ThemeData`: two `ColorScheme`s and every component theme. |
 | `RondaPalette` | `ThemeExtension` for roles Material has no slot for (`context.rondaPalette`). |
-| `AppTextStyle` | Young Serif titles, Atkinson Hyperlegible text, tabular figures; fills `TextTheme`. |
+| `AppTextStyle` | Zilla Slab titles, Atkinson Hyperlegible text, tabular figures; fills `TextTheme`. |
 | `AppSpacing` | 4 / 8 / 12 / 16 / 24 / 32 from a unit of 16 (`context.appSpacing`). |
-| `AppRadius` | 8 / 10 / 12 / 16 / 22. |
+| `AppRadius` | 8 / 10 / 20 / 16 / 22. |
+| `AiTreatment` | The agent's virola thread (`context.aiTreatment`); `AiSignature` draws it. |
 
 ## Components
 
@@ -31,9 +32,9 @@ from `AppTheme.largeTextScale` (1.5) layouts take their large-text form
 
 ## Fonts
 
-Bundled in `assets/fonts/` (OFL 1.1, from github.com/google/fonts): Young Serif Regular and
-Atkinson Hyperlegible Regular and Bold. Call `registerRondaUiLicenses()` once from the app's
-bootstrap to put both OFL notices on the licence page.
+Bundled in `assets/fonts/` (OFL 1.1, from github.com/google/fonts): Zilla Slab Medium,
+SemiBold and Bold, and Atkinson Hyperlegible Regular and Bold. Call `registerRondaUiLicenses()`
+once from the app's bootstrap to put both OFL notices on the licence page.
 
 ## Tests
 

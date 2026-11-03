@@ -5,7 +5,7 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// The fonts this package bundles, with the asset that holds each one's
 /// OFL 1.1 notice.
 const _fontLicenses = [
-  ('Young Serif', 'assets/fonts/OFL-YoungSerif.txt'),
+  ('Zilla Slab', 'assets/fonts/OFL-ZillaSlab.txt'),
   ('Atkinson Hyperlegible', 'assets/fonts/OFL-AtkinsonHyperlegible.txt'),
 ];
 

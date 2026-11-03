@@ -299,8 +299,14 @@ flutter:
   generate: true
   uses-material-design: true
   fonts:          # bundled from github.com/google/fonts (OFL 1.1); the two families have different copyright holders, so register both OFL notices with LicenseRegistry
-    - family: YoungSerif
-      fonts: [{asset: assets/fonts/YoungSerif-Regular.ttf}]
+    - family: ZillaSlab
+      fonts:
+        - asset: assets/fonts/ZillaSlab-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/ZillaSlab-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/ZillaSlab-Bold.ttf
+          weight: 700
     - family: AtkinsonHyperlegible
       fonts:
         - asset: assets/fonts/AtkinsonHyperlegible-Regular.ttf

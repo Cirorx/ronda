@@ -28,10 +28,6 @@ class const LoginView({
   /// Maestro's handle on the link to make a Google account.
   static const createAccountIdentifier = 'login_create_account';
 
-  /// The spinner beside "Seguir con Google" while sign-in runs.
-  static const double _spinnerSize = 18;
-  static const double _spinnerStroke = 2;
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -96,30 +92,13 @@ class const LoginView({
               MergeSemantics(
                 child: Semantics(
                   identifier: googleButtonIdentifier,
+                  liveRegion: inProgress,
+                  label: inProgress ? l10n.loginInProgress : null,
                   child: FilledButton(
                     onPressed: inProgress
                         ? null
                         : () => context.read<LoginCubit>().signInWithGoogle(),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      spacing: spacing.xs,
-                      children: [
-                        if (inProgress)
-                          SizedBox.square(
-                            dimension: _spinnerSize,
-                            child: CircularProgressIndicator(
-                              strokeWidth: _spinnerStroke,
-                              semanticsLabel: l10n.loginInProgress,
-                            ),
-                          ),
-                        Flexible(
-                          child: Text(
-                            l10n.loginGoogleButton,
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
+                    child: BusyLabel(l10n.loginGoogleButton, busy: inProgress),
                   ),
                 ),
               ),

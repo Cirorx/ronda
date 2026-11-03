@@ -64,6 +64,7 @@ class const ThisWeekCard({
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: spacing.md,
             children: [
+              if (week.agentCard != null) const AiSignature(),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: spacing.xxs,

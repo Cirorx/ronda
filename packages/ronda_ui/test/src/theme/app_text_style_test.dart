@@ -3,10 +3,10 @@ import 'package:ronda_ui/ronda_ui.dart';
 
 void main() {
   group(AppTextStyle, () {
-    const titleFamily = 'packages/ronda_ui/YoungSerif';
+    const titleFamily = 'packages/ronda_ui/ZillaSlab';
     const textFamily = 'packages/ronda_ui/AtkinsonHyperlegible';
 
-    test('sets titles in Young Serif from the package', () {
+    test('sets titles in Zilla Slab from the package', () {
       for (final style in [
         AppTextStyle.displayLarge,
         AppTextStyle.displayMedium,

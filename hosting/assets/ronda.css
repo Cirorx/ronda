@@ -4,9 +4,16 @@
    slides, so every way out is the way in. */
 
 @font-face {
-  font-family: 'Young Serif';
-  src: url('fonts/YoungSerif-Regular.ttf') format('truetype');
-  font-weight: 400;
+  font-family: 'Zilla Slab';
+  src: url('fonts/ZillaSlab-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Zilla Slab';
+  src: url('fonts/ZillaSlab-SemiBold.ttf') format('truetype');
+  font-weight: 600;
   font-display: swap;
 }
 
@@ -28,20 +35,20 @@
   color-scheme: light dark;
   --paper: #fffefa;
   --surface: #ffffff;
-  --ink: #18202f;
-  --muted: #5a6477;
-  --line: #d6dde8;
-  --birome: #2341c0;
-  --birome-pressed: #1a3196;
+  --ink: #241b12;
+  --muted: #77695a;
+  --line: #e2d6c2;
+  --birome: #4e6428;
+  --birome-pressed: #3e5020;
   --on-birome: #ffffff;
-  --birome-tint: #eef1fc;
-  --yerba: #1d7448;
-  --ambar: #985e00;
-  --ambar-tint: #fbf3e6;
-  --margen: #c8433c;
-  --neutral-tint: #f3f5fa;
+  --birome-tint: #eef1df;
+  --yerba: #6b7b8a;
+  --ambar: #8f5e0b;
+  --ambar-tint: #faf0da;
+  --margen: #8f5e0b;
+  --neutral-tint: #eef1df;
   /* The soft edge under the top bar while the page scrolls under it. */
-  --edge: rgb(24 32 47 / 0.09);
+  --edge: rgb(36 27 18 / 0.09);
 
   /* Spacing 4/8/12/16/24/32 in rem, so it grows with the reader's text size. */
   --space-1: 0.25rem;
@@ -59,20 +66,20 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #0e1320;
-    --surface: #151b2b;
-    --ink: #e5e9f1;
-    --muted: #a3adbf;
-    --line: #2e384d;
-    --birome: #93a6ff;
-    --birome-pressed: #7189f0;
-    --on-birome: #0e1320;
-    --birome-tint: #1c2440;
-    --yerba: #5cc48e;
-    --ambar: #e2a53d;
-    --ambar-tint: #2a2416;
-    --margen: #e07a72;
-    --neutral-tint: #1a2234;
+    --paper: #171310;
+    --surface: #241d17;
+    --ink: #f5eedf;
+    --muted: #bcaf9c;
+    --line: #42362a;
+    --birome: #c2d191;
+    --birome-pressed: #a9bc74;
+    --on-birome: #232d12;
+    --birome-tint: #2e3419;
+    --yerba: #bec9d4;
+    --ambar: #ebc078;
+    --ambar-tint: #3d2e14;
+    --margen: #ebc078;
+    --neutral-tint: #2e3419;
     --edge: rgb(0 0 0 / 0.45);
   }
 }
@@ -173,7 +180,7 @@ body {
   min-width: var(--target);
   min-height: var(--target);
   color: var(--birome);
-  font-family: 'Young Serif', Georgia, serif;
+  font-family: 'Zilla Slab', Georgia, serif;
   font-size: 1.25rem;
   line-height: 1.2;
   letter-spacing: -0.005em;
@@ -209,7 +216,7 @@ body {
 
 h1,
 h2 {
-  font-family: 'Young Serif', Georgia, serif;
+  font-family: 'Zilla Slab', Georgia, serif;
   font-weight: 400;
   text-wrap: balance;
 }

@@ -11,10 +11,12 @@ import 'package:ronda_ui/ronda_ui.dart';
 /// {@endtemplate}
 abstract final class AppTheme {
   /// The day theme.
-  static ThemeData get light => _theme(_lightScheme, RondaPalette.light);
+  static ThemeData get light =>
+      _theme(_lightScheme, RondaPalette.light, AiTreatment.light);
 
   /// The night theme.
-  static ThemeData get dark => _theme(_darkScheme, RondaPalette.dark);
+  static ThemeData get dark =>
+      _theme(_darkScheme, RondaPalette.dark, AiTreatment.dark);
 
   static const _lightScheme = ColorScheme(
     brightness: Brightness.light,
@@ -160,7 +162,11 @@ abstract final class AppTheme {
     );
   }
 
-  static ThemeData _theme(ColorScheme scheme, RondaPalette palette) {
+  static ThemeData _theme(
+    ColorScheme scheme,
+    RondaPalette palette,
+    AiTreatment ai,
+  ) {
     const spacing = AppSpacing();
     final textTheme = AppTextStyle.textTheme;
     final roundedLg = RoundedRectangleBorder(
@@ -184,7 +190,7 @@ abstract final class AppTheme {
       hoverColor: scheme.onSurface.withValues(alpha: hoverOpacity),
       focusColor: scheme.primary.withValues(alpha: focusOpacity),
       visualDensity: VisualDensity.standard,
-      extensions: <ThemeExtension<dynamic>>[palette, spacing],
+      extensions: <ThemeExtension<dynamic>>[palette, spacing, ai],
       pageTransitionsTheme: PageTransitionsTheme(
         builders: {
           for (final platform in TargetPlatform.values)

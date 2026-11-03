@@ -1,7 +1,7 @@
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// {@template app_text_style}
-/// Ronda's type scale: Young Serif for titles, Atkinson Hyperlegible for
+/// Ronda's type scale: Zilla Slab for titles, Atkinson Hyperlegible for
 /// everything else (`docs/DESIGN.md` § Tokens and the component sheet).
 ///
 /// Every style carries tabular figures, so times line up wherever they
@@ -14,7 +14,7 @@ abstract final class AppTextStyle {
   static const fontPackage = 'ronda_ui';
 
   /// Family name of the title face, as declared in `pubspec.yaml`.
-  static const titleFamily = 'YoungSerif';
+  static const titleFamily = 'ZillaSlab';
 
   /// Family name of the text face, as declared in `pubspec.yaml`.
   static const textFamily = 'AtkinsonHyperlegible';
@@ -61,7 +61,8 @@ abstract final class AppTextStyle {
   static const _title = TextStyle(
     fontFamily: titleFamily,
     package: fontPackage,
-    fontWeight: FontWeight.w400,
+    // Zilla Slab's book weight is Medium; there is no Regular.
+    fontWeight: FontWeight.w500,
     fontFeatures: tabularFigures,
   );
 
@@ -81,13 +82,13 @@ abstract final class AppTextStyle {
     FontWeight fontWeight = FontWeight.w400,
   }) => _sized(_text.copyWith(fontWeight: fontWeight), size, height);
 
-  /// Young Serif 48: the largest heading.
+  /// Zilla Slab 48: the largest heading.
   static final TextStyle displayLarge = _titleOf(48, 1.05);
 
-  /// Young Serif 36: card titles ("Jueves 16:00").
+  /// Zilla Slab 36: card titles ("Jueves 16:00").
   static final TextStyle displayMedium = _titleOf(36, 1.1);
 
-  /// Young Serif 30: screen titles ("¿Qué podés llevar?").
+  /// Zilla Slab 30: screen titles ("¿Qué podés llevar?").
   static final TextStyle displaySmall = _titleOf(30, 1.15);
 
   /// Atkinson Hyperlegible 28 bold: big times ("16:00 · 21:10").
@@ -97,13 +98,13 @@ abstract final class AppTextStyle {
     fontWeight: FontWeight.w700,
   );
 
-  /// Young Serif 26: a question inside a card ("¿Venís?").
+  /// Zilla Slab 26: a question inside a card ("¿Venís?").
   static final TextStyle headlineMedium = _titleOf(26, 1.15);
 
-  /// Young Serif 22: bottom sheet titles.
+  /// Zilla Slab 22: bottom sheet titles.
   static final TextStyle headlineSmall = _titleOf(22, 1.2);
 
-  /// Young Serif 22: app bar titles.
+  /// Zilla Slab 22: app bar titles.
   static final TextStyle titleLarge = _titleOf(22, 1.2);
 
   /// Atkinson Hyperlegible 18 bold: values and row titles.

@@ -29,10 +29,10 @@ void main() {
             entry.packages.single: entry.paragraphs.map((p) => p.text).join(),
         };
 
-        expect(byFont.keys, ['Young Serif', 'Atkinson Hyperlegible']);
+        expect(byFont.keys, ['Zilla Slab', 'Atkinson Hyperlegible']);
         expect(
-          byFont['Young Serif'],
-          contains('Copyright 2023 The Young Serif Project Authors'),
+          byFont['Zilla Slab'],
+          contains('Copyright 2017, The Mozilla Foundation'),
         );
         expect(
           byFont['Atkinson Hyperlegible'],
@@ -49,7 +49,7 @@ void main() {
       await LicenseRegistry.licenses.toList();
 
       expect(requested, [
-        'packages/ronda_ui/assets/fonts/OFL-YoungSerif.txt',
+        'packages/ronda_ui/assets/fonts/OFL-ZillaSlab.txt',
         'packages/ronda_ui/assets/fonts/OFL-AtkinsonHyperlegible.txt',
       ]);
     });

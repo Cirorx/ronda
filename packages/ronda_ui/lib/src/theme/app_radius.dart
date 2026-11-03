@@ -10,8 +10,8 @@ abstract final class AppRadius {
   /// 10: a cell in the slot grid.
   static const double md = 10;
 
-  /// 12: buttons, cards, banners.
-  static const double lg = 12;
+  /// 20: buttons, cards, banners. The crafted, roundest step of the scale.
+  static const double lg = 20;
 
   /// 16: the top of a bottom sheet.
   static const double xl = 16;
