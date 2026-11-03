@@ -1,3 +1,4 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ronda/attendance/widgets/roll_link.dart';
 import 'package:ronda/l10n/l10n.dart';
 import 'package:ronda/my_ronda/agent_card/agent_card_surface.dart';
@@ -53,6 +54,15 @@ class const ThisWeekCard({
     final spacing = context.appSpacing;
 
     Widget rsvp(BuildContext _) => RsvpSection(state: state);
+    // The organiser's card keeps the catalog it loaded with, and with it the
+    // first build's [rsvp], so inside it the block follows the cubit itself:
+    // "Voy" and "Cambiar mi respuesta" then show their answer there too.
+    Widget liveRsvp(BuildContext _) =>
+        BlocBuilder<ThisWeekCubit, ThisWeekState>(
+          builder: (context, state) => state.week == null
+              ? const SizedBox.shrink()
+              : RsvpSection(state: state),
+        );
 
     return Semantics(
       container: true,
@@ -85,7 +95,7 @@ class const ThisWeekCard({
                   message: l10n.thisWeekSaveError,
                 ),
               if (week.agentCard case final card?)
-                AgentCardSurface(card: card, rsvp: rsvp, fallback: rsvp)
+                AgentCardSurface(card: card, rsvp: liveRsvp, fallback: rsvp)
               else
                 rsvp(context),
               if (week.week != null && showWhoIsGoing)

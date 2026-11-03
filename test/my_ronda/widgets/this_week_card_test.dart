@@ -584,6 +584,58 @@ void main() {
         verify(cubit.yesTapped).called(1);
       });
 
+      testWidgets('shows the answer once the cubit has it, without the card '
+          'being built again', (tester) async {
+        final asking = ready(MyRondaFixtures.week(agentCard: agentCard));
+        whenListen(
+          cubit,
+          Stream.value(
+            ready(
+              MyRondaFixtures.week(
+                agentCard: agentCard,
+                myAnswer: RsvpAnswer.yes,
+              ),
+            ),
+          ),
+          initialState: asking,
+        );
+        await pump(tester, asking);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Vas. Llevá el pan.'), findsOneWidget);
+        expect(find.text('Voy'), findsNothing);
+      });
+
+      testWidgets('draws no ¿Venís? while the cubit has no week', (
+        tester,
+      ) async {
+        whenListen(
+          cubit,
+          const Stream<ThisWeekState>.empty(),
+          initialState: const ThisWeekState(),
+        );
+        await tester.pumpApp(
+          RepositoryProvider.value(
+            value: repository,
+            child: BlocProvider.value(
+              value: cubit,
+              child: Scaffold(
+                body: SingleChildScrollView(
+                  child: ThisWeekCard(
+                    state: ready(MyRondaFixtures.week(agentCard: agentCard)),
+                    uid: MyRondaFixtures.uid,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(AgentCardSurface), findsOneWidget);
+        expect(find.text('¿Venís?'), findsNothing);
+      });
+
       testWidgets('shows the template when the card can not be drawn', (
         tester,
       ) async {
