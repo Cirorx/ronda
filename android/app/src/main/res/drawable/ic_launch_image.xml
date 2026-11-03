@@ -1,5 +1,5 @@
 <!-- The launch screen's mark (Android 11 and older; 12+ shows the launcher icon): Ronda's five
-     dots, birome on paper, night colours under values-night/colors.xml. -->
+     dots, yerba green on paper, night colours under values-night/colors.xml. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="120dp"
     android:height="120dp"
