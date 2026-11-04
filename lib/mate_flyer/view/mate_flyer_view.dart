@@ -56,30 +56,36 @@ class const MateFlyerView({super.key}) extends StatelessWidget {
       ),
       _ => (MateFlyerStatus.choosing, _choosing(context)),
     };
+    // The list's own padding drops the bottom inset; SafeArea keeps the last
+    // button above Android's navigation bar (edge-to-edge since Android 15).
     return Scaffold(
       appBar: AppBar(title: Text(l10n.mateFlyerTitle)),
-      body: ListView(
-        padding: EdgeInsets.all(spacing.md),
-        children: [
-          if (_failureMessage(context, state.failure) case final message?) ...[
-            Semantics(
-              liveRegion: true,
-              child: NoteBanner(
-                message: message,
-                variant: NoteBannerVariant.warning,
+      body: SafeArea(
+        top: false,
+        child: ListView(
+          padding: EdgeInsets.all(spacing.md),
+          children: [
+            if (_failureMessage(context, state.failure)
+                case final message?) ...[
+              Semantics(
+                liveRegion: true,
+                child: NoteBanner(
+                  message: message,
+                  variant: NoteBannerVariant.warning,
+                ),
+              ),
+              SizedBox(height: spacing.md),
+            ],
+            RondaSwap(
+              layoutBuilder: RondaSwap.topStartLayout,
+              child: Column(
+                key: ValueKey(step),
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: children,
               ),
             ),
-            SizedBox(height: spacing.md),
           ],
-          RondaSwap(
-            layoutBuilder: RondaSwap.topStartLayout,
-            child: Column(
-              key: ValueKey(step),
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: children,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

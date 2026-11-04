@@ -100,66 +100,70 @@ class _NotificationsViewState extends State<NotificationsView> {
     final refused = state.status == NotificationsStatus.refused;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsNotificationsRow)),
-      body: ListView(
-        padding: EdgeInsets.all(spacing.md),
-        children: [
-          RondaSwap(
-            layoutBuilder: _topStart,
-            child: switch (headline) {
-              null => LoadingStatus.inline(
-                key: const ValueKey(NotificationsStatus.checking),
-                l10n.notificationsChecking,
-              ),
-              final headline => Column(
-                // "Asking" looks like "off" until the phone answers.
-                key: ValueKey((headline, refused)),
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(headline, style: textTheme.titleMedium),
-                  ),
-                  SizedBox(height: spacing.sm),
-                  if (explains)
-                    for (final line in [
-                      l10n.pushPromptWeekly,
-                      l10n.pushPromptChanges,
-                      l10n.pushPromptNever,
-                    ])
-                      Text(line, style: textTheme.bodyLarge),
-                  if (refused) ...[
-                    SizedBox(height: spacing.sm),
-                    Text(
-                      l10n.notificationsRefusedHint,
-                      style: textTheme.bodyLarge,
+      body: SafeArea(
+        top: false,
+        child: ListView(
+          padding: EdgeInsets.all(spacing.md),
+          children: [
+            RondaSwap(
+              layoutBuilder: _topStart,
+              child: switch (headline) {
+                null => LoadingStatus.inline(
+                  key: const ValueKey(NotificationsStatus.checking),
+                  l10n.notificationsChecking,
+                ),
+                final headline => Column(
+                  // "Asking" looks like "off" until the phone answers.
+                  key: ValueKey((headline, refused)),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(headline, style: textTheme.titleMedium),
                     ),
-                  ],
-                  if (state.canTurnOn) ...[
-                    SizedBox(height: spacing.lg),
-                    MergeSemantics(
-                      child: Semantics(
-                        identifier: NotificationsView.turnOnIdentifier,
-                        child: FilledButton(
-                          onPressed: state.status == NotificationsStatus.asking
-                              ? null
-                              : RondaHaptics.onCommit(
-                                  context
-                                      .read<NotificationsCubit>()
-                                      .turnOnTapped,
-                                ),
-                          child: Text(
-                            l10n.notificationsTurnOn,
-                            textAlign: TextAlign.center,
+                    SizedBox(height: spacing.sm),
+                    if (explains)
+                      for (final line in [
+                        l10n.pushPromptWeekly,
+                        l10n.pushPromptChanges,
+                        l10n.pushPromptNever,
+                      ])
+                        Text(line, style: textTheme.bodyLarge),
+                    if (refused) ...[
+                      SizedBox(height: spacing.sm),
+                      Text(
+                        l10n.notificationsRefusedHint,
+                        style: textTheme.bodyLarge,
+                      ),
+                    ],
+                    if (state.canTurnOn) ...[
+                      SizedBox(height: spacing.lg),
+                      MergeSemantics(
+                        child: Semantics(
+                          identifier: NotificationsView.turnOnIdentifier,
+                          child: FilledButton(
+                            onPressed:
+                                state.status == NotificationsStatus.asking
+                                ? null
+                                : RondaHaptics.onCommit(
+                                    context
+                                        .read<NotificationsCubit>()
+                                        .turnOnTapped,
+                                  ),
+                            child: Text(
+                              l10n.notificationsTurnOn,
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
-              ),
-            },
-          ),
-        ],
+                ),
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

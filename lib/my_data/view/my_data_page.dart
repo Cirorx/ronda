@@ -56,26 +56,29 @@ class const MyDataView({super.key}) extends StatelessWidget {
     );
     return Scaffold(
       appBar: AppBar(title: Text(l10n.myDataTitle)),
-      body: ReadableColumn(
-        child: switch (status) {
-          MyDataStatus.loading => Center(
-            child: LoadingStatus(l10n.myDataLoading),
-          ),
-          MyDataStatus.loadFailure => Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: context.appSpacing.sm,
-              children: [
-                StatusLine(l10n.myDataLoadError, textAlign: TextAlign.center),
-                OutlinedButton(
-                  onPressed: context.read<MyDataCubit>().load,
-                  child: Text(l10n.myDataRetry),
-                ),
-              ],
+      body: SafeArea(
+        top: false,
+        child: ReadableColumn(
+          child: switch (status) {
+            MyDataStatus.loading => Center(
+              child: LoadingStatus(l10n.myDataLoading),
             ),
-          ),
-          _ => const _Form(),
-        },
+            MyDataStatus.loadFailure => Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                spacing: context.appSpacing.sm,
+                children: [
+                  StatusLine(l10n.myDataLoadError, textAlign: TextAlign.center),
+                  OutlinedButton(
+                    onPressed: context.read<MyDataCubit>().load,
+                    child: Text(l10n.myDataRetry),
+                  ),
+                ],
+              ),
+            ),
+            _ => const _Form(),
+          },
+        ),
       ),
     );
   }

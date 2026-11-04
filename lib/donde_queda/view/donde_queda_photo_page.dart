@@ -78,30 +78,33 @@ class const DondeQuedaPhotoView({super.key}) extends StatelessWidget {
     };
     return Scaffold(
       appBar: AppBar(title: Text(l10n.dondeQuedaTitle)),
-      body: ReadableColumn(
-        child: ListView(
-          padding: EdgeInsets.all(spacing.md),
-          children: [
-            if (_failureMessage(context, state.failure) case final message?)
-              Padding(
-                padding: EdgeInsets.only(bottom: spacing.md),
-                child: Semantics(
-                  liveRegion: true,
-                  child: NoteBanner(
-                    message: message,
-                    variant: NoteBannerVariant.warning,
+      body: SafeArea(
+        top: false,
+        child: ReadableColumn(
+          child: ListView(
+            padding: EdgeInsets.all(spacing.md),
+            children: [
+              if (_failureMessage(context, state.failure) case final message?)
+                Padding(
+                  padding: EdgeInsets.only(bottom: spacing.md),
+                  child: Semantics(
+                    liveRegion: true,
+                    child: NoteBanner(
+                      message: message,
+                      variant: NoteBannerVariant.warning,
+                    ),
                   ),
                 ),
+              RondaSwap(
+                layoutBuilder: RondaSwap.topStartLayout,
+                child: Column(
+                  key: ValueKey(step),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: children,
+                ),
               ),
-            RondaSwap(
-              layoutBuilder: RondaSwap.topStartLayout,
-              child: Column(
-                key: ValueKey(step),
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: children,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

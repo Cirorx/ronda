@@ -61,42 +61,45 @@ class const YourDataView({super.key}) extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsDataRow)),
-      body: ListView(
-        padding: EdgeInsets.all(spacing.md),
-        children: [
-          heading(l10n.dataKeepTitle),
-          for (final text in [
-            l10n.dataKeepProfile,
-            l10n.dataKeepSearch,
-            l10n.dataKeepRonda,
-            l10n.dataKeepAccount,
-            l10n.dataKeepTerms,
-          ])
-            item(text),
-          SizedBox(height: spacing.lg),
-          heading(l10n.dataNotKeptTitle),
-          for (final text in [
-            l10n.dataNotKeptAudio,
-            l10n.dataNotKeptNeeds,
-            l10n.dataNotKeptCuaderno,
-          ])
-            item(text),
-          SizedBox(height: spacing.lg),
-          const EraseCuadernoSection(),
-          SizedBox(height: spacing.lg),
-          Text(l10n.termsWhere, style: textTheme.bodyLarge),
-          SizedBox(height: spacing.lg),
-          SelectableText(l10n.dataChange(email), style: textTheme.bodyLarge),
-          SizedBox(height: spacing.md),
-          EmailButton(
-            identifier: emailIdentifier,
-            onPressed: () => context.read<ContactCubit>().emailTapped(
-              subject: l10n.dataEmailSubject,
-              body: l10n.dataEmailBody(context.read<AppBloc>().state.user.id),
+      body: SafeArea(
+        top: false,
+        child: ListView(
+          padding: EdgeInsets.all(spacing.md),
+          children: [
+            heading(l10n.dataKeepTitle),
+            for (final text in [
+              l10n.dataKeepProfile,
+              l10n.dataKeepSearch,
+              l10n.dataKeepRonda,
+              l10n.dataKeepAccount,
+              l10n.dataKeepTerms,
+            ])
+              item(text),
+            SizedBox(height: spacing.lg),
+            heading(l10n.dataNotKeptTitle),
+            for (final text in [
+              l10n.dataNotKeptAudio,
+              l10n.dataNotKeptNeeds,
+              l10n.dataNotKeptCuaderno,
+            ])
+              item(text),
+            SizedBox(height: spacing.lg),
+            const EraseCuadernoSection(),
+            SizedBox(height: spacing.lg),
+            Text(l10n.termsWhere, style: textTheme.bodyLarge),
+            SizedBox(height: spacing.lg),
+            SelectableText(l10n.dataChange(email), style: textTheme.bodyLarge),
+            SizedBox(height: spacing.md),
+            EmailButton(
+              identifier: emailIdentifier,
+              onPressed: () => context.read<ContactCubit>().emailTapped(
+                subject: l10n.dataEmailSubject,
+                body: l10n.dataEmailBody(context.read<AppBloc>().state.user.id),
+              ),
             ),
-          ),
-          const ContactFailureNote(failure: ContactStatus.emailFailed),
-        ],
+            const ContactFailureNote(failure: ContactStatus.emailFailed),
+          ],
+        ),
       ),
     );
   }

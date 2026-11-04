@@ -66,28 +66,31 @@ class const ReportView({super.key}) extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsReportRow)),
-      body: ReadableColumn(
-        child: ListView(
-          padding: EdgeInsets.all(spacing.md),
-          children: [
-            Text(l10n.reportBody, style: textTheme.bodyLarge),
-            SizedBox(height: spacing.sm),
-            NoteBanner(
-              variant: NoteBannerVariant.warning,
-              message: l10n.reportDangerNow,
-            ),
-            SizedBox(height: spacing.lg),
-            for (final receipt in state.openReceipts) ...[
-              ReportReceiptCard(receipt: receipt),
+      body: SafeArea(
+        top: false,
+        child: ReadableColumn(
+          child: ListView(
+            padding: EdgeInsets.all(spacing.md),
+            children: [
+              Text(l10n.reportBody, style: textTheme.bodyLarge),
               SizedBox(height: spacing.sm),
+              NoteBanner(
+                variant: NoteBannerVariant.warning,
+                message: l10n.reportDangerNow,
+              ),
+              SizedBox(height: spacing.lg),
+              for (final receipt in state.openReceipts) ...[
+                ReportReceiptCard(receipt: receipt),
+                SizedBox(height: spacing.sm),
+              ],
+              if (state.status == ReportStatus.loading)
+                LoadingStatus.inline(l10n.reportLoading)
+              else
+                const _ReportForm(),
+              SizedBox(height: spacing.xlg),
+              const HelplineBlock(),
             ],
-            if (state.status == ReportStatus.loading)
-              LoadingStatus.inline(l10n.reportLoading)
-            else
-              const _ReportForm(),
-            SizedBox(height: spacing.xlg),
-            const HelplineBlock(),
-          ],
+          ),
         ),
       ),
     );

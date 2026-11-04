@@ -134,23 +134,26 @@ class const DondeQuedaGuessView({super.key}) extends StatelessWidget {
     };
     return Scaffold(
       appBar: AppBar(title: Text(l10n.dondeQuedaTitle)),
-      body: ReadableColumn(
-        child: ListView(
-          padding: EdgeInsets.all(spacing.md),
-          children: [
-            RondaSwap(
-              layoutBuilder: RondaSwap.topStartLayout,
-              child: Column(
-                key: ValueKey(
-                  state.status == DondeQuedaGuessStatus.sending
-                      ? DondeQuedaGuessStatus.ready
-                      : state.status,
+      body: SafeArea(
+        top: false,
+        child: ReadableColumn(
+          child: ListView(
+            padding: EdgeInsets.all(spacing.md),
+            children: [
+              RondaSwap(
+                layoutBuilder: RondaSwap.topStartLayout,
+                child: Column(
+                  key: ValueKey(
+                    state.status == DondeQuedaGuessStatus.sending
+                        ? DondeQuedaGuessStatus.ready
+                        : state.status,
+                  ),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: children,
                 ),
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: children,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

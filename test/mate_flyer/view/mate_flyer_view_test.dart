@@ -359,6 +359,36 @@ void main() {
     });
 
     group('the flyer', () {
+      testWidgets('keeps its last button above the navigation bar', (
+        tester,
+      ) async {
+        tester.view.padding = const FakeViewPadding(bottom: 144);
+        addTearDown(tester.view.resetPadding);
+        await pump(
+          tester,
+          MateFlyerState(status: MateFlyerStatus.ready, flyer: flyer),
+        );
+
+        await tester.scrollUntilVisible(
+          find.text('Sacar otra foto'),
+          100,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.drag(
+          find.byType(Scrollable).first,
+          const Offset(0, -2000),
+        );
+        await tester.pumpAndSettle();
+
+        final bar = tester.view.padding.bottom / tester.view.devicePixelRatio;
+        final screen =
+            tester.view.physicalSize.height / tester.view.devicePixelRatio;
+        expect(
+          tester.getBottomLeft(find.text('Sacar otra foto')).dy,
+          lessThanOrEqualTo(screen - bar),
+        );
+      });
+
       testWidgets('shows it, what the photo is for, and shares it', (
         tester,
       ) async {

@@ -86,10 +86,13 @@ class const CuadernoView({
       ],
       child: Scaffold(
         appBar: AppBar(title: Text(l10n.cuadernoTitle)),
-        body: ReadableColumn(
-          child: ListView(
-            padding: EdgeInsets.all(spacing.md),
-            children: [body],
+        body: SafeArea(
+          top: false,
+          child: ReadableColumn(
+            child: ListView(
+              padding: EdgeInsets.all(spacing.md),
+              children: [body],
+            ),
           ),
         ),
       ),
