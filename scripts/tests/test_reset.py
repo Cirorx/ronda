@@ -256,3 +256,23 @@ def test_a_project_reset_deletes_the_proposals_and_rondas_built_from_demo_uids_a
     for path in ("proposals/mixed", "proposals/real", "rondas/mixed", "rondas/no-members"):
         assert path in out
     assert "demo-built" not in out
+
+
+def test_a_project_reset_deletes_the_demo_reports_and_removals():
+    assert reset.main(["--project", PROJECT]) == 0
+    member = a_real_member()
+    demo = {
+        "reports/demo-pair": {"reporterUid": "demo-001", "aboutUid": "demo-002", "status": "open"},
+        "reports/demo-outside": {"reporterUid": "demo-003", "aboutUid": "", "status": "open"},
+        "removed/demo-002": {"firstName": "Invented", "notice": "pending"},
+    }
+    real = {
+        "reports/real": {"reporterUid": "member-1", "aboutUid": "demo-001", "status": "open"},
+        "reports/about-real": {"reporterUid": "demo-001", "aboutUid": "member-1", "status": "open"},
+        "removed/member-2": {"firstName": "Vecino", "notice": "pending"},
+    }
+    seed.write(seed.firestore_client(PROJECT), demo | real)
+
+    assert reset.main(["--project", PROJECT]) == 0
+
+    assert dump() == demo_data.documents(30) | member | real

@@ -96,7 +96,8 @@ def clear_demo(client: firestore.Client) -> int:
     `rondas/{id}` whose members are all demo uids, with everything under it (members, weeks,
     views, answers, private, moves) and the organiser's acta and runs about it, and the
     `places/demo-*` the organiser offers when it rains and the `osm_places/demo-*` Algo chico
-    offers. A proposal or ronda that names any other
+    offers, the safety reports between demo people (or a demo person and someone from outside)
+    and the `removed/demo-*` marks. A proposal or ronda that names any other
     uid, or a ronda with no members, is kept and listed. A seat fact at a demo path that isn't
     the invented one raises NotDemoData before anything is deleted. Returns the documents
     deleted.
@@ -152,6 +153,16 @@ def clear_demo(client: firestore.Client) -> int:
         fields = pair.to_dict()
         if any(is_demo_uid(fields.get(key, "")) for key in ("uidA", "uidB")):
             pair.reference.delete()
+            deleted += 1
+    for report in client.collection("reports").stream():
+        fields = report.to_dict()
+        about = fields.get("aboutUid", "")
+        if is_demo_uid(fields.get("reporterUid", "")) and (not about or is_demo_uid(about)):
+            report.reference.delete()
+            deleted += 1
+    for mark in client.collection("removed").list_documents():
+        if mark.id.startswith(DEMO_UID_PREFIX):
+            mark.delete()
             deleted += 1
     for snapshot in seats:
         if snapshot.exists:
