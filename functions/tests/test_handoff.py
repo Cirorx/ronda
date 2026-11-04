@@ -207,6 +207,28 @@ class TestTheAnswer:
         assert acta(db)[-1] == ("Jorge abre el jueves.", "host")
         assert run(db, at(4, 13)) == {"rondas": 1, "idle": 1}
 
+    def test_a_yes_names_the_new_opener_on_the_organisers_card(self):
+        db = ronda()
+        db.documents[f"rondas/{RONDA}/views/card"] = {
+            "week": WEEK,
+            "status": "agent",
+            "hostWords": {"title": "Quién abre", "text": "Abre {anfitrion}."},
+            "messages": [
+                {"createSurface": {}},
+                {"updateComponents": {"components": [{"id": "host", "text": "Abre Mirta."}]}},
+            ],
+        }
+        run(db)
+
+        reply(db, "demo-102", "yes")
+
+        card = db.documents[f"rondas/{RONDA}/views/card"]
+        assert card["messages"][1]["updateComponents"]["components"][0] == {
+            "id": "host",
+            "title": "Quién abre",
+            "text": "Abre Jorge.",
+        }
+
     def test_a_cola_already_going_keeps_their_answer(self, monkeypatch):
         db = ronda()
         run(db)

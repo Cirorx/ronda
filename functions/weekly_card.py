@@ -41,7 +41,7 @@ Where things live (docs/ARCHITECTURE.md § Data model):
 
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import Literal
 
@@ -204,6 +204,8 @@ class CardToolbox(Toolbox):
     card: list[dict] | None = None
     """The blocks kept, once the model composed; None until it does."""
     dropped: list[str] = field(default_factory=list)
+    host_words: dict | None = None
+    """The host block's title and text with {anfitrion} still in them; None without one."""
 
 
 MISSING = {
@@ -232,6 +234,10 @@ def compose_card(box: CardToolbox, args: CardArgs) -> Result:
         kept.append(
             {"kind": block.kind, "title": box.facts.fill(title), "text": box.facts.fill(body)}
         )
+        if block.kind == HOST:
+            # Kept with its {anfitrion} so a handoff can write the new opener in (refill_host).
+            keep = replace(box.facts, host_name=PLACEHOLDERS[HOST])
+            box.host_words = {"title": keep.fill(title), "text": keep.fill(body)}
     box.card = kept
     kinds = ", ".join(KIND_WORDS[b["kind"]] for b in kept) or "ninguno"
     summary = f"Armó la tarjeta de la semana con {_avisos(len(kept))}: {kinds}."
@@ -427,6 +433,9 @@ def compose_ronda(
     trace.start(job=JOB, model=model.name, forced=force)
     host, fallback = rain._host(db, meeting.ronda_id, meeting.ronda)
     host_name = host.first_name if host is not None and not fallback else ""
+    opener = meeting.ronda.get("opener") or {}
+    if opener.get("week") == meeting.week and opener.get("firstName"):
+        host_name = opener["firstName"]
     facts = _facts(db, meeting, now, host_name=host_name)
     box = CardToolbox(
         db=db,
@@ -462,7 +471,34 @@ def compose_ronda(
             dropped=box.dropped,
             tokens=model,
         )
-    return _store(db, meeting, trace, AGENT, blocks=box.card, dropped=box.dropped, tokens=model)
+    return _store(
+        db,
+        meeting,
+        trace,
+        AGENT,
+        blocks=box.card,
+        dropped=box.dropped,
+        tokens=model,
+        host_words=box.host_words,
+    )
+
+
+def refill_host(db, ronda_id: str, week: str, name: str) -> bool:
+    """Writes `name` into this week's card where it says who opens, once someone takes the
+    opening (handoff.py): the card was composed with the anfitrión's name. Returns whether the
+    card changed."""
+    ref = db.document(f"rondas/{ronda_id}/views/{VIEW}")
+    card = _read(db, ref.path)
+    words = card.get("hostWords")
+    if card.get("status") != AGENT or card.get("week") != week or not words:
+        return False
+    for message in card.get("messages", []):
+        for component in message.get("updateComponents", {}).get("components", []):
+            if component.get("id") == HOST:
+                component["title"] = words["title"].replace(PLACEHOLDERS[HOST], name)
+                component["text"] = words["text"].replace(PLACEHOLDERS[HOST], name)
+    ref.update({"messages": card["messages"]})
+    return True
 
 
 def _task(meeting: Meeting, facts: Facts, now: datetime) -> str:
@@ -510,6 +546,7 @@ def _store(
     blocks: list[dict] | None = None,
     dropped: list[str] | None = None,
     tokens: Metered | None = None,
+    host_words: dict | None = None,
 ) -> str:
     """Writes `views/card` for the phone and says in the trace what it will show."""
     run = _read(db, f"agent_runs/{trace.run_id}")
@@ -531,6 +568,8 @@ def _store(
     }
     if status == AGENT:
         card["messages"] = a2ui_messages(meeting.week, blocks or [])
+        if host_words:
+            card["hostWords"] = host_words
         note = f"Tarjeta armada por el programa: {_avisos(len(blocks or []))} y ¿Venís?."
     else:
         note = f"Muestra la tarjeta fija: {reason}."

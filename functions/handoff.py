@@ -400,6 +400,9 @@ def answer(
     trace = _trace(db, ronda_id, week, now, False)
     day = moves.weekday(date.fromisoformat(state["date"]))
     trace.acta(JOB, f"{name} abre el {day}.", HOST)
+    import weekly_card  # weekly_card reads first_visit, which reads this module
+
+    weekly_card.refill_host(db, ronda_id, week, name)
     trace.finish("done")
     week_doc = db.document(f"rondas/{ronda_id}/weeks/{week}").get().to_dict() or {}
     if week_doc.get("rsvp", {}).get(uid) != rsvp.YES:

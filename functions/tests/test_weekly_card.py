@@ -237,6 +237,48 @@ class TestTheMessages:
         assert "Se suma alguien nuevo: no." in task
 
 
+class TestWhoOpens:
+    def test_the_weeks_opener_is_who_the_card_names(self):
+        db = FakeFirestore(on(opener={"week": WEEK, "uid": "demo-102", "firstName": "Jorge"}))
+
+        run(db, model=ScriptedModel(compose(HOST_BLOCK)))
+
+        assert texts(card(db)["messages"]) == [
+            "Quién abre\nEsta semana abre Jorge: llega diez minutos antes y saluda."
+        ]
+
+    def test_last_weeks_opener_is_not(self):
+        db = FakeFirestore(on(opener={"week": "2026-W44", "uid": "demo-102", "firstName": "Jorge"}))
+
+        run(db, model=ScriptedModel(compose(HOST_BLOCK)))
+
+        assert "abre Mirta" in texts(card(db)["messages"])[0]
+
+    def test_a_handoff_writes_the_new_opener_into_the_card(self):
+        db = FakeFirestore(on())
+        run(db)
+
+        assert weekly_card.refill_host(db, RONDA, WEEK, "Jorge")
+
+        assert texts(card(db)["messages"]) == [
+            "Puede llover\nEl jueves a las 16 hay 80% de lluvia. Si llueve, nos vemos en el salón.",
+            "Quién abre\nEsta semana abre Jorge: llega diez minutos antes y saluda.",
+        ]
+        assert weekly_card.refill_host(db, RONDA, WEEK, "Ana")
+        assert "abre Ana" in texts(card(db)["messages"])[1]
+
+    def test_a_card_without_who_opens_is_left_alone(self):
+        db = FakeFirestore(on())
+        run(db, model=ScriptedModel(compose(RAIN_BLOCK)))
+        before = card(db)["messages"]
+
+        assert not weekly_card.refill_host(db, RONDA, WEEK, "Jorge")
+        assert not weekly_card.refill_host(db, RONDA, "2026-W46", "Jorge")
+        assert not weekly_card.refill_host(db, "otra", WEEK, "Jorge")
+        assert card(db)["messages"] == before
+        assert "hostWords" not in card(db)
+
+
 class TestTheBlocks:
     @pytest.mark.parametrize(
         ("block", "why"),
