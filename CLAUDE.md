@@ -77,8 +77,8 @@ changes inside `notes/` (`git -C notes commit`); there is nothing to push.
   pixelated on the phone before upload (detection only).
 - The organiser agent says it is a program and does logistics. Every outgoing message passes
   the **gates** in code: 09:00–21:00 only, no emoji, voseo, no money, one routine push a week.
-  "Ronda nunca pide plata" lives in the terms and on the flyers only; a message that mentions
-  money is held.
+  "Ronda nunca pide plata" lives in the terms only (an app that says it won't charge reads
+  oddly; settled with the owner 2026-11-04); a message that mentions money is held.
 - Copy is rioplatense voseo ("¿Venís?"). Every string ships in en and es-419.
 
 ## Docs: read when

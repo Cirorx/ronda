@@ -96,18 +96,17 @@ def flyer_text(pretext: str, slot: str | None, barrio: str) -> flyer_pdf.FlyerTe
         when = f"{DAYS[day]} {BANDS[band]}"
     else:
         when = "Una vez por semana"
-    team = "10" if pretext == "futbol5" else "5 o 6"
+    # Rondas open with two and fill to six (ten for fútbol 5): no fixed size is promised.
+    groups = "Grupos de hasta 10 vecinos" if pretext == "futbol5" else "Grupos chicos de vecinos"
     return flyer_pdf.FlyerText(
         headline=HEADLINES[pretext],
-        what=f"Grupos de {team} vecinos que se juntan una vez por semana, "
-        "siempre en lugares públicos.",
+        what=f"{groups} que se juntan una vez por semana, siempre en lugares públicos.",
         facts=(
             f"{when}, en {BARRIO_NAMES[barrio]}",
-            f"{team} vecinos de todas las edades",
+            "Vecinos de todas las edades",
             "No hace falta traer nada",
         ),
         tear="Arrancá una tira y escaneala.",
-        money="Ronda nunca pide plata.",
     )
 
 

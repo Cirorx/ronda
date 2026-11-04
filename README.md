@@ -42,7 +42,7 @@ long enough for neighbours to become people you'd miss.
 5. **Then Ronda goes quiet.** The group should outlive the app.
 
 Within 10 blocks (15 in Montevideo) · opens with 2 and fills to 6 (fútbol 5: 4 to 10) · bring one friend · same slot all season ·
-leave or switch without explaining · free: **Ronda nunca pide plata**.
+leave or switch without explaining · free.
 
 ## What's built
 

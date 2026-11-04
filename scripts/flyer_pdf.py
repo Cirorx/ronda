@@ -43,7 +43,6 @@ class FlyerText:
     what: str
     facts: tuple[str, str, str]
     tear: str
-    money: str
 
 
 def write_pdf(path: Path, text: FlyerText, url: str, title: str) -> None:
@@ -70,8 +69,8 @@ def _register_fonts() -> None:
 
 
 def _draw_top(canvas: Canvas, text: FlyerText, width: float, height: float) -> None:
-    """The headline, what and the facts from the top down; the money line and "Arrancá una
-    tira" from the strips up, so the instruction sits right above what it is about."""
+    """The headline, what and the facts from the top down; "Arrancá una tira" right above
+    the strips it is about."""
     left = MARGIN + 8 * mm
     right = width - MARGIN
     top = height - MARGIN
@@ -107,15 +106,6 @@ def _draw_top(canvas: Canvas, text: FlyerText, width: float, height: float) -> N
     canvas.setFont(BOLD, 28)
     canvas.drawString(left, y, text.tear)
 
-    size = _fit(text.money, BOLD, 22, right - left - 10 * mm)
-    y += 22 * mm
-    canvas.setStrokeColor(INK)
-    canvas.setLineWidth(1.6)
-    box_width = pdfmetrics.stringWidth(text.money, BOLD, size) + 10 * mm
-    canvas.roundRect(left, y - 4.5 * mm, box_width, size + 8 * mm, 3 * mm, stroke=1, fill=0)
-    canvas.setFont(BOLD, size)
-    canvas.drawString(left + 5 * mm, y, text.money)
-
 
 def _draw_strips(canvas: Canvas, text: FlyerText, url: str, width: float) -> None:
     strip_width = (width - 2 * MARGIN) / STRIPS
@@ -142,10 +132,10 @@ def _draw_strips(canvas: Canvas, text: FlyerText, url: str, width: float) -> Non
         canvas.translate(x + strip_width / 2, qr_bottom - 3 * mm)
         canvas.rotate(-90)
         canvas.setFillColor(INK)
-        lines = ((BOLD, 11, text.headline), (BODY, 10, text.money), (BODY, 7.5, short))
+        lines = ((BOLD, 11, text.headline), (BODY, 7.5, short))
         length = qr_bottom - 3 * mm - bottom - 3 * mm
         # Turned clockwise, the tops of the letters face right: the headline is the rightmost.
-        for offset, (font, size, line) in zip((12, 0, -12), lines, strict=True):
+        for offset, (font, size, line) in zip((6, -6), lines, strict=True):
             canvas.setFont(font, _fit(line, font, size, length))
             canvas.drawString(0, offset - size / 3, line)
         canvas.restoreState()

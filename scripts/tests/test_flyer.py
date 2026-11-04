@@ -47,26 +47,26 @@ class TestFlyerText:
         assert text.headline == "¿Te sumás a un mate?"
         assert text.facts == (
             "Los sábados de 14 a 18, en Solymar Norte",
-            "5 o 6 vecinos de todas las edades",
+            "Vecinos de todas las edades",
             "No hace falta traer nada",
         )
+        assert text.what.startswith("Grupos chicos de vecinos que se juntan")
         assert text.tear == "Arrancá una tira y escaneala."
-        assert text.money == "Ronda nunca pide plata."
 
     def test_without_a_slot_says_once_a_week(self):
         assert flyer.flyer_text("caminata", None, "el-pinar-sur").facts[0] == (
             "Una vez por semana, en El Pinar Sur"
         )
 
-    def test_a_football_flyer_counts_ten(self):
+    def test_a_football_flyer_says_up_to_ten(self):
         text = flyer.flyer_text("futbol5", "thu-evening", "lagomar-sur")
 
         assert text.headline == "¿Te sumás a un fútbol 5?"
         assert text.facts[:2] == (
             "Los jueves de 19 a 21, en Lagomar Sur",
-            "10 vecinos de todas las edades",
+            "Vecinos de todas las edades",
         )
-        assert text.what.startswith("Grupos de 10 vecinos")
+        assert text.what.startswith("Grupos de hasta 10 vecinos")
 
     def test_every_barrio_and_pretext_has_its_words(self):
         assert set(flyer.BARRIO_NAMES) == set(flyer.CENTROIDS)

@@ -802,8 +802,8 @@ weights and limits are in `solver/README.md`; every rule name and number is in
   check-in in their own words.
 - Gates in code (not prompt): quiet hours 21:00–09:00, bot disclosure, no emoji, voseo, no
   money, one routine push a week, public places only for the ronda itself (the host may set a
-  home for the después). ("Ronda nunca pide plata" is in the terms and on the flyers; a
-  message that mentions money is held.)
+  home for the después). ("Ronda nunca pide plata" is in the terms only; a message that
+  mentions money is held.)
 
 Built in #49 (`functions/organiser/`, `functions/rain.py`; "Ronda se calla" is #50;
 `offer_bench_seat` is built in #48, below; `assign_hosts` and `prompt_buddy` are built as plain
