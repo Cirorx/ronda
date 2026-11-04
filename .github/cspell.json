@@ -26,6 +26,7 @@
   ],
   "useGitignore": true,
   "words": [
+    "certifi",
     "a2ui",
     "OBJC",
     "audioplayers",

@@ -181,7 +181,10 @@ pass it everywhere, so nothing lands on another attached device.
 2. **Device:** an Android emulator (`emulator -avd <avd>`) reaches the emulators at `10.0.2.2`
    without setup. A USB phone needs
    `for p in 9099 8088 5001 9199; do adb -s <serial> reverse tcp:$p tcp:$p; done` after every
-   reconnect, and the build below with `--dart-define=FIREBASE_EMULATOR_HOST=127.0.0.1` added.
+   reconnect, and the build below with `--dart-define=FIREBASE_EMULATOR_HOST=127.0.0.2` added:
+   FlutterFire rewrites `127.0.0.1` and `localhost` to `10.0.2.2` on Android, which a phone can't
+   reach, and `127.0.0.2` is the phone's loopback too (allowed in the development flavor's
+   network security config).
 3. **Build and install** the development flavor with the demo Google account, so sign-in needs no
    browser:
    `flutter build apk --debug --flavor development -t lib/main_development.dart --dart-define=EMULATOR_GOOGLE_CREDENTIAL=true`,
@@ -626,6 +629,10 @@ on both Android apps, and release builds are signed with that key until a releas
   functions emulator's Python worker crashes when it forks ("Crashing instead" in the log), so
   callables and triggers fail at random, and Firestore writes that fire a trigger can come back
   `499 Cancelled` (seen 2026-11-03: `demo_ronda.py` left an earlier scene's ¿seguimos? behind).
+  Calls to the Meta models from the forked worker crash it too, in macOS's proxy lookup and its
+  certificate check (seen 2026-11-04 on `make_mate_flyer`: "socket hang up"), so add
+  `no_proxy='*'` and `SSL_CERT_FILE=functions/venv/lib/python3.13/site-packages/certifi/cacert.pem`
+  (an absolute path) when the emulators should reach the real models.
 - **Demo data** (`docs/ARCHITECTURE.md` § Demo data), from the repo root with the emulators up:
   `FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 uv run --python 3.13 scripts/reset.py`
   restores the golden path (no Auth accounts; seat facts and the 30 invented sign-ups), and
@@ -792,7 +799,7 @@ scripts, and the app's fonts with their OFL licences). No build step, no Firebas
   domain, in `auth_repository`.
 
 **Tear-off flyers** (`scripts/flyer.py`, #43). One command per spot writes `flyers/{id}` and a
-printable A4 PDF: seven strips, each with a QR to `{base}/f/{id}` and "Ronda nunca pide plata".
+printable A4 PDF: seven strips, each with a QR to `{base}/f/{id}` and the flyer's headline.
 From the repo root, with `--project ronda-uy` and Application Default Credentials for the real
 project (or `FIRESTORE_EMULATOR_HOST=127.0.0.1:8088` and no `--project` for the emulator):
 `uv run --python 3.13 scripts/flyer.py --lat <lat> --lng <lng> --label "<where it hangs>" --slot sat-afternoon --project ronda-uy`.

@@ -97,8 +97,10 @@ What the code handles about each model:
   Markdown-stripped before the gates read them, and the gates (no emoji, voseo, no money,
   nothing from 21:00 to 09:00) decide whether anything goes out.
 - **SAM needs English nouns.** "termo", "mate" and "bizcochos" found nothing; "thermos" and
-  "deck of playing cards" did, and the mates were found only as "pot", never as "mate gourd".
-  The code asks in English and tries the next phrase when one finds nothing.
+  "deck of playing cards" did, and the mates were found only as "pot" or "cup", never as "mate
+  gourd". The code asks in English and tries the next phrase when one finds nothing; it fills
+  the mate's mask from edge to edge, since SAM traces only its wall and would leave the yerba
+  out, and asks for the bombilla on its own to join it to the mate it stands in.
 - **Muse Image invents copy.** Asked for a poster's headline, it added a shop list, "Se fía" and
   "Desde 1978". So it paints only the picture, and every word on the flyer and its QR are drawn
   in code (Pillow, segno): no word on a flyer comes from a model.
@@ -167,7 +169,8 @@ checklist), or, for tests only, copy `tool/firebase_options_stub.dart` to
 
 ```sh
 # The emulators, from the repo root (Firestore on 8088, Auth 9099, Functions 5001, UI on :4000).
-# On macOS the variable keeps the Python functions' worker from crashing when it forks.
+# On macOS the variable keeps the Python functions' worker from crashing when it forks; to reach
+# the real models from it also set no_proxy='*' and SSL_CERT_FILE (docs/STACK.md § Emulators).
 OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES firebase emulators:start
 
 # Invented demo data: 30 sign-ups, seat facts and places (scripts/seed.py 200 adds more)

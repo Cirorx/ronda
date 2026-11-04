@@ -266,3 +266,16 @@ def test_finds_the_owner_by_email_and_prints_the_shot_list(db, capsys):
     out = capsys.readouterr().out
     assert f"/lluvia/{RONDA}/" in out
     assert "Shot list:" in out
+
+
+def test_builds_the_ronda_in_the_owners_barrio_and_band(db, monkeypatch):
+    for name in ("BARRIO", "BAND", "HOUR"):
+        monkeypatch.setattr(demo_ronda, name, getattr(demo_ronda, name))
+    seed.write(db, {f"users/{OWNER}": {"firstName": "Ciro", "ageBand": "18-29"}})
+
+    assert demo_ronda.main([OWNER, "--barrio", "palermo", "--band", "evening"]) == 0
+
+    ronda = get(db, f"rondas/{RONDA}")
+    assert ronda["barrio"] == "palermo"
+    assert ronda["slot"]["time"] == "evening"
+    assert ronda["slot"]["hour"] == "19:00"

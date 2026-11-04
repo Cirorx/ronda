@@ -105,6 +105,8 @@ BARRIO = "el-pinar-sur"
 PRETEXT = "mate"
 BAND = "afternoon"
 HOUR = "16:00"
+HOURS = {"morning": "10:00", "afternoon": "16:00", "evening": "19:00"}
+"""The hour the ronda meets in each band (`--band`), inside it as hosts.set_setup requires."""
 PLACE = {"name": "frente al quiosco", "landmark": "al lado de la parada"}
 """Invented: a public spot in the barrio, as an admin would type it."""
 
@@ -602,10 +604,17 @@ def shot_list(built: Built) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # The scene reads these as module constants; a run sets them once, before building.
+    global BARRIO, BAND, HOUR
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("account", help="the owner's email in the Auth emulator, or their uid")
     parser.add_argument("--scene", choices=SCENES, default="ronda", help="which shot to set up")
+    parser.add_argument(
+        "--barrio", default="el-pinar-sur", help="the ronda's barrio id, as the owner signed up"
+    )
+    parser.add_argument("--band", choices=HOURS, default="afternoon", help="the ronda's time band")
     args = parser.parse_args(argv)
+    BARRIO, BAND, HOUR = args.barrio, args.band, HOURS[args.band]
 
     if missing := seed.missing_hosts(seed.FIRESTORE_HOST):
         print(f"{', '.join(missing)} is not set: this script only writes to the emulators.")
