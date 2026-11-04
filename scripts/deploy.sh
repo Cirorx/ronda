@@ -46,7 +46,9 @@ for entry in "${areas[@]}"; do
     pending+=("$area|$target")
   elif ! git diff --quiet "$tag" HEAD -- $paths; then
     echo "$area: changed since $(git log -1 --format='%h %cs' "$tag"):"
-    git log --format='  %h %s' "$tag"..HEAD -- $paths | head -10
+    # -10, not `| head -10`: head closing the pipe early kills git with SIGPIPE, and pipefail
+    # then ends the whole script without a word once an area has more than ten commits.
+    git log -10 --format='  %h %s' "$tag"..HEAD -- $paths
     pending+=("$area|$target")
   else
     echo "$area: live at $(git log -1 --format='%h %cs' "$tag")"
