@@ -274,6 +274,38 @@ class TestFindObjects:
         assert m.usable(mask(), 400 * 300)
 
 
+class TestTheMate:
+    def test_fills_the_yerba_inside_the_mates_open_wall(self):
+        ring = m.Mask(0, 0, 3, 3, 3, 3, bytes([1, 0, 1, 1, 0, 0, 1, 1, 1]))
+
+        assert m.filled(ring).raster == bytes([1, 1, 1, 1, 0, 0, 1, 1, 1])
+        assert m.filled(m.Mask(0, 0, 3, 1, 3, 1, bytes([0, 1, 0]))).raster == bytes([0, 1, 0])
+
+    def test_leaves_empty_rows_empty(self):
+        mask = m.Mask(0, 0, 2, 2, 2, 2, bytes([0, 0, 1, 1]))
+
+        assert m.filled(mask).raster == mask.raster
+
+    def test_joins_the_bombilla_standing_in_it(self):
+        mate = m.Mask(100, 100, 160, 160, 1, 1, bytes([1]), 0.8)
+        bombilla = m.Mask(140, 40, 150, 110, 1, 1, bytes([1]))
+        elsewhere = m.Mask(400, 400, 410, 470, 1, 1, bytes([1]))
+
+        joined = m.with_bombilla(mate, [bombilla, elsewhere])
+
+        assert (joined.left, joined.top, joined.right, joined.bottom) == (100, 40, 160, 160)
+        assert (joined.width, joined.height, joined.confidence) == (60, 120, 0.8)
+        alpha = m.Image.frombytes("L", (60, 120), bytes(v * 255 for v in joined.raster))
+        assert alpha.getpixel((45, 10)) == 255  # the bombilla, above the mate
+        assert alpha.getpixel((5, 10)) == 0  # beside it, nothing
+        assert alpha.getpixel((5, 100)) == 255  # the mate
+
+    def test_a_mate_without_a_bombilla_is_itself(self):
+        mate = m.Mask(100, 100, 160, 160, 1, 1, bytes([1]))
+
+        assert m.with_bombilla(mate, []) == mate
+
+
 class TestCutout:
     def test_masks_the_box_onto_a_transparent_ground(self):
         photo = Image.open(io.BytesIO(jpeg())).convert("RGB")
@@ -300,7 +332,7 @@ class TestWords:
         assert m.ronda_line({}) == ""
 
     def test_paints_the_pretexts_place_with_no_people_and_no_text(self):
-        assert "coastal promenade" in m.background_prompt("mate")
+        assert "seaside walkway" in m.background_prompt("mate")
         assert "pitch" in m.background_prompt("futbol5")
         assert m.background_prompt(None) == m.background_prompt("mate")
         assert "No people, no text" in m.background_prompt("truco")
@@ -401,7 +433,7 @@ class TestMakeMateFlyer:
         stored = world.bucket.objects[f"flyers/{UID}/{flyer_id}.jpg"].data
         assert Image.open(io.BytesIO(stored)).size == m.FLYER_SIZE
         assert PHOTO not in world.bucket.objects
-        assert "coastal promenade" in world.painter.prompts[0]
+        assert "seaside walkway" in world.painter.prompts[0]
 
     @pytest.mark.parametrize(
         "data",

@@ -24,7 +24,7 @@ import re
 import secrets
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any, Protocol
 
@@ -38,7 +38,7 @@ from meta_sam_parser import (
     parse_responses_stream,
 )
 from openai import AsyncOpenAI
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 from voice_signup import BARRIOS, META_BASE, PRETEXTS
 
@@ -71,8 +71,13 @@ OBJECTS: tuple[tuple[str, tuple[str, ...], int], ...] = (
     ("termo", ("thermos", "vacuum flask"), 1),
     ("mazo", ("deck of playing cards", "playing cards"), 1),
     # SAM found no mates as "mate gourd" or "gourd" on the test photo; as "pot" it found both.
-    ("mates", ("pot", "mate gourd", "gourd"), 3),
+    # A metal mate with a bombilla is none of those to it: "cup" and "mug" are for that one.
+    ("mates", ("pot", "cup", "mug", "metal cup", "mate gourd", "gourd"), 3),
 )
+# The bombilla, looked for beside the rest and joined to the mate it stands in: SAM finds the
+# mate without it.
+BOMBILLA = ("metal drinking straw", "drinking straw", "straw", "metal rod", "stick")
+MATES = "mates"
 # A mask smaller than this share of the photo is a speck; larger, it's the whole table.
 MIN_AREA, MAX_AREA = 0.002, 0.6
 
@@ -96,7 +101,6 @@ BODY = (
     "Los mismos vecinos, a pocas cuadras, todas las semanas. "
     "Venís y listo; no hace falta traer nada."
 )
-MONEY = "Ronda nunca pide plata."
 QR_CAPTION = "Escaneá y mirá las rondas cerca de acá"
 
 DAYS = {
@@ -112,8 +116,14 @@ BANDS = {"morning": "de mañana", "afternoon": "de tarde", "evening": "de noche"
 
 # Muse Image read "rambla" as a Spanish boulevard (docs/MODELS.md): name the place in full.
 SCENES = {
-    "mate": "Montevideo's coastal promenade on the Río de la Plata: a low stone wall, a wide "
-    "sidewalk and the water behind it.",
+    # From the owner's photos of the Rambla (Ciudad Vieja to Carrasco), 2026-11-04.
+    "mate": "The Rambla of Montevideo, Uruguay, on a sunny afternoon: a very wide seaside walkway "
+    "paved in broad alternating stripes of dusty pink and pale grey stone, running along a low "
+    "pinkish granite wall with square granite posts. Beyond the wall, the brown-green water of the "
+    "Río de la Plata, so wide it looks like the sea, with small waves; in places a strip of sand "
+    "or grass and a few rocks below the wall. Tall palm trees and tall curved street lamps along "
+    "the walkway, and a long row of white apartment buildings, ten to fifteen storeys, following "
+    "the curve of the shore into the distance. Big blue sky with a few white clouds.",
     "truco": "A wooden table in a small neighbourhood club, a window onto a quiet street.",
     "futbol5": "A small five-a-side football pitch behind a wire fence, trees around it.",
     "caminata": "A quiet tree-lined street of low houses with wide sidewalks.",
@@ -307,9 +317,8 @@ def cutout(photo: Image.Image, mask: Mask) -> Image.Image:
         min(photo.height, mask.bottom),
     )
     size = (box[2] - box[0], box[3] - box[1])
-    alpha = Image.frombytes("L", (mask.width, mask.height), bytes(v * 255 for v in mask.raster))
     piece = photo.crop(box).convert("RGBA")
-    piece.putalpha(alpha.resize(size))
+    piece.putalpha(_alpha(mask, size))
     return piece
 
 
@@ -317,16 +326,82 @@ async def find_objects(png: bytes, photo_area: int, segmenter: Segmenter) -> lis
     """The masks of the termo, the mazo and the mates, best first: each object tries its phrases
     in order until one finds something usable. Objects are looked for side by side."""
 
-    async def find(phrases: tuple[str, ...], keep: int) -> list[Mask]:
+    async def find(phrases: tuple[str, ...], keep: int, *, thin: bool = False) -> list[Mask]:
         for phrase in phrases:
-            masks = [m for m in await segmenter.segment(png, phrase) if usable(m, photo_area)]
+            found = await segmenter.segment(png, phrase)
+            # A bombilla is thin: its box can be smaller than the smallest object's.
+            masks = [m for m in found if any(m.raster) and (thin or usable(m, photo_area))]
+            log.info("sam %r: %d found, %d usable", phrase, len(found), len(masks))
             if masks:
                 masks.sort(key=lambda m: (m.confidence or 0, m.area), reverse=True)
                 return masks[:keep]
         return []
 
-    found = await asyncio.gather(*(find(phrases, keep) for _, phrases, keep in OBJECTS))
-    return [mask for masks in found for mask in masks]
+    *found, bombillas = await asyncio.gather(
+        *(find(phrases, keep) for _, phrases, keep in OBJECTS), find(BOMBILLA, 3, thin=True)
+    )
+    masks: list[Mask] = []
+    for (name, _, _), kept in zip(OBJECTS, found, strict=True):
+        if name == MATES:
+            # A mate's mask is its wall: the yerba inside is a hole, and the bombilla is apart.
+            kept = [with_bombilla(filled(mate), bombillas) for mate in kept]
+        masks.extend(kept)
+    return masks
+
+
+def _alpha(mask: Mask, size: tuple[int, int] | None = None) -> Image.Image:
+    alpha = Image.frombytes("L", (mask.width, mask.height), bytes(v * 255 for v in mask.raster))
+    return alpha if size is None else alpha.resize(size)
+
+
+def filled(mask: Mask) -> Mask:
+    """`mask` filled across each row between its outermost edges: a mate is round, and SAM
+    traces its wall as an open ring, so the yerba inside would be left out."""
+    rows = []
+    for y in range(mask.height):
+        row = mask.raster[y * mask.width : (y + 1) * mask.width]
+        if 1 in row:
+            first, last = row.index(1), mask.width - 1 - row[::-1].index(1)
+            row = bytes(first * [0] + (last - first + 1) * [1] + (mask.width - 1 - last) * [0])
+        rows.append(row)
+    return replace(mask, raster=b"".join(rows))
+
+
+def with_bombilla(mate: Mask, bombillas: list[Mask]) -> Mask:
+    """`mate` joined with the bombillas whose box meets it, a little widened: one cutout."""
+    pad_x, pad_y = (mate.right - mate.left) // 6, (mate.bottom - mate.top) // 6
+    joined = mate
+    for bombilla in bombillas:
+        if (
+            bombilla.left < mate.right + pad_x
+            and bombilla.right > mate.left - pad_x
+            and bombilla.top < mate.bottom + pad_y
+            and bombilla.bottom > mate.top - pad_y
+        ):
+            joined = _union(joined, bombilla)
+    return joined
+
+
+def _union(a: Mask, b: Mask) -> Mask:
+    """One mask covering both, rastered at the photo's own scale over their joint box."""
+    left, top = min(a.left, b.left), min(a.top, b.top)
+    right, bottom = max(a.right, b.right), max(a.bottom, b.bottom)
+    canvas = Image.new("L", (right - left, bottom - top), 0)
+    for mask in (a, b):
+        size = (mask.right - mask.left, mask.bottom - mask.top)
+        spot = (mask.left - left, mask.top - top)
+        region = canvas.crop((*spot, spot[0] + size[0], spot[1] + size[1]))
+        canvas.paste(ImageChops.lighter(region, _alpha(mask, size)), spot)
+    return Mask(
+        left=left,
+        top=top,
+        right=right,
+        bottom=bottom,
+        width=canvas.width,
+        height=canvas.height,
+        raster=bytes(1 if v > 127 else 0 for v in canvas.tobytes()),
+        confidence=a.confidence,
+    )
 
 
 def background_prompt(pretext: object) -> str:
@@ -396,8 +471,7 @@ def _cover(image: Image.Image, size: tuple[int, int]) -> Image.Image:
 
 def compose(background: Image.Image, cutouts: list[Image.Image], line: str, url: str) -> bytes:
     """The flyer as a JPEG: the painted background, the headline and the ronda on paper at the
-    top, the group's things in the middle, and the promise, the money line and the QR at the
-    bottom."""
+    top, the group's things in the middle, and the promise and the QR at the bottom."""
     width, height = FLYER_SIZE
     margin = 80
     flyer = _cover(background, FLYER_SIZE).convert("RGBA")
@@ -420,8 +494,7 @@ def compose(background: Image.Image, cutouts: list[Image.Image], line: str, url:
     flyer.paste(qr_image(url, qr_side), (qr_left, 1305))
     _text(draw, (qr_left, 1305 + qr_side + 14), QR_CAPTION, _font(BODY_FONT, 28), INK, qr_side, 4)
     column = qr_left - margin - 48
-    y = _text(draw, (margin, 1330), BODY, _font(BODY_FONT, 42), INK, column, 12)
-    _text(draw, (margin, y + 28), MONEY, _font(BOLD_FONT, 42), INK, column, 12)
+    _text(draw, (margin, 1330), BODY, _font(BODY_FONT, 42), INK, column, 12)
 
     out = io.BytesIO()
     flyer.convert("RGB").save(out, format="JPEG", quality=JPEG_QUALITY)
