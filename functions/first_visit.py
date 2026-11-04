@@ -41,6 +41,7 @@ from datetime import datetime, timedelta
 
 import handoff
 import rsvp
+import safety
 from organiser import gates
 
 NEWCOMER_DAYS = 7
@@ -87,11 +88,16 @@ def newcomers(members: dict[str, dict], now: datetime) -> list[str]:
 
 
 def _choices(db, members: dict, answers: dict, day, newcomer: str) -> list[dict]:
-    """Who could wait: the members in for the meeting on `day`, but the newcomer."""
+    """Who could wait: the members in for the meeting on `day`, but the newcomer and anyone
+    the admin separated from them ([Separarlos], safety.py)."""
+    apart = safety.apart_from(db, [newcomer])
     uids = [
         uid
         for uid, member in members.items()
-        if uid != newcomer and not rsvp._paused_on(member, day) and answers.get(uid) != rsvp.NO
+        if uid != newcomer
+        and uid not in apart
+        and not rsvp._paused_on(member, day)
+        and answers.get(uid) != rsvp.NO
     ]
     names = rsvp._first_names(db, uids)
     return [
@@ -134,17 +140,37 @@ def welcome_ronda(db, ronda_id: str, ronda: dict, now: datetime) -> int:
             }
         )
         written += 1
-    # Who could wait changes as the week's answers come in: keep the hosts' list current.
+    # Who could wait changes as the week's answers come in: keep the hosts' list current, and
+    # drop a pick who can't wait any more (left, said "esta no", separated from the newcomer).
     for snapshot in db.collection(f"rondas/{ronda_id}/welcomes").stream():
         welcome = snapshot.to_dict() or {}
         if welcome.get("week") != week:
             continue
         choices = _choices(db, members, answers, day, snapshot.id)
-        if choices != welcome.get("choices"):
+        update: dict = {"choices": choices} if choices != welcome.get("choices") else {}
+        if welcome.get("status") == SET and welcome.get("waiterUid") not in {
+            choice["uid"] for choice in choices
+        }:
+            update |= _no_pick()
+        if update:
             db.document(f"rondas/{ronda_id}/welcomes/{snapshot.id}").update(
-                {"choices": choices, "updatedAt": now}
+                {**update, "updatedAt": now}
             )
     return written
+
+
+def _no_pick() -> dict:
+    """The fields that clear a host's pick: whoever opens waits again."""
+    from google.cloud.firestore import DELETE_FIELD
+
+    return {
+        "status": OPEN,
+        "waiterUid": DELETE_FIELD,
+        "waiterName": DELETE_FIELD,
+        "sign": DELETE_FIELD,
+        "setBy": DELETE_FIELD,
+        "setByName": DELETE_FIELD,
+    }
 
 
 def run_first_visit(db, now: datetime) -> dict:
@@ -242,8 +268,6 @@ def decline(db, uid: str, data: object, now: datetime) -> dict:
     """The member a host picked says "No puedo", `{rondaId, newcomerUid}`: the pick and its
     sign are cleared, whoever opens waits again, and the hosts see who couldn't. Returns
     `{status}`."""
-    from google.cloud.firestore import DELETE_FIELD
-
     data = data if isinstance(data, dict) else {}
     ronda_id, _, newcomer, ref, welcome, day, answers = _upcoming(db, data, now)
     if welcome.get("status") != SET or welcome.get("waiterUid") != uid:
@@ -251,12 +275,7 @@ def decline(db, uid: str, data: object, now: datetime) -> dict:
     members = rsvp.counted(rsvp._members(db, ronda_id))
     ref.update(
         {
-            "status": OPEN,
-            "waiterUid": DELETE_FIELD,
-            "waiterName": DELETE_FIELD,
-            "sign": DELETE_FIELD,
-            "setBy": DELETE_FIELD,
-            "setByName": DELETE_FIELD,
+            **_no_pick(),
             "choices": _choices(db, members, answers, day, newcomer),
             "declined": [*welcome.get("declined", []), uid],
             "declinedName": welcome.get("waiterName", ""),

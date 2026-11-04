@@ -77,6 +77,23 @@ class TestSeparate:
         result = safety.separate(db, {"reportId": report(db, "ana", "dani")}, NOW)
         assert result == {"pairId": "ana_dani", "together": None}
 
+    def test_a_pair_that_sits_together_is_never_each_others_waiter(self):
+        db = FakeFirestore(world())
+        db.documents["rondas/r1/welcomes/ana"] = {
+            "week": "2026-W45",
+            "status": "set",
+            "waiterUid": "beto",
+            "waiterName": "Beto",
+            "choices": [{"uid": "beto", "firstName": "Beto"}],
+        }
+
+        safety.separate(db, {"reportId": report(db, "beto", "ana")}, NOW)
+
+        welcome = db.documents["rondas/r1/welcomes/ana"]
+        assert welcome["status"] == "open"
+        assert "waiterUid" not in welcome
+        assert "beto" not in [choice["uid"] for choice in welcome["choices"]]
+
     def test_juntarlos_de_nuevo_deletes_the_pair(self):
         db = FakeFirestore(world())
         safety.separate(db, {"reportId": report(db)}, NOW)
@@ -118,6 +135,24 @@ class TestSeparate:
 
 
 class TestRemove:
+    def test_drops_their_first_visit_and_their_pick_to_wait(self):
+        db = FakeFirestore(world())
+        db.documents["rondas/r1/welcomes/beto"] = {"week": "2026-W45", "status": "open"}
+        db.documents["rondas/r1/welcomes/cora"] = {
+            "week": "2026-W45",
+            "status": "set",
+            "waiterUid": "beto",
+            "waiterName": "Beto",
+            "choices": [{"uid": "beto", "firstName": "Beto"}],
+        }
+
+        removals.remove(db, {"reportId": report(db)}, NOW, send=Sender())
+
+        assert "rondas/r1/welcomes/beto" not in db.documents
+        welcome = db.documents["rondas/r1/welcomes/cora"]
+        assert welcome["status"] == "open"
+        assert "waiterUid" not in welcome
+
     def test_takes_them_out_of_every_ronda_and_sends_one_neutral_notice(self):
         db = FakeFirestore(world())
         db.documents["users/beto/offers/o1"] = {"status": "pending"}

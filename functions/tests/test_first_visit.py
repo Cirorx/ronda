@@ -94,14 +94,14 @@ class TestTheJob:
 
     def test_is_safe_to_run_again(self):
         db = welcomed()
-        db.documents[WELCOME]["status"] = "set"
+        db.documents[WELCOME] |= {"status": "set", "waiterUid": "demo-102"}
 
         assert first_visit.run_first_visit(db, at(3, 11)) == {"rondas": 1, "welcomes": 0}
         assert db.documents[WELCOME]["status"] == "set"
 
     def test_keeps_who_could_wait_current_as_answers_come_in(self):
         db = welcomed()
-        db.documents[WELCOME]["status"] = "set"
+        db.documents[WELCOME] |= {"status": "set", "waiterUid": "demo-102"}
         db.documents[f"rondas/{RONDA}/weeks/{WEEK}"]["rsvp"]["demo-104"] = "no"
         db.documents[f"rondas/{RONDA}/welcomes/other"] = {"week": "2026-W44", "choices": []}
 
@@ -111,6 +111,28 @@ class TestTheJob:
         assert db.documents[WELCOME]["updatedAt"] == at(3, 11)
         assert db.documents[WELCOME]["status"] == "set"
         assert db.documents[f"rondas/{RONDA}/welcomes/other"]["choices"] == []
+
+    def test_drops_a_pick_who_said_esta_no(self):
+        db = welcomed()
+        db.documents[WELCOME] |= {"status": "set", "waiterUid": "demo-104", "sign": "gorra roja"}
+        db.documents[f"rondas/{RONDA}/weeks/{WEEK}"]["rsvp"]["demo-104"] = "no"
+
+        first_visit.run_first_visit(db, at(3, 11))
+
+        welcome = db.documents[WELCOME]
+        assert welcome["status"] == "open"
+        assert "waiterUid" not in welcome
+        assert "sign" not in welcome
+
+    def test_never_offers_someone_separated_from_the_newcomer(self):
+        db = welcomed()
+        db.documents[WELCOME] |= {"status": "set", "waiterUid": "demo-104"}
+        db.documents[f"avoid/demo-104_{NICO}"] = {"uidA": "demo-104", "uidB": NICO}
+
+        first_visit.run_first_visit(db, at(3, 11))
+
+        assert db.documents[WELCOME]["choices"] == choices("demo-102", "demo-101")
+        assert db.documents[WELCOME]["status"] == "open"
 
     def test_skips_a_newcomer_who_isnt_coming(self):
         db = ronda()

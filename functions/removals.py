@@ -113,6 +113,7 @@ def remove(
     sitting = safety.seated_in(db, uid)
     rsvp._in_transaction(db, _leave(db, uid, sitting, now))
     _withdraw_offers(db, uid, now)
+    _out_of_welcomes(db, uid, sitting, now)
     left = sorted(sitting)
     record = {
         "firstName": rsvp._first_names(db, [uid])[uid],
@@ -124,6 +125,16 @@ def remove(
     reference.set(record)
     notice = deliver_notice(db, uid, record, now, send=send, app_url=app_url) if left else NONE
     return {"uid": uid, "rondaIds": left, "notice": notice}
+
+
+def _out_of_welcomes(db, uid: str, sitting: dict[str, dict], now: datetime) -> None:
+    """Drops `uid`'s own first visit in each ronda they left, and their pick to wait for
+    someone else's (first_visit.welcome_ronda clears a waiter who left)."""
+    import first_visit
+
+    for ronda_id, ronda in sitting.items():
+        db.document(f"rondas/{ronda_id}/welcomes/{uid}").delete()
+        first_visit.welcome_ronda(db, ronda_id, ronda, now)
 
 
 def deliver_notice(

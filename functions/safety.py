@@ -135,6 +135,12 @@ def separate(db, data: object, now: datetime) -> dict:
             "at": now,
         }
     )
+    if shared:
+        import first_visit
+
+        # A pair that still sits together is never each other's waiter on a first visit.
+        ronda = db.document(f"rondas/{shared['rondaId']}").get().to_dict() or {}
+        first_visit.welcome_ronda(db, shared["rondaId"], ronda, now)
     return {"pairId": pair, "together": shared}
 
 
