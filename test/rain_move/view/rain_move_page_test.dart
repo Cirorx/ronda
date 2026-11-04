@@ -89,7 +89,7 @@ void main() {
       final handle = tester.ensureSemantics();
       await pump(tester, const RainMoveState());
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(RondaLoader), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(AppBar),

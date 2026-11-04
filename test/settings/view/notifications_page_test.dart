@@ -89,7 +89,7 @@ void main() {
     ) async {
       await pump(tester, NotificationsStatus.checking);
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(RondaLoader), findsOneWidget);
       expect(
         find.text('Mirando si los avisos están prendidos…'),
         findsOneWidget,

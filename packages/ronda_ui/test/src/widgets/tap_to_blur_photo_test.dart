@@ -25,7 +25,7 @@ void main() {
 
       expect(taps.single.$1, closeTo(0.25, 0.01));
       expect(taps.single.$2, closeTo(0.75, 0.01));
-      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(RondaLoader), findsNothing);
     });
 
     testWidgets('while busy, a ring sits in the middle and taps do '
@@ -36,7 +36,7 @@ void main() {
       await tester.tap(find.byType(TapToBlurPhoto));
 
       expect(tapped, isFalse);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(RondaLoader), findsOneWidget);
     });
   });
 }

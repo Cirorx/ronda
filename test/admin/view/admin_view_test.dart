@@ -108,7 +108,7 @@ void main() {
       ) async {
         await pump(tester, const ProposalsState());
 
-        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.byType(RondaLoader), findsOneWidget);
         expect(find.text('Leyendo las propuestas…'), findsOneWidget);
       });
 

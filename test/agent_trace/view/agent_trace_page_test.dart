@@ -93,7 +93,7 @@ void main() {
       final semantics = tester.ensureSemantics();
       await pump(tester, const AgentTraceState());
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(RondaLoader), findsOneWidget);
       expect(
         tester.getSemantics(find.text('Leyendo lo que hizo el programa…')),
         isSemantics(isLiveRegion: true),

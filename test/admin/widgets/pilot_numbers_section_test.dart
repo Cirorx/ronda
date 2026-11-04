@@ -96,7 +96,7 @@ void main() {
       final semantics = tester.ensureSemantics();
       await pump(tester, const PilotNumbersState());
 
-      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(RondaLoader), findsNothing);
       expect(
         tester.getSemantics(find.text('Contando…')),
         isSemantics(isLiveRegion: true),

@@ -171,7 +171,7 @@ void main() {
       );
 
       expect(find.text('Borroneando las caras…'), findsOneWidget);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(RondaLoader), findsOneWidget);
     });
 
     group('the blurred photo', () {
@@ -251,7 +251,7 @@ void main() {
         await tester.pump();
 
         expect(
-          tester.getCenter(find.byType(CircularProgressIndicator)),
+          tester.getCenter(find.byType(RondaLoader)),
           offsetMoreOrLessEquals(spot),
         );
         expect(
@@ -263,7 +263,7 @@ void main() {
           MateFlyerState(status: MateFlyerStatus.preview, photo: photo),
         );
         await tester.pump();
-        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(find.byType(RondaLoader), findsNothing);
         handle.dispose();
       });
 
@@ -303,7 +303,7 @@ void main() {
         await tester.tap(find.byType(AspectRatio));
         await tester.tap(find.text('Hacer el volante'));
 
-        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.byType(RondaLoader), findsOneWidget);
         verifyNever(
           () => cubit.faceTapped(
             x: any(named: 'x'),

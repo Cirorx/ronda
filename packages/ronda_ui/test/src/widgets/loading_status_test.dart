@@ -11,9 +11,9 @@ void main() {
       // Built at run time, not as a constant.
       await tester.pumpApp(LoadingStatus(words.single));
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(RondaLoader), findsOneWidget);
       expect(
-        tester.getTopLeft(find.byType(CircularProgressIndicator)).dy,
+        tester.getTopLeft(find.byType(RondaLoader)).dy,
         lessThan(tester.getTopLeft(find.text('Buscando tu ronda…')).dy),
       );
       expect(
@@ -27,7 +27,7 @@ void main() {
       final words = ['Contando…'];
       await tester.pumpApp(LoadingStatus.inline(words.single));
 
-      final ring = tester.getRect(find.byType(CircularProgressIndicator));
+      final ring = tester.getRect(find.byType(RondaLoader));
       final line = tester.getRect(find.text('Contando…'));
       expect(ring.right, lessThanOrEqualTo(line.left));
       expect(ring.size, const Size.square(LoadingStatus.inlineSize));

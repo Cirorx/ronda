@@ -29,6 +29,7 @@ export 'src/widgets/note_banner.dart';
 export 'src/widgets/person_row.dart';
 export 'src/widgets/press_scale.dart';
 export 'src/widgets/read_back_card.dart';
+export 'src/widgets/ronda_loader.dart';
 export 'src/widgets/ronda_object_icon.dart';
 export 'src/widgets/ronda_sheet.dart';
 export 'src/widgets/ronda_sketch.dart';

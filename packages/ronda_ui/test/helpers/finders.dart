@@ -9,7 +9,7 @@ Finder byIdentifier(String identifier) => find.byWidgetPredicate(
 /// A progress ring inside the widget with the semantics [identifier].
 Finder progressIn(String identifier) => find.descendant(
   of: byIdentifier(identifier),
-  matching: find.byType(CircularProgressIndicator),
+  matching: find.byType(RondaLoader),
 );
 
 /// Turns the phone's own "remove animations" setting on for the rest of

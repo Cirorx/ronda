@@ -12,7 +12,7 @@ Finder byIdentifier(String identifier) => find.byWidgetPredicate(
 /// A progress ring inside the button with the semantics [identifier].
 Finder progressIn(String identifier) => find.descendant(
   of: byIdentifier(identifier),
-  matching: find.byType(CircularProgressIndicator),
+  matching: find.byType(RondaLoader),
 );
 
 /// Whether a [RondaSwap] is swapping two states right now, and how: with

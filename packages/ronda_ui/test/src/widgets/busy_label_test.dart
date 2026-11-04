@@ -16,19 +16,16 @@ void main() {
       await tester.pumpApp(buildSubject(busy: false));
 
       expect(find.text('Mandarlo'), findsOneWidget);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(RondaLoader), findsNothing);
     });
 
-    testWidgets('carries a ring in the button colour while busy', (
+    testWidgets('carries the loader in the button colour while busy', (
       tester,
     ) async {
       await tester.pumpApp(buildSubject(busy: true));
 
-      final ring = tester.widget<CircularProgressIndicator>(
-        find.byType(CircularProgressIndicator),
-      );
-      expect(ring.color, AppTheme.light.colorScheme.onPrimary);
-      expect(ring.strokeWidth, BusyLabel.strokeWidth);
+      final loader = tester.widget<RondaLoader>(find.byType(RondaLoader));
+      expect(loader.color, AppTheme.light.colorScheme.onPrimary);
       expect(find.text('Mandarlo'), findsOneWidget);
     });
 

@@ -322,7 +322,7 @@ void main() {
         when(() => thisWeekCubit.state).thenReturn(const ThisWeekState());
         await pump(tester);
 
-        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.byType(RondaLoader), findsOneWidget);
         expect(
           tester.getSemantics(find.text('Buscando tu ronda…')),
           isSemantics(isLiveRegion: true),

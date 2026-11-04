@@ -235,7 +235,7 @@ void main() {
       tester,
     ) async {
       await pump(tester, const AttendanceState());
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(RondaLoader), findsOneWidget);
 
       await pump(tester, const AttendanceState(status: AttendanceStatus.none));
       expect(

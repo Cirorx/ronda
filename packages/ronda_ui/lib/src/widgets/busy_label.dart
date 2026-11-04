@@ -1,7 +1,7 @@
 import 'package:ronda_ui/ronda_ui.dart';
 
 /// {@template busy_label}
-/// A button's label that, while [busy], carries a small progress ring in
+/// A button's label that, while [busy], carries a small [RondaLoader] in
 /// the button's own colour: the button that was pressed shows that its
 /// work is on its way. Wrap that button in an [IgnorePointer] while busy,
 /// so it keeps its look but can't be pressed twice.
@@ -17,9 +17,6 @@ class const BusyLabel(
   /// {@macro busy_label}
   this;
 
-  /// How thick the ring is.
-  static const double strokeWidth = 2;
-
   @override
   Widget build(BuildContext context) {
     final text = Text(label, textAlign: TextAlign.center);
@@ -32,13 +29,7 @@ class const BusyLabel(
       spacing: context.appSpacing.xs,
       children: [
         ExcludeSemantics(
-          child: SizedBox.square(
-            dimension: size,
-            child: CircularProgressIndicator(
-              strokeWidth: strokeWidth,
-              color: icon.color,
-            ),
-          ),
+          child: RondaLoader(size: size, color: icon.color),
         ),
         Flexible(child: text),
       ],

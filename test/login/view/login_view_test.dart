@@ -223,7 +223,7 @@ void main() {
           expect(
             find.descendant(
               of: _googleButton,
-              matching: find.byType(CircularProgressIndicator),
+              matching: find.byType(RondaLoader),
             ),
             findsOneWidget,
           );
@@ -244,7 +244,7 @@ void main() {
       testWidgets('no spinner before sign-in starts', (tester) async {
         await pumpSubject(tester);
 
-        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(find.byType(RondaLoader), findsNothing);
       });
 
       testWidgets('no error before a failed sign-in', (tester) async {

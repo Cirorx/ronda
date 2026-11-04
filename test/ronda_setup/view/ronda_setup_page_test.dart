@@ -221,7 +221,7 @@ void main() {
     ) async {
       final semantics = tester.ensureSemantics();
       await pump(tester, const RondaSetupState());
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(RondaLoader), findsOneWidget);
       expect(
         tester.getSemantics(find.text('Leyendo las rondas…')),
         isSemantics(isLiveRegion: true),

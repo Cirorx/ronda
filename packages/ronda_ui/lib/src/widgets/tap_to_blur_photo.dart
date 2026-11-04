@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:ronda_ui/src/extensions/build_context_extensions.dart';
-import 'package:ronda_ui/src/widgets/busy_label.dart';
+import 'package:ronda_ui/src/widgets/ronda_loader.dart';
 
 /// {@template tap_to_blur_photo}
 /// A photo with its faces already blurred, where a tap on a face the
@@ -67,9 +67,7 @@ class _TapToBlurPhotoState extends State<TapToBlurPhoto> {
                     ),
                     child: Padding(
                       padding: EdgeInsets.all(spacing.xs),
-                      child: const CircularProgressIndicator(
-                        strokeWidth: BusyLabel.strokeWidth,
-                      ),
+                      child: const RondaLoader(),
                     ),
                   ),
                 ),

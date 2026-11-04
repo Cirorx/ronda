@@ -217,7 +217,7 @@ void main() {
       ) async {
         await pumpSubject(tester, const PayoffState());
 
-        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.byType(RondaLoader), findsOneWidget);
         expect(find.text('Guardame el lugar'), findsOneWidget);
       });
 
@@ -320,7 +320,7 @@ void main() {
         await tester.pump(AppMotion.standardDuration);
         await tester.pump();
         expect(find.text('Mirando quién se anotó cerca tuyo…'), findsNothing);
-        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(find.byType(RondaLoader), findsNothing);
       });
 
       testWidgets('only cross-fading with reduced motion', (tester) async {
