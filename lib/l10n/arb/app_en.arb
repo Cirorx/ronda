@@ -1349,7 +1349,7 @@
     "@pushPromptGotIt": {
         "description": "Button that hides the notifications card after the phone refused"
     },
-    "mateFlyerTitle": "A spare mate",
+    "mateFlyerTitle": "A shared mate",
     "@mateFlyerTitle": {
         "description": "Title of the newcomer-seat flyer screen and its entry card"
     },

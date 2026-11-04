@@ -256,18 +256,18 @@ class const MyRondaView({required final String uid, super.key})
           child: switch (context.windowSize) {
             WindowSize.compact => ListView(
               padding: EdgeInsets.all(spacing.md),
-              children: [...main, ...aside],
+              children: _apart([...main, ...aside], spacing.sm),
             ),
             WindowSize.medium => ReadableColumn(
               child: ListView(
                 padding: EdgeInsets.all(spacing.md),
-                children: [...main, ...aside],
+                children: _apart([...main, ...aside], spacing.sm),
               ),
             ),
             WindowSize.expanded => PaperColumns(
               main: ListView(
                 padding: EdgeInsets.all(spacing.md),
-                children: main,
+                children: _apart(main, spacing.sm),
               ),
               side: ListView(
                 padding: EdgeInsetsDirectional.symmetric(vertical: spacing.md),
@@ -293,3 +293,12 @@ class const MyRondaView({required final String uid, super.key})
     );
   }
 }
+
+/// [cards] with [gap] under each, so the cards of Mi ronda never touch.
+List<Widget> _apart(List<Widget> cards, double gap) => [
+  for (final card in cards)
+    Padding(
+      padding: EdgeInsets.only(bottom: gap),
+      child: card,
+    ),
+];

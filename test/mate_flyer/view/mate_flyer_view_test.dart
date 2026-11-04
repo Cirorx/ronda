@@ -120,7 +120,7 @@ void main() {
       );
 
       expect(find.text('Do it from the phone app'), findsOneWidget);
-      expect(find.text('A spare mate'), findsOneWidget);
+      expect(find.text('A shared mate'), findsOneWidget);
     });
 
     group('waiting for a photo', () {

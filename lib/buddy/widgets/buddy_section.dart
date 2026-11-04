@@ -62,6 +62,7 @@ class const BuddyView({super.key}) extends StatelessWidget {
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: context.appSpacing.sm,
       children: [
         RondaSwap(
           layoutBuilder: RondaSwap.topStartLayout,
@@ -228,37 +229,50 @@ class const _Chosen(final SetupMember? buddy) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Row(
-      spacing: context.appSpacing.xs,
-      children: [
-        if (buddy != null)
-          ExcludeSemantics(
-            child: Icon(
-              Icons.check_circle_outline,
-              color: context.rondaPalette.yerba,
-            ),
-          ),
-        Expanded(
-          child: Semantics(
-            liveRegion: true,
-            child: Text(switch (buddy) {
-              final buddy? => l10n.buddyChosen(buddy.firstName),
-              null => l10n.buddyNobody,
-            }, style: Theme.of(context).textTheme.bodyMedium),
-          ),
+    final spacing = context.appSpacing;
+    // A card like the choice it replaces, so it sits in Mi ronda's column
+    // of cards instead of hanging between two of them.
+    return Card(
+      child: Padding(
+        padding: EdgeInsetsDirectional.fromSTEB(
+          spacing.md,
+          spacing.xs,
+          spacing.xs,
+          spacing.xs,
         ),
-        MergeSemantics(
-          child: Semantics(
-            identifier: BuddyView.changeIdentifier,
-            child: TextButton(
-              onPressed: context.read<BuddyCubit>().changeTapped,
-              child: Text(
-                buddy == null ? l10n.buddyPickSomeone : l10n.buddyChange,
+        child: Row(
+          spacing: spacing.sm,
+          children: [
+            if (buddy != null)
+              ExcludeSemantics(
+                child: Icon(
+                  Icons.check_circle_outline,
+                  color: context.rondaPalette.yerba,
+                ),
+              ),
+            Expanded(
+              child: Semantics(
+                liveRegion: true,
+                child: Text(switch (buddy) {
+                  final buddy? => l10n.buddyChosen(buddy.firstName),
+                  null => l10n.buddyNobody,
+                }, style: Theme.of(context).textTheme.bodyMedium),
               ),
             ),
-          ),
+            MergeSemantics(
+              child: Semantics(
+                identifier: BuddyView.changeIdentifier,
+                child: TextButton(
+                  onPressed: context.read<BuddyCubit>().changeTapped,
+                  child: Text(
+                    buddy == null ? l10n.buddyPickSomeone : l10n.buddyChange,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

@@ -205,6 +205,8 @@ class _AppViewState extends State<AppView> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
+      // Off in debug too: the ribbon covers the profile button on screen.
+      debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => context.l10n.appTitle,
       // Dark mode follows the system (themeMode defaults to system).
       theme: AppTheme.light,
