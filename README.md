@@ -7,7 +7,9 @@
 Ronda keeps the same small group of neighbours meeting every week around one pretext: mate on the
 rambla, truco, fútbol 5. It is built in Ciudad de la Costa and Montevideo, Uruguay, for the
 [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon)
-(indie track, "Build for Your World"), 27 October – 4 November 2026.
+(indie track, "Build for Your World"), 27 October – 4 November 2026. Before the window the repo
+held only the design docs and the agents' setup (26 October, 13 commits, no code); every line of
+code is from inside it, starting at [`8c379ec`](https://github.com/Cirorx/ronda/commit/8c379ec).
 
 ## Try it
 
@@ -95,8 +97,8 @@ What the code handles about each model:
   Markdown-stripped before the gates read them, and the gates (no emoji, voseo, no money,
   nothing from 21:00 to 09:00) decide whether anything goes out.
 - **SAM needs English nouns.** "termo", "mate" and "bizcochos" found nothing; "thermos" and
-  "deck of playing cards" did. The code asks in English and tries a second phrase when the
-  first finds nothing.
+  "deck of playing cards" did, and the mates were found only as "pot", never as "mate gourd".
+  The code asks in English and tries the next phrase when one finds nothing.
 - **Muse Image invents copy.** Asked for a poster's headline, it added a shop list, "Se fía" and
   "Desde 1978". So it paints only the picture, and every word on the flyer and its QR are drawn
   in code (Pillow, segno): no word on a flyer comes from a model.
