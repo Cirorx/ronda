@@ -7,6 +7,11 @@ sets ``max_instances`` so a loop or a flood can't run up the bill.
 import firebase_admin
 from firebase_functions import firestore_fn, https_fn, options, params, scheduler_fn
 
+import cloud_log
+
+# The jobs' log.info timings reach Cloud Logging only once logging is set up.
+cloud_log.setup()
+
 REGION = "southamerica-east1"
 
 options.set_global_options(region=REGION, max_instances=2)
