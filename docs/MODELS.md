@@ -179,8 +179,8 @@ The README's models table quotes these numbers.
   - SAM "thermos" 3.6 s (1 mask) and "deck of playing cards" 3.8 s (1), but "mate gourd" 5.3 s
     and "gourd" 3.4 s found nothing, so the flyer came out with the termo and the mazo only.
   - Asked alone: "cup" (4.7 s) and "bowl" (3.8 s) found nothing; **"pot" (3.6 s) found both
-    mates**; "thermos" 2.6 s. That was one painted photo: try "pot" in `mate_flyer.OBJECTS` on a
-    real one.
+    mates**; "thermos" 2.6 s. That was one painted photo, so `mate_flyer.OBJECTS` asks for "pot"
+    first and keeps "mate gourd" and "gourd" behind it; still to see on a real photo.
   - 8 SAM calls at $0.0025, 2 images at $0.01.
 - **On ronda-uy**, read-only (Cloud Run request logs, Firestore, Storage):
   - `extract` 3 × 200 on 11-01 (11.8, 12.5 and 19.1 s, the one-call path);

@@ -70,7 +70,8 @@ SAM_SIDE = 1280
 OBJECTS: tuple[tuple[str, tuple[str, ...], int], ...] = (
     ("termo", ("thermos", "vacuum flask"), 1),
     ("mazo", ("deck of playing cards", "playing cards"), 1),
-    ("mates", ("mate gourd", "gourd"), 3),
+    # SAM found no mates as "mate gourd" or "gourd" on the test photo; as "pot" it found both.
+    ("mates", ("pot", "mate gourd", "gourd"), 3),
 )
 # A mask smaller than this share of the photo is a speck; larger, it's the whole table.
 MIN_AREA, MAX_AREA = 0.002, 0.6
