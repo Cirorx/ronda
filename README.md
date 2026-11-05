@@ -47,7 +47,7 @@ One Flutter app, one Firebase project in São Paulo, and every AI job on a Meta 
 keeps what is sensitive; the server sees seat ids, counts and blurred photos.
 
 ```mermaid
-flowchart LR
+flowchart TB
   subgraph phone["Phone: Flutter app on Android, iOS and web"]
     signup["Sign-up: one voice note or seven taps"]
     needs["Needs: seat filters that stay on the phone"]
@@ -187,27 +187,30 @@ step is logged.
 
 ```mermaid
 flowchart TD
-  job["Hourly dispatcher: rain check, weekly card, bench, a new ronda's place and hour"]
-  turn["A turn on Muse Spark Open, at most 12 a run"]
-  tool["Tool call: get_forecast, get_last_bus, count_rsvps, propose_move, send_member_push, log_acta"]
-  fits{"Does the call fit its pydantic schema?"}
-  gates{"Gates: 09:00 to 21:00, says it is a program, no emoji, voseo, no money, one routine push a week, public places only"}
+  job["Hourly job: rain check, weekly card, bench, a new ronda's place"]
+  turn["Muse Spark Open turn, at most 12 a run"]
+  fallback["Spark 1.3, then code alone"]
+  tool["Tool call, such as get_forecast or propose_move"]
+  fits{"Fits its pydantic schema?"}
+  gates{"Every gate passes?"}
   sent["Sent as a push"]
   held["Held, with the reason"]
   log["Trace for the admin, acta for the members"]
-  fallback["Spark 1.3, then code alone"]
 
   job --> turn
-  turn -->|"model error"| fallback
+  turn -.->|"model error"| fallback
   turn --> tool
   tool --> fits
-  fits -->|"no: the error goes back, one more turn"| turn
+  fits -->|"no: the error goes back"| turn
   fits -->|"yes"| gates
-  gates -->|"pass"| sent
-  gates -->|"fail"| held
+  gates -->|"yes"| sent
+  gates -->|"no"| held
   sent --> log
   held --> log
 ```
+
+The gates, in code and in this order: 09:00 to 21:00 only, the first message says it is a
+program, no emoji, voseo, no money, one routine push a week, public places only.
 
 ## Why
 
