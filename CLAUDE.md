@@ -27,7 +27,14 @@ runtime, built for the Meta Global AI Developer Hackathon.
 4. Finish **green**: run the `green-gate` skill on every package you touched (analyze, format,
    test, coverage in one passing round, targets in `docs/STACK.md` § Quality bar), and tick every
    box in the issue's "Done when".
-5. Commit with `Closes #<n>`, push, and add a line to `notes/NOW.md`.
+5. Land it through a pull request: `main` is protected (ruleset "Protect main": no force-push,
+   no deletion, and the CI jobs build, functions, solver, scripts, rules and spell-check must
+   pass), so a direct push to `main` is rejected. Push a branch, open the PR with
+   `gh pr create` (a conventional-commit title, since the semantic-pull-request check reads
+   it; `Closes #<n>` in the body), wait for the checks, then
+   `gh pr merge --squash --delete-branch`. This replaces "commit and push straight to `main`"
+   in `~/Documents/coding/CLAUDE.md` for this repo; its hours rule still applies to merging.
+   Add a line to `notes/NOW.md`.
 6. Once your work is on main, run `scripts/prune_worktrees.sh`. It removes every worktree whose
    work is already on main, together with its branch, because each one holds gigabytes of
    build output. It keeps the ones with uncommitted changes, locked ones, and any where nothing
