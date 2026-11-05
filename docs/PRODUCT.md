@@ -1,7 +1,5 @@
 # Product spec (features in the 9-day build)
 
-Visual reference: the screen canvas (link in `notes/HANDOFF.md`, local only).
-The older planilla mockups (`notes/planilla/index.html`) show the research, not the current UI.
 Copy below is the real UI copy (rioplatense voseo); English UI mirrors it. Names, places and
 dates in the examples are demo data. Everything not listed here is out of the build.
 
@@ -728,4 +726,4 @@ rates anything, keeps a streak or counts days, and never says "ánimo", "bienest
 - Dark mode follows the system and uses the night tokens in `docs/DESIGN.md`.
 
 ## Demo video
-The script, shot list and the 45-second X cut are in `notes/DEMO.md` (local only).
+The three-minute demo is on YouTube: https://youtu.be/2hi27Q0GdFs

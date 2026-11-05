@@ -380,8 +380,7 @@ empty stub) is refused before it reaches the controller, so the template shows.
 
 ## Choices
 
-- **State: Bloc, Cubit-first**, laid out as above. Farolito uses the same stack (copy patterns,
-  never code: pre-10-27 code is banned); the VGV skills and `bloc_lint` keep AI-written code in
+- **State: Bloc, Cubit-first**, laid out as above. The VGV skills and `bloc_lint` keep AI-written code in
   line; no code generation.
 - **E2E: Maestro**, not Patrol or `integration_test`. Black-box YAML on the USB phone and on web,
   grants permissions on launch, and the same flows replay the golden path for the demo
