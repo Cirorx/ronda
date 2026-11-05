@@ -67,7 +67,9 @@ before(async () => {
       pretext: 'mate',
       hosts: { anfitrion: HOST, cola: COLA },
     });
-    await setDoc(doc(db, 'rondas/r1/members/' + MEMBER), { state: 'active' });
+    for (const uid of [MEMBER, HOST, COLA]) {
+      await setDoc(doc(db, 'rondas/r1/members/' + uid), { state: 'active' });
+    }
     await setDoc(doc(db, 'rondas/r2'), { pretext: 'truco' });
     await setDoc(doc(db, 'flyers/mate-1'), {
       kind: 'mate',
