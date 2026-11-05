@@ -224,8 +224,7 @@ Counts toward "Use of Meta AI tooling" (25% of the score); mention what was used
 Scripted in `scripts/smoke/` (`uv run scripts/smoke/s1_access.py`, `s2_structured.py`,
 `s3_transcribe.py note.wav`, `s4_baseten_tools.py`, `s5_sam.py photo.png out/`, `s6_image.py`,
 `s7_public_data.py`, `s11_mvd_bus.py`, and `s8_donde_queda.py` and `s10_barrios.py`, run with
-`functions/venv/bin/python`). They read keys from the environment or `.env` and never print them. Log latency and cost of each in
-`notes/NOW.md`.
+`functions/venv/bin/python`). They read keys from the environment or `.env` and never print them.
 
 Results from Uruguay, 2026-10-28:
 - 1: 200 in ~4 s. Spark 1.3 reasons by default: a one-line hello used 557 reasoning tokens.
