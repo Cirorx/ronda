@@ -10,8 +10,9 @@ import demo_data
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "solver" / "fixtures" / "invented_demo_30.json"
-RULES = (ROOT / "firestore.rules").read_text()
-INVENTED_SEATS = json.loads((ROOT / "data" / "demo" / "invented_seat_facts.json").read_text())
+RULES = (ROOT / "firebase" / "firestore.rules").read_text()
+DEMO = ROOT / "scripts" / "data" / "demo"
+INVENTED_SEATS = json.loads((DEMO / "invented_seat_facts.json").read_text())
 
 BARRIOS = {
     "shangrila", "san-jose-de-carrasco", "lagomar-sur", "lagomar-norte", "solymar-sur",

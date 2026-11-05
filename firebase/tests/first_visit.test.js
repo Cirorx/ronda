@@ -4,7 +4,7 @@
 // `waiterUid`. Nobody else reads one, and no client writes any: functions/first_visit.py does,
 // with the admin SDK.
 //
-//   cd rules && npm install && npm test
+//   cd firebase/tests && npm install && npm test
 //
 // It runs on its own project id, since node runs test files in parallel.
 import { after, before, beforeEach, describe, test } from 'node:test';

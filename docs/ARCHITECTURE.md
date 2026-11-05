@@ -151,17 +151,17 @@ isn't set up).
     it could infer a need from which ids are missing (all evening seats gone → "volver de
     noche"). The need itself is never sent. Every phone reads every seat fact when it works the seats
     out: 497 catalogue documents, worth a query by the member's barrio if it gets slow.
-  - Demo data: `data/demo/invented_seat_facts.json` (invented: 14 hand-made seats for one slot
+  - Demo data: `scripts/data/demo/invented_seat_facts.json` (invented: 14 hand-made seats for one slot
     each, two with a place an invented host has set) over the same catalogue production
     publishes, loaded by `scripts/seed.py` (§ Demo data).
 - `users/{uid}/tokens/{token}`: platform (android | ios | web), updatedAt (server time). Written
-  and deleted by the owner only, never read by a client (rules test: `rules/tokens.test.js`); the
+  and deleted by the owner only, never read by a client (rules test: `firebase/tests/tokens.test.js`); the
   phone deletes its own on sign-out, before the auth state changes. The
   sender builds a different payload per platform (`docs/STACK.md` § Push).
 - Rules accept on `users/{uid}` only the fields above (typed: `ageBand` one of the bands,
   `firstName` 1–30 characters, `terms` exactly `{version, acceptedAt}`, `slots`, `pretexts` and
   `brings` lists of id strings), so any write carrying a `needs`, mood, audio or address field is
-  rejected, at the top level or inside a list element (rules test: `rules/users.test.js`). The
+  rejected, at the top level or inside a list element (rules test: `firebase/tests/users.test.js`). The
   `terms` write comes first and creates the document; the profile lands on it when onboarding is
   saved.
 - Before sign-in nothing is written: the buttons path is answered signed out, so the accepted
@@ -212,7 +212,7 @@ isn't set up).
   rsvpSentAt, attendance {uid: bool}, plan {uid: item}. The id is the meeting's ISO week
   (`2026-W44`), even when the push goes out the week before. No member reads it, not even a
   host: the raw `rsvp` map and who came stay off members' phones (rules tests:
-  `rules/rsvp.test.js`, `rules/hosts.test.js`). The admin reads it (since #47), for the
+  `firebase/tests/rsvp.test.js`, `firebase/tests/hosts.test.js`). The admin reads it (since #47), for the
   attendance numbers, so the admin also sees the raw `rsvp`. `rsvpSentAt` is set in a
   transaction before the push goes out, which makes it once per ronda and week.
 - Attendance (built in #47, `functions/attendance.py`): "¿Quién vino hoy?".
@@ -232,7 +232,7 @@ isn't set up).
     so the order gives nobody away), marks {uid: bool} (the host's copy of the record),
     askedUid, askedRole (opener | anfitrion | cola | ""), askedAt, updatedAt. `get` by the
     ronda's anfitrión and cola, the host it was sent to (`askedUid`) and the admin, never
-    listed (rules tests: `rules/hosts.test.js`, `rules/despues.test.js`).
+    listed (rules tests: `firebase/tests/hosts.test.js`, `firebase/tests/despues.test.js`).
   - `record_attendance {rondaId, week, uid, came}`: the ronda's anfitrión or cola (still in the
     ronda), the host the roll was sent to, or the admin; for someone on the roll; until six
     days after the meeting. Writes `weeks/{w}.attendance.{uid}` and the roll's mark in one
@@ -257,7 +257,7 @@ isn't set up).
   - `rondas/{id}/private/seguimos`: askedAt, firstMeeting, asked [uids], answers {uid: yes |
     no}, choices {uid: join | wait}, then closedAt, outcome (season | didntFill), meeting; or
     {skipped: "late", skippedAt} when the ask came too late. Read by no client, not even the
-    admin (rules test: `rules/seguimos.test.js`).
+    admin (rules test: `firebase/tests/seguimos.test.js`).
   - `rondas/{id}/seguimos/{uid}`: the member's own question and what came of it, read by that
     member only: status (open | closed), askedAt, answer?, answeredAt?, then closedAt, outcome
     (season | gracias | didntFill), alternatives [{rondaId, line, pretext, barrio, slot,
@@ -302,7 +302,7 @@ isn't set up).
   - `users/{uid}/offers/{offerId}` (`{rondaId}_{isoWeek}_{nn}`): rondaId, week, date, pretext,
     slot {day, time}, hour, placeName, placeLandmark, deadline, status (pending | taken |
     declined | expired | withdrawn), createdAt, answeredAt | closedAt. Read (get and list) by
-    that person only (rules test: `rules/bench.test.js`). Its status lives here alone and
+    that person only (rules test: `firebase/tests/bench.test.js`). Its status lives here alone and
     changes in transactions, so an answer and a run never overwrite each other.
   - `answer_bench_offer {offerId, take}` (`bench.answer`): the person's own pending offer before
     its deadline; taking writes `weeks/{w}.guests.{uid} = {firstName, brings, offerId, at}` and
@@ -349,7 +349,7 @@ isn't set up).
     the meeting's day (its `dateOverride`, if any) is over. The RSVP push adds "Después, si
     querés, … en lo de Mirta." when it is set (never the address). Rules: the ronda's members
     `get` it once `set` (or a missing one); whoever set it and whose home it is, always; never
-    listed or written by a client (`rules/despues.test.js`).
+    listed or written by a client (`firebase/tests/despues.test.js`).
   - "¿Abrís vos?" (`functions/handoff.py`, job `handoff`): `rondas/{id}/handoffs/{isoWeek}`
     (no client reads it): week, date, hour, fromUid, fromName, reason (no | away | unanswered),
     step (cola | members | taken | nobody | back), asked, declined, askedAt, deadline, takenBy?,
@@ -377,7 +377,7 @@ isn't set up).
     public_place). `decline_welcome {rondaId, newcomerUid}` (the picked waiter): clears the
     pick and the sign, back to `open` with `declinedName`. No push. Rules: the newcomer `get`s
     their own; the anfitrión and the cola `get` and list the ronda's; a picked waiter `get`s
-    theirs and lists by `waiterUid`; no client writes (`rules/first_visit.test.js`).
+    theirs and lists by `waiterUid`; no client writes (`firebase/tests/first_visit.test.js`).
   - The turns (`functions/rotation.py`, job `assign_hosts`): when `hosts.month` is behind the
     current month in Montevideo, the cola opens and the next active member by `joinedAt`
     closes, once per month missed; `turns` is rewritten and the acta gets one line,
@@ -391,7 +391,7 @@ isn't set up).
     (`rondas/{id}/buddy_prompts/{isoWeek}.prompted`, no client reads it): the buddy gets the
     push (`data.type: buddy`) and `rondas/{id}/buddy_asks/{buddyUid}` {status open, asks
     [{firstName, day, week, at}]}, which only they read and only they close (`status: closed`,
-    `closedAt == request.time`; `rules/buddy.test.js`). The admin's trace has it; the acta
+    `closedAt == request.time`; `firebase/tests/buddy.test.js`). The admin's trace has it; the acta
     doesn't.
 - ¿Dónde queda? (#58, `functions/donde_queda.py`): the weekly barrio photo game. Fixed rules in
   code; SAM 3.1 and Spark 1.3 only check the photo and the words; nothing is pushed.
@@ -438,10 +438,10 @@ isn't set up).
     repo, as for `flyer_photos/`): `donde_queda_photos/` 1 day, `donde_queda/` 10 days (a game
     lasts at most eight). Faces reach Storage only pixelated, so the 24 h rule holds whatever
     the lifecycle does.
-  - Rules tests: `rules/donde_queda.test.js`; a whole round with three members on the emulators:
+  - Rules tests: `firebase/tests/donde_queda.test.js`; a whole round with three members on the emulators:
     `functions/tests/test_donde_queda_emulators.py`.
 - Safety (#71, `functions/reports.py`, `safety.py`, `removals.py`; rules tests:
-  `rules/reports.test.js`, and `rules/admin.test.js` for the admin paths):
+  `firebase/tests/reports.test.js`, and `firebase/tests/admin.test.js` for the admin paths):
   - `reports/{id}`: reporterUid, reporterName, aboutUid (`""` for "Alguien de afuera"),
     aboutName, rondaId and rondaLine (the ronda the two share, else the reporter's; `""` for
     none), tags [`askedForMoney` | `bothered` | `romantic` | `minor` | `privatePlace` | `other`],
@@ -490,7 +490,7 @@ isn't set up).
   members as "Lo que hizo el programa" (`/acta/{rondaId}`); one line per tool call and per send.
 - `acta/{rondaId}/flags/{uid}`: exactly `{week, at}` (`at == request.time`), written by a member
   of that ronda for themselves when they tap [Algo estuvo mal]; read by the admin only, who sees
-  the count on the trace (rules test: `rules/organiser.test.js`).
+  the count on the trace (rules test: `firebase/tests/organiser.test.js`).
 - `agent_runs/{runId}`: job, rondaId, week, startedAt, endedAt, status (running | done | capped
   | stopped | failed), model, forced, note (the model's last words, Markdown stripped),
   stepCount, actaCount. The rain check's run is `{rondaId}_{week}_rain` (claimed in a transaction,
@@ -522,7 +522,7 @@ isn't set up).
   week, `agent_runs/{rondaId}_{isoWeek}_card`, claimed like the rain check's.
 - `places/{id}`: covered public places the organiser may offer when it rains: name (with its
   article, "el Salón Comunal de El Pinar"), barrios[], covered, kind (`public`). Read by the
-  server only. The demo set is `data/demo/invented_places.json`; the real project has none until
+  server only. The demo set is `scripts/data/demo/invented_places.json`; the real project has none until
   the owner adds them.
 - `osm_places/{id}` (Algo chico esta semana, #56; `functions/free_places.py`): the OpenStreetMap
   cache, written by `scripts/osm_places.py` (one Overpass query for Ciudad de la Costa with a
@@ -531,7 +531,7 @@ isn't set up).
   openingHours? (OSM's syntax, read by `functions/opening_hours.py`), source and fetchedAt (the
   ODbL credit). Distance is blocks from the member's barrio centroid, as the solver measures a
   walk, within ten for everyone: the phone sends nothing about its needs. `demo-*` ids are the
-  invented set of `data/demo/invented_osm_places.json` and count only on the emulators and
+  invented set of `scripts/data/demo/invented_osm_places.json` and count only on the emulators and
   `demo-*` projects (`demo_users.demo_counts_here`). Algo chico itself stores nothing on the
   server: the plan is on the phone (`device_store`), and `suggest_small_plans` and
   `shape_small_plan` write no document and log only ids, sizes and timings.
@@ -561,7 +561,7 @@ isn't set up).
   - **Expiry:** the hourly `shared_plans` job deletes a plan once `startsAt` has passed or its
     author left, after refreshing the cards; the app also hides a plan whose time passed, since the
     job lags by up to an hour. It sends nothing.
-  - Rules tests: `rules/shared_plans.test.js`; a plan shared, joined, withdrawn and expired on the
+  - Rules tests: `firebase/tests/shared_plans.test.js`; a plan shared, joined, withdrawn and expired on the
     emulators: `functions/tests/test_shared_plans_emulators.py`.
 - `users/{uid}/private/agent`: what the gates remember of a person: introducedAt (their first
   organiser message, which carries "Soy un programa") and routine {isoWeek: at}. No client
@@ -581,7 +581,7 @@ isn't set up).
   stoppedAt and stoppedBy ([Frenar]), autoBlocked (stopped | setup | report | avoid | seated |
   removed) and autoBlockedAt, and once approved notice (pending | sent) and noticeAt.
   Read by the admin claim only (`request.auth.token.admin == true`), written only by the
-  callables, so nothing reaches members before approval (rules test: `rules/`).
+  callables, so nothing reaches members before approval (rules tests: `firebase/tests/`).
   - `propose_groups` (admin only, 2 GiB, 4 vCPU, max 1 instance, no min instances) reads
     `users`, `users/{uid}/private/eligible` and `avoid`, keeps people with a profile in a known
     barrio and eligible ids, solves, joins first names and writes a pending proposal. The
@@ -604,7 +604,7 @@ isn't set up).
     each token renewal; `AdminAccessCubit`) to show the Admin tab and to let `/admin` open
     (#69). That is only what the app shows: `firestore.rules`' `isAdmin()` and the callables'
     `_require_admin` check `admin == true` on every admin read and call, and
-    `rules/admin.test.js` and `TestEveryAdminCallable` (`functions/tests/test_main.py`) hold
+    `firebase/tests/admin.test.js` and `TestEveryAdminCallable` (`functions/tests/test_main.py`) hold
     every admin path and callable to it. Storage has no admin path.
 - "Sumar a esta ronda" (#55, `functions/ronda_members.py`), both admin only:
   - `ronda_candidates {rondaId}`: the ronda's line, its members' first names, seats taken
@@ -643,7 +643,7 @@ isn't set up).
   members, `cap` is the pretext's largest ronda, 6 or 10; `waiting` counts sign-ups in that barrio
   who picked its pretext and slot and sit in no ronda), `waiting[{pretext, count}]` the same
   sign-ups by pretext, and updatedAt. No uid, name or place. Anyone may `get` one, signed in or
-  not; nobody lists or writes them from a client (rules test: `rules/public.test.js`). The app's
+  not; nobody lists or writes them from a client (rules test: `firebase/tests/public.test.js`). The app's
   onboarding payoff reads one signed out, the waiting counts only (`ronda_repository`'s
   `cerca`, 8 s timeout). The
   hourly `refresh_cerca` rewrites all of them with `run_refresh_cerca(db, now)`; once #28 writes
@@ -664,7 +664,7 @@ isn't set up).
     ronda's, for the landing), createdBy (the host's uid), imagePath (`flyers/{uid}/{id}.jpg` in
     Storage), scans, createdAt, lastScanAt. Written only by the `make_mate_flyer` callable; read
     (`get`, never listed) by `createdBy` and by that ronda's `hosts.anfitrion` / `hosts.cola`
-    (rules test: `rules/flyers.test.js`).
+    (rules test: `firebase/tests/flyers.test.js`).
     - The phone pixelates every face (`packages/face_blur`) and uploads the JPEG to
       `flyer_photos/{uid}/{photoId}.jpg` (owner-only create, `image/jpeg`, ≤ 3 MB, no client
       read). `make_mate_flyer {rondaId, photoPath}` checks the path is the caller's and that they
@@ -720,7 +720,7 @@ isn't set up).
     `X-Forwarded-For` hop. The raw IP is never stored. The app itself sends at most 20 reports a
     session, each code and screen once, batched for 2 s (a fatal one at once).
   - Read by the admin claim only, on `/admin/errores` (the newest 300, grouped by code and
-    screen); no client writes either collection (rules test: `rules/client_errors.test.js`).
+    screen); no client writes either collection (rules test: `firebase/tests/client_errors.test.js`).
 
 ### Demo data (emulators)
 
@@ -735,7 +735,7 @@ project checklist. Everything seeded is invented:
 - Documents: `seat_facts` (511: the catalogue's 497, exactly as `seat_catalog` publishes it, and
   the 14 hand-made seats; a place's `blocksFrom` lists its own area's barrios, Ciudad de la
   Costa's or Montevideo's);
-  `places/demo-*` (5 invented covered public places, `data/demo/invented_places.json`);
+  `places/demo-*` (5 invented covered public places, `scripts/data/demo/invented_places.json`);
   `users/{uid}` with the profile, `plusOneUid` on whoever brings a +1 (as the generator gives
   it) and the accepted terms; `users/{uid}/private/eligible` = `{seatIds, updatedAt}`; and
   `avoid/{uidA}_{uidB}` per report-apart pair, uids in order (one pair in the 30 set). Needs are

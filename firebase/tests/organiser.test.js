@@ -1,7 +1,7 @@
 // The organiser agent under firestore.rules (#49): the trace is the admin's, the acta its
 // ronda's, a rain proposal its host's, and [Algo estuvo mal] the one thing a member writes.
 //
-//   cd rules && npm install && npm test
+//   cd firebase/tests && npm install && npm test
 //
 // The documents are written the way functions/rain.py and functions/organiser/ write them, with
 // the rules off, as the admin SDK skips them.
@@ -188,7 +188,7 @@ describe('what stays on the server', () => {
       await assertFails(getDoc(doc(db, 'places/salon')));
       await assertFails(getDoc(doc(db, 'users/demo-102/private/agent')));
     }
-    // The week, with the move's override, is the admin's since #47 (rules/hosts.test.js).
+    // The week, with the move's override, is the admin's since #47 (hosts.test.js).
     for (const db of [member('demo-101'), member('demo-102')]) {
       await assertFails(getDoc(doc(db, `rondas/r1/weeks/${WEEK}`)));
     }

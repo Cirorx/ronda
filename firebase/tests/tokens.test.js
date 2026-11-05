@@ -2,7 +2,7 @@
 // phones' tokens, as exactly {platform, updatedAt}, and nobody reads them back
 // from a client.
 //
-//   cd rules && npm install && npm test
+//   cd firebase/tests && npm install && npm test
 //
 // It runs on its own project id, since node runs test files in parallel; every
 // test makes its own documents, so nothing needs clearing.

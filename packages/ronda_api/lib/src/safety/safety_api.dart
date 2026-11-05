@@ -11,8 +11,8 @@ import 'package:ronda_api/src/safety/safety_documents.dart';
 /// - for the admin, the reports, who is kept apart and who is out of Ronda
 ///   in Firestore, the unread count, and the callables that act on them.
 ///
-/// The rules decide who reads what (`rules/reports.test.js`,
-/// `rules/admin.test.js`). [functions] must be built with
+/// The rules decide who reads what (`firebase/tests/reports.test.js`,
+/// `firebase/tests/admin.test.js`). [functions] must be built with
 /// `FirebaseFunctions.instanceFor(region: RondaApi.region)`.
 /// {@endtemplate}
 class const SafetyApi({

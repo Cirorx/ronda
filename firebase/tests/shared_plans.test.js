@@ -3,7 +3,7 @@
 // included; a member who left or another ronda's member reads nothing; and no client writes a
 // card or a plan.
 //
-//   cd rules && npm install
+//   cd firebase/tests && npm install
 //   FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 npm test
 //
 // It runs on its own project id, since node runs test files in parallel. Every person is

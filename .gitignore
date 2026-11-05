@@ -23,6 +23,7 @@ functions/venv/
 .DS_Store
 # never commit pilot data
 /data/private/
+/scripts/data/private/
 # IDE project files
 .idea/
 # local-only notes (its own local git repo, never on GitHub)

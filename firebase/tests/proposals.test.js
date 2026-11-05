@@ -1,7 +1,7 @@
 // Proposals and rondas under firestore.rules: nothing is visible to a member
 // before Aprobar, and afterwards each member reads only their own ronda.
 //
-//   cd rules && npm install && npm test
+//   cd firebase/tests && npm install && npm test
 //
 // The documents are written the way the approve_proposal callable writes them
 // (functions/proposals.py), with the rules off, as the admin SDK skips them.

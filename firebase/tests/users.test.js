@@ -1,7 +1,7 @@
 // users/{uid} and users/{uid}/private/eligible under firestore.rules: what a voice sign-up
 // leaves in Firestore, and the ways a client might slip a need, a mood or a voice note into it.
 //
-//   cd rules && npm install && npm test
+//   cd firebase/tests && npm install && npm test
 //
 // A voice sign-up writes Firestore from the phone only, the way packages/ronda_api does: the
 // terms when a welcome door is tapped, then on "Está bien, guardalo" the eligible seat ids and

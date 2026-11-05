@@ -1,7 +1,7 @@
 // ¿Seguimos? under firestore.rules: no client reads who said what (#46). Each member reads
 // only their own question and its result, the admin only counts.
 //
-//   cd rules && npm install && npm test
+//   cd firebase/tests && npm install && npm test
 //
 // The documents are written the way the answer_seguimos callable and the jobs write them
 // (functions/seguimos.py), with the rules off, as the admin SDK skips them.

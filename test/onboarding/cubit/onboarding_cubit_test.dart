@@ -24,7 +24,8 @@ final _answered = OnboardingState(
   firstName: const FirstName.dirty(' Marta '),
 );
 
-/// Invented demo seats (values from data/demo/invented_seat_facts.json).
+/// Invented demo seats (values from
+/// scripts/data/demo/invented_seat_facts.json).
 const _seats = [
   PublishedSeat(
     seatId: 'solymar-sur_mate_sat-afternoon',

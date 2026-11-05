@@ -2,7 +2,7 @@
 // is read by its own person only, and nobody reads who is on a bench, the week's bench run or
 // the lists themselves.
 //
-//   cd rules && npm install && npm test
+//   cd firebase/tests && npm install && npm test
 //
 // The documents are written the way functions/bench.py and functions/waitlists.py write them,
 // with the rules off, as the admin SDK skips them.

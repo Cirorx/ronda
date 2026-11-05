@@ -235,7 +235,7 @@ void main() {
         late Map<String, Object?> demoSeats;
 
         setUp(() {
-          final file = File('../../data/demo/invented_seat_facts.json');
+          final file = File('../../scripts/data/demo/invented_seat_facts.json');
           final json = jsonDecode(file.readAsStringSync()) as Map;
           demoSeats = (json['seats']! as Map).cast<String, Object?>();
         });

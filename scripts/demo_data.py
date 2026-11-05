@@ -19,9 +19,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-INVENTED_SEAT_FACTS = ROOT / "data" / "demo" / "invented_seat_facts.json"
-INVENTED_PLACES = ROOT / "data" / "demo" / "invented_places.json"
-INVENTED_OSM_PLACES = ROOT / "data" / "demo" / "invented_osm_places.json"
+INVENTED_SEAT_FACTS = ROOT / "scripts" / "data" / "demo" / "invented_seat_facts.json"
+INVENTED_PLACES = ROOT / "scripts" / "data" / "demo" / "invented_places.json"
+INVENTED_OSM_PLACES = ROOT / "scripts" / "data" / "demo" / "invented_osm_places.json"
 
 # ronda_solver is not an installable package (solver/pyproject.toml: package = false), so the
 # generator is imported from its folder.
@@ -78,9 +78,9 @@ def documents(people: int) -> Documents:
 def seat_facts_documents(problem: dict) -> Documents:
     """`seat_facts`: the seat catalogue production publishes (ronda_solver.seats, one document per
     barrio and pretext, which the phone expands to every slot), plus the hand-made seats in
-    data/demo/invented_seat_facts.json, each for one slot, which keep the two places an invented
-    host has set. The catalogue's documents are exactly what functions/seat_catalog.py writes, so
-    a project reset finds them unchanged.
+    scripts/data/demo/invented_seat_facts.json, each for one slot, which keep the two places an
+    invented host has set. The catalogue's documents are exactly what functions/seat_catalog.py
+    writes, so a project reset finds them unchanged.
     """
     seats = json.loads(INVENTED_SEAT_FACTS.read_text())["seats"]
     return {f"seat_facts/{seat_id}": fields for seat_id, fields in catalogue().items()} | {
@@ -129,14 +129,14 @@ def avoid_documents(problem: dict) -> Documents:
 
 def place_documents(problem: dict) -> Documents:
     """`places/{id}`: the covered public places the organiser may offer when it rains, as
-    data/demo/invented_places.json writes them. Every id starts with `demo-`."""
+    scripts/data/demo/invented_places.json writes them. Every id starts with `demo-`."""
     places = json.loads(INVENTED_PLACES.read_text())["places"]
     return {f"places/{place_id}": fields for place_id, fields in sorted(places.items())}
 
 
 def osm_place_documents(problem: dict) -> Documents:
     """`osm_places/{id}`: stand-ins for the OpenStreetMap cache (free public places Algo chico
-    esta semana offers), as data/demo/invented_osm_places.json writes them. Every id starts
+    esta semana offers), as scripts/data/demo/invented_osm_places.json writes them. Every id starts
     with `demo-`, and the functions ignore them off the emulators and `demo-*` projects."""
     places = json.loads(INVENTED_OSM_PLACES.read_text())["places"]
     return {f"osm_places/{place_id}": fields for place_id, fields in sorted(places.items())}

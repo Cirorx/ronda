@@ -5,7 +5,7 @@
 // `'true'`, `1`, `'yes'`, a `role`). No client writes any of them, the admin included. And the
 // claim opens nothing in Storage, which has no admin path.
 //
-//   cd rules && npm install && npm run test:emulator
+//   cd firebase/tests && npm install && npm run test:emulator
 //
 // It runs on its own project id, like the other files.
 import { after, before, describe, test } from 'node:test';

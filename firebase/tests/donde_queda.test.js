@@ -3,7 +3,7 @@
 // photographer's pin and every guess stay closed to every client; and nobody but the owner
 // uploads or deletes a photo before it is checked.
 //
-//   cd rules && npm install
+//   cd firebase/tests && npm install
 //   FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 \
 //     FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 npm test
 //

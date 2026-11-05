@@ -3,7 +3,7 @@
 // closed even to signed-in members: the flyer_landing function counts its
 // scans and answers its page with the admin SDK.
 //
-//   cd rules && npm install && npm test
+//   cd firebase/tests && npm install && npm test
 //
 // It runs on its own project id, since node runs test files in parallel.
 import { after, before, describe, test } from 'node:test';

@@ -3,7 +3,7 @@
 // `flyers/{id}` document of kind `mate` is read by the host who made it and by
 // that ronda's hosts, and written by no client.
 //
-//   cd rules && npm install
+//   cd firebase/tests && npm install
 //   FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 \
 //     FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 npm test
 //

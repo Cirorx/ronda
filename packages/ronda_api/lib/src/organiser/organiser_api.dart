@@ -11,7 +11,7 @@ import 'package:ronda_api/src/organiser/organiser_documents.dart';
 /// - a rain proposal, read by its host, and the `answer_move` callable;
 /// - the admin's `run_job` for the rain check.
 ///
-/// The rules decide who reads what (`rules/organiser.test.js`).
+/// The rules decide who reads what (`firebase/tests/organiser.test.js`).
 /// [functions] must be built with
 /// `FirebaseFunctions.instanceFor(region: RondaApi.region)`.
 /// {@endtemplate}

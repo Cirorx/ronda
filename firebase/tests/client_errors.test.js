@@ -2,7 +2,7 @@
 // client_errors with the admin SDK, the admin reads it on /admin/errores, and no client
 // writes it. The callable's per-caller quota, client_error_quota, is closed to everyone.
 //
-//   cd rules && npm install && npm test
+//   cd firebase/tests && npm install && npm test
 //
 // It runs on its own project id, since node runs test files in parallel.
 import { after, before, describe, test } from 'node:test';

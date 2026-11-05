@@ -4,7 +4,7 @@
 // users/{uid}.buddyUid, which nobody else reads. functions/buddy.py writes the rest with the
 // admin SDK.
 //
-//   cd rules && npm install && npm test
+//   cd firebase/tests && npm install && npm test
 //
 // It runs on its own project id, since node runs test files in parallel.
 import { after, before, beforeEach, describe, test } from 'node:test';

@@ -2,9 +2,9 @@
 // report and the reporter's receipt with the admin SDK. Only the admin reads a report: not the
 // reporter, not the person it is about, nobody else in their ronda. The reporter reads their
 // own receipt and nobody else's. Who is kept apart and who is out of Ronda open to the admin
-// only (rules/admin.test.js holds those paths to the exact claim). No client writes any of it.
+// only (admin.test.js holds those paths to the exact claim). No client writes any of it.
 //
-//   cd rules && npm install && npm run test:emulator
+//   cd firebase/tests && npm install && npm run test:emulator
 //
 // It runs on its own project id, like the other files.
 import { after, before, describe, test } from 'node:test';

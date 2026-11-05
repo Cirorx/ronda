@@ -1,7 +1,7 @@
 // The weekly RSVP under firestore.rules: members read the derived "who's coming" view of their
 // own ronda and their own answer, and nobody reads the raw rsvp map (#45).
 //
-//   cd rules && npm install && npm test
+//   cd firebase/tests && npm install && npm test
 //
 // The documents are written the way the answer_rsvp callable and the RSVP job write them
 // (functions/rsvp.py), with the rules off, as the admin SDK skips them.
@@ -103,7 +103,7 @@ describe('the raw rsvp map', () => {
     await assertFails(getDocs(collection(member('demo-001'), 'rondas/r1/weeks')));
   });
 
-  test('the admin reads it, for attendance and the numbers (#47, rules/hosts.test.js)', async () => {
+  test('the admin reads it, for attendance and the numbers (#47, hosts.test.js)', async () => {
     await assertSucceeds(getDoc(doc(admin(), `rondas/r1/weeks/${WEEK}`)));
   });
 

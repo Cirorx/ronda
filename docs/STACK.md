@@ -460,7 +460,7 @@ Store `platform` with each FCM token. iPhone web users get push only after Add t
 Built in #27 (`packages/push_client`, `packages/push_repository`, `lib/push/`):
 - **Token:** `users/{uid}/tokens/{token}` = exactly `{platform, updatedAt}` (server time), written
   by the owner only and never read by a client (`firestore.rules`, tested in
-  `rules/tokens.test.js`). Saved when notifications are allowed, on every launch that lands on
+  `firebase/tests/tokens.test.js`). Saved when notifications are allowed, on every launch that lands on
   Mi ronda, and again on every FCM token refresh. Signing out (`AppSignOutRequested` in
   `AppBloc`) first deletes the document, while the member still may, then the FCM token itself
   (`deleteToken`), each step giving up after 5 s; a browser that never allowed notifications is
@@ -610,8 +610,8 @@ on both Android apps, and release builds are signed with that key until a releas
   from `functions/` with `firebase emulators:exec --only firestore,storage --project
   demo-ronda-voice "venv/bin/pytest tests/test_voice_signup_emulators.py"`; plain `pytest`
   skips it.
-- **Rules tests** (`rules/`, `@firebase/rules-unit-testing` 6.0.0 on node's test runner):
-  `cd rules && npm ci && npm run test:emulator` starts a Firestore emulator for them; with one
+- **Rules tests** (`firebase/tests/`, `@firebase/rules-unit-testing` 6.0.0 on node's test runner):
+  `cd firebase/tests && npm ci && npm run test:emulator` starts a Firestore emulator for them; with one
   already running on 8088, `npm test` uses it under the tests' own project ids
   (`demo-ronda-rules`, `demo-ronda-users`, `demo-ronda-public`, `demo-ronda-errors`: one per
   file, as node runs test files in parallel).

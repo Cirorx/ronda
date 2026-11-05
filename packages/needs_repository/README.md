@@ -55,7 +55,7 @@ as `Needs.none`.
 ## Tests
 
 `test/src/needs_repository_test.dart` also runs the filter over the repo's invented demo seats,
-`../../data/demo/invented_seat_facts.json`, so the demo data and the filter can't drift apart.
+`../../scripts/data/demo/invented_seat_facts.json`, so the demo data and the filter can't drift apart.
 
 ```sh
 very_good test --coverage --min-coverage 100

@@ -27,9 +27,9 @@ project="${1:-ronda-uy}"
 # area|deploy target|paths that change what that target ships (functions/tests is in firebase.json's
 # functions ignore list, so it never ships)
 areas=(
-  "rules|firestore:rules|firestore.rules"
-  "indexes|firestore:indexes|firestore.indexes.json"
-  "storage|storage|storage.rules"
+  "rules|firestore:rules|firebase/firestore.rules"
+  "indexes|firestore:indexes|firebase/firestore.indexes.json"
+  "storage|storage|firebase/storage.rules"
   "functions|functions|functions :(exclude)functions/tests solver/ronda_solver packages/ronda_ui/assets/fonts"
   "hosting|hosting|hosting lib web packages pubspec.yaml pubspec.lock firebase.json scripts/build_web.sh"
 )
@@ -83,7 +83,7 @@ $status_only && exit 0
 [[ "$(git rev-parse --abbrev-ref HEAD)" == main ]] || fail "Deploy from main."
 git fetch -q origin main
 [[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/main)" ]] || fail "main isn't in sync with origin/main."
-[[ -z "$(git status --porcelain -- functions solver firestore.rules storage.rules firestore.indexes.json hosting lib web packages)" ]] ||
+[[ -z "$(git status --porcelain -- functions solver firebase/firestore.rules firebase/storage.rules firebase/firestore.indexes.json hosting lib web packages)" ]] ||
   fail "Uncommitted changes in deployed paths."
 
 if [[ -z "${FCM_VAPID_KEY:-}" && -f .env ]]; then

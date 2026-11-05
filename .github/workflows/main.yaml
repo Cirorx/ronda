@@ -135,12 +135,12 @@ jobs:
         env:
           RONDA_EMULATORS_REQUIRED: "1"
 
-  # firestore.rules and storage.rules on the Firestore and Storage emulators (needs Java).
+  # The rules in firebase/ on the Firestore and Storage emulators (needs Java).
   rules:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: rules
+        working-directory: firebase/tests
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v5

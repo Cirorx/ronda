@@ -3,7 +3,7 @@
 // the host's roll ("¿Quién vino hoy?") is read with `get` by the ronda's anfitrión and cola and
 // by the admin. No client writes either: functions/attendance.py does, with the admin SDK.
 //
-//   cd rules && npm install && npm test
+//   cd firebase/tests && npm install && npm test
 //
 // It runs on its own project id, since node runs test files in parallel.
 import { after, before, beforeEach, describe, test } from 'node:test';

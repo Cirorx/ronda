@@ -1,7 +1,7 @@
 // The seat catalogue under firestore.rules: a signed-in member reads the
 // seats and the catalogue's version, and nobody writes either from a phone.
 //
-//   cd rules && npm install && npm test
+//   cd firebase/tests && npm install && npm test
 //
 // It runs on its own project id, since node runs test files in parallel.
 import { after, before, describe, test } from 'node:test';

@@ -111,7 +111,7 @@ PLACE = {"name": "frente al quiosco", "landmark": "al lado de la parada"}
 """Invented: a public spot in the barrio, as an admin would type it."""
 
 COVERED_PLACE = "demo-salon-el-pinar"
-"""The invented covered place near the barrio (data/demo/invented_places.json)."""
+"""The invented covered place near the barrio (scripts/data/demo/invented_places.json)."""
 
 SIGN = "tiene el termo verde"
 """How the newcomer knows who waits, in the `newcomer` scene; invented."""

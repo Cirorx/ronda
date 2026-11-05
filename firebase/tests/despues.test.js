@@ -5,7 +5,7 @@
 // No client writes any of it: functions/despues.py and functions/handoff.py do, with the admin
 // SDK.
 //
-//   cd rules && npm install && npm test
+//   cd firebase/tests && npm install && npm test
 //
 // It runs on its own project id, since node runs test files in parallel.
 import { after, before, beforeEach, describe, test } from 'node:test';
