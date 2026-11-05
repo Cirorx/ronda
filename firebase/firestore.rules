@@ -134,8 +134,19 @@ service cloud.firestore {
     }
 
     // An approved ronda and its member list, read by its own members only.
-    // approve_proposal writes both with the admin SDK.
+    // approve_proposal writes both with the admin SDK. A member who left or was
+    // removed keeps their member document with `state: left` (removals.py,
+    // seguimos.py), so membership also needs that state not to be `left`.
     function isMemberOf(rondaId) {
+      return request.auth != null
+          && exists(/databases/$(database)/documents/rondas/$(rondaId)/members/$(request.auth.uid))
+          && get(/databases/$(database)/documents/rondas/$(rondaId)/members/$(request.auth.uid))
+              .data.get('state', 'active') != 'left';
+    }
+
+    // Whether the caller ever sat in ronda [rondaId], left or not: only for reading their own
+    // documents about how it ended (their ¿seguimos? question), never the ronda's.
+    function wasMemberOf(rondaId) {
       return request.auth != null && exists(
           /databases/$(database)/documents/rondas/$(rondaId)/members/$(request.auth.uid));
     }
@@ -185,11 +196,13 @@ service cloud.firestore {
               || isRondaHost(resource.data.rondaId));
     }
 
-    // Whether the caller is ronda [rondaId]'s anfitrión or cola.
+    // Whether the caller is ronda [rondaId]'s anfitrión or cola and still a member
+    // (hosts only change at the monthly rotation, so a removed host stays listed).
     function isRondaHost(rondaId) {
       let hosts = get(/databases/$(database)/documents/rondas/$(rondaId))
           .data.get('hosts', {});
-      return request.auth.uid in [hosts.get('anfitrion', ''), hosts.get('cola', '')];
+      return request.auth.uid in [hosts.get('anfitrion', ''), hosts.get('cola', '')]
+          && isMemberOf(rondaId);
     }
 
     // The weekly loop (#45). The raw `rsvp` map lives in rondas/{id}/weeks/{isoWeek}, which no
@@ -216,7 +229,7 @@ service cloud.firestore {
     // outcome as the ronda's `season`. The answer_seguimos callable, the ¿seguimos? job and
     // the RSVP job write all three with the admin SDK; no client writes any of them.
     match /rondas/{rondaId}/seguimos/{uid} {
-      allow read: if isOwner(uid) && isMemberOf(rondaId);
+      allow read: if isOwner(uid) && wasMemberOf(rondaId);
     }
 
     match /seguimos_counts/{rondaId} {
@@ -297,7 +310,8 @@ service cloud.firestore {
     // attendance ask went to them: overlapping matches add up, so this widens the rolls block
     // for that one person and that one roll.
     match /rondas/{rondaId}/rolls/{week} {
-      allow get: if request.auth != null && resource.data.askedUid == request.auth.uid;
+      allow get: if request.auth != null && resource.data.askedUid == request.auth.uid
+          && isMemberOf(rondaId);
     }
 
     // The después of one meeting, which may be a member's home and its address: the ronda's
