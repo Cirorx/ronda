@@ -66,6 +66,7 @@ flowchart TB
       gates{"Gates in code"}
       flyer["Flyer: words and QR drawn in code"]
     end
+    fcm["Cloud Messaging"]
   end
 
   subgraph meta["Meta models"]
@@ -86,11 +87,12 @@ flowchart TB
   needs -->|"eligible seat ids only"| fs
   fs --> solver
   solver -->|"proposals a person can stop"| fs
-  open_data -->|"forecast, last bus"| agent
+  agent -->|"forecast, last bus"| open_data
   agent --> so
   so -.->|"fallback"| s13
   agent --> gates
-  gates -->|"push"| card
+  gates --> fcm
+  card <-.->|"weekly push"| fcm
   agent -->|"acta"| fs
   card -->|"RSVP"| fs
   blur -->|"blurred photo"| st
