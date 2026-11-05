@@ -11,6 +11,10 @@ rambla, truco, fútbol 5. It is built in Ciudad de la Costa and Montevideo, Urug
 held only the design docs and the agents' setup (26 October, 13 commits, no code); every line of
 code is from inside it, starting at [`8c379ec`](https://github.com/Cirorx/ronda/commit/8c379ec).
 
+[Try it](#try-it) · [Architecture](#architecture) · [Meta models](#meta-models-in-ronda) ·
+[Voice sign-up](#sign-up-by-voice-end-to-end) · [Organiser agent](#the-organiser-agent-and-its-gates) ·
+[Running it](#running-it) · [Docs](#docs)
+
 ## Try it
 
 - **Web app:** <https://ronda-uy.web.app/app/> (Android and iOS builds come from the same code).
@@ -22,17 +26,10 @@ code is from inside it, starting at [`8c379ec`](https://github.com/Cirorx/ronda/
   groups from them and approves them. On the live project invented sign-ups never count, so a
   new member waits for real neighbours ("Todavía no tenés grupo").
 
-## Why
-
-In Uruguay, one in four adults say they feel very lonely, and more than one in three under thirty
-[1][2]. Almost a third of homes have just one person in them [3]. Friend apps seat you with new
-strangers at every event [4]. Ronda does the opposite: the same faces, close to home, every week,
-long enough for neighbours to become people you'd miss.
-
 ## How it works
 
-1. **Tell Ronda what you like and when you're free:** one voice note or three taps. No profile, no
-   photo.
+1. **Tell Ronda what you like and when you're free:** one voice note or seven short questions. No
+   profile, no photo.
 2. **Get a seat:** an open seat in a ronda nearby, or a new ronda that starts as soon as two
    neighbours want the same thing, and fills to six. A person sees every group and can stop it.
 3. **The first time, someone waits for you:** a named member, at the spot. After the first meeting
@@ -44,30 +41,67 @@ long enough for neighbours to become people you'd miss.
 Within 10 blocks (15 in Montevideo) · opens with 2 and fills to 6 (fútbol 5: 4 to 10) · bring one friend · same slot all season ·
 leave or switch without explaining · free.
 
-## What's built
+## Architecture
 
-All of this is in the code on `main`, with tests:
+One Flutter app, one Firebase project in São Paulo, and every AI job on a Meta model. The phone
+keeps what is sensitive; the server sees seat ids, counts and blurred photos.
 
-- **Sign-up by voice or by taps:** one spoken note read into the profile's fields, or seven short
-  questions; a read-back to check every field; needs kept on the phone as seat filters. Sign-in
-  with Google or a phone number.
-- **Groups:** a CP-SAT solver (`solver/`) proposes rondas from slot, distance, pretext and age
-  band; the admin screen approves them, or a ronda that formed itself goes ahead unless stopped
-  in time, with its place, hour and host set by the organiser agent.
-- **The weekly loop:** the weekly card on Mi ronda with [Voy] [Esta no], the RSVP push, the
-  bench filling an empty seat, attendance ("¿Quién vino?"), "¿seguimos?" after the first meeting,
-  the rain check and its proposal to move, and the acta: a log of everything the program did.
-- **First visit and trust:** "Así va a ser" for a newcomer (who waits for them, where), a chosen
-  person who writes when you miss one, and "Contar algo que pasó", read by a person.
-- **Between meetings:** "Algo chico esta semana" (small plans, by voice or taps), ¿Dónde queda?
-  (a barrio photo game, with people, plates and house numbers blurred) and the cuaderno del
-  barrio (a private noticing log that stays on the phone).
-- **Getting found:** the public "Cerca tuyo" page (<https://ronda-uy.web.app/>), the tear-off
-  flyer with a QR per spot, and "Un mate de más", the flyer a host makes from a photo of the
-  group's things.
-- **Ajustes:** Mis datos, notifications, what Ronda keeps about you, sign out.
-- **Built, off by default:** live transcription through `relay/`. **Not yet:** the in-app Cerca
-  list, Truco's team draw, self-service data download and deletion (done by hand on request).
+```mermaid
+flowchart LR
+  subgraph phone["Phone: Flutter app on Android, iOS and web"]
+    signup["Sign-up: one voice note or seven taps"]
+    needs["Needs: seat filters that stay on the phone"]
+    blur["Faces pixelated: ML Kit, detection only"]
+    card["Weekly card: Voy / Esta no"]
+  end
+
+  subgraph firebase["Firebase, São Paulo"]
+    auth["Auth: Google or phone number"]
+    st[("Storage: audio deleted once read")]
+    fs[("Firestore")]
+    subgraph fn["Python Cloud Functions"]
+      voice["Voice sign-up"]
+      solver["CP-SAT group solver"]
+      agent["Organiser agent"]
+      gates{"Gates in code"}
+      flyer["Flyer: words and QR drawn in code"]
+    end
+  end
+
+  subgraph meta["Meta models"]
+    vt["Voice Transcribe"]
+    s13["Muse Spark 1.3"]
+    so["Muse Spark Open, on Baseten"]
+    sam["SAM 3.1"]
+    mi["Muse Image"]
+  end
+
+  open_data["Open data: Open-Meteo, DNT GTFS, Montevideo buses, OpenStreetMap"]
+
+  signup --> auth
+  signup -->|"audio, after the terms"| st
+  st --> voice
+  voice --> vt
+  voice --> s13
+  needs -->|"eligible seat ids only"| fs
+  fs --> solver
+  solver -->|"proposals a person can stop"| fs
+  open_data -->|"forecast, last bus"| agent
+  agent --> so
+  so -.->|"fallback"| s13
+  agent --> gates
+  gates -->|"push"| card
+  agent -->|"acta"| fs
+  card -->|"RSVP"| fs
+  blur -->|"blurred photo"| st
+  st --> flyer
+  flyer --> sam
+  flyer --> mi
+```
+
+The live transcription relay (`relay/`, Cloud Run) is built and off by default. Components, data
+model and every job are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); packages and setup in
+[`docs/STACK.md`](docs/STACK.md).
 
 ## Meta models in Ronda
 
@@ -112,6 +146,76 @@ phone pixelates them before upload. Speech recognition is always Voice Transcrib
 text-to-speech ships in this build: reading a screen aloud is left to the phone's own screen
 reader (TalkBack, VoiceOver), through the app's semantics labels.
 
+## Sign-up by voice, end to end
+
+One spoken minute becomes a profile. The audio lives only as long as the call that reads it, and
+the needs never leave the phone.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor P as Person
+  participant App as Phone app
+  participant St as Storage
+  participant Fn as extract (Cloud Function)
+  participant VT as Voice Transcribe
+  participant SP as Muse Spark 1.3
+  participant FS as Firestore
+  P->>App: Taps "Con un audio", which accepts the terms
+  App->>App: Sign-in with Google or a phone number
+  P->>App: Talks for up to 60 s
+  App->>St: The note, under audio/{uid}/
+  App->>Fn: extract
+  Fn->>VT: The note
+  VT-->>Fn: The words
+  Fn->>SP: The words, with a strict JSON schema
+  SP-->>Fn: Name, age band, barrio, pretexts, slots, what they bring
+  Fn->>St: Deletes the note, in every case
+  Fn-->>App: The words and the fields
+  App->>P: "Nos falta poco" for what is missing, then "¿Entendimos bien?"
+  P->>App: Changes any field, then "Está bien, guardalo"
+  App->>App: Needs filter the seats, on the phone
+  App->>FS: users/{uid}/private/eligible, seat ids only
+  App->>FS: users/{uid}, the profile without needs
+  Note over App,Fn: Any failure offers "Prefiero tocar botones": the same profile in seven taps
+```
+
+## The organiser agent and its gates
+
+The agent decides; code checks. A message reaches a phone only if every gate passes, and every
+step is logged.
+
+```mermaid
+flowchart TD
+  job["Hourly dispatcher: rain check, weekly card, bench, a new ronda's place and hour"]
+  turn["A turn on Muse Spark Open, at most 12 a run"]
+  tool["Tool call: get_forecast, get_last_bus, count_rsvps, propose_move, send_member_push, log_acta"]
+  fits{"Does the call fit its pydantic schema?"}
+  gates{"Gates: 09:00 to 21:00, says it is a program, no emoji, voseo, no money, one routine push a week, public places only"}
+  sent["Sent as a push"]
+  held["Held, with the reason"]
+  log["Trace for the admin, acta for the members"]
+  fallback["Spark 1.3, then code alone"]
+
+  job --> turn
+  turn -->|"model error"| fallback
+  turn --> tool
+  tool --> fits
+  fits -->|"no: the error goes back, one more turn"| turn
+  fits -->|"yes"| gates
+  gates -->|"pass"| sent
+  gates -->|"fail"| held
+  sent --> log
+  held --> log
+```
+
+## Why
+
+In Uruguay, one in four adults say they feel very lonely, and more than one in three under thirty
+[1][2]. Almost a third of homes have just one person in them [3]. Friend apps seat you with new
+strangers at every event [4]. Ronda does the opposite: the same faces, close to home, every week,
+long enough for neighbours to become people you'd miss.
+
 ## Privacy by design: split by sensitivity
 
 - **Needs stay on the phone.** "I can't walk far", "not after dark", "no car" are filters on the
@@ -124,21 +228,30 @@ reader (TalkBack, VoiceOver), through the app's semantics labels.
   every action is written to a log members can read. These are rules in code, not in a prompt.
 - **Matching never uses personality.** Only walking distance, time slot, activity and age band.
 
-## Architecture
+## What's built
 
-```
-Phone app (Flutter: Android, iOS, web)
-  ├─ sign-up by voice or buttons → read-back → profile without needs
-  ├─ needs → on-device filters → eligible seat ids
-  └─ weekly push: [Voy] [Esta no]
-Firebase (São Paulo)
-  ├─ Firestore, Storage (audio deleted on success), Hosting (the web app under /app, plain-HTML public pages)
-  └─ Python functions: voice extraction · CP-SAT group solver · organiser agent · flyer
-Meta Model API (Voice Transcribe, Spark 1.3, SAM 3.1, Muse Image) · Baseten (Muse Spark Open)
-Open data: Open-Meteo · DNT bus timetables (GTFS) · Intendencia de Montevideo buses · OpenStreetMap
-```
+All of this is in the code on `main`, with tests:
 
-More in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/STACK.md`](docs/STACK.md).
+- **Sign-up by voice or by taps:** one spoken note read into the profile's fields, or seven short
+  questions; a read-back to check every field; needs kept on the phone as seat filters. Sign-in
+  with Google or a phone number.
+- **Groups:** a CP-SAT solver (`solver/`) proposes rondas from slot, distance, pretext and age
+  band; the admin screen approves them, or a ronda that formed itself goes ahead unless stopped
+  in time, with its place, hour and host set by the organiser agent.
+- **The weekly loop:** the weekly card on Mi ronda with [Voy] [Esta no], the RSVP push, the
+  bench filling an empty seat, attendance ("¿Quién vino?"), "¿seguimos?" after the first meeting,
+  the rain check and its proposal to move, and the acta: a log of everything the program did.
+- **First visit and trust:** "Así va a ser" for a newcomer (who waits for them, where), a chosen
+  person who writes when you miss one, and "Contar algo que pasó", read by a person.
+- **Between meetings:** "Algo chico esta semana" (small plans, by voice or taps), ¿Dónde queda?
+  (a barrio photo game, with people, plates and house numbers blurred) and the cuaderno del
+  barrio (a private noticing log that stays on the phone).
+- **Getting found:** the public "Cerca tuyo" page (<https://ronda-uy.web.app/>), the tear-off
+  flyer with a QR per spot, and "Un mate de más", the flyer a host makes from a photo of the
+  group's things.
+- **Ajustes:** Mis datos, notifications, what Ronda keeps about you, sign out.
+- **Built, off by default:** live transcription through `relay/`. **Not yet:** the in-app Cerca
+  list, Truco's team draw, self-service data download and deletion (done by hand on request).
 
 ## Repo layout
 
@@ -149,11 +262,10 @@ functions/  Python Cloud Functions: voice sign-up, organiser agent, flyers, the 
 solver/     the CP-SAT group solver, pure Python
 relay/      the live transcription relay (Cloud Run), off by default
 hosting/    the public web pages: Cerca tuyo and the flyer's QR landing
-rules/      Firestore and Storage security-rules tests
+firebase/   Firestore and Storage rules, indexes, and the rules' tests
 flows/      Maestro UI flows (sign-up by taps and by voice, first visit)
 evals/      model evals with recorded answers: voice, weekly card
-scripts/    demo seed and reset, flyers, a smoke test per model, deploys
-data/       invented demo data (places, seat facts)
+scripts/    demo seed and reset (invented data in scripts/data/demo), flyers, model smoke tests, deploys
 docs/       product, architecture, stack, models, design, glossary
 ```
 
@@ -190,7 +302,7 @@ VIRTUAL_ENV=functions/venv uv pip install -r functions/requirements.txt -r funct
 (cd functions && venv/bin/pytest --cov)
 (cd solver && uv sync && uv run pytest --cov)
 (cd scripts && uv sync && uv run pytest)
-(cd rules && npm ci && npm run test:emulator)
+(cd firebase/tests && npm ci && npm run test:emulator)
 ```
 
 Model keys never go in the app. The functions read `MODEL_API_KEY` (Meta Model API) and
