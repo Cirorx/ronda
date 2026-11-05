@@ -277,16 +277,26 @@ Built with Claude Code; the rules its agents follow live in [`CLAUDE.md`](CLAUDE
 ## Running it
 
 You need Flutter 3.47, Python 3.13 with `uv`, Node and the Firebase CLI
-([`docs/STACK.md`](docs/STACK.md) § Toolchain). The Firebase options files are not in the repo:
-on a fresh clone run `flutterfire configure` per flavor (STACK.md § Native and project
-checklist), or, for tests only, copy `tool/firebase_options_stub.dart` to
-`lib/firebase_options_development.dart` and `lib/firebase_options_production.dart`, as CI does.
+([`docs/STACK.md`](docs/STACK.md) § Toolchain). The Firebase options files are not in the repo.
+To run on the emulators without access to the Ronda project, copy
+`tool/firebase_options_stub.dart` to `lib/firebase_options_development.dart` and
+`lib/firebase_options_production.dart`, as CI does: its made-up values name the project
+`demo-ronda`, which the emulators run with no Firebase login. With access to the real project,
+run `flutterfire configure` per flavor instead (STACK.md § Native and project checklist) and
+leave out `--project demo-ronda` and `GCLOUD_PROJECT` below.
 
 ```sh
+# Once: the functions' Python environment, which the emulators load the functions from
+uv venv --seed --python 3.13 functions/venv
+VIRTUAL_ENV=functions/venv uv pip install -r functions/requirements.txt -r functions/requirements-dev.txt
+
 # The emulators, from the repo root (Firestore on 8088, Auth 9099, Functions 5001, UI on :4000).
 # On macOS the variable keeps the Python functions' worker from crashing when it forks; to reach
 # the real models from it also set no_proxy='*' and SSL_CERT_FILE (docs/STACK.md § Emulators).
-OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES firebase emulators:start
+OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES firebase emulators:start --project demo-ronda
+
+# In a second terminal: the scripts write to the same project as the emulators
+export GCLOUD_PROJECT=demo-ronda
 
 # Invented demo data: 30 sign-ups, seat facts and places (scripts/seed.py 200 adds more)
 FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \
@@ -295,13 +305,13 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:909
 # The app against the emulators (on a phone: --flavor development instead of -d chrome)
 flutter run -d chrome -t lib/main_development.dart
 
-# Make your account admin to reach /admin, then sign out and in again
+# Sign in with Google: the emulator's sign-in page lets you add a made-up account, and the
+# script finds it by that email. Then sign out and in again, and open /admin. "Form the groups"
+# can take up to a minute on the emulators.
 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 uv run --python 3.13 scripts/set_admin.py <email>
 
 # Tests
 flutter test
-uv venv --seed --python 3.13 functions/venv
-VIRTUAL_ENV=functions/venv uv pip install -r functions/requirements.txt -r functions/requirements-dev.txt
 (cd functions && venv/bin/pytest --cov)
 (cd solver && uv sync && uv run pytest --cov)
 (cd scripts && uv sync && uv run pytest)
