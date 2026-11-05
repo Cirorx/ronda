@@ -20,7 +20,7 @@ code is from inside it, starting at [`8c379ec`](https://github.com/Cirorx/ronda/
 - **Web app:** <https://ronda-uy.web.app/app/> (Android and iOS builds come from the same code).
   A new visitor gets "¿Cómo funciona?", with a sample of the weekly card, signs up by voice or
   by taps, sees what's near them, then signs in with Google or a phone number to keep the seat.
-- **Video:** coming 4 November 2026.
+- **Video:** [Ronda in three minutes, on YouTube](https://youtu.be/2hi27Q0GdFs)
 - **To see a ronda with people in it:** run it on the emulators (§ [Running it](#running-it)):
   `scripts/reset.py` seeds 30 invented neighbours, and the admin screen (`/admin`) proposes
   groups from them and approves them. On the live project invented sign-ups never count, so a
