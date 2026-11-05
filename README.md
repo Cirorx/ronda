@@ -158,21 +158,19 @@ sequenceDiagram
   autonumber
   actor P as Person
   participant App as Phone app
-  participant St as Storage
-  participant Fn as extract (Cloud Function)
+  participant Fn as Cloud Function
   participant VT as Voice Transcribe
   participant SP as Muse Spark 1.3
   participant FS as Firestore
   P->>App: Taps "Con un audio", which accepts the terms
   App->>App: Sign-in with Google or a phone number
   P->>App: Talks for up to 60 s
-  App->>St: The note, under audio/{uid}/
-  App->>Fn: extract
+  App->>Fn: extract, after uploading the note to Storage
   Fn->>VT: The note
   VT-->>Fn: The words
   Fn->>SP: The words, with a strict JSON schema
   SP-->>Fn: Name, age band, barrio, pretexts, slots, what they bring
-  Fn->>St: Deletes the note, in every case
+  Note over Fn: Deletes the note from Storage, in every case
   Fn-->>App: The words and the fields
   App->>P: "Nos falta poco" for what is missing, then "¿Entendimos bien?"
   P->>App: Changes any field, then "Está bien, guardalo"
