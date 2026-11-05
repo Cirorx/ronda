@@ -1,8 +1,28 @@
+<div align="center">
+
+<img src="docs/assets/ronda-mark.svg" width="88" alt="">
+
 # Ronda
 
-**Los mismos vecinos, a pocas cuadras, el mismo día todas las semanas. Vos decís "voy"; Ronda organiza el resto.**
+**Los mismos vecinos, a pocas cuadras, el mismo día todas las semanas.<br>Vos decís "voy"; Ronda organiza el resto.**
 
 *The same few neighbours, a few blocks from home, the same day every week. You say "voy"; Ronda does the rest.*
+
+[![CI](https://github.com/Cirorx/ronda/actions/workflows/main.yaml/badge.svg)](https://github.com/Cirorx/ronda/actions/workflows/main.yaml)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-4e6428)](LICENSE)
+[![Flutter](https://img.shields.io/badge/Flutter-Android%20%C2%B7%20iOS%20%C2%B7%20web-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Firebase](https://img.shields.io/badge/Firebase-S%C3%A3o%20Paulo-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com)
+[![Meta models](https://img.shields.io/badge/AI-5%20Meta%20models-0866FF?logo=meta&logoColor=white)](#meta-models-in-ronda)
+
+[Try it](#try-it) · [Architecture](#architecture) · [Meta models](#meta-models-in-ronda) ·
+[Voice sign-up](#sign-up-by-voice-end-to-end) · [Organiser agent](#the-organiser-agent-and-its-gates) ·
+[Running it](#running-it) · [Docs](#docs)
+
+<a href="https://youtu.be/2hi27Q0GdFs"><img src="docs/assets/demo-video.jpg" width="640" alt="Watch the three-minute demo on YouTube"></a>
+
+<sub>The three-minute demo, on YouTube.</sub>
+
+</div>
 
 Ronda keeps the same small group of neighbours meeting every week around one pretext: mate on the
 rambla, truco, fútbol 5. It is built in Ciudad de la Costa and Montevideo, Uruguay, for the
@@ -10,10 +30,6 @@ rambla, truco, fútbol 5. It is built in Ciudad de la Costa and Montevideo, Urug
 (indie track, "Build for Your World"), 27 October – 4 November 2026. Before the window the repo
 held only the design docs and the agents' setup (26 October, 13 commits, no code); every line of
 code is from inside it, starting at [`8c379ec`](https://github.com/Cirorx/ronda/commit/8c379ec).
-
-[Try it](#try-it) · [Architecture](#architecture) · [Meta models](#meta-models-in-ronda) ·
-[Voice sign-up](#sign-up-by-voice-end-to-end) · [Organiser agent](#the-organiser-agent-and-its-gates) ·
-[Running it](#running-it) · [Docs](#docs)
 
 ## Try it
 
@@ -40,6 +56,15 @@ code is from inside it, starting at [`8c379ec`](https://github.com/Cirorx/ronda/
 
 Within 10 blocks (15 in Montevideo) · opens with 2 and fills to 6 (fútbol 5: 4 to 10) · bring one friend · same slot all season ·
 leave or switch without explaining · free.
+
+<table>
+  <tr>
+    <td align="center" width="25%"><img src="docs/assets/screen-voice.jpg" alt="The voice note being read: what Ronda heard, and the recording already deleted"><br><sub>Sign up with one voice note</sub></td>
+    <td align="center" width="25%"><img src="docs/assets/screen-my-ronda.jpg" alt="My ronda while the group is being put together"><br><sub>Mi ronda, while the group forms</sub></td>
+    <td align="center" width="25%"><img src="docs/assets/screen-organiser-log.jpg" alt="The organiser's log: each step labelled model, code or person"><br><sub>The organiser's log, in the open</sub></td>
+    <td align="center" width="25%"><img src="docs/assets/screen-flyer.jpg" alt="The Hay un mate de más flyer made from the host's photo"><br><sub>A flyer from the host's photo</sub></td>
+  </tr>
+</table>
 
 ## Architecture
 
@@ -258,6 +283,9 @@ All of this is in the code on `main`, with tests:
 
 ## Repo layout
 
+<details>
+<summary>The folders, one line each</summary>
+
 ```
 lib/        the Flutter app, one folder per feature (Bloc, VGV layers)
 packages/   data and repository packages, and ronda_ui (theme and shared widgets)
@@ -271,6 +299,8 @@ evals/      model evals with recorded answers: voice, weekly card
 scripts/    demo seed and reset (invented data in scripts/data/demo), flyers, model smoke tests, deploys
 docs/       product, architecture, stack, models, design, glossary
 ```
+
+</details>
 
 Built with Claude Code; the rules its agents follow live in [`CLAUDE.md`](CLAUDE.md).
 
@@ -350,6 +380,9 @@ deploys, is in [`docs/STACK.md`](docs/STACK.md).
 
 ## Sources
 
+<details>
+<summary>The four sources behind the numbers in the video</summary>
+
 1. MSP / CIFRA, [*Percepción de la población sobre la salud mental y hábitos de consulta y tratamiento*](https://mediospublicos.uy/wp-content/uploads/2025/10/PERCEPCION-DE-LA-POBLACION-SOBRE-LA-SALUD-MENTAL-Y-HABITOS-DE-CONSULTA-Y-TRATAMIENTO.pdf),
    national telephone survey, n = 803, August 2025: 24% of adults score "very lonely"; 35% under 30.
 2. Meta–Gallup, [*The Global State of Social Connections*](https://www.gallup.com/file/analytics/513347/Gallup-Meta-Global%20State%20of%20Social%20Connections%20Report-2023.pdf),
@@ -358,6 +391,8 @@ deploys, is in [`docs/STACK.md`](docs/STACK.md).
    2024: 29.2% of households have one person.
 4. Timeleft, [Timeleft Repeat](https://timeleft.com/post/timeleft-repeat-reconnect-with-friends/),
    December 2025: every dinner seats "new faces selected by our algorithm".
+
+</details>
 
 ## Team
 
