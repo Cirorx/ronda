@@ -54,7 +54,7 @@ dependencies:
     path: packages/link_opener
   live_transcript:
     path: packages/live_transcript
-  material_ui: ^1.9.0
+  material_ui: ^1.11.1
   needs_repository:
     path: packages/needs_repository
   onboarding_repository:
